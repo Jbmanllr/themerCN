@@ -1,0 +1,78 @@
+// Body of the Cards preview tab: the sample cards in a grid driven by container
+// queries (`@2xl:` to `@7xl:`), so in the tab it follows the preview width,
+// not the window's (the `@container` is in
+// ../../theme-preview/examples-preview-container.tsx). Default export: loaded
+// through `lazy()` by ../../builtin-tabs.tsx and ../../preview-cards.tsx.
+
+import { CardsActivityGoal } from "./activity-goal";
+import { CardsCalendar } from "./calendar";
+import { CardsChat } from "./chat";
+import { CardsCookieSettings } from "./cookie-settings";
+import { CardsCreateAccount } from "./create-account";
+import { CardsExerciseMinutes } from "./exercise-minutes";
+import { CardsForms } from "./forms";
+import { CardsPayments } from "./payments";
+import { CardsReportIssue } from "./report-issue";
+import { CardsShare } from "./share";
+import { CardsStats } from "./stats";
+import { CardsTeamMembers } from "./team-members";
+import { DatePickerWithRange } from "./date-picker-with-range";
+import { GithubCard } from "./github-card";
+
+export default function CardsDemo() {
+  return (
+    <div className="grid p-2 **:data-[slot=card]:shadow-none md:p-4 md:pt-1 @3xl:gap-4 @5xl:grid-cols-10 @7xl:grid-cols-11">
+      <div className="grid gap-4 @5xl:col-span-4 @7xl:col-span-6">
+        <CardsStats />
+        <div className="grid gap-1 @2xl:grid-cols-[auto_1fr] @3xl:hidden">
+          <CardsCalendar />
+          <div className="@2xl:pt-0 @2xl:pl-3 @7xl:pl-4">
+            <CardsActivityGoal />
+          </div>
+          <div className="pt-3 @2xl:col-span-2 @7xl:pt-4">
+            <CardsExerciseMinutes />
+          </div>
+        </div>
+        <div className="grid gap-4 @3xl:grid-cols-2 @5xl:grid-cols-1 @7xl:grid-cols-2">
+          <div className="flex flex-col gap-4">
+            <CardsForms />
+            <CardsTeamMembers />
+            <CardsCookieSettings />
+            <div className="hidden flex-col gap-4 @7xl:flex">
+              <GithubCard />
+              <DatePickerWithRange />
+            </div>
+          </div>
+          <div className="flex flex-col gap-4 pb-4">
+            <CardsCreateAccount />
+            <CardsChat />
+            <GithubCard />
+            <DatePickerWithRange />
+
+            <div className="hidden @7xl:block">
+              <CardsReportIssue />
+            </div>
+          </div>
+        </div>
+      </div>
+      <div className="flex flex-col gap-4 @5xl:col-span-6 @7xl:col-span-5">
+        <div className="hidden gap-1 @2xl:grid-cols-[auto_1fr] @3xl:grid">
+          <CardsCalendar />
+          <div className="pt-3 @2xl:pt-0 @2xl:pl-3 @7xl:pl-4">
+            <CardsActivityGoal />
+          </div>
+          <div className="pt-3 @2xl:col-span-2 @7xl:pt-3">
+            <CardsExerciseMinutes />
+          </div>
+        </div>
+        <div className="hidden @3xl:block">
+          <CardsPayments />
+        </div>
+        <CardsShare />
+        <div className="@7xl:hidden">
+          <CardsReportIssue />
+        </div>
+      </div>
+    </div>
+  );
+}

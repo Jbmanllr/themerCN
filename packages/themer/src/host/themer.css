@@ -1,0 +1,67 @@
+/*
+ * The editor's Tailwind utilities, for a host's themer.css to @import right
+ * after its @reference to the host's own globals.css (which gives this sheet
+ * the host's theme and custom variants without re-emitting them). The host
+ * imports its themer.css from its shell alone, a lazy dev chunk its
+ * next.config.ts removes from every build without the editor, so none of this
+ * reaches production CSS.
+ *
+ * Contract: source(none) plus @source scans this package and @banter/ui only:
+ * the editor and its preview pages are built from all of @banter/ui, while a
+ * host may scan only the components it uses (the CMS does). The output goes in
+ * the `themer` layer, which each host's globals.css orders below `utilities`:
+ * this sheet loads later and repeats classes the host uses (`hidden`,
+ * `order-last`), and in the same layer those repeats overrode the host's
+ * `dark:` and `md:` variants.
+ */
+@layer themer {
+  @tailwind utilities source(none);
+}
+@source "..";
+@source "../../../ui/src";
+
+/* Base UI portals each popup as body > [data-base-ui-portal] > positioner,
+ * and the primitives isolate that positioner at z-index 50, under the editor
+ * overlay (9999+). While the editor is mounted, lift every popup layer above
+ * it so its menus, tooltips and preview dialogs show. Unlayered on purpose:
+ * it must beat the `z-50` utility; an inline positioner zIndex still wins.
+ * The portal wrapper is lifted too: hosts may isolate it at z-index 50
+ * (both apps' globals.css do), which would trap the lifted child below the
+ * overlay. 10060 is Z_INDEX.portalPopup (config/constants.ts); keep the two
+ * equal. */
+body:has([data-themer-overlay]) > [data-base-ui-portal],
+body:has([data-themer-overlay]) > [data-base-ui-portal] > * {
+  z-index: 10060;
+}
+
+/* Light/dark reveal (utils/theme-transition.ts; adapted from tweakcn,
+ * Apache-2.0, github.com/jnsahaj/tweakcn @ a3b47b37, modified by Banter).
+ * Matches only while the editor's toggle runs a transition, so the host's
+ * own view transitions keep their animation. Outside @layer themer: view
+ * transition pseudo-elements are not utilities. --themer-vt-x/-y hold the
+ * click point as a viewport percentage (centre when absent). */
+html[data-themer-vt]::view-transition-old(root),
+html[data-themer-vt]::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+html[data-themer-vt]::view-transition-old(root) {
+  z-index: 0;
+}
+
+html[data-themer-vt]::view-transition-new(root) {
+  z-index: 1;
+  animation: themer-vt-reveal 0.4s ease-in-out forwards;
+}
+
+@keyframes themer-vt-reveal {
+  from {
+    clip-path: circle(0% at var(--themer-vt-x, 50%) var(--themer-vt-y, 50%));
+    opacity: 0.7;
+  }
+  to {
+    clip-path: circle(150% at var(--themer-vt-x, 50%) var(--themer-vt-y, 50%));
+    opacity: 1;
+  }
+}

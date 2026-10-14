@@ -154,7 +154,7 @@ function resolveModeHeading(
  * values, then (for dark) its dark values on top of its light ones, as
  * tweakcn's mergePresetWithDefaults. When neither the mode's own values nor
  * (for dark) the preset's light values declare `font-heading`, the mode's
- * resolved `font-serif` is its heading font (Banter addition; tweakcn presets
+ * resolved `font-serif` is its heading font (a themercn addition; tweakcn presets
  * have no heading slot). Unknown ids resolve to "default". The result is
  * cached per id and shared: treat it as read-only.
  */

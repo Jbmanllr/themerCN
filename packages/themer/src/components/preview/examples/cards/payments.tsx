@@ -1,7 +1,7 @@
 "use client";
 
 // Payments card of the Cards preview tab: a TanStack Table v9 demo (row
-// selection, pagination) over fixed sample rows, not Banter data.
+// selection, pagination) over fixed sample rows, not Host data.
 //
 // Contract: a DropdownMenuLabel (Base UI group label) must sit inside a
 // DropdownMenuGroup; outside one, opening a row's menu throws and takes the

@@ -1,5 +1,5 @@
 // Mail layout of the Mail preview tab: a resizable account nav, message list
-// and message view over the sample mails in ../data.tsx, not Banter data.
+// and message view over the sample mails in ../data.tsx, not Host data.
 //
 // Contract: the demo runs inside the host's own page, so it must not touch it:
 // no cookie writes (the ported example saved its panel layout in cookies) and

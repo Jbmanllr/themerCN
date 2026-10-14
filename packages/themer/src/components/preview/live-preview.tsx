@@ -17,11 +17,11 @@
 // - next-themes inside the frame owns its light/dark class, as on the page.
 // - A cross-origin URL cannot be themed (or inspected); reading it throws or
 //   yields null, which is ignored.
-// - Each host sends same-origin framing headers only while its editor gate is
-//   on; that is what lets this frame load the host's pages.
+// - The Host must allow same-origin framing (`frame-ancestors 'self'`,
+//   `X-Frame-Options: SAMEORIGIN`); a page that refuses it stays empty here.
 //
 // See: packages/themer/ARCHITECTURE.md (Preview System, Applying a theme) and
-// packages/themer/README.md (Host integration contract, framing headers)
+// packages/themer/README.md ("Content Security Policy")
 
 import * as React from "react";
 import {

@@ -78,7 +78,7 @@ export function PanelTabs({
           value={panel.id}
           className={cn("m-0 min-h-0 flex-1", contentClassName)}
           // Leaves this scroll container native in a host that runs Lenis
-          // (see LenisPause; neither Banter app does).
+          // (see LenisPause).
           data-lenis-prevent
         >
           <PanelContent panel={panel.id} />

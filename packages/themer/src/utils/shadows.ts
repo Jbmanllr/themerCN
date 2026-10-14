@@ -7,13 +7,12 @@
 // and blur and the spread minus 1px (`shadow` equals `shadow-sm`). Never scale
 // the user's offset, blur or spread per size: that made a preset's shadows
 // (e.g. neo-brutalism's hard offset) look unlike tweakcn's; shadows.test.ts pins
-// tweakcn's strings. Banter changes: the map is computed for an explicit mode
+// tweakcn's strings. Changes from tweakcn: the map is computed for an explicit mode
 // (export writes both), and getShadowVariables adds this package's raw
 // parameter keys to its result (apply-theme ignores them and writes only the
 // per-size scale).
 //
-// See: packages/themer/docs/API.md ("CSS Import, Sidebar Sync, Shadows, Colour
-// Groups").
+// See: packages/themer/ARCHITECTURE.md ("Applying a theme").
 
 import type { ThemeEditorState, ThemeMode, ThemeStyleProps } from "../types";
 import { defaultThemeState } from "../config/defaults";

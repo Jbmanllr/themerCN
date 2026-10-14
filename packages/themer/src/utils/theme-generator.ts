@@ -1,6 +1,6 @@
 // Adapted from tweakcn (Apache-2.0, github.com/jnsahaj/tweakcn @ a3b47b37); modified for themercn.
 //
-// CSS / Tailwind export of the editor state. Banter changes to tweakcn's
+// CSS / Tailwind export of the editor state. Changes from tweakcn's
 // generator (utils/theme-style-generator.ts): every mode block is generated
 // from that mode's own values (letter spacing and spacing included, so a
 // dark-only value survives export), the heading font is exported as
@@ -9,17 +9,17 @@
 // multiplicative one the host previews with (not tweakcn's additive one), and
 // Tailwind v3 output never carries oklch (v3 colour tokens are
 // `hsl(var(--x))`, so oklch maps to hsl). Host extra colours
-// (ThemerConfig.extraColors; the caller passes their keys) are exported when
+// (ThemerProps.extraColors; the caller passes their keys) are exported when
 // the theme sets them: in the mode blocks that set them, in the
 // `@theme inline` `--color-*` mapping and in the v3 config's colours.
 //
 // Contract: pure; the output is text users paste into their own project.
 // Extra colour keys come only from the `extraColorKeys` argument (the Code
 // dialog passes them, useThemer's export helpers do not). RADIUS_SCALE must
-// keep matching the scale `@banter/ui-tokens/web.css` declares, so an export
-// rounds like the preview; `--radius-pill` is Banter's own and is not exported.
+// keep matching shadcn's scale (packages/ui/src/styles/globals.css), so an
+// export rounds like the preview.
 //
-// See: packages/themer/docs/API.md ("Theme Export").
+// See: packages/themer/ARCHITECTURE.md ("Export and import").
 
 import type {
   ThemeEditorState,
@@ -40,7 +40,7 @@ const EXPORT_COLOR_KEYS = COLOR_STYLE_KEYS.filter(
 
 /**
  * shadcn v4's multiplicative radius scale, as the previewed host declares it
- * (packages/ui-tokens/web.css), so an export rounds like the preview; null
+ * (packages/ui/src/styles/globals.css), so an export rounds like the preview; null
  * is `var(--radius)` itself.
  */
 const RADIUS_SCALE = [

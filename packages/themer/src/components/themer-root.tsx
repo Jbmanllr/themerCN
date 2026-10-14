@@ -5,7 +5,7 @@
 // (ThemerScope), and the cleanups that run when it closes. The host's
 // children must stay un-wrapped (see ThemerRoot below).
 //
-// See: packages/themer/docs/API.md ("ThemerRoot").
+// See: packages/themer/ARCHITECTURE.md ("Core Entry Points").
 
 import * as React from "react";
 import { createPortal } from "react-dom";
@@ -87,7 +87,7 @@ export function ThemerRoot({ children }: ThemerRootProps) {
 
 /**
  * The trigger and overlay with no host content: ThemerRoot around nothing, so
- * it shares the root's close cleanup (AI chat reset, mobile scroll lock, Lenis
+ * it shares the root's close cleanup (mobile scroll lock, Lenis
  * pause) and renders nothing until the themer context is ready.
  */
 export function ThemerOverlayOnly() {

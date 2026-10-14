@@ -21,7 +21,7 @@
 //   Written only when the shadow inputs differ from the library defaults (a
 //   preset that declares shadows, or an edit): a preset without shadows, such
 //   as a host brand preset, keeps the host's own Tailwind shadow scale.
-// - Host extra colours (ThemerConfig.extraColors) are ordinary style keys:
+// - Host extra colours (ThemerProps.extraColors) are ordinary style keys:
 //   written as `--key` when the theme sets them, absent (the host's CSS
 //   shows) when it does not.
 // - Every property written is recorded per element, so a re-apply drops keys
@@ -31,8 +31,7 @@
 // override sheet exists only while a `--shadow-*` variable is written, and
 // removing the theme removes the sheet with it.
 //
-// See: packages/themer/ARCHITECTURE.md ("Applying a theme") and
-// packages/themer/docs/API.md ("Theme Application").
+// See: packages/themer/ARCHITECTURE.md ("Applying a theme").
 import { defaultLightStyles } from "../config/defaults";
 import { getExtraColorKeys } from "../config/extra-colors";
 import type { ThemeEditorState, ThemeMode } from "../types";

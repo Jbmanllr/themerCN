@@ -1,5 +1,10 @@
 # API Reference
 
+> **Retired.** This page describes the pre-themercn package (`@banter/themer`)
+> and is no longer maintained or linked. Use the package
+> [README](../README.md) and [ARCHITECTURE.md](../ARCHITECTURE.md). Pending
+> removal by the repository owner.
+
 Everything below is re-exported from the package root, `@banter/themer`, except where a section names a file path: import that path. Subpath imports exist only per file (`@banter/themer/<dir>/<file>`, see `exports` in `package.json`); `@banter/themer/utils` and `@banter/themer/hooks` do not resolve. The root barrel exports `useThemer` from `hooks/use-themer.ts` but not `useToggleMode`, which sits in the same file.
 
 ## Components

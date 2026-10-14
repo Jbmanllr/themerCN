@@ -6,9 +6,9 @@
 //
 // Contract: pure functions; the merge never mutates its inputs. The host-facing
 // rules (replace by id, `order`, `scroll` default) are public behavior of
-// `ThemerConfig.previewTabs`.
+// `ThemerProps.previewTabs`.
 //
-// See: packages/themer/README.md (Host extension points)
+// See: packages/themer/README.md ("`<Themer>` props")
 
 import type { ComponentType } from "react";
 import type { ThemerPreviewTab } from "../../types";

@@ -1,8 +1,8 @@
 "use client";
 
 // Legacy all-in-one header (undo/redo, mode, presets, inspector, export). Not
-// the one the overlay shows: nothing in the repository imports this file (it
-// stays reachable as `@villa/themer/components/themer-header`). The overlay
+// the one the overlay shows: nothing in the repository imports this file, and
+// no package entry exports it. The overlay
 // uses ./overlay/themer-header.tsx (sidebar trigger and close button), the
 // controls live in ActionBar (./action-bar.tsx), PreviewTabs (inspector,
 // fullscreen) and the sidebar's preset picker, and the barrel's

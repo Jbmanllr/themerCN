@@ -18,7 +18,7 @@
 // - No View Transitions API, or prefers-reduced-motion: the update runs
 //   directly, with no animation.
 //
-// See: packages/themer/docs/API.md ("useToggleMode").
+// See: packages/themer/ARCHITECTURE.md ("Colour mode").
 
 // react-doctor-disable-next-line react-doctor/no-flush-sync -- flushSync runs only inside document.startViewTransition's update callback, from event handlers: it is what puts the committed mode in the browser's "new" snapshot (next-themes sets the class in an effect React's <ViewTransition> does not capture)
 import { flushSync } from "react-dom";

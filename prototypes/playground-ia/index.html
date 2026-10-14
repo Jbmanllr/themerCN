@@ -150,14 +150,7 @@ function siteHeaderA(){ return `
 function footerA(){ return `<footer class="grid" style="grid-template-columns:repeat(auto-fit,minmax(120px,1fr));padding:24px;border-top:1px solid var(--border);margin-top:32px" >
   ${["Shop","Learn","Company","Playground"].map(h=>`<div class="col muted" style="gap:4px"><b style="color:var(--foreground)">${h}</b><span>Link</span><span>Link</span><span>Link</span></div>`).join("")}</footer>`; }
 
-function themerFloating(open){ return `
-  <div style="position:fixed;right:16px;bottom:72px;z-index:50">
-    ${open?`<div class="themer card" style="width:300px;height:420px;margin-bottom:8px;border-color:#333;padding:12px;display:flex;flex-direction:column;gap:10px">
-      <div class="row" style="justify-content:space-between"><b>Themer</b><span class="lbl">overlay</span></div>
-      <div class="lbl">Preset</div><div class="row">${["#3f5f3a","#4f46e5","#e11d48","#0ea5e9"].map(c=>`<span class="sw" style="background:${c}"></span>`).join("")}</div>
-      <div class="lbl">Colors · Radius · Fonts · Shadows</div><div class="ph" style="flex:1;background:#222">token controls</div></div>`:""}
-    <button class="btn" style="background:#111;color:#fff;border-radius:999px">🎨 Themer</button>
-  </div>`; }
+function themerFloating(open){ return `<div style="position:fixed;right:16px;bottom:72px;z-index:50;width:260px">${open?`<div style="height:240px;margin-bottom:8px;border:2px dashed #a1a1aa;border-radius:10px;display:flex;align-items:center;justify-content:center;text-align:center;color:#71717a;font-size:12px;padding:12px;background:var(--background)">Existing Themer UI<br>(packages/themer, unchanged)<br>position placeholder only</div>`:""}<div style="height:auto;border:2px dashed #a1a1aa;border-radius:10px;display:flex;align-items:center;justify-content:center;text-align:center;color:#71717a;font-size:12px;padding:12px;background:var(--background)">Existing Themer UI<br>(packages/themer, unchanged)<br>position placeholder only</div></div>`; }
 
 const W = {
   A: {
@@ -212,11 +205,7 @@ function railB(active){ const g={Marketing:["Home","Features","Pricing","About",
   return `<aside class="hide-sm col" style="width:200px;border-right:1px solid var(--border);padding:14px;gap:10px;background:var(--muted);flex-shrink:0">
     <div class="row"><div class="ph" style="width:24px;height:24px;background:var(--primary)"></div><b>Lumen</b></div>
     ${Object.entries(g).map(([h,items])=>`<div class="col" style="gap:2px"><span class="lbl muted" style="font-size:10px;text-transform:uppercase;letter-spacing:.08em">${h}</span>${items.map(i=>`<span style="padding:3px 6px;border-radius:6px;${i==active?'background:var(--background);font-weight:600':''}" class="${i==active?'':'muted'}">${i}</span>`).join("")}</div>`).join("")}</aside>`; }
-function themerDocked(){ return `<aside class="themer col hide-sm" style="width:280px;flex-shrink:0;padding:12px;gap:10px;border-left:1px solid #333">
-  <div class="row" style="justify-content:space-between"><b>Themer</b><span class="lbl">docked · ⌘.</span></div>
-  <div class="row" style="gap:4px">${["Colors","Type","Radius","Shadow"].map((t,i)=>`<span style="padding:3px 8px;border-radius:6px;${i==0?'background:#333':''}">${t}</span>`).join("")}</div>
-  ${["background","foreground","primary","muted","accent","border"].map(t=>`<div class="row" style="justify-content:space-between"><span>--${t}</span><span class="sw" style="background:var(--${t})"></span></div>`).join("")}
-  <div class="ph" style="flex:1;background:#222">more controls</div></aside>`; }
+function themerDocked(){ return `<aside class="hide-sm" style="width:280px;flex-shrink:0;padding:12px;display:flex"><div style="flex:1;border:2px dashed #a1a1aa;border-radius:10px;display:flex;align-items:center;justify-content:center;text-align:center;color:#71717a;font-size:12px;padding:12px;background:var(--background)">Existing Themer UI<br>(packages/themer, unchanged)<br>position placeholder only</div></aside>`; }
 function shellB(active, body){ return `<div style="display:flex;min-height:100vh">${railB(active)}<main style="flex:1;min-width:0">${body}</main>${themerDocked()}</div>`; }
 
 W.B.home = () => shellB("Home", `
@@ -250,11 +239,7 @@ W.B.chat = () => shellB("Chat", `
     <div class="row" style="padding:12px 24px;border-top:1px solid var(--border)"><input class="inp" placeholder="Ask about your metrics…"><button class="btn">↑</button></div></div>`);
 
 function editorC(screen, body){ return `<div style="display:flex;min-height:100vh;background:#e5e5e5">
-  <aside class="themer col hide-sm" style="width:300px;flex-shrink:0;padding:14px;gap:12px">
-    <b style="font-size:14px">themerCN</b><div class="lbl">Preset</div>
-    <div class="grid" style="grid-template-columns:repeat(4,1fr);gap:6px">${["#18181b","#3f5f3a","#4f46e5","#e11d48","#0ea5e9","#d97706","#7c3aed","#059669"].map(c=>`<span class="sw" style="background:${c};width:100%;height:28px"></span>`).join("")}</div>
-    <div class="lbl">Tokens</div><div class="ph" style="flex:1;background:#222">full editor (fixed)</div>
-    <div class="row"><button class="btn" style="flex:1;background:#333;color:#fff">Copy CSS</button><button class="btn" style="background:#333;color:#fff">☾</button></div></aside>
+  <aside class="hide-sm" style="width:300px;flex-shrink:0;padding:14px;display:flex"><div style="flex:1;border:2px dashed #a1a1aa;border-radius:10px;display:flex;align-items:center;justify-content:center;text-align:center;color:#71717a;font-size:12px;padding:12px;background:var(--background)">Existing Themer UI<br>(packages/themer, unchanged)<br>position placeholder only</div></aside>
   <main class="col" style="flex:1;padding:16px;gap:10px;min-width:0">
     <div class="row" style="justify-content:space-between;color:#333"><div class="row"><span class="chip" style="background:#fff;color:#000">Screen: ${screen} ▾</span><span class="chip" style="background:#fff;color:#000">Tenant: ${screen=="Home"?"Showroom hub":screen=="Product"?"Nightjar shop":"Lumen app"}</span></div>
       <div class="row hide-sm">${["📱","💻","🖥"].map((d,i)=>`<span class="chip" style="background:${i==1?'#000':'#fff'};color:${i==1?'#fff':'#000'}">${d}</span>`).join("")}</div></div>

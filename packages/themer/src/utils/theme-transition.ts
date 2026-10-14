@@ -1,4 +1,4 @@
-// Adapted from tweakcn (Apache-2.0, github.com/jnsahaj/tweakcn @ a3b47b37); modified by Banter.
+// Adapted from tweakcn (Apache-2.0, github.com/jnsahaj/tweakcn @ a3b47b37); modified for themercn.
 //
 // The circular "reveal" when the editor flips light/dark (tweakcn
 // components/theme-provider.tsx handleThemeToggle + app/globals.css). The

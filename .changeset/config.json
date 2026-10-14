@@ -1,0 +1,18 @@
+{
+  "$schema": "https://unpkg.com/@changesets/config@4.0.1/schema.json",
+  "changelog": [
+    "@changesets/changelog-github",
+    { "repo": "Jbmanllr/themerCN" }
+  ],
+  "commit": false,
+  "access": "public",
+  "baseBranch": "main",
+  "ignore": [
+    "web",
+    "vite-app",
+    "@workspace/ui",
+    "@workspace/eslint-config",
+    "@workspace/typescript-config"
+  ],
+  "privatePackages": { "version": false, "tag": false }
+}

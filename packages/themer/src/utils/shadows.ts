@@ -1,4 +1,4 @@
-// Adapted from tweakcn (Apache-2.0, github.com/jnsahaj/tweakcn @ a3b47b37); modified by Banter.
+// Adapted from tweakcn (Apache-2.0, github.com/jnsahaj/tweakcn @ a3b47b37); modified for themercn.
 //
 // Shadow scale from the six shadow parameters, with tweakcn's getShadowMap
 // semantics (utils/shadows.ts): every size uses the user's offset, blur and

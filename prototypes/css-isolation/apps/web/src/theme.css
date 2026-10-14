@@ -1,0 +1,58 @@
+/* PROTOTYPE. The Theme being edited: shadcn tokens plus the Themer's extra
+ * Theme-owned tokens. Loaded in every frame, so the clean reference frames
+ * see the same Theme as the main page. Warm palette so "follows the Theme"
+ * is visible at a glance. */
+:root {
+  --background: oklch(0.985 0.008 75);
+  --foreground: oklch(0.22 0.03 50);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.22 0.03 50);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.22 0.03 50);
+  --primary: oklch(0.58 0.16 45);
+  --primary-foreground: oklch(0.99 0.01 75);
+  --secondary: oklch(0.93 0.03 75);
+  --secondary-foreground: oklch(0.3 0.05 50);
+  --muted: oklch(0.95 0.015 75);
+  --muted-foreground: oklch(0.5 0.03 50);
+  --accent: oklch(0.93 0.04 75);
+  --accent-foreground: oklch(0.3 0.05 50);
+  --destructive: oklch(0.577 0.245 27.325);
+  --border: oklch(0.88 0.02 70);
+  --input: oklch(0.88 0.02 70);
+  --ring: oklch(0.58 0.16 45);
+  --radius: 0.75rem;
+  --spacing: 0.25rem;
+  --tracking-normal: 0em;
+  --font-sans: "Inter Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: Georgia, serif;
+  --font-mono: ui-monospace, monospace;
+  --font-heading: "Inter Variable", ui-sans-serif, system-ui, sans-serif;
+  --shadow-xs: 0 1px 2px 0 oklch(0.2 0.03 50 / 0.06);
+  --shadow-sm: 0 1px 3px 0 oklch(0.2 0.03 50 / 0.1), 0 1px 2px -1px oklch(0.2 0.03 50 / 0.1);
+  --shadow: var(--shadow-sm);
+  --shadow-md: 0 4px 6px -1px oklch(0.2 0.03 50 / 0.1), 0 2px 4px -2px oklch(0.2 0.03 50 / 0.1);
+  --shadow-lg: 0 10px 15px -3px oklch(0.2 0.03 50 / 0.1), 0 4px 6px -4px oklch(0.2 0.03 50 / 0.1);
+  --shadow-xl: 0 20px 25px -5px oklch(0.2 0.03 50 / 0.1), 0 8px 10px -6px oklch(0.2 0.03 50 / 0.1);
+  --shadow-2xl: 0 25px 50px -12px oklch(0.2 0.03 50 / 0.25);
+}
+.dark {
+  --background: oklch(0.18 0.02 50);
+  --foreground: oklch(0.96 0.01 75);
+  --card: oklch(0.23 0.025 50);
+  --card-foreground: oklch(0.96 0.01 75);
+  --popover: oklch(0.23 0.025 50);
+  --popover-foreground: oklch(0.96 0.01 75);
+  --primary: oklch(0.72 0.15 55);
+  --primary-foreground: oklch(0.2 0.03 50);
+  --secondary: oklch(0.3 0.03 50);
+  --secondary-foreground: oklch(0.96 0.01 75);
+  --muted: oklch(0.28 0.02 50);
+  --muted-foreground: oklch(0.72 0.02 70);
+  --accent: oklch(0.3 0.03 50);
+  --accent-foreground: oklch(0.96 0.01 75);
+  --destructive: oklch(0.704 0.191 22.216);
+  --border: oklch(1 0 0 / 12%);
+  --input: oklch(1 0 0 / 16%);
+  --ring: oklch(0.72 0.15 55);
+}

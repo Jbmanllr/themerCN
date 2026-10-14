@@ -1,0 +1,80 @@
+/* PROTOTYPE. A deliberately hostile Host app: its own Tailwind v4 build with
+ * a private type scale that differs from Tailwind's defaults, plus legacy
+ * unlayered CSS of the kind real apps carry. */
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+@import "@fontsource-variable/inter";
+
+@custom-variant dark (&:is(.dark *));
+@source "./";
+@source "../../../packages/ui/src";
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+/* The Host's private scale: not Theme tokens, so the Themer must not see them. */
+@theme {
+  --text-xs: 0.8rem;
+  --text-sm: 1.05rem;
+  --text-base: 1.15rem;
+  --font-weight-medium: 650;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* Legacy, unlayered: beats every layered rule, Host's or Themer's. */
+button {
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+h2 {
+  color: crimson;
+  font-family: Georgia, serif;
+}
+input {
+  font-size: 18px;
+}
+label {
+  font-style: italic;
+}
+[role="menu"],
+[role="listbox"],
+[role="dialog"] {
+  outline: 3px dashed crimson;
+}
+.border {
+  border-color: crimson;
+}

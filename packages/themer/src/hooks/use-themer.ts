@@ -7,11 +7,12 @@
 // theme edit: components that need one value should select it from the store
 // directly (see selectors/editor-selectors.ts) instead of calling this.
 //
-// Light/dark: next-themes owns the root class and ThemerProvider keeps
-// themeState.currentMode in sync with it; this hook only issues the change.
+// Light/dark: useColorMode (components/color-mode.tsx) owns the mode and
+// ThemerProvider keeps themeState.currentMode in sync with it; this hook only
+// issues the change.
 
 import { useCallback } from "react";
-import { useTheme } from "next-themes";
+import { useColorMode } from "../components/color-mode";
 import { useShallow } from "zustand/react/shallow";
 import { getExtraColorKeys } from "../config/extra-colors";
 import { useEditorStore } from "../stores/editor-store";
@@ -64,7 +65,7 @@ function toOrigin(
  * handlers only (the transition commits the change with flushSync).
  */
 export function useToggleMode(): (origin?: ToggleModeOrigin) => void {
-  const { setTheme: setNextTheme } = useTheme();
+  const { setMode } = useColorMode();
   const setCurrentMode = useEditorStore((state) => state.setCurrentMode);
 
   return useCallback(
@@ -74,11 +75,11 @@ export function useToggleMode(): (origin?: ToggleModeOrigin) => void {
           ? "dark"
           : "light";
       runThemeTransition(() => {
-        setNextTheme(newMode);
+        setMode(newMode);
         setCurrentMode(newMode);
       }, toOrigin(origin));
     },
-    [setNextTheme, setCurrentMode],
+    [setMode, setCurrentMode],
   );
 }
 

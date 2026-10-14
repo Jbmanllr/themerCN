@@ -1,8 +1,8 @@
 // Barrel for the editor's components, re-exported by the package root
-// (src/index.ts). Not exported here: ThemerDevShell and ThemerOverlayOnly
-// (reachable by file path, `@villa/themer/components/<file>`; docs/API.md),
-// LenisPause, and the legacy ./themer-header.tsx, which nothing imports (the
-// ThemerHeader below is ./overlay/themer-header.tsx).
+// Internal: the package root (src/index.ts) exports only <Themer> and its
+// types. Not listed here: Themer, ThemerOverlayOnly, LenisPause, and the
+// legacy ./themer-header.tsx, which nothing imports (the ThemerHeader below
+// is ./overlay/themer-header.tsx).
 
 // Main components
 export { ThemerProvider, useThemerContext } from "./themer-provider";

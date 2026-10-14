@@ -1,31 +1,28 @@
 "use client";
 
-// The editor's context root, mounted beside the host's tree by
-// ThemerDevShell (host/gate.tsx renders the shell after the page, never
-// around it): registers host presets and extra colours, applies the edited
-// theme to the host document, and binds the keyboard shortcuts.
+// The editor's context root, mounted by <Themer> (components/themer.tsx)
+// beside the host's tree: registers host presets and extra colours, applies
+// the edited theme to the host document, and binds the keyboard shortcuts.
 //
 // Contract:
 // - Registration (configurePresets, configureExtraColors) happens during
 //   render, before any child reads the registries; hosts pass `presets` and
 //   `extraColors` as module-level constants.
-// - The host's next-themes owns the root light/dark class: this provider
-//   mirrors its resolved mode into the editor store and writes CSS variables
-//   (and the shadow override sheet), not the class. It sets the class itself
-//   only while next-themes reports no resolved mode (`updateClass`).
+// - The light/dark mode comes from useColorMode (components/color-mode.tsx:
+//   the Host's controlled `colorMode`, or the `.dark` class on <html>). This
+//   provider mirrors it into the editor store and writes CSS variables (and
+//   the shadow override sheet), never the class.
 // - The CSS variables, the shadow override sheet and the theme's font links
 //   are removed when the theme override preference goes off or the provider
-//   unmounts; a class set through `updateClass` is not.
+//   unmounts.
 //
 // See: packages/themer/docs/API.md ("ThemerProvider").
 
 import * as React from "react";
-import { useTheme } from "next-themes";
 import { useShallow } from "zustand/react/shallow";
 import type {
   ThemerConfig,
   ThemerContextValue,
-  ThemeMode,
 } from "../types";
 import {
   useKeyboardShortcut,
@@ -39,20 +36,16 @@ import {
   applyThemeToElement,
   removeThemeFromElement,
 } from "../utils/apply-theme";
-import { DEFAULT_FONT_CATALOG_ENDPOINT } from "../utils/font-loader";
+import { useColorMode } from "./color-mode";
 import { DynamicFontLoader } from "./dynamic-font-loader";
 import { useSidebarSyncAlignment } from "../hooks/use-sidebar-sync-alignment";
 import { SHORTCUTS } from "../config/constants";
-import { configurePresets } from "../config/presets";
+import { configurePresets, getDefaultPresetId } from "../config/presets";
 import { configureExtraColors } from "../config/extra-colors";
 
 const subscribeToHydration = () => () => {};
 const getHydratedSnapshot = () => true;
 const getServerSnapshot = () => false;
-
-function toThemeMode(value: string | undefined): ThemeMode | null {
-  return value === "dark" || value === "light" ? value : null;
-}
 
 /**
  * Themer context
@@ -85,14 +78,15 @@ export function ThemerProvider({
   config: userConfig,
 }: ThemerProviderProps) {
   // Merge user config with defaults
+  // Unset (undefined) props keep the defaults. No zIndex default: the
+  // overlay and the trigger fall back to their own Z_INDEX layers
+  // (config/constants.ts); a host value applies to both. No font endpoint
+  // default: without one the picker searches the bundled list.
   const config = React.useMemo<ThemerConfig>(
     () => ({
-      showTrigger: true,
-      shortcut: SHORTCUTS.toggle,
-      // No zIndex default: the overlay and the trigger fall back to their own
-      // Z_INDEX layers (config/constants.ts); a host value applies to both.
-      fontCatalogEndpoint: DEFAULT_FONT_CATALOG_ENDPOINT,
       ...userConfig,
+      showTrigger: userConfig?.showTrigger ?? true,
+      shortcut: userConfig?.shortcut ?? SHORTCUTS.toggle,
     }),
     [userConfig],
   );
@@ -120,7 +114,7 @@ export function ThemerProvider({
   // was stored); this must run after configurePresets above, never at
   // module-load hydration, when host presets are not registered yet.
   React.useLayoutEffect(() => {
-    if (config.defaultPreset) adoptDefaultPreset(config.defaultPreset);
+    adoptDefaultPreset(getDefaultPresetId());
     refreshUntouchedPreset();
   }, [
     adoptDefaultPreset,
@@ -139,10 +133,9 @@ export function ThemerProvider({
   // isReady when client is ready (theme from localStorage is available immediately)
   const isReady = isClientReady;
 
-  const { resolvedTheme } = useTheme();
-  const nextThemeMode = toThemeMode(resolvedTheme);
+  const { mode } = useColorMode();
 
-  // Apply live editor variables, but let next-themes own the root light/dark class.
+  // Apply live editor variables; the root light/dark class is not ours.
   const themeState = useEditorStore((state) => state.themeState);
   const { undo, redo, canUndo, canRedo, setCurrentMode } = useEditorStore(
     useShallow((state) => ({
@@ -157,18 +150,13 @@ export function ThemerProvider({
     (state) => state.themeOverrideEnabled,
   );
   const appliedThemeState = React.useMemo(
-    () =>
-      nextThemeMode
-        ? { ...themeState, currentMode: nextThemeMode }
-        : themeState,
-    [nextThemeMode, themeState],
+    () => ({ ...themeState, currentMode: mode }),
+    [mode, themeState],
   );
 
   React.useEffect(() => {
-    if (nextThemeMode && themeState.currentMode !== nextThemeMode) {
-      setCurrentMode(nextThemeMode);
-    }
-  }, [nextThemeMode, setCurrentMode, themeState.currentMode]);
+    if (themeState.currentMode !== mode) setCurrentMode(mode);
+  }, [mode, setCurrentMode, themeState.currentMode]);
 
   // Re-applying on every change is enough to drop properties the new theme no
   // longer sets (applyThemeToElement diffs against its previous call), so the
@@ -178,9 +166,9 @@ export function ThemerProvider({
   React.useEffect(() => {
     if (!themeOverrideEnabled) return;
     applyThemeToElement(appliedThemeState, document.documentElement, {
-      updateClass: nextThemeMode === null,
+      updateClass: false,
     });
-  }, [appliedThemeState, nextThemeMode, themeOverrideEnabled]);
+  }, [appliedThemeState, themeOverrideEnabled]);
 
   React.useEffect(() => {
     if (!themeOverrideEnabled) return undefined;

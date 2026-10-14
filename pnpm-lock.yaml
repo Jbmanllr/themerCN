@@ -196,9 +196,6 @@ importers:
       next:
         specifier: 16.4.0
         version: 16.4.0(@babel/core@8.0.6)(@types/node@24.19.2)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
-      next-themes:
-        specifier: 0.4.6
-        version: 0.4.6(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
       react:
         specifier: ^19.2.0
         version: 19.3.0

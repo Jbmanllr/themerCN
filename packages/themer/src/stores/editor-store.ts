@@ -16,7 +16,7 @@
 //   The persisted shape is versioned: migrateEditorState upgrades older
 //   states. utils/theme-script.ts reads `state.themeState` (currentMode,
 //   styles) straight from this localStorage entry before hydration: keep
-//   that path and STORAGE_KEYS.editor when the shape or key changes.
+//   that path and getStorageKeys().editor when the shape or key changes.
 // - themeCheckpoint is the theme before the first HSL adjustment (the base
 //   the HSL controls recompute from). Applying, resetting, adopting or
 //   refreshing a preset, importing CSS, undo and redo move it;
@@ -56,7 +56,7 @@ import {
 import {
   MAX_HISTORY_COUNT,
   HISTORY_DEBOUNCE_MS,
-  STORAGE_KEYS,
+  getStorageKeys,
 } from "../config/constants";
 import { isDeepEqual } from "../utils/deep-equal";
 
@@ -169,7 +169,7 @@ export function migrateEditorState(
 
 /**
  * Theme editor store: the edited theme with undo/redo, persisted to
- * localStorage under STORAGE_KEYS.editor ("villa-themer-editor-state").
+ * localStorage under `<storageNamespace>:editor` (getStorageKeys).
  */
 export const useEditorStore = create<EditorStore>()(
   persist(
@@ -349,7 +349,15 @@ export const useEditorStore = create<EditorStore>()(
         const { restoredFromStorage, history, themeState } = get();
         if (restoredFromStorage || history.length > 0) return;
         if (themeState.preset !== defaultThemeState.preset) return;
-        if (!hasPreset(presetId) || presetId === themeState.preset) return;
+        if (!hasPreset(presetId)) return;
+        // The same id is adopted again when a Host Preset replaced it (a Host
+        // "default"): the fresh state still holds the built-in styles.
+        if (
+          presetId === themeState.preset &&
+          isDeepEqual(themeState.styles, resolvePresetStyles(presetId))
+        ) {
+          return;
+        }
 
         const newThemeState = presetThemeState(themeState, presetId);
         set({
@@ -446,7 +454,9 @@ export const useEditorStore = create<EditorStore>()(
       canRedo: () => get().future.length > 0,
     }),
     {
-      name: STORAGE_KEYS.editor,
+      name: getStorageKeys().editor,
+      // <Themer> names the namespace and hydrates (stores/hydrate.ts).
+      skipHydration: true,
       version: EDITOR_STATE_VERSION,
       migrate: migrateEditorState,
       // Called with `undefined` when nothing is stored, and with an empty

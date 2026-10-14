@@ -41,8 +41,6 @@ export const GOOGLE_FONTS_API_URL =
   "https://www.googleapis.com/webfonts/v1/webfonts";
 export const GOOGLE_FONTS_CSS_URL = "https://fonts.googleapis.com/css2";
 
-export const DEFAULT_FONT_CATALOG_ENDPOINT = "/dev/themer/google-fonts";
-
 export const FONT_CATEGORIES: Record<
   FontCategory,
   { label: string; fallback: string }

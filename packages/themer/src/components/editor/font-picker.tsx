@@ -3,8 +3,8 @@
 // The Google Fonts picker and the four theme font slots (sans, heading,
 // serif, mono). A popover with a debounced search, a category filter and the
 // host's paged catalogue (useFontSearch). The endpoint is the picker's
-// `fontCatalogEndpoint` prop, else ThemerConfig.fontCatalogEndpoint, else
-// DEFAULT_FONT_CATALOG_ENDPOINT.
+// `fontCatalogEndpoint` prop, else ThemerConfig.fontCatalogEndpoint, else the
+// bundled list searched in the browser (useFontSearch).
 //
 // Contract:
 // - A pick loads the family first (acquireGoogleFont + waitForFont, up to 3 s)
@@ -58,7 +58,6 @@ import { useEditorStore } from "../../stores/editor-store";
 import { useOptionalThemerContext } from "../themer-provider";
 import { useScrollBoundary } from "./scroll-boundary";
 import {
-  DEFAULT_FONT_CATALOG_ENDPOINT,
   acquireFontPreview,
   acquireGoogleFont,
   buildFontFamily,
@@ -203,7 +202,7 @@ function readRootVariable(name: string): string {
 function FontValueLabel({
   value,
   endpoint,
-}: Readonly<{ value: string; endpoint: string }>) {
+}: Readonly<{ value: string; endpoint: string | undefined }>) {
   const description = React.useMemo(
     () => describeFontValue(value, readRootVariable),
     [value],
@@ -400,9 +399,7 @@ export function FontPicker({
   const themerContext = useOptionalThemerContext();
   const defaultCategory = toFontCategory(category);
   const endpoint =
-    fontCatalogEndpoint ??
-    themerContext?.config.fontCatalogEndpoint ??
-    DEFAULT_FONT_CATALOG_ENDPOINT;
+    fontCatalogEndpoint ?? themerContext?.config.fontCatalogEndpoint;
 
   const [open, setOpen] = React.useState(false);
   const labelId = React.useId();

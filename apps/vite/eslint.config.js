@@ -1,4 +1,7 @@
 import { config } from "@workspace/eslint-config/react-internal"
 
 /** @type {import("eslint").Linter.Config} */
-export default config
+export default [
+  ...config,
+  { ignores: ["dist-e2e/**", "playwright-report/**", "test-results/**"] },
+]

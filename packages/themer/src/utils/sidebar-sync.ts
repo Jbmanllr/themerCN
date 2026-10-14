@@ -1,4 +1,4 @@
-// Adapted from tweakcn (Apache-2.0, github.com/jnsahaj/tweakcn @ a3b47b37); modified by Banter.
+// Adapted from tweakcn (Apache-2.0, github.com/jnsahaj/tweakcn @ a3b47b37); modified for themercn.
 //
 // Sidebar Sync: while the preference is on, every sidebar colour equals its
 // base twin (sidebar -> background, sidebar-primary -> primary, ...) in BOTH

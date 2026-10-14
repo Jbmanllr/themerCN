@@ -2,6 +2,7 @@
   "name": "themercn-workspace",
   "version": "0.0.1",
   "private": true,
+  "license": "Apache-2.0",
   "scripts": {
     "build": "turbo build",
     "check:package": "turbo check:package",
@@ -13,6 +14,8 @@
     "e2e": "turbo e2e"
   },
   "devDependencies": {
+    "@changesets/changelog-github": "^1.0.1",
+    "@changesets/cli": "3.0.3",
     "@workspace/eslint-config": "workspace:*",
     "@workspace/typescript-config": "workspace:*",
     "prettier": "^3.9.9",

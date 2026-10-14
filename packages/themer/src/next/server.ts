@@ -12,6 +12,7 @@
 // - GET ?q=&category=&limit=&offset= returns
 //   { fonts, total, offset, limit, hasMore }.
 
+/** Options of `createFontCatalogRoute`. */
 export interface FontCatalogRouteOptions {
   /** Whether the route serves the catalog; `false` answers 404. */
   enabled: boolean;

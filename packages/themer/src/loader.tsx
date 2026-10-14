@@ -23,6 +23,7 @@ import type { ThemerProps } from "./types";
 
 /** What `load` resolves to: the `themercn` module, or anything with its `Themer`. */
 export interface ThemerModule {
+  /** The `<Themer>` component the loader renders. */
   Themer: ComponentType<ThemerProps>;
 }
 

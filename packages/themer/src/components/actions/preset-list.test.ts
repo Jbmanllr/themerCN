@@ -15,7 +15,7 @@ const labels: Record<string, string> = {
   "ocean-breeze": "Ocean Breeze",
   "themer-ocean-breeze": "Ocean Breeze (Themer)",
   nature: "Nature",
-  banter: "Banter",
+  brand: "Brand",
 };
 const ids = Object.keys(labels);
 const getLabel = (id: string) => labels[id] ?? id;
@@ -44,11 +44,11 @@ describe("preset list filtering and cycling", () => {
 
   it("enters the filtered list at its ends when the current preset is filtered out", () => {
     const filtered = filterPresetIds(ids, "ocean", getLabel);
-    expect(cyclePresetId(filtered, "banter", "next")).toBe("ocean-breeze");
-    expect(cyclePresetId(filtered, "banter", "prev")).toBe(
+    expect(cyclePresetId(filtered, "brand", "next")).toBe("ocean-breeze");
+    expect(cyclePresetId(filtered, "brand", "prev")).toBe(
       "themer-ocean-breeze",
     );
-    expect(cyclePresetId([], "banter", "next")).toBeUndefined();
+    expect(cyclePresetId([], "brand", "next")).toBeUndefined();
   });
 
   it("shuffles to another preset of the filtered list", () => {
@@ -58,8 +58,8 @@ describe("preset list filtering and cycling", () => {
         "themer-ocean-breeze",
       );
     }
-    expect(pickRandomPresetId(["banter"], "banter", () => 0.7)).toBe("banter");
-    expect(pickRandomPresetId([], "banter")).toBeUndefined();
+    expect(pickRandomPresetId(["brand"], "brand", () => 0.7)).toBe("brand");
+    expect(pickRandomPresetId([], "brand")).toBeUndefined();
   });
 });
 
@@ -74,7 +74,7 @@ describe("preset badges and markers", () => {
   });
 
   it("adds * to the label only while edits are unsaved", () => {
-    expect(formatPresetTriggerLabel("Banter", true)).toBe("Banter*");
-    expect(formatPresetTriggerLabel("Banter", false)).toBe("Banter");
+    expect(formatPresetTriggerLabel("Brand", true)).toBe("Brand*");
+    expect(formatPresetTriggerLabel("Brand", false)).toBe("Brand");
   });
 });

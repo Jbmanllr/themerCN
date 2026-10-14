@@ -1,301 +1,342 @@
-# Themer dans Villa du Golfe
+# themercn
 
-Port local du package `packages/themer` de Banterapp, à partir de son intégration réelle dans `apps/cms`. Les notices et licences originales sont conservées. Les imports ont été adaptés à `@villa/ui`, aux composants Luma et aux versions du monorepo. Les clés de stockage sont propres à Villa du Golfe. Le breakpoint de l’éditeur est conservé à 1280 px sans importer les tokens de marque de Banterapp.
+A live editor for a shadcn Theme's design tokens. Mount one `<Themer>` next to
+your app, open it with the floating button or `Ctrl+Shift+E`, and edit
+colours, fonts, radius, spacing, letter spacing and shadows on the page you are
+looking at. When you like the result, copy the CSS from the Code dialog into
+your project.
 
-L’application hôte : `apps/web/src/components/dev-tools/themer`. Le preset choisi est le **Default intégré**, sans preset de marque. `next.config.mjs` exclut le montage client lors d’un build de production. Les styles de l’éditeur ne sont importés que par son shell différé de développement. L’URL de catalogue des polices est `/dev/themer/fonts`, réservée au développement.
+- **React only, self-contained.** The Themer brings its own precompiled CSS,
+  scoped to its own root, and its own providers. Your app compiles nothing of
+  the Themer's.
+- **Out of your bundle when off.** A loader keeps every byte of the Themer out
+  of builds where you turn it off.
+- **Next Adapter.** `themercn/next` paints a saved Theme before React runs;
+  `themercn/next/server` serves the font catalog.
 
-Les tests historiques du package restent présents comme référence du port ; les vérifications exécutables du projet sont `pnpm --filter @villa/themer typecheck` et les parcours publics dans `apps/web/tests/themer.spec.ts`.
+Adapted from [tweakcn](https://github.com/jnsahaj/tweakcn) (Apache-2.0); see
+[Credits and licences](#credits-and-licences).
 
----
+## Requirements
 
-## Documentation originale de Banterapp
+- React and React DOM `^19.2.0`. Next `>=16` only for the Next Adapter.
+- A shadcn setup on Tailwind v4: the Theme's tokens are CSS variables on
+  `:root` and `.dark` (`--background`, `--primary`, `--radius`, …), mapped to
+  utilities with `@theme inline { --color-primary: var(--primary); … }`. The
+  Themer writes those variables on `<html>`, so whatever reads them follows
+  the edit. Font edits reach the page through `--font-sans`, `--font-heading`,
+  `--font-serif` and `--font-mono`, so map the font utilities you use to them.
+- A browser with [`@scope`](#styles-and-browser-support) (Chrome 118, Safari 17.4,
+  Firefox 146).
+- Light/dark is the `.dark` class on `<html>`.
 
-# @banter/themer
+## Install
 
-Local-development theme editor for the shadcn CSS variables that
-`@banter/ui-tokens` generates. It edits the live page in `apps/web` and the CMS
-marketing site; **no deployment ever compiles it**. Adapted from
-[tweakcn](https://github.com/jnsahaj/tweakcn) (Apache-2.0; see
-[Credits and licences](#credits-and-licences)).
-
-## Run it
-
-```bash
-BANTER_WEB_THEMER=1 BANTER_CMS_THEMER=1 pnpm dev:web   # web and CMS, editor in both
-BANTER_WEB_THEMER=1 pnpm --filter @banter/web dev   # web only, :3000
-BANTER_CMS_THEMER=1 pnpm --filter @banter/cms dev   # CMS marketing site only, :3002
+```sh
+pnpm add themercn
 ```
 
-The `pnpm dev*` commands run `turbo run dev` in strict env mode, so these switches reach the
-apps only because `turbo.json` lists them in `dev.passThroughEnv`.
+## Next quick start
 
-Open it with the floating button or `Ctrl+Shift+E` (`Cmd+Shift+E` on Mac). A
-flag change needs a dev server restart: `next.config.ts` reads it at load.
+Three pieces, all from the [Playground](https://github.com/Jbmanllr/themerCN/tree/main/apps/web), the Next app in this
+repository that runs them.
 
-**The editor never writes the token source.** To keep a theme, copy the exported
-values into `packages/ui-tokens/tokens` and run `pnpm tokens:build`;
-`@banter/ui-tokens` owns the shipped values. The editor's own state (the edited
-theme and its preferences) persists in this browser's `localStorage` only
-(`themer-editor-state`, `themer-preferences`; undo history is not kept). There
-is no save-theme action in this port: `ThemerProvider` creates the configured
-storage adapter, but no editor control reads or writes themes through it.
+**1. A client component that loads the Themer.** Create the loader once, at
+module level. Pass `null` instead of the import to keep the Themer out of a
+build (for example
+`createThemerLoader(process.env.NEXT_PUBLIC_THEMER === "1" ? () => import("themercn") : null)`).
+The Playground ships it everywhere, uses `next-themes` for light/dark (so it
+passes `colorMode` and `onColorModeChange`), and adds its own brand Preset:
 
-## Host integration contract
+<!-- recipe: apps/web/components/themer/playground-themer.tsx -->
+```tsx
+import { useTheme } from "next-themes"
+import { createThemerLoader } from "themercn/loader"
 
-The wiring lives once in this package, under [`src/host/`](src/host/)
-(exported as `@banter/themer/host/*`); each host (`apps/web`, `apps/cms`)
-keeps only one-line bindings under `src/components/dev-tools/themer/` (the
-CMS's route is in `app/(frontend)/dev/themer/`). Nothing in `src/host/` needs
-Next.js: the gate is plain React and the font handler uses web `Request`/
-`Response`. Only the build alias and the route file's location are Next's.
+import { NIGHTJAR_PRESET_ID, playgroundPresets } from "@/lib/brand/nightjar"
 
-| Piece       | Shared, in `src/host/`                                                                                                                                                                                                                                                                                                                                                                                                                                                                            | Host binding (web paths)                                                                                                                                                                                                                                |
-| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Switch      | [flag.ts](src/host/flag.ts): on only under `next dev` with the host's flag `1`                                                                                                                                                                                                                                                                                                                                                                                                                    | [themer-gate.ts](../../apps/web/src/components/dev-tools/themer/themer-gate.ts) names the flag (`BANTER_WEB_THEMER`, `BANTER_CMS_THEMER`).                                                                                                              |
-| Build alias | [passthrough.tsx](src/host/passthrough.tsx): renders children and no head script, imports nothing else; exports every name a host's mount module does (pinned by `tests/config/themer-wiring.test.mjs`)                                                                                                                                                                                                                                                                                           | [next.config.ts](../../apps/web/next.config.ts): `turbopack.resolveAlias` points the mount at `@banter/themer/host/passthrough` unless the switch is on, so other builds never compile the editor.                                                      |
-| Mount       | [gate.tsx](src/host/gate.tsx): `createDevThemerGate(loadShell)` loads the shell after hydration, skips it inside the Live tab's frame, and renders it after the page as a sibling, never around it: wrapping the page once the shell arrived remounted it and dropped what the visitor had done. Never `lazy()` + `<Suspense>`: SSR streamed the page twice and left the visible copy dead. [head-script.tsx](src/host/head-script.tsx): the saved edit, painted from `<head>` before React runs. | [dev-themer-gate.tsx](../../apps/web/src/components/dev-tools/themer/dev-themer-gate.tsx) passes the host's shell loader and re-exports the head script as `DevThemerHeadScript`, which the root layout renders in `<head>`.                            |
-| Shell       | [`ThemerDevShell`](src/components/themer-dev-shell.tsx): the editor's providers, trigger and overlay; takes no children                                                                                                                                                                                                                                                                                                                                                                           | [dev-themer-shell.tsx](../../apps/web/src/components/dev-tools/themer/dev-themer-shell.tsx) passes the host's font route and imports the host's `themer.css`.                                                                                           |
-| Styles      | [themer.css](src/host/themer.css): the `themer` layer, the scanned sources (this package and `@banter/ui`), the popup z-index lift                                                                                                                                                                                                                                                                                                                                                                | [themer.css](../../apps/web/src/components/dev-tools/themer/themer.css): `@reference` to the host's own `globals.css`, then `@import "@banter/themer/host/themer.css"`.                                                                                 |
-| Font route  | [font-catalog-route.ts](src/host/font-catalog-route.ts): `404` before loading anything while off; otherwise [`fontCatalogResponse`](src/api/font-catalog.ts) with the server-only `GOOGLE_FONTS_API_KEY` (optional)                                                                                                                                                                                                                                                                               | [route.ts](../../apps/web/src/app/dev/themer/google-fonts/route.ts): `export const GET = fontCatalogRoute(() => isThemerEnabled())`.                                                                                                                    |
-| Presets     | `ThemerConfig.presets` / `defaultPreset` through `ThemerDevShell` props                                                                                                                                                                                                                                                                                                                                                                                                                           | Both hosts pass `[banterThemerPreset]` from `@banter/ui-tokens/themer-preset` and `defaultPreset={banterThemerPreset.id}` in `dev-themer-shell.tsx`, as module-level constants.                                                                         |
-| Colours     | `ThemerConfig.extraColors` through the `ThemerDevShell` `extraColors` prop                                                                                                                                                                                                                                                                                                                                                                                                                        | Both hosts pass `banterThemerExtraColors` from `@banter/ui-tokens/themer-preset` (groups: brand accents, status, utility, and product, which lists only `evidence`, `evidence-foreground` and `interest-*`); `banterThemerPreset` carries their values. |
-| Preview     | `ThemerConfig.previewTabs` / `previewWrapper` through `ThemerDevShell` props                                                                                                                                                                                                                                                                                                                                                                                                                      | Optional. A host adds tabs with its own pages and a wrapper for its providers (see [Host extension points](#host-extension-points)).                                                                                                                    |
+// Unconditional: the Playground always ships the Themer. A Host app that
+// wants it off in some builds passes `null` here instead.
+const ThemerLoader = createThemerLoader(() => import("themercn"))
 
-CSS rules, pinned by
-[themer-wiring.test.mjs](../../tests/config/themer-wiring.test.mjs):
+/** The route `createFontCatalogRoute` answers on. */
+export const FONT_CATALOG_ENDPOINT = "/api/themer/fonts"
 
-- Never `@source` this package from a host `globals.css`: that shipped ~34 KB
-  of editor CSS to every visitor.
-- The shared `themer.css` compiles the editor's utilities inside
-  `@layer themer`, and each host's `globals.css` declares
-  `@layer theme, base, components, themer, utilities;` before Tailwind. In the
-  same layer, the later editor sheet overrode the app's `dark:` and `md:`
-  variants. It scans all of `@banter/ui` itself, because a host may scan only
-  the components it uses (the CMS does).
+export function PlaygroundThemer() {
+  const { resolvedTheme, setTheme } = useTheme()
 
-Other invariants:
+  return (
+    <ThemerLoader
+      presets={playgroundPresets}
+      defaultPreset={NIGHTJAR_PRESET_ID}
+      colorMode={resolvedTheme === "dark" ? "dark" : "light"}
+      onColorModeChange={setTheme}
+      fontCatalogEndpoint={FONT_CATALOG_ENDPOINT}
+    />
+  )
+}
+```
 
-- The editor renders stock `@banter/ui` components only (never a host's
-  brand layer, ADR-0080), so its own chrome and its built-in preview pages
-  show stock shadcn and follow every token, radius included. The Live tab
-  shows the host page with the host's own components. Its popups stack above
-  the overlay through `host/themer.css`'s portal lift, not through
-  positioner props.
-- It switches to its mobile drawer below `breakpoints.wide` (1280px)
-  ([use-is-mobile.ts](src/hooks/use-is-mobile.ts)), so its `@banter/ui`
-  Sidebar (which becomes a Sheet below shadcn's 768px) only renders where it
-  stays a sidebar.
-- The host's `next-themes` owns the light/dark class; the editor only
-  overrides variables.
-- Every Base UI popup (menus, tooltips, preview dialogs) must sit above the
-  overlay: the shared `themer.css` lifts `body > [data-base-ui-portal]` and its
-  child to z-index 10060 while `[data-themer-overlay]` is mounted.
-- The Live tab frames the page the editor was opened from. Each host answers
-  `X-Frame-Options: SAMEORIGIN` / `frame-ancestors 'self'` only while its gate
-  is on, and `DENY` / `'none'` otherwise: the `allowSameOriginFraming` option
-  of [`apps/web/src/lib/security-headers.ts`](../../apps/web/src/lib/security-headers.ts)
-  and [`apps/cms/src/security/headers.ts`](../../apps/cms/src/security/headers.ts),
-  which each host's `next.config.ts` sets from `isThemerEnabled()`. The same
-  option adds Google Fonts to the CSP, so the editor can load the fonts a theme
-  picks. The mount skips the editor inside a frame, so the preview never shows
-  a second editor.
+The file starts with `"use client"`. Without a theme library, render
+`<ThemerLoader />` with no props: the Themer toggles `.dark` on `<html>`
+itself.
 
-## Host extension points
+**2. The root layout.** `<ThemerHeadScript>` (from `themercn/next`) goes in
+`<head>`; the loader goes beside the page, never around it:
 
-All are fields of `ThemerConfig` ([API](docs/API.md#themerconfig)) and props of
-`ThemerDevShell`. Pass each as a **module-level constant**: a new identity per
-render re-registers presets or rebuilds the tab list.
+<!-- recipe: apps/web/app/layout.tsx -->
+```tsx
+<head>
+  {/* Restores the saved Theme before first paint (README, Next quick
+      start). Without a saved Theme, app/nightjar.css is the first paint. */}
+  <ThemerHeadScript />
+</head>
+<body>
+  <ThemeProvider>
+    {children}
+    {/* A sibling of the page, never around it. */}
+    <PlaygroundThemer />
+  </ThemeProvider>
+</body>
+```
 
-- `presets: readonly ThemePreset[]`: registered after the built-in presets; an
-  id clash replaces the built-in one. The picker does not list them last:
-  `getPresetIds` puts `default` first, then every preset alphabetically by
-  label, so a host preset sits among the others. Only keys the preset changes
-  are needed:
-  light fills from the defaults, dark from the preset's light, then its own
-  dark (`resolvePresetStyles`). Banter's own brand is `banterThemerPreset`
-  (`@banter/ui-tokens/themer-preset`, built from the generated tokens).
-- `defaultPreset: string`: the preset a fresh store (nothing in localStorage,
-  nothing edited) starts on, applied without an undo entry
-  (`adoptDefaultPreset`). Unknown id falls back to `"default"`. A restored
-  theme that is still exactly its preset as last applied (`presetBaseline`)
-  follows the preset's current source (`refreshUntouchedPreset`), so host
-  token changes reach the page; an edited, imported or undone theme is kept.
-- `extraColors: readonly ThemerExtraColorGroup[]`: `{ title, description?,
-colors: [{ key, label }] }`, colour tokens beyond the 32 shadcn colours.
-  Keys are CSS custom property names without `--` (kebab-case); a key that
-  names a built-in style key or starts with `shadow-` is ignored. The groups follow the built-in ones
-  in the Colors list (search, focus jumps and the inspector include them);
-  values live in the same per-mode `styles` objects, so apply, undo/redo,
-  "unsaved", HSL adjustments, CSS import and export treat them like built-in
-  colours. A theme that does not set an extra leaves it unset: the picker
-  shows the host's computed value, nothing is written for it, and editing it
-  writes it into the theme. Presets may carry extra values (Banter's does).
-- `previewTabs: readonly ThemerPreviewTab[]`: `{ id, label, component, scroll?,
-order? }`. Merged with the built-in tabs (Live, Cards, Dashboard, Mail,
-  Pricing, Color Palette, Typography); built-ins use order 0, 10, 20, ...; a
-  host tab without `order` goes last; a host id equal to a built-in id
-  replaces it. Use `React.lazy` components so host preview code loads only
-  when the tab opens. The tab reads the live theme from the CSS variables on
-  `<html>`.
-- `previewWrapper: ComponentType<{ children }>`: wraps every **host** tab so
-  it gets the host's providers (i18n, query client...), because the editor
-  renders in a portal outside the host tree.
+If you set `storageNamespace` on the Themer, pass the same value to
+`<ThemerHeadScript storageNamespace="…">`.
 
-## Features
+**3. The font catalog route** (optional; without it the font picker searches
+the bundled list of 130 families). `app/api/themer/fonts/route.ts`:
 
-Layout: a sidebar (Colors, Typography, Other; AI Generate only with
-`showTabAI`) beside a preview area. Below 1280 px a bottom drawer replaces the
-sidebar and the preview is not shown.
+<!-- recipe: apps/web/app/api/themer/fonts/route.ts -->
+```ts
+import { createFontCatalogRoute } from "themercn/next/server"
 
-- **Preset picker** (top of the sidebar): searchable list with swatches and a
-  count; a "New" badge on recent tweakcn presets; previous/next arrows and the
-  shuffle button (inside the popover, `data-testid="themer-preset-random"`)
-  act on the **filtered** list. `*` after the label = the theme differs from
-  its preset (`selectHasUnsavedChanges`). Local presets that shared an id
-  with a tweakcn preset are `themer-<id>`; persisted old ids are migrated.
-- **Colors**: grouped list with search (kept across panel switches, cleared
-  on close), per-token pickers, host extra-colour groups after the built-in
-  ones (`extraColors`), **Sidebar Sync** toggle (sidebar colours follow their
-  base twins in both modes; one undo entry on toggle, re-aligned after
-  preset/undo/import). With Sync on, the action bar's Reset counts the preset
-  as aligned (`selectCanResetToPreset`), so it stays disabled on a freshly
-  applied preset instead of offering to clear the undo history for nothing.
-- **Typography**: font pickers for sans, heading, serif, mono (Google Fonts
-  through the host's catalog route; no key needed) and letter spacing (shared
-  by light and dark, like the fonts). Each picker names the font the theme
-  sets: a Google family, a "Custom font" (a host `var()` font such as
-  Banter's DM Sans, or a family Google does not serve, such as Georgia), or
-  "System font (…)".
-- **Other**: HSL adjustments, radius, base spacing, shadows (colour, opacity,
-  blur, spread, offsets).
-- **Action bar**: contrast checker dialog, light/dark toggle (circular
-  View Transitions reveal when supported), undo/redo, reset to preset,
-  **Import CSS** dialog, Code dialog, theme override switch (off = the page
-  and Live frame show the production theme; the editor's variables and font
-  links are removed).
-- **Code dialog**: tabs `index.css`, `layout.tsx` and, for Tailwind v3 only,
-  `tailwind.config.ts`; colour format and Tailwind v3/v4 switches (v3 maps
-  oklch to hsl). An install command for tweakcn's registry
-  (`shadcn@latest add https://tweakcn.com/r/themes/<id>.json` behind `npx`,
-  `pnpm dlx`, `yarn dlx` or `bunx`, picked in the dialog) shows only for an
-  unedited tweakcn-catalogue preset: its registry serves nothing else.
-- **Import CSS**: paste a shadcn/tweakcn `index.css`, a Tailwind v3/v4 theme
-  or `packages/ui-tokens/web.css`; parsed by `parseThemeCss` on submit (nested
-  at-rules, comments, units; `.theme-inverse` and other selectors ignored;
-  unknown properties reported). One undo entry, new checkpoint, HSL reset.
-  A "replace" switch resets keys the CSS does not mention to the default
-  preset.
-- **Contrast checker**: rates the token pairs for the chosen mode (Light/Dark
-  toggle inside the dialog does not flip the page) including the sidebar
-  pairs (`sidebar`, `sidebar-primary`, `sidebar-accent` with their
-  foregrounds). AAA >= 7, AA >= 4.5, AA Large >= 3 (large text only; fails
-  normal text). Focus buttons jump to the colour control.
-- **Preview tabs**: Live (the host page in a same-origin iframe, starts on the
-  current page, device widths, refresh), Cards, Dashboard, Mail, Pricing,
-  Color Palette, Typography (menu), plus host tabs. Selection is persisted.
-- **Inspector**: hover a preview element to see its token classes; click pins
-  it and focuses the matching colour control. Disabled on mobile and for a
-  cross-origin Live frame.
-- **Fullscreen preview**: the preview covers the editor chrome (and the page
-  goes native fullscreen where allowed); a light/dark toggle shows in the
-  preview bar meanwhile. `Esc` exits.
-- **What reaches the page**: the editor writes `--font-sans`, `--font-heading`,
-  `--font-serif`, `--font-mono`, `--radius`, `--spacing`, `letter-spacing` and
-  `--tracking-*` on `<html>`; shadows rewire the `.shadow-*` utilities
-  (ARCHITECTURE: "Applying a theme"). For fonts to follow, the host CSS must
-  keep them runtime-overridable (see
-  [ui-tokens README](../ui-tokens/README.md#source-layers), the font bullet).
-- Not in this port: tweakcn's accounts, Save/Share and its AI theme
-  generation (a mock panel stays behind `showTabAI`).
+export const { GET } = createFontCatalogRoute({
+  enabled: true,
+  googleFontsApiKey: process.env.GOOGLE_FONTS_API_KEY,
+})
+```
 
-## Package facts
+Set `enabled` to the same switch as the loader: disabled, the route answers
+`404` without loading any catalog code. The key is optional and stays on the
+server; the package reads no environment variables.
 
-- **Source:** ported from the p0rtal monorepo's `@workspace/themer`, itself
-  adapted from tweakcn. Files whose logic Banter wrote or changed open with a
-  rationale header. A shadcn-example demo page under
-  `src/components/preview/examples/` has one only where Banter changed its
-  behavior or it carries a contract (for example `cards/payments.tsx`,
-  `mail/components/mail.tsx`); the unchanged ports and the preset data
-  (`tweakcn-presets.ts`) have none. Files derived from tweakcn add the line
-  `Adapted from tweakcn (Apache-2.0, ...); modified for themercn.` Entry points:
-  [themer-provider.tsx](src/components/themer-provider.tsx),
-  [themer-root.tsx](src/components/themer-root.tsx),
-  [editor-store.ts](src/stores/editor-store.ts).
-- **Presets:** `themePresets` in [presets.ts](src/config/presets.ts), in
-  registration order: `default`, tweakcn's catalogue
-  ([tweakcn-presets.ts](src/config/tweakcn-presets.ts)), the local presets
-  (`custom-1`, `rose-gold`, `midnight-blue` and the seven `themer-*`), then
-  host presets. The picker's own order is `default`, then alphabetical.
-- **Storage config:** Banter passes `storage: 'indexeddb'`. The type also
-  accepts `'file'`, `'payload'` and `'auto'` (tries Payload, then
-  `public/themes` files, then IndexedDB, then memory). Saved-theme storage has
-  no UI in this port; editor state itself persists in localStorage.
-- **AI generation:** [ai-generate.ts](src/api/ai-generate.ts) is a mock server
-  action. Its Generate panel shows only with `showTabAI` (default `false`;
-  `enableAI` is read by nothing). Nothing in Banter sets it.
-- **Shared pieces:** `ActionButton` and `ModeToggle`
-  (`src/components/ui/`), `useCopyFeedback` and `useSidebarSyncAlignment`
-  (`src/hooks/`), `SectionContext` (`components/editor/section-context.ts`),
-  `ImageAttachments` (`components/ai/`) and `generateThemeScript`
-  (`utils/theme-script.ts`) are internal building blocks; their contracts are
-  in [API: Building blocks](docs/API.md#building-blocks). Hooks, contexts and
-  script text sit in files of their own so component files export only
-  components (Fast Refresh keeps state).
-- **Tests:** vitest, package-local (`pnpm --filter @banter/themer test`):
-  stores (undo batching, presets, import, migrations), `apply-theme`,
-  `parse-css`, `theme-generator`, shadows, font loader, contrast, sidebar
-  sync, colour groups, inspector class regex, fullscreen, keyboard shortcuts,
-  preview-tab registry, preset list, font catalogue, host flag and font route,
-  dev shell, and the hooks and components above. The package has no vitest
-  config, so tests run in node: a test that mounts into a DOM opens with
-  `// @vitest-environment happy-dom` (see
-  [DOM tests](../../docs/guides/testing.md#dom-tests)), and `apply-theme` and
-  the font loader use the fake document in
-  [fake-document.test-helper.ts](src/utils/fake-document.test-helper.ts).
-  Lint keeps two upstream allowances (`_` unused names, `!`
-  assertions); see [eslint.config.mjs](eslint.config.mjs).
+## Vite quick start
+
+From the [Vite smoke app](https://github.com/Jbmanllr/themerCN/tree/main/apps/vite), which turns the Themer on with
+`VITE_THEMER=1`. In `src/main.tsx`, render the loader beside your app:
+
+<!-- recipe: apps/vite/src/main.tsx -->
+```tsx
+const ThemerLoader = createThemerLoader(
+  import.meta.env.VITE_THEMER === "1" ? () => import("themercn") : null
+)
+
+createRoot(document.getElementById("root")!).render(
+  <StrictMode>
+    <App />
+    <ThemerLoader />
+  </StrictMode>
+)
+```
+
+The condition is static, so a build with `VITE_THEMER` unset drops the import
+and ships no Themer code. In `vite.config.ts`, a `transformIndexHtml` plugin
+inlines the head script under the same condition
+(`import { getThemerHeadScript } from "themercn/head-script"`):
+
+<!-- recipe: apps/vite/vite.config.ts -->
+```ts
+function themerHeadScript(): Plugin {
+  return {
+    name: "themer-head-script",
+    transformIndexHtml: () => [
+      {
+        tag: "script",
+        children: getThemerHeadScript(),
+        injectTo: "head-prepend",
+      },
+    ],
+  }
+}
+
+export default defineConfig(({ mode }) => {
+  const env = loadEnv(mode, process.cwd(), "VITE_")
+  const themer = env.VITE_THEMER === "1"
+
+  return {
+    plugins: [react(), tailwindcss(), themer && themerHeadScript()],
+    test: { include: ["src/**/*.test.{ts,tsx}"] },
+  }
+})
+```
+
+Any other React setup works the same way: render the loader (or `<Themer>`
+itself) beside your tree, and put `getThemerHeadScript()` in an inline
+`<script>` at the top of `<head>`.
+
+## Entry points
+
+| Import                 | Exports                                                                                    | Notes                                                                                     |
+| ---------------------- | ------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------- |
+| `themercn`             | `Themer`; types `ThemerProps`, `ThemePreset`, `ThemerExtraColorGroup`, `ThemerPreviewTab` | The Themer itself (client only). Usually loaded through the loader.                      |
+| `themercn/loader`      | `createThemerLoader`, type `ThemerModule`                                                  | About 1 kB. Reaches no Themer code; with `null` nothing of the Themer ships.              |
+| `themercn/head-script` | `getThemerHeadScript`, type `ThemerHeadScriptOptions`                                      | A string generator with no imports: safe in a build config or on a server.                |
+| `themercn/next`        | `ThemerHeadScript`, type `ThemerHeadScriptProps`                                           | Client component for the root layout's `<head>`.                                          |
+| `themercn/next/server` | `createFontCatalogRoute`, type `FontCatalogRouteOptions`                                   | Route handler for an App Router `route.ts`.                                               |
+
+ESM only. Every export carries TSDoc, so your editor shows these docs on
+hover.
+
+## `<Themer>` props
+
+`createThemerLoader`'s component takes the same props. Every prop is optional.
+Pass `presets`, `extraColors`, `previewTabs` and `previewWrapper` as stable,
+module-level values: a new identity re-registers or rebuilds them.
+
+| Prop                  | Type                                     | Default            | Description                                                                                                                                                                       |
+| --------------------- | ---------------------------------------- | ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `defaultPreset`       | `string`                                 | `"default"`        | The Preset a fresh Themer starts on (nothing saved yet). An unknown id falls back to `"default"`.                                                                                 |
+| `presets`             | `readonly ThemePreset[]`                 | none               | Your Presets, added to the built-in ones. On an id clash yours wins.                                                                                                              |
+| `extraColors`         | `readonly ThemerExtraColorGroup[]`       | none               | Colour tokens beyond shadcn's: `{ title, description?, colors: [{ key, label }] }`, `key` a kebab-case custom property name without `--`. Edited, exported and imported like the built-in ones. |
+| `previewTabs`         | `readonly ThemerPreviewTab[]`            | none               | Preview tabs of your own: `{ id, label, component, scroll?, order? }`. Use `React.lazy` components. A built-in id replaces that tab.                                               |
+| `previewWrapper`      | `ComponentType<{ children: ReactNode }>` | none               | Wraps your preview tabs (not the built-in ones) with the providers your components need: the Themer renders outside your tree.                                                    |
+| `shortcut`            | `string`                                 | `"ctrl+shift+e"`   | Toggles the Themer. Modifiers `ctrl`, `alt`, `shift`, `meta`, joined with `+`; `ctrl` also matches Cmd on macOS.                                                                  |
+| `showTrigger`         | `boolean`                                | `true`             | Shows the floating button.                                                                                                                                                        |
+| `zIndex`              | `number`                                 | `9990` / `10000`   | Layer of the trigger and the overlay (by default 9990 and 10000). Popups sit one layer above the overlay.                                                                         |
+| `storageNamespace`    | `string`                                 | `"themercn"`       | Prefix of the localStorage keys `<ns>:editor` and `<ns>:preferences`. Give the head script the same value.                                                                        |
+| `colorMode`           | `"light" \| "dark"`                      | none               | Controlled light/dark, for an app with its own mode state. Pass it with `onColorModeChange`; your app keeps the `.dark` class. Unset, the Themer toggles `.dark` on `<html>` and follows changes made by others. |
+| `onColorModeChange`   | `(mode: "light" \| "dark") => void`      | none               | Called with the mode the user switched to, in controlled mode.                                                                                                                    |
+| `fontCatalogEndpoint` | `string`                                 | none               | URL of a [font catalog](#font-catalog). Unset, the font picker searches the bundled list in the browser.                                                                          |
+
+`<Themer>` takes no children and renders nothing on the server, during
+hydration and inside an iframe (its own Live preview frames your page).
+
+A `ThemePreset` is `{ id, label, description?, source?, createdAt?, styles: { light, dark } }`.
+`styles` holds token values by custom property name without `--`
+(`primary`, `font-sans`, `radius`, your extra colours) and needs only the keys
+the Preset changes: light is laid over the defaults, dark over the Preset's
+light values.
+
+## Saved Themes and the head script
+
+The edited Theme and the Themer's preferences persist in the browser's
+localStorage under `<storageNamespace>:editor` and
+`<storageNamespace>:preferences`; nothing is sent anywhere. The Themer never
+writes your source files: copy the Code dialog's CSS into your project to keep
+a Theme.
+
+Without the head script, a reload paints your own Theme first and switches to
+the saved edit once the Themer loads after hydration. The head script applies
+the saved Theme while the HTML is parsed (and requests its Google Fonts). With
+nothing saved, or the Theme override switched off in the Themer, it changes
+nothing, so it is safe to render even in builds where the Themer is off.
+
+## Font catalog
+
+The font picker pages through `fontCatalogEndpoint` with:
+
+```
+GET <endpoint>?q=<search>&limit=<n>&offset=<n>[&category=<category>]
+```
+
+`category` is one of `sans-serif`, `serif`, `display`, `handwriting`,
+`monospace` (left out for all). The answer is:
+
+```ts
+{
+  fonts: { family: string; category: string; variants: string[]; variable: boolean }[]
+  total: number
+  offset: number
+  limit: number
+  hasMore: boolean
+}
+```
+
+`createFontCatalogRoute` implements it: with `googleFontsApiKey`, the Google
+Fonts Developer API list (cached a day); without one, Google's public catalog
+(held in memory a day); if Google fails, the bundled list. It clamps `limit` to
+1–100 (default 50) and `offset` to 0 or more. Any endpoint that answers this
+contract works, in any framework.
+
+## Content Security Policy
+
+CSP is your app's job; the package adds no headers. With a CSP, allow:
+
+| Directive         | Source                                       | Why                                                                                     |
+| ----------------- | -------------------------------------------- | --------------------------------------------------------------------------------------- |
+| `style-src`       | `https://fonts.googleapis.com`               | Font stylesheets for the fonts a Theme picks (Themer and head script).                  |
+| `font-src`        | `https://fonts.gstatic.com`                  | The font files those stylesheets load.                                                  |
+| `style-src`       | `'unsafe-inline'`                            | The Themer injects its CSS as a `<style>` element.                                      |
+| `script-src`      | `'unsafe-inline'` or the head script's hash  | The head script is an inline `<script>`.                                                |
+| `frame-ancestors` | `'self'` (and `X-Frame-Options: SAMEORIGIN`) | The Live preview tab frames your own page; a page that refuses framing shows empty there. |
+
+The font catalog route calls Google from your server, not from the browser.
 
 ## Keyboard shortcuts
 
-Registered in code (`themerShortcuts` in
-[use-keyboard-shortcut.ts](src/hooks/use-keyboard-shortcut.ts)). `Ctrl` also
-matches `Cmd` on macOS. A shortcut is ignored while focus is in an input,
-textarea or contenteditable element, and an extra modifier rejects a match.
+`Ctrl` also matches `Cmd` on macOS. Shortcuts are ignored while focus is in an
+input, a textarea or a contenteditable element, and an extra modifier rejects a
+match.
 
-| Shortcut       | Action                  | Active                                                               | Registered in                                               |
-| -------------- | ----------------------- | -------------------------------------------------------------------- | ----------------------------------------------------------- |
-| `Ctrl+Shift+E` | Toggle the editor       | Always (configurable: `ThemerConfig.shortcut`)                       | [themer-provider.tsx](src/components/themer-provider.tsx)   |
-| `Ctrl+Z`       | Undo                    | Editor open                                                          | themer-provider.tsx                                         |
-| `Ctrl+Shift+Z` | Redo                    | Editor open                                                          | themer-provider.tsx                                         |
-| `Ctrl+I`       | Toggle the inspector    | Preview mounted, desktop layout, frame not cross-origin              | [preview-tabs.tsx](src/components/preview/preview-tabs.tsx) |
-| `Esc`          | Exit fullscreen preview | Fullscreen preview on (CSS fallback; native fullscreen exits itself) | [use-fullscreen.ts](src/hooks/use-fullscreen.ts)            |
+| Shortcut       | Action                  | When                                                  |
+| -------------- | ----------------------- | ----------------------------------------------------- |
+| `Ctrl+Shift+E` | Open or close the Themer | Always (change it with `shortcut`)                   |
+| `Ctrl+Z`       | Undo                    | Themer open                                           |
+| `Ctrl+Shift+Z` | Redo                    | Themer open                                           |
+| `Ctrl+I`       | Toggle the inspector    | Preview shown, desktop layout, same-origin Live frame |
+| `Esc`          | Exit fullscreen preview | Fullscreen preview on                                 |
 
-The toggle default is `SHORTCUTS.toggle` (`config/constants.ts`). It avoids
-combinations the browsers keep for themselves (`Cmd/Ctrl+Shift+T` reopens a
-closed tab, `+N`, `+W` and `+Q` act on windows) and any Option/Alt chord.
-`SHORTCUTS` / `themerShortcuts` also list `save` (`Ctrl+S`) and `export`
-(`Ctrl+E`), but **nothing handles them**; there is no Save action in this
-port and Export is the Code button.
+## Styles and browser support
 
-## Documentation
+The Themer injects one `<style data-themer-style>` while it is mounted. All of
+its CSS (Tailwind's Preflight, shadcn's base rules, the utilities it uses)
+sits inside `@scope ([data-themer]) to ([data-themer-host])`: it styles the
+Themer UI and nothing else, and your preview tabs render inside
+`[data-themer-host]` with your own styles. Its popups render in its own
+container, not in `<body>`. The Themer UI reads the page's Theme variables, so
+it shows the Theme being edited.
 
-- [Architecture](./ARCHITECTURE.md): stores, data flow, theme application and
-  font loading.
-- [API reference](./docs/API.md): components, hooks, config and types.
-- [File storage](./docs/FILE-STORAGE.md): the generic `'file'` mode (unused in
-  Banter).
-- [`docs/ARCHITECTURE.md`](../../docs/ARCHITECTURE.md): repository-wide
-  ownership and runtime boundaries.
+`@scope` with a lower boundary needs Chrome 118, Safari 17.4 or Firefox 146.
+
+Known leak: your unlayered element rules (for example
+`button { border: 3px dashed red }`) still reach the Themer's elements on
+properties Preflight does not reset, because they win on specificity. Layered
+CSS, which is what Tailwind emits, does not leak.
+
+## What you can edit
+
+- **Presets**: a searchable picker with the built-in tweakcn catalogue plus
+  yours, previous/next/shuffle, and a `*` while the Theme differs from its
+  Preset. Reset returns to the Preset.
+- **Colours**: every shadcn colour token plus your extra colours, with search,
+  Tailwind palette picks and Sidebar Sync (sidebar colours follow their base
+  twins).
+- **Typography**: sans, heading, serif and mono fonts from Google Fonts, and
+  letter spacing.
+- **Other**: HSL adjustments of the whole palette, radius, spacing and
+  shadows.
+- **Actions**: contrast checker (WCAG AA/AAA), light/dark toggle, undo/redo,
+  Import CSS (a shadcn or tweakcn `index.css`), the Code dialog (`index.css`
+  for Tailwind v3 or v4 in hex, rgb, hsl or oklch, plus a `layout.tsx` for the
+  fonts), and a switch that turns the edited Theme off to compare.
+- **Preview**: Live (your page in a same-origin frame, at several device
+  widths), Cards, Dashboard, Mail, Pricing, Color Palette and Typography
+  pages, plus your own tabs; an inspector that shows an element's token
+  classes and jumps to the colour; fullscreen.
+
+Below 1280 px wide the Themer opens as a bottom drawer without the preview.
 
 ## Credits and licences
 
 themercn is licensed under the [Apache License 2.0](LICENSE).
 
 Adapted from [tweakcn](https://github.com/jnsahaj/tweakcn) by
-[@jnsahaj](https://github.com/jnsahaj), **Apache License 2.0** (not MIT),
-commit `a3b47b37`; modified for themercn. The full licence is in
+[@jnsahaj](https://github.com/jnsahaj), **Apache License 2.0**, commit
+`a3b47b37`; modified for themercn. The full licence is in
 [LICENSES/tweakcn-Apache-2.0.txt](LICENSES/tweakcn-Apache-2.0.txt) and the
-attribution in [NOTICE](NOTICE), which also carries the shadcn/ui (MIT,
-[LICENSES/shadcn-ui-MIT.txt](LICENSES/shadcn-ui-MIT.txt)) notice for the demo
-pages. Keep the header line on every ported file and keep NOTICE current when
-porting more code.
+attribution in [NOTICE](NOTICE). The preview pages derive from the
+[shadcn/ui](https://github.com/shadcn-ui/ui) examples, MIT
+([LICENSES/shadcn-ui-MIT.txt](LICENSES/shadcn-ui-MIT.txt)).
+
+Contributing: see the [repository](https://github.com/Jbmanllr/themerCN/) and the package's
+[ARCHITECTURE.md](https://github.com/Jbmanllr/themerCN/blob/main/packages/themer/ARCHITECTURE.md).

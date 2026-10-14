@@ -1,5 +1,5 @@
 // The pill-shaped trigger of the preview tab bar: the stock `TabsTrigger` with
-// a call-site `className` (ADR-0080: `@banter/ui` itself is never restyled).
+// a call-site `className` (`@workspace/ui` itself stays stock shadcn).
 import { TabsTrigger } from "@workspace/ui/components/tabs";
 import { cn } from "@workspace/ui/lib/utils";
 import * as React from "react";

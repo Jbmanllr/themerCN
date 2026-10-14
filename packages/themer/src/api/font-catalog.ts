@@ -18,7 +18,7 @@
 //   offset >= 0, both truncated; a non-finite value falls back to the
 //   default.
 //
-// See: packages/themer/README.md ("Host integration contract", Font route).
+// See: packages/themer/README.md ("Font catalog").
 
 import {
   FALLBACK_FONTS,

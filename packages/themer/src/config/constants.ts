@@ -51,7 +51,7 @@ export const Z_INDEX = {
 /**
  * Editor sidebar widths, set as `--sidebar-width`/`--sidebar-width-icon` on
  * its own SidebarProvider. Wider than the app Sidebar's 16rem default in
- * @banter/ui (packages/ui/src/components/sidebar.tsx) to fit the controls.
+ * @workspace/ui (packages/ui/src/components/sidebar.tsx) to fit the controls.
  */
 export const SIDEBAR_WIDTHS = {
   expanded: "20rem", // --sidebar-width (320px) - wider for better control layout

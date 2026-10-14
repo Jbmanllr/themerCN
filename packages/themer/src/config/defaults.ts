@@ -1,7 +1,6 @@
 // The package's built-in default theme and the key lists derived for it. This
-// is tweakcn's default, not Banter's brand theme: Banter's own values live in
-// @banter/ui-tokens and reach the editor as a host preset (README "Host
-// integration contract").
+// is tweakcn's default; a Host's own brand reaches the editor as a Host
+// Preset (`<Themer presets>`, README "`<Themer>` props").
 //
 // Contract: defaultLightStyles and defaultDarkStyles are the base that
 // resolvePresetStyles (presets.ts) merges every preset over, so each style

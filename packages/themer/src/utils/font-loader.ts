@@ -932,7 +932,10 @@ export const POPULAR_FONTS: Record<FontCategory, FontInfo[]> = {
   ],
 };
 
-export const FALLBACK_FONTS: FontInfo[] = Object.values(POPULAR_FONTS).flat();
+// Pure, so entries that need only the name lists (head-script) drop the catalogue.
+export const FALLBACK_FONTS: FontInfo[] = /* @__PURE__ */ Object.values(
+  POPULAR_FONTS,
+).flat();
 
 function normalizeWeights(weights: readonly FontWeight[]): string[] {
   return weights.map((weight) => String(weight));

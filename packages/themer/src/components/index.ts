@@ -12,9 +12,8 @@ export { ThemerOverlay } from "./themer-overlay";
 export { ThemerSidebar } from "./themer-sidebar";
 export { ActionBar } from "./action-bar";
 
-// Theme initialization: ThemeScript goes in a host's <head> (Banter's hosts use
-// host/head-script.tsx instead); ThemerProvider mounts DynamicFontLoader itself
-export { ThemeScript } from "./theme-script";
+// Theme initialization: the pre-paint script is src/head-script.ts (the
+// `themercn/head-script` entry); ThemerProvider mounts DynamicFontLoader itself
 export { DynamicFontLoader } from "./dynamic-font-loader";
 
 // Editor components

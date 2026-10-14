@@ -1,5 +1,9 @@
 # themerCN
 
+## Release status
+
+`pre-release`
+
 ## Agent skills
 
 ### Issue tracker

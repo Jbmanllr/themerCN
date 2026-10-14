@@ -46,7 +46,7 @@
     "sonner": "2.0.8",
     "zod": "4.6.5",
     "zustand": "5.0.15",
-    "@villa/ui": "workspace:*"
+    "@workspace/ui": "workspace:*"
   },
   "peerDependencies": {
     "react": "^19.2.0",

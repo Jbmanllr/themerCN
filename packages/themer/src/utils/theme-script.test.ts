@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 
-// The script ThemeScript puts in <head> runs before React, on whatever the
+// The pre-paint script (getThemerHeadScript) runs before React, on whatever the
 // host page already has. It must read the keys the editor really writes, do
 // nothing without a saved edit (the host's own CSS stays), leave the `.dark`
 // class to the host's next-themes, and ask Google only for families Google

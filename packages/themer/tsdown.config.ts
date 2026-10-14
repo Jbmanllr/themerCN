@@ -2,9 +2,11 @@ import { defineConfig, type UserConfig } from "tsdown"
 
 import pkg from "./package.json" with { type: "json" }
 
-// Two configs, as in nuqs: Rolldown keeps a top-level directive only on entry
-// modules, so the client config adds 'use client' to each entry chunk with
-// `outputOptions.intro`; the server config adds none.
+// One config per group of entries, so Rolldown never shares a chunk between
+// the core and the entries a Host app imports where the Themer is off.
+// Rolldown keeps a top-level directive only on entry modules: the core's
+// entry (src/index.ts) has none, so its config adds 'use client' with
+// `outputOptions.intro`; `loader` and `next` carry their own.
 
 // `packages/ui` (a workspace devDependency, outside node_modules) is bundled
 // into `dist`; nothing from node_modules may be (`onlyBundle: []`), so
@@ -32,7 +34,8 @@ const common = {
   },
 } satisfies UserConfig
 
-const client = {
+// The core: `<Themer>` and everything it loads.
+const core = {
   ...common,
   clean: true,
   entry: { index: "src/index.ts" },
@@ -43,14 +46,33 @@ const client = {
   },
 } satisfies UserConfig
 
-// Entries with no directive (`head-script`, `next/server`) arrive with the
-// Next Adapter (#21); tsdown needs at least one entry per config.
-const server = {
+// The entries a Host app imports where the Themer may be off. Each config
+// builds alone, so Rolldown cannot share a chunk between them and the core:
+// `loader`, `head-script` and `next` must reach no Themer code
+// (scripts/check-entries.mjs checks the output).
+const adapters = {
   ...common,
   clean: false,
-  entry: {} as Record<string, string>,
+  entry: { loader: "src/loader.tsx", next: "src/next/index.tsx" },
+  // Their sources start with 'use client', which Rolldown keeps on an entry
+  // module, so they need no intro.
+  deps: { ...common.deps, onlyImport: ["react"] },
 } satisfies UserConfig
 
-export default defineConfig(
-  [client, server].filter((config) => Object.keys(config.entry).length > 0)
-)
+// No directive, no imports: callable from a Vite config or a server.
+const headScript = {
+  ...common,
+  clean: false,
+  entry: { "head-script": "src/head-script.ts" },
+  deps: { ...common.deps, onlyImport: [] },
+} satisfies UserConfig
+
+// No directive; its catalog code loads lazily, after the `enabled` check.
+const nextServer = {
+  ...common,
+  clean: false,
+  entry: { "next/server": "src/next/server.ts" },
+  deps: { ...common.deps, onlyImport: [] },
+} satisfies UserConfig
+
+export default defineConfig([core, adapters, headScript, nextServer])

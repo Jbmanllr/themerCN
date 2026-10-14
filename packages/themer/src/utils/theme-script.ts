@@ -1,14 +1,12 @@
-// The body of ThemeScript's inline <head> script, as a string. Kept out of
-// components/theme-script.tsx so that file exports only its component.
+// The body of the pre-paint <head> script, as a string. Public as
+// getThemerHeadScript (../head-script.ts, the `themercn/head-script` entry).
 //
 // Contract: the string runs raw in the browser before React and cannot see
 // this module's scope, so values from here (storage keys, font lists) are
 // embedded with JSON.stringify. It reads what the editor persists
 // (getStorageKeys), so a change to that persisted shape changes the script.
-// Banter's hosts run it from ../host/head-script.tsx (a raw <script> through
-// their alias-gated mount module), not from ThemeScript.
-//
-// See: packages/themer/docs/API.md ("ThemeScript").
+// Its imports are constants only, so the head-script entry stays small and
+// reaches no Themer code (scripts/check-entries.mjs).
 
 import { COMMON_STYLE_KEYS } from "../types/theme";
 import { getStorageKeys } from "../config/constants";

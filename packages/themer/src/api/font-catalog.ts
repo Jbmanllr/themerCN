@@ -1,6 +1,6 @@
-// Font catalog response for the editor's font picker. A host's route handler
-// returns it only after its own dev-only gate has passed
-// (src/host/font-catalog-route.ts); this file does no gating.
+// Font catalog response for the editor's font picker. The Next Adapter's
+// route (src/next/server.ts) returns it only when the Host enabled it; this
+// file does no gating.
 //
 // Contract:
 // - This package reads no environment: the host passes the Google Fonts key.

@@ -1,8 +1,9 @@
 "use client";
 
-// Puts the editor beside the host's tree: the floating trigger, the overlay
-// portaled to document.body, and the cleanups that run when it closes. The
-// host's children must stay un-wrapped (see ThemerRoot below).
+// Puts the editor beside the host's tree: the floating trigger and the
+// overlay, portaled to document.body inside the Themer's CSS scope
+// (ThemerScope), and the cleanups that run when it closes. The host's
+// children must stay un-wrapped (see ThemerRoot below).
 //
 // See: packages/themer/docs/API.md ("ThemerRoot").
 
@@ -11,7 +12,9 @@ import { createPortal } from "react-dom";
 import { useOverlayStore } from "../stores/overlay-store";
 import { useThemerContext } from "./themer-provider";
 import { useIsMobile } from "../hooks/use-is-mobile";
+import { Z_INDEX } from "../config/constants";
 import { ThemerOverlay } from "./themer-overlay";
+import { ThemerScope } from "./themer-scope";
 import { ThemerTrigger } from "./themer-trigger";
 import { LenisPause } from "./lenis-pause";
 
@@ -33,7 +36,7 @@ interface ThemerRootProps {
  */
 export function ThemerRoot({ children }: ThemerRootProps) {
   const isOpen = useOverlayStore((state) => state.isOpen);
-  const { isReady } = useThemerContext();
+  const { config, isReady } = useThemerContext();
   const isMobile = useIsMobile();
 
   // Disable body scroll when open on mobile
@@ -65,14 +68,19 @@ export function ThemerRoot({ children }: ThemerRootProps) {
     <>
       {children}
 
-      {/* Floating trigger button */}
-      <ThemerTrigger />
-
       {/* Pause Lenis when overlay is open */}
       <LenisPause />
 
-      {/* Overlay portal - only render on client to avoid hydration mismatch */}
-      {isClient && createPortal(<ThemerOverlay />, document.body)}
+      {/* The trigger and overlay, in the Themer's CSS scope on <body>; only
+          on the client to avoid a hydration mismatch. */}
+      {isClient &&
+        createPortal(
+          <ThemerScope popupLayer={(config.zIndex ?? Z_INDEX.sidebar) + 1}>
+            <ThemerTrigger />
+            <ThemerOverlay />
+          </ThemerScope>,
+          document.body,
+        )}
     </>
   );
 }

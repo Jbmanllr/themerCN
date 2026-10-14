@@ -12,8 +12,8 @@
 // preset (selectHasUnsavedChanges).
 //
 // Differences: Base UI composition (`render`), and the popover sized from its
-// trigger with `--anchor-width` (no ResizeObserver). It sits above the overlay
-// through host/themer.css, which lifts every portalled popup.
+// trigger with `--anchor-width` (no ResizeObserver). It portals into the
+// Themer's popup container, above the overlay (themer-scope.tsx).
 
 import * as React from "react";
 import { ChevronDown, ArrowLeft, ArrowRight, Shuffle } from "lucide-react";

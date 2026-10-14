@@ -27,3 +27,11 @@ _Avoid_: integration, plugin
 **Preset**:
 A named Theme offered as a starting point, either built into the Themer or supplied by a Host app.
 _Avoid_: template, default theme
+
+**Themer UI**:
+The Themer's own interface: its sidebar, header, controls and the popups they open. It always shows the Theme being edited.
+_Avoid_: chrome, editor UI, panel
+
+**Preview**:
+Any surface that exists to display the Theme: a built-in preview page or the Live view of the Host app's page.
+_Avoid_: demo, sample page

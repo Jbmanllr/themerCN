@@ -3,7 +3,7 @@ import type {
   FilterFontCategory,
   PaginatedFontsResponse,
 } from "../types/fonts";
-import { DEFAULT_FONT_CATALOG_ENDPOINT } from "../utils/font-loader";
+import { FALLBACK_FONTS, filterAndPaginateFonts } from "../utils/font-loader";
 
 type UseFontSearchParams = {
   endpoint?: string;
@@ -14,13 +14,14 @@ type UseFontSearchParams = {
 };
 
 /**
- * Searches the host-owned font catalog for the dev font picker.
- *
- * The host endpoint owns API-key access, production gating, and fallback behavior; the package only
- * consumes the paginated response contract.
+ * Searches the font catalog for the font picker. With an `endpoint` (the
+ * Host's `fontCatalogEndpoint`) it pages through
+ * `GET ?q=&category=&limit=&offset=` → `{ fonts, total, offset, limit, hasMore }`;
+ * the Host's route owns API keys and gating. Without one it searches the
+ * bundled list (FALLBACK_FONTS) in the browser, with the same paging.
  */
 export function useFontSearch({
-  endpoint = DEFAULT_FONT_CATALOG_ENDPOINT,
+  endpoint,
   query,
   category = "all",
   limit = 20,
@@ -29,6 +30,15 @@ export function useFontSearch({
   return useInfiniteQuery({
     queryKey: ["themer-fonts", endpoint, query, category, limit],
     queryFn: async ({ pageParam }) => {
+      if (!endpoint) {
+        return filterAndPaginateFonts(FALLBACK_FONTS, {
+          query,
+          category,
+          limit,
+          offset: pageParam,
+        });
+      }
+
       const searchParams = new URLSearchParams({
         q: query,
         limit: String(limit),

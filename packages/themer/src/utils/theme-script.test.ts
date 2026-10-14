@@ -15,7 +15,9 @@ import {
   vi,
 } from "vitest";
 
-import { STORAGE_KEYS } from "../config/constants";
+import { getStorageKeys } from "../config/constants";
+
+const STORAGE_KEYS = getStorageKeys();
 import { generateThemeScript } from "./theme-script";
 
 function saveEditor(themeState: unknown) {

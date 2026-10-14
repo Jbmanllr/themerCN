@@ -96,7 +96,6 @@ export {
   extractColorVariables,
 } from "./parse-css";
 export {
-  DEFAULT_FONT_CATALOG_ENDPOINT,
   FALLBACK_FONTS,
   FONT_CATEGORIES,
   GOOGLE_FONTS_API_URL,

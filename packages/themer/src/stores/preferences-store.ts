@@ -2,8 +2,8 @@
 
 // The editor's user preferences (colour format, Tailwind version, preview tab,
 // sidebar and section states, theme override and more), persisted in this
-// browser's localStorage under STORAGE_KEYS.preferences
-// ("villa-themer-preferences").
+// browser's localStorage under `<storageNamespace>:preferences`
+// (getStorageKeys; `<Themer>` hydrates it through stores/hydrate.ts).
 //
 // Contract:
 // - The whole state persists (no partialize), versioned by
@@ -20,7 +20,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { PreferencesStore } from "../types";
-import { STORAGE_KEYS } from "../config/constants";
+import { getStorageKeys } from "../config/constants";
 
 /** Version of the persisted preferences (zustand persist `version`). */
 export const PREFERENCES_VERSION = 2;
@@ -97,7 +97,9 @@ export const usePreferencesStore = create<PreferencesStore>()(
         colorFormatsByVersion[get().tailwindVersion],
     }),
     {
-      name: STORAGE_KEYS.preferences,
+      name: getStorageKeys().preferences,
+      // <Themer> names the namespace and hydrates (stores/hydrate.ts).
+      skipHydration: true,
       version: PREFERENCES_VERSION,
       migrate: (persistedState, version) =>
         migratePreferences(persistedState, version) as PreferencesStore,

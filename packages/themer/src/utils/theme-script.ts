@@ -4,14 +4,14 @@
 // Contract: the string runs raw in the browser before React and cannot see
 // this module's scope, so values from here (storage keys, font lists) are
 // embedded with JSON.stringify. It reads what the editor persists
-// (STORAGE_KEYS), so a change to that persisted shape changes the script.
+// (getStorageKeys), so a change to that persisted shape changes the script.
 // Banter's hosts run it from ../host/head-script.tsx (a raw <script> through
 // their alias-gated mount module), not from ThemeScript.
 //
 // See: packages/themer/docs/API.md ("ThemeScript").
 
 import { COMMON_STYLE_KEYS } from "../types/theme";
-import { STORAGE_KEYS } from "../config/constants";
+import { getStorageKeys } from "../config/constants";
 import { GENERIC_FONT_FAMILIES, LOCAL_FONT_FAMILY_NAMES } from "./font-loader";
 
 /**
@@ -23,7 +23,10 @@ import { GENERIC_FONT_FAMILIES, LOCAL_FONT_FAMILY_NAMES } from "./font-loader";
  * or the tracking variables, and preloads Google fonts for the sans, serif and mono slots
  * only (DynamicFontLoader loads the heading font after hydration).
  */
-export function generateThemeScript() {
+export function generateThemeScript({
+  storageNamespace,
+}: { storageNamespace?: string } = {}) {
+  const storageKeys = getStorageKeys(storageNamespace);
   return `
     // ----- FONT LOADING UTILITIES -----
     // The Google family a font value starts with; null for a host font
@@ -55,8 +58,8 @@ export function generateThemeScript() {
 
     // ----- THEME INITIALIZATION -----
     (function() {
-      var storageKey = ${JSON.stringify(STORAGE_KEYS.editor)};
-      var preferencesStorageKey = ${JSON.stringify(STORAGE_KEYS.preferences)};
+      var storageKey = ${JSON.stringify(storageKeys.editor)};
+      var preferencesStorageKey = ${JSON.stringify(storageKeys.preferences)};
       var root = document.documentElement;
 
       var themeState = null;

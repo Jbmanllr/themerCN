@@ -96,15 +96,20 @@ export const SHORTCUTS = {
   inspector: "ctrl+i",
 } as const;
 
+/** Default `storageNamespace` of `<Themer>`. */
+export const DEFAULT_STORAGE_NAMESPACE = "themercn";
+
 /**
- * localStorage keys. `editor` and `preferences` are the persisted stores
- * (editor-store.ts, preferences-store.ts) and are also read by the
- * pre-hydration script (utils/theme-script.ts).
+ * localStorage keys of a storage namespace. `editor` and `preferences` are
+ * the persisted stores (editor-store.ts, preferences-store.ts) and are also
+ * read by the pre-hydration script (utils/theme-script.ts).
  */
-export const STORAGE_KEYS = {
-  editor: "villa-themer-editor-state",
-  preferences: "villa-themer-preferences",
-} as const;
+export function getStorageKeys(namespace: string = DEFAULT_STORAGE_NAMESPACE) {
+  return {
+    editor: `${namespace}:editor`,
+    preferences: `${namespace}:preferences`,
+  } as const;
+}
 
 /**
  * WCAG contrast ratio thresholds that utils/contrast-checker.ts grades a

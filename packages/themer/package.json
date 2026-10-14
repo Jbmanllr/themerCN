@@ -1,32 +1,47 @@
 {
   "name": "themercn",
   "version": "0.1.0",
-  "private": true,
   "type": "module",
   "sideEffects": [
     "**/*.css"
   ],
   "exports": {
-    ".": "./src/index.ts"
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
   },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE",
+    "NOTICE",
+    "LICENSES",
+    "CHANGELOG.md"
+  ],
   "scripts": {
     "build:css": "node scripts/build-css.mjs",
+    "build": "tsdown",
+    "check:package": "publint --strict && attw --pack . --profile esm-only && node scripts/check-pack.mjs",
     "typecheck": "tsc --noEmit",
     "test": "vitest run"
   },
   "dependencies": {
+    "@base-ui/react": "^1.9.0",
     "@dnd-kit/core": "6.3.1",
     "@dnd-kit/modifiers": "9.0.0",
     "@dnd-kit/sortable": "10.0.0",
     "@dnd-kit/utilities": "3.2.2",
     "@tanstack/react-query": "5.104.1",
     "@tanstack/react-table": "9.2.5",
-    "@workspace/ui": "workspace:*",
+    "class-variance-authority": "^0.7.1",
+    "cmdk": "^1.1.1",
+    "cn": "^0.4.0",
     "culori": "4.0.2",
     "date-fns": "4.4.0",
     "lenis": "1.3.26",
     "lucide-react": "1.52.0",
-    "next": "16.4.0",
     "react-day-picker": "10.0.2",
     "react-resizable-panels": "4.14.2",
     "recharts": "3.10.1",
@@ -35,19 +50,30 @@
     "zustand": "5.0.15"
   },
   "peerDependencies": {
+    "next": ">=16",
     "react": "^19.2.0",
     "react-dom": "^19.2.0"
   },
+  "peerDependenciesMeta": {
+    "next": {
+      "optional": true
+    }
+  },
   "devDependencies": {
+    "@arethetypeswrong/cli": "0.18.5",
     "@tailwindcss/postcss": "4.3.3",
     "@types/culori": "4.0.1",
     "@types/node": "^24.0.0",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
+    "@workspace/ui": "workspace:*",
     "happy-dom": "21.0.1",
+    "next": "16.4.0",
     "postcss": "8.5.30",
+    "publint": "0.3.25",
     "shadcn": "4.21.4",
     "tailwindcss": "4.3.3",
+    "tsdown": "0.23.1",
     "tw-animate-css": "1.4.0",
     "typescript": "^5.9.3",
     "vitest": "^5.0.4"

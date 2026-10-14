@@ -14,7 +14,7 @@ permissions:
 
 jobs:
   checks:
-    name: Lint, typecheck, test, build
+    name: Lint, typecheck, test, build, package checks
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -31,3 +31,6 @@ jobs:
       - run: pnpm install --frozen-lockfile
 
       - run: pnpm turbo lint typecheck test build
+
+      # publint, attw and the packed-file check, against the built package.
+      - run: pnpm turbo check:package

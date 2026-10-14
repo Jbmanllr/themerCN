@@ -9,6 +9,14 @@
         "$TURBO_ROOT$/packages/ui/src/**"
       ],
       "outputs": ["src/generated/**"]
+    },
+    "build": {
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "!src/generated/**",
+        "$TURBO_ROOT$/packages/ui/src/**"
+      ],
+      "outputs": ["dist/**"]
     }
   }
 }

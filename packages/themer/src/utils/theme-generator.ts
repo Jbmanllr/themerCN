@@ -1,4 +1,4 @@
-// Adapted from tweakcn (Apache-2.0, github.com/jnsahaj/tweakcn @ a3b47b37); modified by Banter.
+// Adapted from tweakcn (Apache-2.0, github.com/jnsahaj/tweakcn @ a3b47b37); modified for themercn.
 //
 // CSS / Tailwind export of the editor state. Banter changes to tweakcn's
 // generator (utils/theme-style-generator.ts): every mode block is generated

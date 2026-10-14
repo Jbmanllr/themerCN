@@ -14,7 +14,7 @@ In Banter it is a local-development tool only, mounted by `apps/web` and the CMS
 - AI theme generation (a mock server action behind `showTabAI`, off by default; see [AI Generation Flow](#ai-generation-flow))
 - Full undo/redo support
 
-**Origin:** adapted from [tweakcn](https://github.com/jnsahaj/tweakcn) (Apache-2.0; see [NOTICE](NOTICE) and `LICENSES/`), via the p0rtal monorepo's themer. Ported files carry the header `Adapted from tweakcn (Apache-2.0, ...); modified by Banter.`
+**Origin:** adapted from [tweakcn](https://github.com/jnsahaj/tweakcn) (Apache-2.0; see [NOTICE](NOTICE) and `LICENSES/`), via the p0rtal monorepo's themer. Ported files carry the header `Adapted from tweakcn (Apache-2.0, ...); modified for themercn.`
 
 ## System Flow
 

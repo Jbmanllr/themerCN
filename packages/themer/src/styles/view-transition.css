@@ -1,5 +1,5 @@
 /* Light/dark reveal (utils/theme-transition.ts; adapted from tweakcn,
- * Apache-2.0, github.com/jnsahaj/tweakcn @ a3b47b37, modified by Banter).
+ * Apache-2.0, github.com/jnsahaj/tweakcn @ a3b47b37, modified for themercn).
  * Matches only while the editor's toggle runs a transition, so the host's
  * own view transitions keep their animation. Appended to the Themer's CSS
  * outside its @scope: view transition pseudo-elements belong to <html>.

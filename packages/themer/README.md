@@ -217,7 +217,7 @@ sidebar and the preview is not shown.
   behavior or it carries a contract (for example `cards/payments.tsx`,
   `mail/components/mail.tsx`); the unchanged ports and the preset data
   (`tweakcn-presets.ts`) have none. Files derived from tweakcn add the line
-  `Adapted from tweakcn (Apache-2.0, ...); modified by Banter.` Entry points:
+  `Adapted from tweakcn (Apache-2.0, ...); modified for themercn.` Entry points:
   [themer-provider.tsx](src/components/themer-provider.tsx),
   [themer-root.tsx](src/components/themer-root.tsx),
   [editor-store.ts](src/stores/editor-store.ts).
@@ -289,9 +289,11 @@ port and Export is the Code button.
 
 ## Credits and licences
 
+themercn is licensed under the [Apache License 2.0](LICENSE).
+
 Adapted from [tweakcn](https://github.com/jnsahaj/tweakcn) by
 [@jnsahaj](https://github.com/jnsahaj), **Apache License 2.0** (not MIT),
-commit `a3b47b37`; modified by Banter. The full licence is in
+commit `a3b47b37`; modified for themercn. The full licence is in
 [LICENSES/tweakcn-Apache-2.0.txt](LICENSES/tweakcn-Apache-2.0.txt) and the
 attribution in [NOTICE](NOTICE), which also carries the shadcn/ui (MIT,
 [LICENSES/shadcn-ui-MIT.txt](LICENSES/shadcn-ui-MIT.txt)) notice for the demo

@@ -11,7 +11,11 @@ const pkgDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..")
 
 // Entries built by the client config (tsdown.config.ts) start with
 // 'use client'; every other `.js` entry must not.
-const CLIENT_ENTRIES = new Set(["dist/index.js"])
+const CLIENT_ENTRIES = new Set([
+  "dist/index.js",
+  "dist/loader.js",
+  "dist/next.js",
+])
 
 const ALLOWED = [
   /^package\.json$/,

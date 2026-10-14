@@ -16,6 +16,22 @@
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
     },
+    "./loader": {
+      "types": "./dist/loader.d.ts",
+      "default": "./dist/loader.js"
+    },
+    "./head-script": {
+      "types": "./dist/head-script.d.ts",
+      "default": "./dist/head-script.js"
+    },
+    "./next": {
+      "types": "./dist/next.d.ts",
+      "default": "./dist/next.js"
+    },
+    "./next/server": {
+      "types": "./dist/next/server.d.ts",
+      "default": "./dist/next/server.js"
+    },
     "./package.json": "./package.json"
   },
   "files": [
@@ -29,7 +45,7 @@
   "scripts": {
     "build:css": "node scripts/build-css.mjs",
     "build": "tsdown",
-    "check:package": "publint --strict && attw --pack . --profile esm-only && node scripts/check-pack.mjs",
+    "check:package": "publint --strict && attw --pack . --profile esm-only && node scripts/check-pack.mjs && node scripts/check-entries.mjs",
     "typecheck": "tsc --noEmit",
     "test": "vitest run"
   },

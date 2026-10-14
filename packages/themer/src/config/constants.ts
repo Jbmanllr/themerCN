@@ -3,9 +3,8 @@
 //
 // Contract: a constant is only as live as its readers. The notes below say
 // which ones code reads today; a constant marked "no reader" changes no
-// behavior when edited. A value mirrored in another file (Z_INDEX.portalPopup
-// in host/themer.css, SHORTCUTS.undo and .redo in themerShortcuts) must be
-// edited in both places.
+// behavior when edited. A value mirrored in another file (SHORTCUTS.undo and
+// .redo in themerShortcuts) must be edited in both places.
 
 /**
  * Most undo entries editor-store keeps; the oldest is dropped first. History
@@ -35,8 +34,8 @@ export const HIGHLIGHT_ANIMATION_MS = 1500;
 /**
  * Layers of the editor chrome. Read today: `trigger` and `sidebar` (the
  * floating trigger and the overlay, each unless the host sets
- * ThemerConfig.zIndex). `portalPopup` has no code reader: host/themer.css
- * repeats its value as a literal. `overlay`, `header`, `popover`, `modal` and
+ * ThemerConfig.zIndex). Popups take the layer above the overlay's
+ * (themer-scope.tsx). `overlay`, `header`, `popover`, `modal` and
  * `inspector` have no reader.
  */
 export const Z_INDEX = {
@@ -47,11 +46,6 @@ export const Z_INDEX = {
   popover: 10002,
   modal: 10003,
   inspector: 10004,
-  /**
-   * Every Base UI popup layer while the editor is mounted. Mirrored as a
-   * literal in host/themer.css (CSS cannot import it); keep the two equal.
-   */
-  portalPopup: 10060,
 } as const;
 
 /**

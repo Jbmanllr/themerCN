@@ -333,10 +333,16 @@ font list is rendered through a portal.
 
 #### Popup layering
 
-Base UI popups portal to `body > [data-base-ui-portal]`. While `[data-themer-overlay]` is mounted,
-`host/themer.css` lifts the portal wrapper and its child (hosts isolate the wrapper at z-index 50) to `Z_INDEX.portalPopup` (10060, mirrored as a literal in
-the CSS: keep equal). Every popup shares that layer; one opened from inside another (the font
-picker's category select) is portalled later, so it paints on top. The editor renders stock
+The Themer's CSS (`src/styles/themer.css`, compiled by `scripts/build-css.mjs` and injected as a
+`<style data-themer-style>` by `<Themer>`) applies only inside `@scope ([data-themer]) to
+([data-themer-host])`. Base UI popups portal into `[data-themer-portals]`, a container inside that
+root (`ThemerScope`, `components/themer-scope.tsx`), through `@workspace/ui`'s
+`PortalContainerContext`: Popover, Select, DropdownMenu, Tooltip, Dialog, Sheet and Drawer pass
+`container={usePortalContainer()}` (`components/portal-container.test.tsx` fails if a
+`shadcn add -o` reinstall drops it). The container is fixed at the viewport origin, unclipped, one
+layer above the overlay. Every popup shares that layer; one opened from inside another (the font
+picker's category select) is portalled later, so it paints on top. Host preview tabs render inside
+`[data-themer-host]`, the scope's lower boundary. The editor renders stock
 `@banter/ui` components only, so it sets no positioner props of its own.
 
 ### Export Flow
@@ -535,7 +541,7 @@ packages/themer/
 │   │   ├── preview/               # Preview tabs, registry, inspector, demo pages
 │   │   ├── actions/               # Action buttons/dialogs
 │   │   └── ai/                    # AI chat interface
-│   ├── host/                      # Host wiring: flag, passthrough, gate, font route handler, themer.css
+│   ├── host/                      # Host wiring: flag, passthrough, gate, font route handler
 │   ├── stores/                    # Zustand stores (5)
 │   ├── selectors/                 # Narrow editor-store selectors
 │   ├── hooks/                     # Custom hooks

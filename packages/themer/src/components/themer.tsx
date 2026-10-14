@@ -13,6 +13,9 @@
 // - It renders nothing on the server, during hydration, and inside an iframe
 //   (`window.self !== window.top`): the Live preview frames the Host page,
 //   whose own <Themer> must not stack a second Themer UI.
+// - It brings its own CSS: a <style data-themer-style> injected while it is
+//   mounted, scoped to its `[data-themer]` root (themer-scope.tsx). The Host
+//   app compiles and imports nothing of the Themer's.
 // - The persisted stores hydrate from `<storageNamespace>:editor` and
 //   `<storageNamespace>:preferences` when it first renders on the client.
 // - `presets`, `extraColors`, `previewTabs` and `previewWrapper` must be
@@ -28,6 +31,7 @@ import { hydrateThemerStores } from "../stores/hydrate";
 import { ColorModeProvider } from "./color-mode";
 import { ThemerProvider } from "./themer-provider";
 import { ThemerOverlayOnly } from "./themer-root";
+import { useThemerStyle } from "./themer-scope";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -105,6 +109,7 @@ function ThemerApp({
   // Before any child reads the stores, so the first render already shows
   // the persisted Theme of this namespace.
   hydrateThemerStores(storageNamespace);
+  useThemerStyle();
 
   const [queryClient] = useState(
     () =>

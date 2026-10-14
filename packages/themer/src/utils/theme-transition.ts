@@ -6,7 +6,7 @@
 // the viewport for keyboard and programmatic toggles.
 //
 // Differences from tweakcn, and why:
-// - The CSS (packages/themer/src/host/themer.css) only matches while
+// - The CSS (packages/themer/src/styles/view-transition.css) only matches while
 //   `html[data-themer-vt]` is set, so the host's own view transitions (page
 //   navigations) keep their animation. The attribute and the origin
 //   variables (`--themer-vt-x/-y`, not tweakcn's bare `--x/--y`, which a

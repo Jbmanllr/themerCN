@@ -10,7 +10,18 @@ import { defaultThemeState } from "./config/defaults";
 import { useEditorStore } from "./stores/editor-store";
 import { useOverlayStore } from "./stores/overlay-store";
 import { usePreferencesStore } from "./stores/preferences-store";
+import { THEMER_CSS } from "./generated/themer-css";
 import { Themer, type ThemerProps } from "./index";
+
+// happy-dom applies injected sheets to getComputedStyle but resolves custom
+// properties without cycle detection, and overflows on the real sheet's
+// `[--radius:var(--radius-xl)]` (fine in browsers, where `--radius-xl` is
+// computed on the scope root). The real sheet is covered by
+// styles/themer-css.test.ts; here a stand-in proves what gets injected.
+vi.mock("./generated/themer-css", () => ({
+  THEMER_CSS:
+    "@scope ([data-themer]) to ([data-themer-host]) { .stand-in { color: red } }",
+}));
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT =
   true;
@@ -243,4 +254,73 @@ describe("Themer", () => {
       expect(overlay?.style.zIndex).toBe("42");
     });
   });
+
+  describe("CSS isolation", () => {
+    function themerStyles() {
+      return document.head.querySelectorAll("style[data-themer-style]");
+    }
+
+    it("injects its scoped CSS while mounted, and removes it after", async () => {
+      await mount();
+
+      expect(themerStyles()).toHaveLength(1);
+      expect(themerStyles()[0]?.textContent).toBe(THEMER_CSS);
+
+      await act(async () => root?.unmount());
+      root = null;
+
+      expect(themerStyles()).toHaveLength(0);
+    });
+
+    it("renders its UI under an unstyled [data-themer] root", async () => {
+      await mount();
+      const triggerRoot = trigger()?.closest("[data-themer]");
+      await openThemer();
+
+      const scopeRoot = document
+        .querySelector('[data-testid="themer-overlay"]')
+        ?.closest("[data-themer]");
+      expect(scopeRoot).toBeInstanceOf(HTMLElement);
+      expect(triggerRoot).toBe(scopeRoot);
+      expect(scopeRoot?.getAttribute("class")).toBeNull();
+      expect(scopeRoot?.getAttribute("style")).toBeNull();
+    });
+
+    it("mounts its popups inside its root, above the overlay", async () => {
+      await mount({ zIndex: 42 });
+      await openThemer();
+
+      await act(async () =>
+        document
+          .querySelector<HTMLElement>('[data-testid="themer-preset-trigger"]')
+          ?.click(),
+      );
+
+      const popup = document.querySelector('[data-slot="popover-content"]');
+      const portals = popup?.closest<HTMLElement>("[data-themer-portals]");
+      expect(portals?.closest("[data-themer]")).not.toBeNull();
+      expect(Number(portals?.style.zIndex)).toBeGreaterThan(42);
+    });
+
+    it("leaves Host preview tabs outside its scope", async () => {
+      await mount({ previewTabs: HOST_TABS });
+      await openThemer();
+
+      const hostTab = [
+        ...document.querySelectorAll<HTMLElement>('[role="tab"]'),
+      ].find((tab) => tab.textContent === "Host tab");
+      await act(async () => hostTab?.click());
+
+      const content = document.querySelector('[data-testid="host-tab-content"]');
+      expect(content?.closest("[data-themer-host]")).not.toBeNull();
+    });
+  });
 });
+
+const HOST_TABS = [
+  {
+    id: "host-tab",
+    label: "Host tab",
+    component: () => <p data-testid="host-tab-content">Host content</p>,
+  },
+];

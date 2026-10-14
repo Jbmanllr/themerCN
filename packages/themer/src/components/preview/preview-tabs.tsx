@@ -201,11 +201,19 @@ const PreviewTabBody = React.memo(function PreviewTabBody({
   wrapper: ThemerConfig["previewWrapper"];
 }) {
   const Component = tab.component;
+  // A host tab is styled by the Host's CSS alone: `[data-themer-host]` is the
+  // lower boundary of the Themer's @scope (themer-scope.tsx).
   const content =
-    tab.source === "host" && Wrapper ? (
-      <Wrapper>
-        <Component />
-      </Wrapper>
+    tab.source === "host" ? (
+      <div data-themer-host="" style={{ display: "contents" }}>
+        {Wrapper ? (
+          <Wrapper>
+            <Component />
+          </Wrapper>
+        ) : (
+          <Component />
+        )}
+      </div>
     ) : (
       <Component />
     );

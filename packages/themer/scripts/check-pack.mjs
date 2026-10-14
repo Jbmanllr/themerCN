@@ -26,7 +26,7 @@ const ALLOWED = [
   /^LICENSES\/[^/]+\.txt$/,
   /^dist\/.+\.(js|d\.ts)$/,
 ]
-const REQUIRED = ["package.json", "README.md", "NOTICE"]
+const REQUIRED = ["package.json", "README.md", "LICENSE", "NOTICE"]
 
 const pkg = JSON.parse(
   fs.readFileSync(path.join(pkgDir, "package.json"), "utf8")
@@ -39,6 +39,20 @@ const [pack] = JSON.parse(
 )
 const files = new Set(pack.files.map((f) => f.path))
 const errors = []
+
+// 0.0.0 is the unreleased version: `changeset version` writes the first
+// CHANGELOG.md along with the first real version.
+if (pkg.version !== "0.0.0") REQUIRED.push("CHANGELOG.md")
+
+// The package's LICENSE is a copy of the repository's (npm only packs files
+// from the package directory).
+const rootLicense = path.join(pkgDir, "../../LICENSE")
+const pkgLicense = path.join(pkgDir, "LICENSE")
+if (
+  fs.existsSync(pkgLicense) &&
+  fs.readFileSync(pkgLicense, "utf8") !== fs.readFileSync(rootLicense, "utf8")
+)
+  errors.push("LICENSE differs from the repository root LICENSE")
 
 for (const file of files) {
   if (!ALLOWED.some((re) => re.test(file)))

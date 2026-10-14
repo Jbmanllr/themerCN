@@ -1,5 +1,5 @@
 // State and action shapes of the editor, preferences, colour focus and
-// overlay stores in src/stores/ (the AI store's types are in ai.ts).
+// overlay stores in src/stores/.
 // Behaviour rules (undo batching, persistence versions, what resets on close)
 // are written in the store files.
 
@@ -183,11 +183,6 @@ export interface PreferencesState {
   /** Show contrast warnings */
   showContrastWarnings: boolean;
   /**
-   * AI provider choice. Nothing reads it today, not even the Generate panel
-   * (shown only with `showTabAI`).
-   */
-  aiProvider?: "openai" | "google" | "anthropic";
-  /**
    * Id of the last selected preview tab, built-in or host. An id that no
    * longer exists falls back to the first tab at render.
    */
@@ -219,7 +214,6 @@ export interface PreferencesActions {
   setTailwindVersion: (version: PreferencesState["tailwindVersion"]) => void;
   setPackageManager: (packageManager: PackageManager) => void;
   setShowContrastWarnings: (show: boolean) => void;
-  setAIProvider: (provider: PreferencesState["aiProvider"]) => void;
   setPreviewTab: (tab: string) => void;
   setSidebarCollapsed: (collapsed: boolean) => void;
   setThemeOverrideEnabled: (enabled: boolean) => void;
@@ -267,8 +261,8 @@ export type ColorFocusStore = ColorFocusState & ColorFocusActions;
 export interface ThemerOverlayState {
   /** Whether the themer is open */
   isOpen: boolean;
-  /** Current active panel; "generate" is hidden unless `showTabAI`. */
-  activePanel: "colors" | "typography" | "other" | "generate";
+  /** Current active panel. */
+  activePanel: "colors" | "typography" | "other";
   /** Inspector mode enabled */
   inspectorMode: boolean;
   /** Fullscreen preview layout flag (see hooks/use-fullscreen.ts) */

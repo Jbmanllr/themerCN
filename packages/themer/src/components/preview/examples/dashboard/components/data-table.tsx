@@ -68,15 +68,15 @@ import { toast } from "sonner";
 import { z } from "zod";
 
 import { useIsMobile } from "../../../../../hooks/use-is-mobile";
-import { Badge } from "@villa/ui/components/badge";
-import { Button } from "@villa/ui/components/button";
+import { Badge } from "@workspace/ui/components/badge";
+import { Button } from "@workspace/ui/components/button";
 import {
   ChartConfig,
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
-} from "@villa/ui/components/chart";
-import { Checkbox } from "@villa/ui/components/checkbox";
+} from "@workspace/ui/components/chart";
+import { Checkbox } from "@workspace/ui/components/checkbox";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -84,17 +84,17 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@villa/ui/components/dropdown-menu";
-import { Input } from "@villa/ui/components/input";
-import { Label } from "@villa/ui/components/label";
+} from "@workspace/ui/components/dropdown-menu";
+import { Input } from "@workspace/ui/components/input";
+import { Label } from "@workspace/ui/components/label";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@villa/ui/components/select";
-import { Separator } from "@villa/ui/components/separator";
+} from "@workspace/ui/components/select";
+import { Separator } from "@workspace/ui/components/separator";
 import {
   Sheet,
   SheetClose,
@@ -104,7 +104,7 @@ import {
   SheetHeader,
   SheetTitle,
   SheetTrigger,
-} from "@villa/ui/components/sheet";
+} from "@workspace/ui/components/sheet";
 import {
   Table,
   TableBody,
@@ -112,13 +112,13 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@villa/ui/components/table";
+} from "@workspace/ui/components/table";
 import {
   Tabs,
   TabsContent,
   TabsList,
   TabsTrigger,
-} from "@villa/ui/components/tabs";
+} from "@workspace/ui/components/tabs";
 
 // react-doctor-disable-next-line react-doctor/only-export-components -- as in the stock shadcn dashboard, this schema only derives the row type through z.infer, so unexported it would fail no-unused-vars; the cost is a full reload when editing this demo
 export const schema = z.object({

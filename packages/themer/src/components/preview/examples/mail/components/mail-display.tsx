@@ -16,27 +16,27 @@ import {
 import {
   DropdownMenuContent,
   DropdownMenuItem,
-} from "@villa/ui/components/dropdown-menu";
+} from "@workspace/ui/components/dropdown-menu";
 import {
   Avatar,
   AvatarFallback,
   AvatarImage,
-} from "@villa/ui/components/avatar";
-import { Button } from "@villa/ui/components/button";
-import { Calendar } from "@villa/ui/components/calendar";
+} from "@workspace/ui/components/avatar";
+import { Button } from "@workspace/ui/components/button";
+import { Calendar } from "@workspace/ui/components/calendar";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
-} from "@villa/ui/components/dropdown-menu";
-import { Label } from "@villa/ui/components/label";
+} from "@workspace/ui/components/dropdown-menu";
+import { Label } from "@workspace/ui/components/label";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@villa/ui/components/popover";
-import { Separator } from "@villa/ui/components/separator";
-import { Switch } from "@villa/ui/components/switch";
-import { Textarea } from "@villa/ui/components/textarea";
+} from "@workspace/ui/components/popover";
+import { Separator } from "@workspace/ui/components/separator";
+import { Switch } from "@workspace/ui/components/switch";
+import { Textarea } from "@workspace/ui/components/textarea";
 import { Mail } from "../data";
 import { useState } from "react";
 

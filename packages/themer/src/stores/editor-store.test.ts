@@ -273,31 +273,6 @@ describe("adoptDefaultPreset", () => {
 });
 
 describe("migrateEditorState", () => {
-  it("renames retired preset ids and fills the heading font", () => {
-    const { "font-heading": _heading, ...lightV0 } =
-      defaultThemeState.styles.light;
-    const v0: ThemeEditorState = {
-      ...defaultThemeState,
-      preset: "graphite",
-      styles: {
-        light: { ...lightV0, "font-serif": "Lora, serif" } as never,
-        dark: defaultThemeState.styles.dark,
-      },
-    };
-    const migrated = migrateEditorState(
-      {
-        themeState: v0,
-        themeCheckpoint: { ...v0, preset: "violet-bloom" },
-      },
-      0,
-    );
-    expect(migrated.themeState.preset).toBe("themer-graphite");
-    expect(migrated.themeCheckpoint?.preset).toBe("themer-violet-bloom");
-    expect(migrated.themeState.styles.light["font-heading"]).toBe(
-      "Lora, serif",
-    );
-  });
-
   it("drops an unedited library default so the host preset applies", () => {
     const stored = { themeState: defaultThemeState, themeCheckpoint: null };
     expect(migrateEditorState(stored, 1)).toEqual({});

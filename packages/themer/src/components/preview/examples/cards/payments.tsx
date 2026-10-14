@@ -29,15 +29,15 @@ import {
 import { MoreHorizontalIcon } from "lucide-react";
 import * as React from "react";
 
-import { Button } from "@villa/ui/components/button";
+import { Button } from "@workspace/ui/components/button";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@villa/ui/components/card";
-import { Checkbox } from "@villa/ui/components/checkbox";
+} from "@workspace/ui/components/card";
+import { Checkbox } from "@workspace/ui/components/checkbox";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -46,7 +46,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@villa/ui/components/dropdown-menu";
+} from "@workspace/ui/components/dropdown-menu";
 import {
   Table,
   TableBody,
@@ -54,7 +54,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@villa/ui/components/table";
+} from "@workspace/ui/components/table";
 
 const data: Payment[] = [
   {

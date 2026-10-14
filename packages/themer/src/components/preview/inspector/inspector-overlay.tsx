@@ -12,8 +12,8 @@
 
 import { memo } from "react";
 import { Inspect, Pin } from "lucide-react";
-import { Separator } from "@villa/ui/components/separator";
-import { cn } from "@villa/ui/lib/utils";
+import { Separator } from "@workspace/ui/components/separator";
+import { cn } from "@workspace/ui/lib/utils";
 import { InspectorClassItem } from "./inspector-class-item";
 import { INSPECTOR_CARD_ATTRIBUTE, type InspectorState } from "./use-inspector";
 

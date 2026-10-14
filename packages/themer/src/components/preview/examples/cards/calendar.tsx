@@ -2,8 +2,8 @@
 
 import { addDays } from "date-fns";
 
-import { Calendar } from "@villa/ui/components/calendar";
-import { Card, CardContent } from "@villa/ui/components/card";
+import { Calendar } from "@workspace/ui/components/calendar";
+import { Card, CardContent } from "@workspace/ui/components/card";
 
 const start = new Date(2025, 5, 5);
 

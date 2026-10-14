@@ -51,7 +51,6 @@ import { defaultThemeState, defaultHSLAdjustments } from "../config/defaults";
 import {
   getDefaultPresetId,
   hasPreset,
-  migratePresetId,
   resolvePresetStyles,
 } from "../config/presets";
 import {
@@ -109,32 +108,6 @@ function baselineOf(presetId: string, styles: ThemeStyles): PresetBaseline {
   return { preset: presetId, styles: copyStyles(styles) };
 }
 
-function migrateModeStyles(styles: unknown): unknown {
-  if (!styles || typeof styles !== "object") return styles;
-  const mode = styles as Partial<ThemeStyleProps>;
-  // v0 had no heading font: headings used the serif.
-  if (mode["font-heading"] === undefined && mode["font-serif"] !== undefined) {
-    return { ...mode, "font-heading": mode["font-serif"] };
-  }
-  return mode;
-}
-
-function migrateThemeState(state: unknown): unknown {
-  if (!state || typeof state !== "object") return state;
-  const themeState = state as Partial<ThemeEditorState>;
-  return {
-    ...themeState,
-    preset: migratePresetId(themeState.preset),
-    ...(themeState.styles && {
-      styles: {
-        ...themeState.styles,
-        light: migrateModeStyles(themeState.styles.light),
-        dark: migrateModeStyles(themeState.styles.dark),
-      },
-    }),
-  };
-}
-
 /** True when a state is the library's `default` preset with no edits. */
 function isUntouchedLibraryDefault(state: unknown): boolean {
   if (!state || typeof state !== "object") return false;
@@ -155,9 +128,6 @@ function isUntouchedLibraryDefault(state: unknown): boolean {
 /**
  * Upgrade a persisted editor state to EDITOR_STATE_VERSION.
  * v2 -> v3: use the light typography in both modes, preserving edited colours.
- * v0 -> v1: renamed preset ids (the seven local presets that shadowed
- * tweakcn ids -> `themer-<id>`, config/presets.ts LEGACY_PRESET_IDS), and a
- * `font-heading` filled from each mode's serif.
  * v1 -> v2: a stored, unedited library `default` was saved before hosts had
  * a default preset (and before fonts reached the page), so it is dropped:
  * the store then counts as fresh and adoptDefaultPreset applies the host's
@@ -171,37 +141,27 @@ export function migrateEditorState(
   if (version >= EDITOR_STATE_VERSION) {
     return state as PersistedEditorState;
   }
-  const migrated =
-    version < 1
-      ? {
-          ...state,
-          themeState: migrateThemeState(state.themeState) as ThemeEditorState,
-          themeCheckpoint: (state.themeCheckpoint
-            ? migrateThemeState(state.themeCheckpoint)
-            : null) as ThemeEditorState | null,
-        }
-      : state;
-  if (version < 2 && isUntouchedLibraryDefault(migrated.themeState)) {
+  if (version < 2 && isUntouchedLibraryDefault(state.themeState)) {
     return {} as PersistedEditorState;
   }
   return {
-    ...migrated,
-    ...(migrated.themeState && {
+    ...state,
+    ...(state.themeState && {
       themeState: {
-        ...migrated.themeState,
-        styles: copyStyles(migrated.themeState.styles),
+        ...state.themeState,
+        styles: copyStyles(state.themeState.styles),
       },
     }),
-    ...(migrated.themeCheckpoint && {
+    ...(state.themeCheckpoint && {
       themeCheckpoint: {
-        ...migrated.themeCheckpoint,
-        styles: copyStyles(migrated.themeCheckpoint.styles),
+        ...state.themeCheckpoint,
+        styles: copyStyles(state.themeCheckpoint.styles),
       },
     }),
-    ...(migrated.presetBaseline && {
+    ...(state.presetBaseline && {
       presetBaseline: {
-        ...migrated.presetBaseline,
-        styles: copyStyles(migrated.presetBaseline.styles),
+        ...state.presetBaseline,
+        styles: copyStyles(state.presetBaseline.styles),
       },
     }),
   } as PersistedEditorState;

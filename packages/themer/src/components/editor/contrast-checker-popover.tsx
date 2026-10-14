@@ -15,9 +15,9 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@villa/ui/components/dialog";
-import { ScrollArea } from "@villa/ui/components/scroll-area";
-import { Button } from "@villa/ui/components/button";
+} from "@workspace/ui/components/dialog";
+import { ScrollArea } from "@workspace/ui/components/scroll-area";
+import { Button } from "@workspace/ui/components/button";
 import { ContrastChecker } from "./contrast-checker";
 
 interface ContrastCheckerDialogProps {

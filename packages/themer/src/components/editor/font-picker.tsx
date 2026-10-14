@@ -21,9 +21,9 @@
 
 import * as React from "react";
 import { AlertCircle, ChevronDown, FunnelX } from "lucide-react";
-import { Alert, AlertAction, AlertTitle } from "@villa/ui/components/alert";
-import { Badge } from "@villa/ui/components/badge";
-import { Button } from "@villa/ui/components/button";
+import { Alert, AlertAction, AlertTitle } from "@workspace/ui/components/alert";
+import { Badge } from "@workspace/ui/components/badge";
+import { Button } from "@workspace/ui/components/button";
 import {
   Command,
   CommandEmpty,
@@ -31,18 +31,18 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
-} from "@villa/ui/components/command";
+} from "@workspace/ui/components/command";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@villa/ui/components/popover";
-import { Label } from "@villa/ui/components/label";
+} from "@workspace/ui/components/popover";
+import { Label } from "@workspace/ui/components/label";
 import {
   Marker,
   MarkerContent,
   MarkerIcon,
-} from "@villa/ui/components/marker";
+} from "@workspace/ui/components/marker";
 import {
   Select,
   SelectContent,
@@ -50,9 +50,9 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@villa/ui/components/select";
-import { Separator } from "@villa/ui/components/separator";
-import { Spinner } from "@villa/ui/components/spinner";
+} from "@workspace/ui/components/select";
+import { Separator } from "@workspace/ui/components/separator";
+import { Spinner } from "@workspace/ui/components/spinner";
 import { useFontSearch } from "../../hooks/use-font-search";
 import { useEditorStore } from "../../stores/editor-store";
 import { useOptionalThemerContext } from "../themer-provider";

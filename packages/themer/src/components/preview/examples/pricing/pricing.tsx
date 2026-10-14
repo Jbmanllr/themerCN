@@ -8,16 +8,16 @@
 import { ArrowRight, CircleCheck } from "lucide-react";
 import { useState } from "react";
 
-import { Button } from "@villa/ui/components/button";
+import { Button } from "@workspace/ui/components/button";
 import {
   Card,
   CardContent,
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@villa/ui/components/card";
-import { Separator } from "@villa/ui/components/separator";
-import { Switch } from "@villa/ui/components/switch";
+} from "@workspace/ui/components/card";
+import { Separator } from "@workspace/ui/components/separator";
+import { Switch } from "@workspace/ui/components/switch";
 
 interface PricingFeature {
   text: string;

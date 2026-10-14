@@ -8,7 +8,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-} from "@villa/ui/components/sidebar";
+} from "@workspace/ui/components/sidebar";
 
 export function NavMain({
   items,

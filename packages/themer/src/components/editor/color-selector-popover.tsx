@@ -17,7 +17,7 @@
 
 import * as React from "react";
 import { LayoutGrid, List } from "lucide-react";
-import { Button } from "@villa/ui/components/button";
+import { Button } from "@workspace/ui/components/button";
 import {
   Command,
   CommandEmpty,
@@ -25,21 +25,21 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
-} from "@villa/ui/components/command";
+} from "@workspace/ui/components/command";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@villa/ui/components/popover";
-import { ScrollArea } from "@villa/ui/components/scroll-area";
-import { Separator } from "@villa/ui/components/separator";
+} from "@workspace/ui/components/popover";
+import { ScrollArea } from "@workspace/ui/components/scroll-area";
+import { Separator } from "@workspace/ui/components/separator";
 import {
   Tabs,
   TabsContent,
   TabsList,
   TabsTrigger,
-} from "@villa/ui/components/tabs";
-import { cn } from "@villa/ui/lib/utils";
+} from "@workspace/ui/components/tabs";
+import { cn } from "@workspace/ui/lib/utils";
 import {
   filterTailwindPaletteEntries,
   getTailwindPaletteEntries,

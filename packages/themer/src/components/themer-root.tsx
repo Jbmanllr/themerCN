@@ -9,7 +9,6 @@
 import * as React from "react";
 import { createPortal } from "react-dom";
 import { useOverlayStore } from "../stores/overlay-store";
-import { useAIStore } from "../stores/ai-store";
 import { useThemerContext } from "./themer-provider";
 import { useIsMobile } from "../hooks/use-is-mobile";
 import { ThemerOverlay } from "./themer-overlay";
@@ -36,13 +35,6 @@ export function ThemerRoot({ children }: ThemerRootProps) {
   const isOpen = useOverlayStore((state) => state.isOpen);
   const { isReady } = useThemerContext();
   const isMobile = useIsMobile();
-
-  // The AI chat (hidden behind showTabAI) holds messages and pasted images as
-  // data URLs; drop them when the editor closes instead of keeping them for
-  // the page's lifetime.
-  React.useEffect(() => {
-    if (!isOpen) useAIStore.getState().reset();
-  }, [isOpen]);
 
   // Disable body scroll when open on mobile
   // Save/restore previous overflow value to avoid conflicts

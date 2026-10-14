@@ -11,7 +11,7 @@ vi.mock("../themer-provider", () => ({
   useThemerContext: () => ({ config: { showTabAI: false } }),
 }));
 
-import { SidebarProvider } from "@villa/ui/components/sidebar";
+import { SidebarProvider } from "@workspace/ui/components/sidebar";
 import { useOverlayStore } from "../../stores/overlay-store";
 import { CollapsedNavigation } from "./collapsed-navigation";
 

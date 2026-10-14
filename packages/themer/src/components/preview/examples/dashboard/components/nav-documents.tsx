@@ -10,7 +10,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@villa/ui/components/dropdown-menu";
+} from "@workspace/ui/components/dropdown-menu";
 import {
   SidebarGroup,
   SidebarGroupLabel,
@@ -19,7 +19,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   useSidebar,
-} from "@villa/ui/components/sidebar";
+} from "@workspace/ui/components/sidebar";
 
 export function NavDocuments({
   items,

@@ -1,12 +1,12 @@
 import { LucideIcon } from "lucide-react";
 
-import { cn } from "@villa/ui/lib/utils";
-import { buttonVariants } from "@villa/ui/components/button";
+import { cn } from "@workspace/ui/lib/utils";
+import { buttonVariants } from "@workspace/ui/components/button";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from "@villa/ui/components/tooltip";
+} from "@workspace/ui/components/tooltip";
 
 interface NavProps {
   isCollapsed: boolean;

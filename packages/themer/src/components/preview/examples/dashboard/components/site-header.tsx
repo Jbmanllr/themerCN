@@ -1,5 +1,5 @@
-import { Separator } from "@villa/ui/components/separator";
-import { SidebarTrigger } from "@villa/ui/components/sidebar";
+import { Separator } from "@workspace/ui/components/separator";
+import { SidebarTrigger } from "@workspace/ui/components/sidebar";
 
 export function SiteHeader() {
   return (

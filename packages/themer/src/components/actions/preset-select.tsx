@@ -18,8 +18,8 @@
 import * as React from "react";
 import { ChevronDown, ArrowLeft, ArrowRight, Shuffle } from "lucide-react";
 import { useShallow } from "zustand/react/shallow";
-import { Badge } from "@villa/ui/components/badge";
-import { Button } from "@villa/ui/components/button";
+import { Badge } from "@workspace/ui/components/badge";
+import { Button } from "@workspace/ui/components/button";
 import {
   Command,
   CommandEmpty,
@@ -27,13 +27,13 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
-} from "@villa/ui/components/command";
+} from "@workspace/ui/components/command";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@villa/ui/components/popover";
-import { Separator } from "@villa/ui/components/separator";
+} from "@workspace/ui/components/popover";
+import { Separator } from "@workspace/ui/components/separator";
 import {
   themePresets,
   getPresetIds,

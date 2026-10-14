@@ -20,15 +20,15 @@
 
 import * as React from "react";
 import { Undo2, Redo2, Code2, RotateCcw, Eye, Upload } from "lucide-react";
-import { Button } from "@villa/ui/components/button";
-import { ButtonGroup } from "@villa/ui/components/button-group";
-import { Separator } from "@villa/ui/components/separator";
-import { Switch } from "@villa/ui/components/switch";
+import { Button } from "@workspace/ui/components/button";
+import { ButtonGroup } from "@workspace/ui/components/button-group";
+import { Separator } from "@workspace/ui/components/separator";
+import { Switch } from "@workspace/ui/components/switch";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from "@villa/ui/components/tooltip";
+} from "@workspace/ui/components/tooltip";
 import { useEditorStore } from "../stores/editor-store";
 import { usePreferencesStore } from "../stores/preferences-store";
 import {

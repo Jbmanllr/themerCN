@@ -1,5 +1,5 @@
 // The public type surface of @banter/themer: re-exports of the theme, font,
-// editor, storage and AI types, plus ThemerConfig (what a host passes to
+// and editor types, plus ThemerConfig (what a host passes to
 // ThemerProvider) and the preview-tab and extra-colour types it uses.
 //
 // Contract: ThemerConfig is the host-facing API (Banter's hosts reach it
@@ -72,37 +72,9 @@ export type {
   ThemerOverlayStore,
 } from "./editor";
 
-// Storage types
-export type {
-  StorageAdapter,
-  StorageType,
-  StorageConfig,
-  PayloadTheme,
-  FileTheme,
-  ShareData,
-  StorageAdapterOptions,
-} from "./storage";
-
-// AI types
-export type {
-  AIProviderType,
-  AIProviderConfig,
-  AIGenerateRequest,
-  AIGenerateResponse,
-  AIMessage,
-  AIChatState,
-  AIChatActions,
-  AIChatStore,
-  AIProvider,
-} from "./ai";
-
-export { AI_SUGGESTED_PROMPTS, AI_SYSTEM_PROMPT } from "./ai";
-
 // Import for use in interfaces below
 import type { ComponentType, ReactNode } from "react";
-import type { AIProviderConfig } from "./ai";
 import type { ThemePreset } from "./theme";
-import type { StorageAdapter } from "./storage";
 
 // Component prop types, part of the public type surface. Nothing imports
 // them: each component declares its own props next to its code.
@@ -219,19 +191,6 @@ export interface ThemerExtraColorGroup {
 /** What a host passes to ThemerProvider as `config`, merged over defaults. */
 export interface ThemerConfig {
   /**
-   * Which storage adapter ThemerProvider creates (default "auto"; the order
-   * is in createStorageAdapter). Banter hosts pass "indexeddb"; no editor
-   * control calls the adapter.
-   */
-  storage?: "payload" | "file" | "indexeddb" | "auto";
-  /**
-   * Folder of the "file" adapters: a URL path in the browser (default
-   * "/themes"), a directory path on the server (default "./themes").
-   */
-  themesDirectory?: string;
-  /** REST endpoint of the Payload themes collection (default "/api/themes"). */
-  payloadEndpoint?: string;
-  /**
    * Preset the editor starts from when nothing is persisted yet, and the
    * fallback target of "reset" when the stored preset id no longer exists.
    * Must name a built-in or host preset; an unknown id falls back to
@@ -251,18 +210,6 @@ export interface ThemerConfig {
    * CSS value and is not written to the page. Pass a module-level constant.
    */
   extraColors?: readonly ThemerExtraColorGroup[];
-  /**
-   * Declared only: nothing reads it (ThemerProvider defaults it to false).
-   * The Generate panel is gated by `showTabAI`.
-   */
-  enableAI?: boolean;
-  /**
-   * Show the Generate (AI) tab in the editor navigation (default false). Its
-   * generation action is a mock (api/ai-generate.ts).
-   */
-  showTabAI?: boolean;
-  /** Declared only: nothing reads it (the AI generation action is a mock). */
-  aiProvider?: AIProviderConfig;
   /**
    * Keyboard shortcut that toggles the editor (default SHORTCUTS.toggle, "ctrl+shift+e"; on
    * macOS Cmd stands in for ctrl).
@@ -300,11 +247,6 @@ export interface ThemerConfig {
 export interface ThemerContextValue {
   /** Current configuration: the host's `config` merged over the defaults. */
   config: ThemerConfig;
-  /**
-   * The storage adapter: null until created, and for good if creation
-   * failed. No component reads it today.
-   */
-  storage: StorageAdapter | null;
   /** True once the client has hydrated (persisted theme state is readable). */
   isReady: boolean;
 }

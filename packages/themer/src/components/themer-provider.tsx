@@ -2,9 +2,8 @@
 
 // The editor's context root, mounted beside the host's tree by
 // ThemerDevShell (host/gate.tsx renders the shell after the page, never
-// around it): registers host presets and extra colours, creates the
-// storage adapter, applies the edited theme to the host document, and binds
-// the keyboard shortcuts.
+// around it): registers host presets and extra colours, applies the edited
+// theme to the host document, and binds the keyboard shortcuts.
 //
 // Contract:
 // - Registration (configurePresets, configureExtraColors) happens during
@@ -26,10 +25,8 @@ import { useShallow } from "zustand/react/shallow";
 import type {
   ThemerConfig,
   ThemerContextValue,
-  StorageAdapter,
   ThemeMode,
 } from "../types";
-import { createStorageAdapter } from "../storage";
 import {
   useKeyboardShortcut,
   parseShortcut,
@@ -77,32 +74,27 @@ export function useOptionalThemerContext() {
 interface ThemerProviderProps {
   children: React.ReactNode;
   config?: ThemerConfig;
-  showTabAI?: boolean;
 }
 
 /**
  * Provider for the themer package
- * Sets up storage, keyboard shortcuts, and theme application
+ * Sets up keyboard shortcuts and theme application
  */
 export function ThemerProvider({
   children,
   config: userConfig,
-  showTabAI = false,
 }: ThemerProviderProps) {
   // Merge user config with defaults
   const config = React.useMemo<ThemerConfig>(
     () => ({
-      storage: "auto",
       showTrigger: true,
       shortcut: SHORTCUTS.toggle,
       // No zIndex default: the overlay and the trigger fall back to their own
       // Z_INDEX layers (config/constants.ts); a host value applies to both.
-      enableAI: false,
-      showTabAI,
       fontCatalogEndpoint: DEFAULT_FONT_CATALOG_ENDPOINT,
       ...userConfig,
     }),
-    [showTabAI, userConfig],
+    [userConfig],
   );
 
   // Host presets must be in the registry before any child (preset picker,
@@ -136,37 +128,6 @@ export function ThemerProvider({
     config.defaultPreset,
     config.presets,
   ]);
-
-  // Storage state. No component reads it today: this port has no save-theme
-  // action (README "Run it").
-  const [storage, setStorage] = React.useState<StorageAdapter | null>(null);
-
-  // Initialize storage in useEffect (not during render to avoid side-effects)
-  React.useEffect(() => {
-    let isMounted = true;
-
-    async function initStorage() {
-      try {
-        const adapter = await createStorageAdapter({
-          mode: config.storage ?? "auto",
-          themesDirectory: config.themesDirectory,
-          payloadEndpoint: config.payloadEndpoint,
-        });
-
-        if (isMounted) {
-          setStorage(adapter);
-        }
-      } catch (error) {
-        console.error("Failed to initialize themer storage:", error);
-      }
-    }
-
-    initStorage();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [config.storage, config.themesDirectory, config.payloadEndpoint]);
 
   // Client-side ready check
   const isClientReady = React.useSyncExternalStore(
@@ -271,10 +232,9 @@ export function ThemerProvider({
   const contextValue = React.useMemo<ThemerContextValue>(
     () => ({
       config,
-      storage,
       isReady,
     }),
-    [config, storage, isReady],
+    [config, isReady],
   );
 
   return (

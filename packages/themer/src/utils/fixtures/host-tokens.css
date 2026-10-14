@@ -1,0 +1,53 @@
+/*
+ * Test fixture for parse-css.test.ts: a host app's generated token sheet,
+ * with shadcn tokens, host-only tokens (--blush, --evidence, --signal), a
+ * light-only radius, a mode-swapping .theme-inverse block, next/font
+ * variables in font stacks, and an @theme inline mapping.
+ */
+@theme inline {
+  --color-background: var(--background);
+  --color-primary: var(--primary);
+  --color-blush: var(--blush);
+  --radius-lg: var(--radius);
+  --font-sans: var(--font-sans);
+}
+
+:root {
+  --background: #FAF7F2;
+  --foreground: #2B2430;
+  --card: #FFFFFF;
+  --card-foreground: #2B2430;
+  --primary: #2B2430;
+  --primary-foreground: #FAF7F2;
+  --destructive: #B3261E;
+  --destructive-foreground: #FAF7F2;
+  --border: #E4DED6;
+  --radius: 0.75rem;
+  --font-sans: var(--font-dm-sans);
+  --font-serif: var(--font-fraunces), ui-serif, Georgia, serif;
+  --blush: #F2C9C4;
+  --evidence: #E8B04B;
+  --signal: #3457FF;
+}
+
+.dark {
+  --background: #1B1720;
+  --foreground: #FAF7F2;
+  --card: #241F2A;
+  --card-foreground: #FAF7F2;
+  --primary: #FAF7F2;
+  --primary-foreground: #2B2430;
+  --destructive: #F2665C;
+  --destructive-foreground: #1B1720;
+  --border: #3A3340;
+  --blush: #6E3F3A;
+  --evidence: #8A6420;
+  --signal: #8FA4FF;
+}
+
+.theme-inverse {
+  --background: #1B1720;
+  --foreground: #FAF7F2;
+  --primary: #FAF7F2;
+  --primary-foreground: #2B2430;
+}

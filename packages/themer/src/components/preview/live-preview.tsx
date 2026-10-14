@@ -32,16 +32,16 @@ import {
   Tablet,
 } from "lucide-react";
 import type { PanelImperativeHandle } from "react-resizable-panels";
-import { Input } from "@villa/ui/components/input";
+import { Input } from "@workspace/ui/components/input";
 import {
   ResizableHandle,
   ResizablePanel,
   ResizablePanelGroup,
-} from "@villa/ui/components/resizable";
+} from "@workspace/ui/components/resizable";
 import {
   ToggleGroup,
   ToggleGroupItem,
-} from "@villa/ui/components/toggle-group";
+} from "@workspace/ui/components/toggle-group";
 import { useEditorStore } from "../../stores/editor-store";
 import { usePreferencesStore } from "../../stores/preferences-store";
 import {

@@ -16,17 +16,17 @@
 
 import * as React from "react";
 import { ChevronDown } from "lucide-react";
-import { Button } from "@villa/ui/components/button";
+import { Button } from "@workspace/ui/components/button";
 import {
   ToggleGroup,
   ToggleGroupItem,
-} from "@villa/ui/components/toggle-group";
+} from "@workspace/ui/components/toggle-group";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from "@villa/ui/components/tooltip";
-import { cn } from "@villa/ui/lib/utils";
+} from "@workspace/ui/components/tooltip";
+import { cn } from "@workspace/ui/lib/utils";
 import { useShallow } from "zustand/react/shallow";
 import { SliderWithInput } from "./slider-with-input";
 import { useEditorStore } from "../../stores/editor-store";

@@ -23,15 +23,15 @@ import {
   Maximize2,
   Eye,
 } from "lucide-react";
-import { Button } from "@villa/ui/components/button";
+import { Button } from "@workspace/ui/components/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@villa/ui/components/dropdown-menu";
-import { Separator } from "@villa/ui/components/separator";
+} from "@workspace/ui/components/dropdown-menu";
+import { Separator } from "@workspace/ui/components/separator";
 import { useThemer } from "../hooks/use-themer";
 import { useOverlayStore } from "../stores/overlay-store";
 import { formatShortcut } from "../hooks/use-keyboard-shortcut";

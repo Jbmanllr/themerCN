@@ -1,21 +1,20 @@
-// Proves parseThemeCss on Banter's generated web.css (root and .dark colours
-// verbatim, the light-only radius mirrored into dark, .theme-inverse never
-// read, Banter-only tokens listed once as ignored, next/font variables kept in
-// font stacks) and on hand-written CSS: braces in comments and strings, nested
+// Proves parseThemeCss on a host app's generated token sheet
+// (fixtures/host-tokens.css: root and .dark colours verbatim, the light-only
+// radius mirrored into dark, .theme-inverse never read, host-only tokens
+// listed once as ignored, next/font variables kept in font stacks) and on hand-written CSS: braces in comments and strings, nested
 // at-rules, selector lists, repeated blocks, unit and colour normalisation,
-// var() chains and cycles, and host extra colour keys. Reading the real
-// web.css keeps the importer in step with the tokens it must round-trip.
+// var() chains and cycles, and host extra colour keys.
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { parseThemeCss } from "./parse-css";
 
 const webCss = readFileSync(
-  resolve(__dirname, "../../../ui-tokens/web.css"),
+  resolve(__dirname, "fixtures/host-tokens.css"),
   "utf8",
 );
 
-describe("parseThemeCss on Banter's web.css", () => {
+describe("parseThemeCss on a host token sheet", () => {
   const parsed = parseThemeCss(webCss);
 
   it("reads the root and .dark colours verbatim", () => {
@@ -38,7 +37,7 @@ describe("parseThemeCss on Banter's web.css", () => {
     expect(parsed.warnings.join("\n")).toContain(".theme-inverse");
   });
 
-  it("lists Banter-only tokens as ignored, once each", () => {
+  it("lists host-only tokens as ignored, once each", () => {
     expect(parsed.ignored).toEqual(
       expect.arrayContaining(["--blush", "--evidence", "--signal"]),
     );
@@ -285,7 +284,7 @@ describe("parseThemeCss with host extra colours", () => {
     expect(parsed.ignored).toContain("--signal");
   });
 
-  it("parses extras from Banter's web.css", () => {
+  it("parses extras from a host token sheet", () => {
     const parsed = parseThemeCss(webCss, { extraColorKeys: ["signal"] });
     expect(parsed.light.signal).toBeTypeOf("string");
     expect(parsed.dark.signal).toBeTypeOf("string");

@@ -1,6 +1,6 @@
 "use client";
 
-import { cn } from "@villa/ui/lib/utils";
+import { cn } from "@workspace/ui/lib/utils";
 
 /**
  * Three bouncing dots, announced to assistive technology as "Loading". The

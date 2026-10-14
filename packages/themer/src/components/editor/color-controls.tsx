@@ -32,13 +32,13 @@ import {
   InputGroupAddon,
   InputGroupButton,
   InputGroupInput,
-} from "@villa/ui/components/input-group";
-import { Toggle } from "@villa/ui/components/toggle";
+} from "@workspace/ui/components/input-group";
+import { Toggle } from "@workspace/ui/components/toggle";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from "@villa/ui/components/tooltip";
+} from "@workspace/ui/components/tooltip";
 import { ColorPicker } from "./color-picker";
 import { ControlSection } from "./control-section";
 import { useEditorStore } from "../../stores/editor-store";

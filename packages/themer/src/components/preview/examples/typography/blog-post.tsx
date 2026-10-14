@@ -10,11 +10,11 @@ import {
   Avatar,
   AvatarFallback,
   AvatarImage,
-} from "@villa/ui/components/avatar";
-import { Badge } from "@villa/ui/components/badge";
-import { Button } from "@villa/ui/components/button";
-import { Card, CardContent } from "@villa/ui/components/card";
-import { Separator } from "@villa/ui/components/separator";
+} from "@workspace/ui/components/avatar";
+import { Badge } from "@workspace/ui/components/badge";
+import { Button } from "@workspace/ui/components/button";
+import { Card, CardContent } from "@workspace/ui/components/card";
+import { Separator } from "@workspace/ui/components/separator";
 import {
   Bookmark,
   Calendar,

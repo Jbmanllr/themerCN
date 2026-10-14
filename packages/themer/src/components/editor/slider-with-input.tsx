@@ -8,10 +8,10 @@
 // field clamps whatever is there and commits it.
 
 import * as React from "react";
-import { Slider } from "@villa/ui/components/slider";
-import { Input } from "@villa/ui/components/input";
-import { Label } from "@villa/ui/components/label";
-import { cn } from "@villa/ui/lib/utils";
+import { Slider } from "@workspace/ui/components/slider";
+import { Input } from "@workspace/ui/components/input";
+import { Label } from "@workspace/ui/components/label";
+import { cn } from "@workspace/ui/lib/utils";
 import { clampToRange } from "../../utils/length";
 
 interface SliderWithInputProps {

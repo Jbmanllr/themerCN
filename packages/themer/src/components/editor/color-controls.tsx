@@ -253,8 +253,7 @@ export function ColorControls() {
 /**
  * Read-only swatch grid of the built-in colours of the current mode (no host
  * extra colours). No panel mounts it and the components/index.ts barrel
- * leaves it out; it is reachable by file path
- * (`@villa/themer/components/editor/color-controls`).
+ * leaves it out; no package entry exports it.
  */
 export function ColorGrid() {
   const currentStyles = useEditorStore(

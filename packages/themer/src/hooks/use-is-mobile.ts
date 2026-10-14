@@ -5,7 +5,7 @@
 import { useState, useEffect, useCallback, useSyncExternalStore } from "react";
 
 // The editor switches to its mobile drawer below 1280 (1280px).
-// Its desktop overlay renders the stock @banter/ui Sidebar, which becomes a
+// Its desktop overlay renders the stock @workspace/ui Sidebar, which becomes a
 // Sheet below shadcn's own 768px, so this value must never drop under 768:
 // the overlay would then draw around a Sidebar in Sheet mode.
 const MOBILE_BREAKPOINT = 1280;

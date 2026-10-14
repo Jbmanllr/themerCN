@@ -24,6 +24,7 @@ import { getThemerHeadScript } from "../head-script";
 
 const subscribeToHydration = () => () => {};
 
+/** Props of `<ThemerHeadScript>`. */
 export interface ThemerHeadScriptProps {
   /** The `storageNamespace` of the Host's `<Themer>`. Default `"themercn"`. */
   storageNamespace?: string;

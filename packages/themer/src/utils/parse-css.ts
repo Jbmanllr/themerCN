@@ -20,8 +20,7 @@
 // lengths to px). Non-colour keys set only for light are mirrored into dark;
 // colours never are.
 //
-// See: packages/themer/docs/API.md ("CSS Import, Sidebar Sync, Shadows, Colour
-// Groups").
+// See: packages/themer/ARCHITECTURE.md ("Export and import").
 import * as culori from "culori";
 import type {
   PartialThemeStyleProps,

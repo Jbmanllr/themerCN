@@ -1,0 +1,12 @@
+@import "@workspace/ui/globals.css";
+/* Nightjar's tokens, generated from lib/brand/nightjar.ts. Imported after the
+   shared shadcn baseline so its :root and .dark values win. */
+@import "./nightjar.css";
+
+/* The shared baseline maps only --font-sans; the Themer also edits the
+   heading, serif and mono stacks, so the Playground's utilities read them. */
+@theme inline {
+  --font-heading: var(--font-heading);
+  --font-serif: var(--font-serif);
+  --font-mono: var(--font-mono);
+}

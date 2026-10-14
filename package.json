@@ -3,11 +3,13 @@
   "version": "0.0.1",
   "private": true,
   "scripts": {
-    "build": "turbo build",
+    "build": "turbo build --filter=!@villa/themer",
     "dev": "turbo dev",
-    "lint": "turbo lint",
+    "lint": "turbo lint --filter=!@villa/themer",
     "format": "turbo format",
-    "typecheck": "turbo typecheck"
+    "typecheck": "turbo typecheck --filter=!@villa/themer",
+    "test": "turbo test --filter=!@villa/themer",
+    "e2e": "turbo e2e --filter=!@villa/themer"
   },
   "devDependencies": {
     "@workspace/eslint-config": "workspace:*",

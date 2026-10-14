@@ -4,25 +4,25 @@ import {
   Avatar,
   AvatarFallback,
   AvatarImage,
-} from "@villa/ui/components/avatar";
-import { Button } from "@villa/ui/components/button";
+} from "@workspace/ui/components/avatar";
+import { Button } from "@workspace/ui/components/button";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@villa/ui/components/card";
-import { Input } from "@villa/ui/components/input";
-import { Label } from "@villa/ui/components/label";
+} from "@workspace/ui/components/card";
+import { Input } from "@workspace/ui/components/input";
+import { Label } from "@workspace/ui/components/label";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@villa/ui/components/select";
-import { Separator } from "@villa/ui/components/separator";
+} from "@workspace/ui/components/select";
+import { Separator } from "@workspace/ui/components/separator";
 import { avatarDataUri } from "../avatar-data-uri";
 
 const people = [

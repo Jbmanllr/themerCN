@@ -26,51 +26,17 @@ import { STORAGE_KEYS } from "../config/constants";
 export const PREFERENCES_VERSION = 2;
 
 /**
- * Pre-v2 ControlSection kept its open states under its own localStorage key;
- * v2 moves them into `sectionStates`. The old key is read once by the
- * migration and left in place (harmless, never read again).
- */
-export const LEGACY_SECTION_STATES_KEY = "themer-section-states";
-
-function readLegacySectionStates(): Record<string, boolean> | undefined {
-  if (typeof window === "undefined") return undefined;
-  try {
-    const stored = window.localStorage.getItem(LEGACY_SECTION_STATES_KEY);
-    if (!stored) return undefined;
-    const parsed: unknown = JSON.parse(stored);
-    if (!parsed || typeof parsed !== "object") return undefined;
-    return Object.fromEntries(
-      Object.entries(parsed).filter(
-        (entry): entry is [string, boolean] => typeof entry[1] === "boolean",
-      ),
-    );
-  } catch {
-    return undefined;
-  }
-}
-
-/**
  * Upgrade persisted preferences to PREFERENCES_VERSION.
  * v0 -> v1: the "custom" preview tab merged into "live". Other unknown tab
  * ids are left as stored; the preview tabs fall back to their first tab.
- * v1 -> v2: section open states move from the legacy localStorage key into
- * `sectionStates` (new keys get their defaults from the store); stored
- * `sectionStates` win over the legacy key. `readLegacy` is injectable so tests
- * need no localStorage.
  */
 export function migratePreferences(
   persistedState: unknown,
   version: number,
-  readLegacy: () =>
-    Record<string, boolean> | undefined = readLegacySectionStates,
 ): Partial<PreferencesStore> {
   let state = (persistedState ?? {}) as Partial<PreferencesStore>;
   if (version < 1 && state.previewTab === "custom") {
     state = { ...state, previewTab: "live" };
-  }
-  if (version < 2 && state.sectionStates === undefined) {
-    const legacy = readLegacy();
-    if (legacy) state = { ...state, sectionStates: legacy };
   }
   return state;
 }
@@ -93,7 +59,6 @@ export const usePreferencesStore = create<PreferencesStore>()(
       tailwindVersion: "4",
       packageManager: "pnpm",
       showContrastWarnings: true,
-      aiProvider: undefined,
       previewTab: "cards",
       sidebarCollapsed: false,
       themeOverrideEnabled: true,
@@ -116,7 +81,6 @@ export const usePreferencesStore = create<PreferencesStore>()(
       },
       setPackageManager: (packageManager) => set({ packageManager }),
       setShowContrastWarnings: (show) => set({ showContrastWarnings: show }),
-      setAIProvider: (provider) => set({ aiProvider: provider }),
       setPreviewTab: (tab) => set({ previewTab: tab }),
       setSidebarCollapsed: (collapsed) => set({ sidebarCollapsed: collapsed }),
       setThemeOverrideEnabled: (enabled) =>

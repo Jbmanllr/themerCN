@@ -7,7 +7,7 @@ import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { SidebarProvider } from "@villa/ui/components/sidebar";
+import { SidebarProvider } from "@workspace/ui/components/sidebar";
 
 import { NavUser } from "./nav-user";
 

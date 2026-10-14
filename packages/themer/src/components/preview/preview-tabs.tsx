@@ -22,22 +22,22 @@
 
 import * as React from "react";
 import { Inspect, Maximize, Minimize, MoreVertical } from "lucide-react";
-import { Button } from "@villa/ui/components/button";
+import { Button } from "@workspace/ui/components/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@villa/ui/components/dropdown-menu";
-import { ScrollArea, ScrollBar } from "@villa/ui/components/scroll-area";
-import { Tabs, TabsContent, TabsList } from "@villa/ui/components/tabs";
-import { Toggle } from "@villa/ui/components/toggle";
+} from "@workspace/ui/components/dropdown-menu";
+import { ScrollArea, ScrollBar } from "@workspace/ui/components/scroll-area";
+import { Tabs, TabsContent, TabsList } from "@workspace/ui/components/tabs";
+import { Toggle } from "@workspace/ui/components/toggle";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from "@villa/ui/components/tooltip";
-import { cn } from "@villa/ui/lib/utils";
+} from "@workspace/ui/components/tooltip";
+import { cn } from "@workspace/ui/lib/utils";
 import { useColorFocusTrigger } from "../../hooks/use-color-focus";
 import { useIsMobile } from "../../hooks/use-is-mobile";
 import {

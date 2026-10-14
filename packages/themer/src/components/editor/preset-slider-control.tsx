@@ -10,8 +10,8 @@ import * as React from "react";
 import {
   ToggleGroup,
   ToggleGroupItem,
-} from "@villa/ui/components/toggle-group";
-import { cn } from "@villa/ui/lib/utils";
+} from "@workspace/ui/components/toggle-group";
+import { cn } from "@workspace/ui/lib/utils";
 import { useEditorStore } from "../../stores/editor-store";
 import { CONTROL_RANGES } from "../../config/constants";
 import type { CommonStyleKey } from "../../types";

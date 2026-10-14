@@ -6,7 +6,7 @@
 // mobile-drawer.tsx) has its own preset select and draws the same PanelTabs
 // through MobilePanelContent.
 
-import { SidebarGroup } from "@villa/ui/components/sidebar";
+import { SidebarGroup } from "@workspace/ui/components/sidebar";
 import { useEditorStore } from "../../stores/editor-store";
 import { PresetSelect } from "../actions/preset-select";
 import { PanelTabs } from "./panel-tabs";

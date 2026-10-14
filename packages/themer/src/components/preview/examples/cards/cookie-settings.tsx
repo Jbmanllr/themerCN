@@ -1,6 +1,6 @@
 "use client";
 
-import { Button } from "@villa/ui/components/button";
+import { Button } from "@workspace/ui/components/button";
 import {
   Card,
   CardContent,
@@ -8,9 +8,9 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@villa/ui/components/card";
-import { Label } from "@villa/ui/components/label";
-import { Switch } from "@villa/ui/components/switch";
+} from "@workspace/ui/components/card";
+import { Label } from "@workspace/ui/components/label";
+import { Switch } from "@workspace/ui/components/switch";
 
 export function CardsCookieSettings() {
   return (

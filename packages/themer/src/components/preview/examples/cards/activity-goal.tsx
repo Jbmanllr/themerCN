@@ -5,7 +5,7 @@ import * as React from "react";
 // react-doctor-disable-next-line react-doctor/prefer-dynamic-import -- this demo is reached only through lazy(() => import("./examples/cards")) in builtin-tabs.tsx and preview-cards.tsx, so recharts already loads on demand
 import { Bar, BarChart } from "recharts";
 
-import { Button } from "@villa/ui/components/button";
+import { Button } from "@workspace/ui/components/button";
 import {
   Card,
   CardContent,
@@ -13,8 +13,8 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@villa/ui/components/card";
-import { ChartConfig, ChartContainer } from "@villa/ui/components/chart";
+} from "@workspace/ui/components/card";
+import { ChartConfig, ChartContainer } from "@workspace/ui/components/chart";
 
 const data = [
   {

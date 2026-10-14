@@ -13,7 +13,7 @@
 // See: packages/themer/ARCHITECTURE.md ("Core Entry Points").
 
 import * as React from "react";
-import { SidebarProvider, SidebarInset } from "@villa/ui/components/sidebar";
+import { SidebarProvider, SidebarInset } from "@workspace/ui/components/sidebar";
 import { useOverlayStore } from "../stores/overlay-store";
 import { usePreferencesStore } from "../stores/preferences-store";
 import { useThemerContext } from "./themer-provider";

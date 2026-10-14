@@ -18,7 +18,7 @@ import {
   Avatar,
   AvatarFallback,
   AvatarImage,
-} from "@villa/ui/components/avatar";
+} from "@workspace/ui/components/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -27,13 +27,13 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@villa/ui/components/dropdown-menu";
+} from "@workspace/ui/components/dropdown-menu";
 import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
   useSidebar,
-} from "@villa/ui/components/sidebar";
+} from "@workspace/ui/components/sidebar";
 
 export function NavUser({
   user,

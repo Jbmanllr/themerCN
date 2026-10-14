@@ -12,7 +12,7 @@ import {
   DrawerContent,
   DrawerHeader,
   DrawerTitle,
-} from "@villa/ui/components/drawer";
+} from "@workspace/ui/components/drawer";
 import {
   useApplyThemePreset,
   usePreset,

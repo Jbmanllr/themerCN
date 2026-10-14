@@ -15,8 +15,8 @@ import {
   Alert,
   AlertDescription,
   AlertTitle,
-} from "@villa/ui/components/alert";
-import { Button } from "@villa/ui/components/button";
+} from "@workspace/ui/components/alert";
+import { Button } from "@workspace/ui/components/button";
 import {
   Dialog,
   DialogClose,
@@ -25,10 +25,10 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@villa/ui/components/dialog";
-import { Field, FieldLabel } from "@villa/ui/components/field";
-import { Switch } from "@villa/ui/components/switch";
-import { Textarea } from "@villa/ui/components/textarea";
+} from "@workspace/ui/components/dialog";
+import { Field, FieldLabel } from "@workspace/ui/components/field";
+import { Switch } from "@workspace/ui/components/switch";
+import { Textarea } from "@workspace/ui/components/textarea";
 import { useEditorStore } from "../../stores/editor-store";
 import { parseThemeCss, type ParsedThemeCss } from "../../utils/parse-css";
 import { getExtraColorKeys } from "../../config/extra-colors";

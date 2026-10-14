@@ -44,12 +44,6 @@ export { InspectorOverlay } from "./preview/inspector-overlay";
 export { PreviewCards } from "./preview/preview-cards";
 export { PreviewTabs } from "./preview/preview-tabs";
 
-// AI components
-export { AIChat } from "./ai/ai-chat";
-export { AIPromptInput } from "./ai/ai-prompt-input";
-export { AISuggestions } from "./ai/ai-suggestions";
-export { AIMessageItem } from "./ai/ai-message";
-
 // Overlay components
 export {
   MobileDrawer,
@@ -63,16 +57,11 @@ export {
   ColorsPanel,
   TypographyPanel,
   OtherPanel,
-  GeneratePanel,
 } from "./panels";
 
 // Sidebar components
 export {
-  AI_PANEL,
-  BASE_PANELS,
   PANELS,
-  getPanelConfigs,
-  getVisiblePanel,
   type Panel,
   type PanelConfig,
   CollapsedNavigation,

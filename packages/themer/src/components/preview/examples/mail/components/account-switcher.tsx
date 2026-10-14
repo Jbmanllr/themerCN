@@ -1,13 +1,13 @@
 import * as React from "react";
 
-import { cn } from "@villa/ui/lib/utils";
+import { cn } from "@workspace/ui/lib/utils";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@villa/ui/components/select";
+} from "@workspace/ui/components/select";
 
 interface AccountSwitcherProps {
   isCollapsed: boolean;

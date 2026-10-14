@@ -14,9 +14,9 @@
 // stored format is kept unless the user picks from the native input.
 
 import * as React from "react";
-import { Label } from "@villa/ui/components/label";
-import { Input } from "@villa/ui/components/input";
-import { cn } from "@villa/ui/lib/utils";
+import { Label } from "@workspace/ui/components/label";
+import { Input } from "@workspace/ui/components/input";
+import { cn } from "@workspace/ui/lib/utils";
 import { useColorFocus } from "../../hooks/use-color-focus";
 import { debounce } from "../../utils/debounce";
 import { isValidColor, toColorInputValue } from "../../utils/color-converter";

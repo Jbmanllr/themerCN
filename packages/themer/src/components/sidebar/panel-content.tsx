@@ -3,7 +3,6 @@
 import { ColorsPanel } from "../panels/colors-panel";
 import { TypographyPanel } from "../panels/typography-panel";
 import { OtherPanel } from "../panels/other-panel";
-import { GeneratePanel } from "../panels/generate-panel";
 import type { Panel } from "./panels-config";
 
 interface PanelContentProps {
@@ -21,8 +20,6 @@ export function PanelContent({ panel }: PanelContentProps) {
       return <TypographyPanel />;
     case "other":
       return <OtherPanel />;
-    case "generate":
-      return <GeneratePanel />;
     default:
       return null;
   }

@@ -8,7 +8,7 @@
 
 import * as React from "react";
 import { Paintbrush } from "lucide-react";
-import { cn } from "@villa/ui/lib/utils";
+import { cn } from "@workspace/ui/lib/utils";
 import { useOverlayStore } from "../stores/overlay-store";
 import { useThemerContext } from "./themer-provider";
 import { SHORTCUTS, Z_INDEX } from "../config/constants";

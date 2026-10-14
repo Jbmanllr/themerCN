@@ -1,15 +1,15 @@
 {
-  "name": "themercn",
+  "name": "themercn-workspace",
   "version": "0.0.1",
   "private": true,
   "scripts": {
-    "build": "turbo build --filter=!@villa/themer",
+    "build": "turbo build",
     "dev": "turbo dev",
-    "lint": "turbo lint --filter=!@villa/themer",
+    "lint": "turbo lint",
     "format": "turbo format",
-    "typecheck": "turbo typecheck --filter=!@villa/themer",
-    "test": "turbo test --filter=!@villa/themer",
-    "e2e": "turbo e2e --filter=!@villa/themer"
+    "typecheck": "turbo typecheck",
+    "test": "turbo test",
+    "e2e": "turbo e2e"
   },
   "devDependencies": {
     "@workspace/eslint-config": "workspace:*",

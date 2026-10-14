@@ -2,14 +2,14 @@
 
 import { Circle, Star } from "lucide-react";
 
-import { Button } from "@villa/ui/components/button";
+import { Button } from "@workspace/ui/components/button";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@villa/ui/components/card";
+} from "@workspace/ui/components/card";
 
 export function GithubCard() {
   return (

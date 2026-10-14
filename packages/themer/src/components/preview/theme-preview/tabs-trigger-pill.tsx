@@ -1,7 +1,7 @@
 // The pill-shaped trigger of the preview tab bar: the stock `TabsTrigger` with
 // a call-site `className` (ADR-0080: `@banter/ui` itself is never restyled).
-import { TabsTrigger } from "@villa/ui/components/tabs";
-import { cn } from "@villa/ui/lib/utils";
+import { TabsTrigger } from "@workspace/ui/components/tabs";
+import { cn } from "@workspace/ui/lib/utils";
 import * as React from "react";
 
 const TabsTriggerPill = ({

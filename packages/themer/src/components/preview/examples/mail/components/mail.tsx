@@ -21,21 +21,21 @@ import {
   Users2,
 } from "lucide-react";
 
-import { cn } from "@villa/ui/lib/utils";
-import { Input } from "@villa/ui/components/input";
+import { cn } from "@workspace/ui/lib/utils";
+import { Input } from "@workspace/ui/components/input";
 import {
   ResizableHandle,
   ResizablePanel,
   ResizablePanelGroup,
-} from "@villa/ui/components/resizable";
-import { Separator } from "@villa/ui/components/separator";
+} from "@workspace/ui/components/resizable";
+import { Separator } from "@workspace/ui/components/separator";
 import {
   Tabs,
   TabsContent,
   TabsList,
   TabsTrigger,
-} from "@villa/ui/components/tabs";
-import { TooltipProvider } from "@villa/ui/components/tooltip";
+} from "@workspace/ui/components/tabs";
+import { TooltipProvider } from "@workspace/ui/components/tooltip";
 import { AccountSwitcher } from "./account-switcher";
 import { MailDisplay } from "./mail-display";
 import { MailList } from "./mail-list";

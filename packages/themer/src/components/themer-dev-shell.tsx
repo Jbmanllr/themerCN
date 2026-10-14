@@ -2,8 +2,7 @@
 
 // The editor as a host app mounts it for local development, beside the host's
 // tree (host/gate.tsx): ThemerProvider and the trigger and overlay
-// (ThemerOverlayOnly), with the editor's own QueryClient and the IndexedDB
-// storage adapter.
+// (ThemerOverlayOnly), with the editor's own QueryClient.
 //
 // Contract:
 // - It takes no children: the host page renders beside it, never inside it,
@@ -13,10 +12,7 @@
 //   not share or be cleared with the host's product cache, and the host's
 //   queries keep the host's client and its freshness rules, because no host
 //   component renders below this one (themer-dev-shell.test.tsx).
-// - `storage: "indexeddb"` only selects the adapter ThemerProvider creates.
-//   This port has no save-theme action, so nothing writes to it today
-//   (README "Run it"); the edited theme persists in this browser's localStorage
-//   only.
+// - The edited theme persists in this browser's localStorage only.
 // - The host stays in charge of the light/dark class (next-themes); the
 //   editor only overrides CSS variables.
 // - The host compiles the editor's Tailwind utilities itself: its themer.css
@@ -89,7 +85,6 @@ export function ThemerDevShell({
       previewTabs,
       previewWrapper,
       showTrigger: true,
-      storage: "indexeddb",
     }),
     [
       defaultPreset,

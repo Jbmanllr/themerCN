@@ -99,27 +99,11 @@ export const SHORTCUTS = {
 /**
  * localStorage keys. `editor` and `preferences` are the persisted stores
  * (editor-store.ts, preferences-store.ts) and are also read by the
- * pre-hydration script (utils/theme-script.ts). `themes` has no reader: the
- * editor has no save-theme action.
+ * pre-hydration script (utils/theme-script.ts).
  */
 export const STORAGE_KEYS = {
   editor: "villa-themer-editor-state",
   preferences: "villa-themer-preferences",
-  themes: "themer-saved-themes",
-} as const;
-
-/**
- * IndexedDB defaults for IndexedDBStorageAdapter, the saved-theme store that
- * no editor UI calls (README "Run it"). Only `name` and `stores.themes` are
- * read; `version` and `stores.preferences` have no reader.
- */
-export const INDEXED_DB = {
-  name: "themer-db",
-  version: 1,
-  stores: {
-    themes: "themes",
-    preferences: "preferences",
-  },
 } as const;
 
 /**

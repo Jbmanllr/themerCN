@@ -9,7 +9,7 @@
 // what components/index.ts exports as `ThemerHeader`.
 
 import { X } from "lucide-react";
-import { SidebarTrigger } from "@villa/ui/components/sidebar";
+import { SidebarTrigger } from "@workspace/ui/components/sidebar";
 import { ActionButton } from "../ui/action-button";
 
 interface ThemerHeaderProps {

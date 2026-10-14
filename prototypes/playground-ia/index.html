@@ -1,0 +1,303 @@
+<!doctype html>
+<!--
+  PROTOTYPE — throwaway. Lives only on branch prototype/playground-ia, never merged.
+  Question (wayfinder #8): What are the Playground's information architecture and fictional brand?
+  Plan: three structurally different directions (brand + navigation model + Themer mount),
+  switchable via ?variant=A|B|C, each wireframing three key screens via ?screen=home|product|chat|routes|data.
+  Run: open this file in a browser. ← / → cycle variants.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PROTOTYPE · Playground IA</title>
+<style>
+  :root {
+    --background:#fff; --foreground:#0a0a0a; --muted:#f4f4f5; --muted-foreground:#71717a;
+    --border:#e4e4e7; --primary:#18181b; --primary-foreground:#fafafa; --accent:#f4f4f5; --radius:10px;
+    --ph:#e4e4e7;
+  }
+  .dark { --background:#0a0a0a; --foreground:#fafafa; --muted:#18181b; --muted-foreground:#a1a1aa;
+    --border:#27272a; --primary:#fafafa; --primary-foreground:#18181b; --accent:#27272a; --ph:#27272a; }
+  /* per-brand primary, to hint the brand preset */
+  [data-v=A] { --primary:#3f5f3a; --primary-foreground:#f5f1e8; }
+  [data-v=B] { --primary:#4f46e5; --primary-foreground:#fff; }
+  .dark[data-v=A] { --primary:#9bc28f; --primary-foreground:#13210f; }
+  .dark[data-v=B] { --primary:#818cf8; --primary-foreground:#0b0b2a; }
+  * { box-sizing:border-box; }
+  body { margin:0; font:14px/1.45 ui-sans-serif,system-ui,sans-serif; background:var(--background); color:var(--foreground); }
+  a { color:inherit; text-decoration:none; }
+  .ph { background:var(--ph); border-radius:var(--radius); display:flex; align-items:center; justify-content:center; color:var(--muted-foreground); font-size:12px; }
+  .btn { display:inline-flex; align-items:center; gap:6px; padding:8px 14px; border-radius:var(--radius); background:var(--primary); color:var(--primary-foreground); font-weight:500; border:0; cursor:pointer; font:inherit; }
+  .btn.o { background:transparent; color:var(--foreground); border:1px solid var(--border); }
+  .card { border:1px solid var(--border); border-radius:var(--radius); padding:16px; background:var(--background); }
+  .muted { color:var(--muted-foreground); }
+  .row { display:flex; gap:12px; align-items:center; }
+  .col { display:flex; flex-direction:column; gap:12px; }
+  .grid { display:grid; gap:16px; }
+  .chip { font-size:12px; padding:2px 8px; border:1px solid var(--border); border-radius:999px; }
+  .note { position:relative; border:2px dashed #f59e0b; background:#fffbeb; color:#78350f; border-radius:8px; padding:10px 12px; font-size:12.5px; }
+  .note b { color:#92400e; }
+  h1,h2,h3 { margin:0; letter-spacing:-.01em; }
+  h1 { font-size:40px; line-height:1.1; } h2 { font-size:22px; } h3 { font-size:15px; }
+  pre { margin:0; font:12px/1.5 ui-monospace,monospace; white-space:pre; overflow:auto; }
+  .bubble { padding:10px 12px; border-radius:var(--radius); max-width:75%; }
+  .me { background:var(--primary); color:var(--primary-foreground); align-self:flex-end; }
+  .bot { background:var(--muted); }
+  input.inp { border:1px solid var(--border); border-radius:var(--radius); padding:10px 12px; background:var(--background); color:var(--foreground); font:inherit; flex:1; }
+
+  /* Themer stand-ins */
+  .themer { background:#111; color:#eee; font-size:12px; }
+  .themer .sw { width:18px; height:18px; border-radius:4px; display:inline-block; border:1px solid #333; }
+  .themer .lbl { color:#888; text-transform:uppercase; font-size:10px; letter-spacing:.08em; }
+
+  /* switcher (not part of the design) */
+  #proto-bar { position:fixed; bottom:16px; left:50%; transform:translateX(-50%); z-index:9999; display:flex; gap:4px; align-items:center;
+    background:#000; color:#fff; border-radius:999px; padding:6px; box-shadow:0 8px 24px rgba(0,0,0,.35); font:13px ui-sans-serif,system-ui; max-width:calc(100vw - 32px); flex-wrap:wrap; justify-content:center; }
+  #proto-bar button { background:#222; color:#fff; border:0; border-radius:999px; padding:6px 10px; cursor:pointer; font:inherit; }
+  #proto-bar button.on { background:#fde047; color:#000; }
+  #proto-bar .sep { width:1px; height:20px; background:#444; margin:0 4px; }
+  #proto-bar .label { padding:0 8px; min-width:180px; text-align:center; }
+  @media (max-width:700px){ h1{font-size:28px;} .hide-sm{display:none!important;} }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<div id="proto-bar"></div>
+<script>
+/* ---------- shared IA (identical across variants unless a variant overrides) ---------- */
+const ROUTES = `app/
+├─ (marketing)/            shared: SiteHeader + SiteFooter
+│  ├─ page.tsx             /                  Home
+│  ├─ features/            /features          Landing / features
+│  ├─ pricing/             /pricing
+│  ├─ about/               /about
+│  └─ contact/             /contact           form → toast, no submit
+├─ (content)/blog/         shared: SiteHeader + SiteFooter
+│  ├─ page.tsx             /blog              index
+│  ├─ category/[slug]/     /blog/category/brewing
+│  └─ [slug]/              /blog/how-to-dial-in-espresso
+├─ (shop)/                 shared: SiteHeader (cart count) + SiteFooter
+│  ├─ shop/                /shop              all categories
+│  ├─ shop/[category]/     /shop/beans
+│  ├─ shop/p/[slug]/       /shop/p/night-owl-blend
+│  ├─ cart/                /cart              in-memory cart (zustand, no backend)
+│  └─ checkout/            /checkout          fake form, ends on a confirmation state
+├─ (auth)/                 shared: centered card layout
+│  ├─ login/  signup/
+├─ app/                    shared: AppShell (sidebar + topbar)
+│  ├─ page.tsx             /app               Dashboard
+│  ├─ chat/[[...id]]/      /app/chat          LLM chat, scripted replies
+│  └─ settings/            /app/settings      tabs: profile · billing · notifications
+├─ design-system/          shared: DocsShell (left nav of every component)
+│  ├─ page.tsx             /design-system     overview, light|dark side by side
+│  ├─ tokens/              /design-system/tokens   colors · radius · type · shadows
+│  └─ [component]/         /design-system/button   one page per packages/ui component (61)
+└─ not-found.tsx           404`;
+
+const DATA = `// apps/web/lib/mock/*.ts — fixed, typed, no backend, no randomness (stable screenshots)
+type Product  = { slug; name; category: CategorySlug; price: number /*cents*/; compareAt?: number;
+                  rating: number; reviewCount: number; badges: ("new"|"sale"|"bestseller")[];
+                  options: { name: string; values: string[] }[]; image: ImageRef; description: string }
+type Category = { slug; name; blurb }
+type CartLine = { productSlug; option: Record<string,string>; qty }       // client store only
+type Post     = { slug; title; excerpt; category: PostCategorySlug; author: AuthorId;
+                  publishedAt: ISODate; readingMinutes; cover: ImageRef; body: Block[] }  // Block = p|h2|quote|code|image|list
+type Author   = { id; name; role; avatar: ImageRef }
+type Plan     = { id; name; monthly; yearly; features: string[]; highlighted?: boolean }
+type Metric   = { id; label; value; delta: number; series: number[] }     // dashboard cards + chart
+type Order    = { id; customer; status: "paid"|"pending"|"refunded"; total; date }  // dashboard table
+type ChatThread = { id; title; messages: { role: "user"|"assistant"; content: Block[] }[] }
+type ScriptedReply = { match: RegExp | "fallback"; reply: Block[]; delayMs }        // canned stream
+type ImageRef = { kind: "illustration" | "photo-placeholder"; seed; alt }`;
+
+/* ---------- variants ---------- */
+const V = {
+  A: {
+    name: "Site-first · floating Themer",
+    brand: "Nightjar Coffee Co.",
+    voice: "Warm, unhurried, a little nerdy about brewing. Short sentences. “Good coffee, slowly.”",
+    imagery: "Flat vector illustrations (beans, kettles, birds) generated in-repo as SVG — no stock photos, no licensing, theme-tinted via currentColor.",
+    themer: "Floating launcher (bottom-right) opens the Themer as an overlay drawer over the real page. The page is the preview; nothing reflows.",
+    nav: "Classic website header (Shop · Blog · Pricing · About) + footer sitemap. /app gets its own AppShell sidebar. Design system linked from the footer and a “Design system” header chip.",
+  },
+  B: {
+    name: "App-shell everywhere · docked Themer",
+    brand: "Lumen — analytics for small teams",
+    voice: "Crisp SaaS. Confident, plain verbs, numbers up front. “See what changed. Ship what matters.”",
+    imagery: "Product screenshots made of real Playground components (charts, tables) + abstract gradient blobs drawn from --primary/--accent. Shop sells merch & desk hardware.",
+    themer: "Docked right panel that pushes the page (split view, resizable). Toggle with ⌘. — content reflows so you see responsive breakpoints while editing.",
+    nav: "One persistent left rail for the whole Playground: Marketing / Blog / Shop / App / Design system as groups. Every screen is one click from every other.",
+  },
+  C: {
+    name: "Editor-first showroom · fixed Themer",
+    brand: "No single brand — “Showroom” with per-section tenants",
+    voice: "Each section borrows a micro-brand (Nightjar shop, Lumen app, Field Notes blog). Hub copy is neutral and instructional.",
+    imagery: "Grey placeholder blocks with labels everywhere — the point is token surfaces, not illustration.",
+    themer: "Themer is the chrome: fixed left editor, screen picker on top, page renders in a resizable canvas (iframe) with device widths. tweakcn-style.",
+    nav: "Hub grid of every screen; a top screen-picker dropdown inside the canvas. No site header — sections are tenants.",
+  },
+};
+const SCREENS = { home:"Home", product:"Product", chat:"Chat", routes:"Route tree", data:"Mock data" };
+
+/* ---------- screen wireframes per variant ---------- */
+function siteHeaderA(){ return `
+  <header class="row" style="justify-content:space-between;padding:14px 24px;border-bottom:1px solid var(--border)">
+    <div class="row"><div class="ph" style="width:28px;height:28px;border-radius:50%">🐦</div><b>Nightjar</b></div>
+    <nav class="row hide-sm muted"><a>Shop</a><a>Blog</a><a>Pricing</a><a>About</a><span class="chip">Design system</span></nav>
+    <div class="row"><a class="muted">Log in</a><span class="chip">Cart · 2</span></div>
+  </header>`; }
+function footerA(){ return `<footer class="grid" style="grid-template-columns:repeat(auto-fit,minmax(120px,1fr));padding:24px;border-top:1px solid var(--border);margin-top:32px" >
+  ${["Shop","Learn","Company","Playground"].map(h=>`<div class="col muted" style="gap:4px"><b style="color:var(--foreground)">${h}</b><span>Link</span><span>Link</span><span>Link</span></div>`).join("")}</footer>`; }
+
+function themerFloating(open){ return `
+  <div style="position:fixed;right:16px;bottom:72px;z-index:50">
+    ${open?`<div class="themer card" style="width:300px;height:420px;margin-bottom:8px;border-color:#333;padding:12px;display:flex;flex-direction:column;gap:10px">
+      <div class="row" style="justify-content:space-between"><b>Themer</b><span class="lbl">overlay</span></div>
+      <div class="lbl">Preset</div><div class="row">${["#3f5f3a","#4f46e5","#e11d48","#0ea5e9"].map(c=>`<span class="sw" style="background:${c}"></span>`).join("")}</div>
+      <div class="lbl">Colors · Radius · Fonts · Shadows</div><div class="ph" style="flex:1;background:#222">token controls</div></div>`:""}
+    <button class="btn" style="background:#111;color:#fff;border-radius:999px">🎨 Themer</button>
+  </div>`; }
+
+const W = {
+  A: {
+    home: () => `${siteHeaderA()}
+      <section class="grid" style="grid-template-columns:repeat(auto-fit,minmax(280px,1fr));padding:48px 24px;align-items:center">
+        <div class="col"><span class="chip" style="align-self:flex-start">New: Winter roast</span>
+          <h1>Good coffee, slowly.</h1><p class="muted">Small-batch beans, brew guides, and a subscription that remembers how you like it.</p>
+          <div class="row"><a class="btn">Shop beans</a><a class="btn o">Read brew guides</a></div></div>
+        <div class="ph" style="height:280px">illustration: kettle + bird (SVG, tinted)</div>
+      </section>
+      <section style="padding:0 24px"><h2>Bestsellers</h2>
+        <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr));margin-top:12px">
+          ${["Night Owl Blend","Ethiopia Guji","Decaf Dusk","Hand grinder"].map(n=>`<div class="col" style="gap:6px"><div class="ph" style="aspect-ratio:1">product</div><b>${n}</b><span class="muted">$18.00</span></div>`).join("")}</div></section>
+      <section class="grid" style="grid-template-columns:repeat(auto-fit,minmax(220px,1fr));padding:32px 24px">
+        <div class="card col"><h3>From the blog</h3><span class="muted">How to dial in espresso · 6 min</span></div>
+        <div class="card col"><h3>Subscribe & save</h3><span class="muted">Plans from $14/mo → /pricing</span></div>
+        <div class="card col"><h3>Ask the Brew Assistant</h3><span class="muted">LLM chat in /app/chat</span></div></section>
+      ${footerA()}${themerFloating(true)}`,
+    product: () => `${siteHeaderA()}
+      <div style="padding:12px 24px" class="muted">Shop / Beans / Night Owl Blend</div>
+      <section class="grid" style="grid-template-columns:repeat(auto-fit,minmax(280px,1fr));padding:0 24px;gap:32px">
+        <div class="col"><div class="ph" style="aspect-ratio:1">hero illustration</div><div class="row">${[1,2,3,4].map(()=>`<div class="ph" style="width:56px;height:56px">·</div>`).join("")}</div></div>
+        <div class="col"><span class="chip" style="align-self:flex-start">Bestseller</span><h1 style="font-size:32px">Night Owl Blend</h1>
+          <div class="row"><b style="font-size:20px">$18.00</b><span class="muted">★ 4.8 (212)</span></div>
+          <p class="muted">Dark chocolate, molasses, a whisper of cherry. Built for late espresso.</p>
+          <div class="lbl muted">Grind</div><div class="row">${["Whole bean","Espresso","Filter"].map((g,i)=>`<span class="chip" style="${i==0?'border-color:var(--primary)':''}">${g}</span>`).join("")}</div>
+          <div class="lbl muted">Size</div><div class="row">${["250g","1kg"].map((g,i)=>`<span class="chip" style="${i==0?'border-color:var(--primary)':''}">${g}</span>`).join("")}</div>
+          <div class="row"><div class="chip">− 1 +</div><a class="btn" style="flex:1;justify-content:center">Add to cart</a></div>
+          <div class="card muted">Accordion: Origin · Brewing · Shipping</div></div></section>
+      <section style="padding:32px 24px"><h2>Reviews</h2><div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(220px,1fr));margin-top:12px">${[1,2,3].map(()=>`<div class="card col"><span>★★★★★</span><span class="muted">“Review text from fixed mock data.”</span></div>`).join("")}</div></section>
+      ${footerA()}${themerFloating(false)}`,
+    chat: () => `
+      <div style="display:grid;grid-template-columns:220px 1fr;min-height:100vh">
+        <aside class="col hide-sm" style="border-right:1px solid var(--border);padding:16px;background:var(--muted)">
+          <b>Nightjar · App</b><div class="col muted" style="gap:6px;margin-top:8px"><span>Dashboard</span><b style="color:var(--foreground)">Brew Assistant</b><span>Subscription</span><span>Settings</span></div>
+          <div class="lbl muted" style="margin-top:16px">Threads</div><div class="col muted" style="gap:4px"><span>Espresso too sour</span><span>V60 ratios</span><span>Gift ideas</span></div></aside>
+        <main class="col" style="padding:16px;gap:0">
+          <div class="row" style="justify-content:space-between;border-bottom:1px solid var(--border);padding-bottom:12px"><b>Brew Assistant</b><span class="chip">Scripted · no model</span></div>
+          <div class="col" style="flex:1;padding:16px 0">
+            <div class="bubble me">My espresso tastes sour. 18g in, 30g out, 22s.</div>
+            <div class="bubble bot">Sour usually means under-extracted. Try grinding finer and aiming for <b>36g in 28–30s</b>. <div class="card" style="margin-top:8px">Suggested: Night Owl Blend · $18 <a class="btn" style="padding:4px 10px">Add</a></div></div>
+            <div class="bubble me">What about a V60?</div>
+            <div class="bubble bot muted">▍ streaming…</div></div>
+          <div class="row"><input class="inp" placeholder="Ask about brewing…"><button class="btn">Send</button></div></main>
+      </div>${themerFloating(false)}`,
+  },
+  B: {},
+  C: {},
+};
+
+function railB(active){ const g={Marketing:["Home","Features","Pricing","About","Contact"],Blog:["Index","Category","Article"],Shop:["Category","Product","Cart","Checkout"],App:["Dashboard","Chat","Settings","Login"],"Design system":["Components","Tokens"],System:["404"]};
+  return `<aside class="hide-sm col" style="width:200px;border-right:1px solid var(--border);padding:14px;gap:10px;background:var(--muted);flex-shrink:0">
+    <div class="row"><div class="ph" style="width:24px;height:24px;background:var(--primary)"></div><b>Lumen</b></div>
+    ${Object.entries(g).map(([h,items])=>`<div class="col" style="gap:2px"><span class="lbl muted" style="font-size:10px;text-transform:uppercase;letter-spacing:.08em">${h}</span>${items.map(i=>`<span style="padding:3px 6px;border-radius:6px;${i==active?'background:var(--background);font-weight:600':''}" class="${i==active?'':'muted'}">${i}</span>`).join("")}</div>`).join("")}</aside>`; }
+function themerDocked(){ return `<aside class="themer col hide-sm" style="width:280px;flex-shrink:0;padding:12px;gap:10px;border-left:1px solid #333">
+  <div class="row" style="justify-content:space-between"><b>Themer</b><span class="lbl">docked · ⌘.</span></div>
+  <div class="row" style="gap:4px">${["Colors","Type","Radius","Shadow"].map((t,i)=>`<span style="padding:3px 8px;border-radius:6px;${i==0?'background:#333':''}">${t}</span>`).join("")}</div>
+  ${["background","foreground","primary","muted","accent","border"].map(t=>`<div class="row" style="justify-content:space-between"><span>--${t}</span><span class="sw" style="background:var(--${t})"></span></div>`).join("")}
+  <div class="ph" style="flex:1;background:#222">more controls</div></aside>`; }
+function shellB(active, body){ return `<div style="display:flex;min-height:100vh">${railB(active)}<main style="flex:1;min-width:0">${body}</main>${themerDocked()}</div>`; }
+
+W.B.home = () => shellB("Home", `
+  <header class="row" style="justify-content:space-between;padding:12px 24px;border-bottom:1px solid var(--border)"><span class="muted">Marketing / Home</span><div class="row"><a class="btn o">Log in</a><a class="btn">Start free</a></div></header>
+  <section class="col" style="padding:56px 24px;align-items:center;text-align:center">
+    <h1>See what changed.<br>Ship what matters.</h1><p class="muted" style="max-width:480px">Lumen turns product events into a weekly brief your whole team reads.</p>
+    <div class="row"><a class="btn">Start free</a><a class="btn o">Book a demo</a></div>
+    <div class="card" style="width:100%;max-width:720px;margin-top:24px;padding:0;overflow:hidden">
+      <div class="row" style="padding:8px 12px;border-bottom:1px solid var(--border)"><span class="muted">app.lumen.dev/dashboard</span></div>
+      <div class="grid" style="grid-template-columns:repeat(3,1fr);padding:12px">${["Active users","Conversion","MRR"].map(m=>`<div class="card col" style="gap:2px"><span class="muted">${m}</span><b style="font-size:20px">12.4k</b><span class="muted">+8.1%</span></div>`).join("")}</div>
+      <div class="ph" style="height:120px;margin:0 12px 12px">chart (real Playground component)</div></div></section>
+  <section class="grid" style="grid-template-columns:repeat(auto-fit,minmax(200px,1fr));padding:0 24px 32px">${["Weekly brief","Funnels","Alerts"].map(f=>`<div class="card col"><div class="ph" style="width:32px;height:32px;background:var(--accent)">◆</div><h3>${f}</h3><span class="muted">One-line benefit.</span></div>`).join("")}</section>`);
+W.B.product = () => shellB("Product", `
+  <header class="row" style="justify-content:space-between;padding:12px 24px;border-bottom:1px solid var(--border)"><span class="muted">Shop / Desk / Lumen Desk Mat</span><span class="chip">Cart · 1</span></header>
+  <section style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:24px;padding:24px">
+    <div class="ph" style="aspect-ratio:4/3;background:linear-gradient(135deg,var(--primary),var(--accent));color:var(--primary-foreground)">gradient render</div>
+    <div class="col"><h1 style="font-size:28px">Lumen Desk Mat</h1><b>$39</b>
+      <table style="border-collapse:collapse;width:100%"><tbody>${[["Size","90 × 40 cm"],["Material","Felt + cork"],["Ships","2–4 days"]].map(r=>`<tr style="border-bottom:1px solid var(--border)"><td class="muted" style="padding:6px 0">${r[0]}</td><td>${r[1]}</td></tr>`).join("")}</tbody></table>
+      <div class="lbl muted">Color</div><div class="row">${["Graphite","Sand","Indigo"].map((c,i)=>`<span class="chip" style="${i==2?'border-color:var(--primary)':''}">${c}</span>`).join("")}</div>
+      <div class="row"><a class="btn" style="flex:1;justify-content:center">Add to cart</a><a class="btn o">♡</a></div>
+      <div class="card muted">Tabs: Details · Specs · Reviews</div></div></section>`);
+W.B.chat = () => shellB("Chat", `
+  <div style="display:grid;grid-template-columns:1fr;height:100vh;grid-template-rows:auto 1fr auto">
+    <header class="row" style="justify-content:space-between;padding:12px 24px;border-bottom:1px solid var(--border)"><b>Ask Lumen</b><div class="row"><span class="chip">Model: lumen-mini (scripted)</span><span class="chip">New chat</span></div></header>
+    <div class="col" style="padding:24px;overflow:auto">
+      <div class="bubble me">Why did conversion drop last week?</div>
+      <div class="bubble bot">Conversion fell <b>2.3 pts</b>, mostly on mobile checkout after Tuesday's release.
+        <div class="card" style="margin-top:8px"><div class="ph" style="height:80px">inline chart</div></div>
+        <div class="row" style="margin-top:8px"><span class="chip">Open funnel</span><span class="chip">Create alert</span></div></div>
+      <div class="row muted" style="gap:6px"><span class="chip">Show by country</span><span class="chip">Compare to last month</span><span class="chip">Draft a brief</span></div></div>
+    <div class="row" style="padding:12px 24px;border-top:1px solid var(--border)"><input class="inp" placeholder="Ask about your metrics…"><button class="btn">↑</button></div></div>`);
+
+function editorC(screen, body){ return `<div style="display:flex;min-height:100vh;background:#e5e5e5">
+  <aside class="themer col hide-sm" style="width:300px;flex-shrink:0;padding:14px;gap:12px">
+    <b style="font-size:14px">themerCN</b><div class="lbl">Preset</div>
+    <div class="grid" style="grid-template-columns:repeat(4,1fr);gap:6px">${["#18181b","#3f5f3a","#4f46e5","#e11d48","#0ea5e9","#d97706","#7c3aed","#059669"].map(c=>`<span class="sw" style="background:${c};width:100%;height:28px"></span>`).join("")}</div>
+    <div class="lbl">Tokens</div><div class="ph" style="flex:1;background:#222">full editor (fixed)</div>
+    <div class="row"><button class="btn" style="flex:1;background:#333;color:#fff">Copy CSS</button><button class="btn" style="background:#333;color:#fff">☾</button></div></aside>
+  <main class="col" style="flex:1;padding:16px;gap:10px;min-width:0">
+    <div class="row" style="justify-content:space-between;color:#333"><div class="row"><span class="chip" style="background:#fff;color:#000">Screen: ${screen} ▾</span><span class="chip" style="background:#fff;color:#000">Tenant: ${screen=="Home"?"Showroom hub":screen=="Product"?"Nightjar shop":"Lumen app"}</span></div>
+      <div class="row hide-sm">${["📱","💻","🖥"].map((d,i)=>`<span class="chip" style="background:${i==1?'#000':'#fff'};color:${i==1?'#fff':'#000'}">${d}</span>`).join("")}</div></div>
+    <div style="flex:1;border-radius:12px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,.15);background:var(--background)">${body}</div></main></div>`; }
+W.C.home = () => editorC("Home", `<div style="padding:24px" class="col"><h2>Showroom</h2><p class="muted">Every surface a Theme touches. Pick a screen.</p>
+  ${Object.entries({Marketing:["Home","Features","Pricing","About","Contact"],Blog:["Index","Category","Article"],Shop:["Category","Product","Cart","Checkout"],App:["Dashboard","Chat","Settings","Login","Sign up"],"Design system":["Components","Tokens"],System:["404"]}).map(([h,items])=>`<h3 style="margin-top:8px">${h}</h3><div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px">${items.map(i=>`<div class="col" style="gap:4px"><div class="ph" style="aspect-ratio:16/10">thumb</div><span>${i}</span></div>`).join("")}</div>`).join("")}</div>`);
+W.C.product = () => editorC("Product", `<div class="col" style="padding:24px"><div class="row" style="justify-content:space-between"><b>Nightjar</b><span class="chip">Cart · 2</span></div>
+  <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:20px"><div class="ph" style="aspect-ratio:1">image</div>
+  <div class="col"><div class="ph" style="height:28px;width:70%">title</div><div class="ph" style="height:18px;width:30%">price</div><div class="ph" style="height:60px">description</div><div class="row"><span class="chip">opt</span><span class="chip">opt</span><span class="chip">opt</span></div><a class="btn">Add to cart</a></div></div></div>`);
+W.C.chat = () => editorC("Chat", `<div class="col" style="padding:24px;height:100%"><b>Lumen · Ask</b><div class="bubble me">Question</div><div class="bubble bot"><div class="ph" style="height:40px;width:260px">answer block</div></div><div class="bubble me">Follow-up</div>
+  <div class="row" style="margin-top:auto"><input class="inp" placeholder="Message"><button class="btn">Send</button></div></div>`);
+
+/* routes + data screens: shared, with variant-specific notes */
+const ROUTE_NOTES = {
+  A: "Route groups map 1:1 to layouts. Themer mounted once in app/layout.tsx as <Themer/> (floating), alongside {children}.",
+  B: "Same routes, but one root PlaygroundShell layout (rail) wraps everything incl. marketing — no site header/footer pattern is exercised. Themer is a sibling in the shell's flex row.",
+  C: "Same routes render inside /showroom?screen=… via an iframe canvas, plus directly at their URLs. Themer owns the outer page; the canvas page gets theme via postMessage → CSS vars. Departs from the decided public API (Themer rendered next to the Host app's tree).",
+};
+function meta(v){ const m=V[v]; return `<div class="note" style="margin:16px"><b>Variant ${v} — ${m.name}</b><br>
+  <b>Brand:</b> ${m.brand}<br><b>Voice:</b> ${m.voice}<br><b>Imagery:</b> ${m.imagery}<br><b>Navigation:</b> ${m.nav}<br><b>Themer mount:</b> ${m.themer}</div>`; }
+function textScreen(v, which){ return `<div style="max-width:1000px;margin:0 auto;padding-bottom:80px">${meta(v)}
+  ${which=="routes"?`<div class="note" style="margin:0 16px 12px">${ROUTE_NOTES[v]}</div><div class="card" style="margin:0 16px"><pre>${ROUTES}</pre></div>`
+  :`<div class="card" style="margin:0 16px"><pre>${DATA}</pre></div>`}</div>`; }
+
+/* ---------- switcher ---------- */
+const KEYS = Object.keys(V), SK = Object.keys(SCREENS);
+function state(){ const p=new URLSearchParams(location.search); return { v: KEYS.includes(p.get("variant"))?p.get("variant"):"A", s: SK.includes(p.get("screen"))?p.get("screen"):"home", d: p.get("dark")=="1" }; }
+function go(patch){ const st={...state(),...patch}; const p=new URLSearchParams({variant:st.v,screen:st.s}); if(st.d)p.set("dark","1"); history.replaceState(null,"","?"+p); render(); }
+function render(){
+  const {v,s,d}=state();
+  document.documentElement.dataset.v=v; document.documentElement.classList.toggle("dark",d);
+  document.getElementById("root").innerHTML = (s=="routes"||s=="data") ? textScreen(v,s) : W[v][s]();
+  const i=KEYS.indexOf(v);
+  document.getElementById("proto-bar").innerHTML = `<button data-a="prev">←</button><span class="label">${v} · ${V[v].name}</span><button data-a="next">→</button><span class="sep"></span>
+    ${SK.map(k=>`<button data-s="${k}" class="${k==s?'on':''}">${SCREENS[k]}</button>`).join("")}<span class="sep"></span><button data-a="dark">${d?"☀":"☾"}</button>`;
+  console.log("[prototype]", {variant:v, screen:s, dark:d});
+}
+document.getElementById("proto-bar").addEventListener("click",e=>{ const b=e.target.closest("button"); if(!b)return; const {v,d}=state(), i=KEYS.indexOf(v);
+  if(b.dataset.a=="prev") go({v:KEYS[(i+KEYS.length-1)%KEYS.length]}); else if(b.dataset.a=="next") go({v:KEYS[(i+1)%KEYS.length]});
+  else if(b.dataset.a=="dark") go({d:!d}); else if(b.dataset.s) go({s:b.dataset.s}); });
+addEventListener("keydown",e=>{ if(e.target.closest("input,textarea,[contenteditable]"))return; const i=KEYS.indexOf(state().v);
+  if(e.key=="ArrowLeft") go({v:KEYS[(i+KEYS.length-1)%KEYS.length]}); if(e.key=="ArrowRight") go({v:KEYS[(i+1)%KEYS.length]}); });
+render();
+</script>
+</body>
+</html>

@@ -143,7 +143,7 @@ export const GOOGLE_FONTS = {
     "Lato",
     "Montserrat",
     "Poppins",
-    "Source Sans Pro",
+    "Source Sans 3",
     "Nunito",
     "Raleway",
     "Ubuntu",

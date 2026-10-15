@@ -1,6 +1,11 @@
-import { expect, test, type Locator, type Page } from "@playwright/test"
+import { expect, test, type Locator } from "@playwright/test"
 
-import { openOverlay, openToolbar } from "./themer-ui"
+import {
+  openLayout,
+  openToolbarPanel,
+  themerToolbar,
+  toolbarPanel,
+} from "./themer-ui"
 
 // The Playground sets no `layout`, so it opens the Workspace; the user
 // switches to Overlay from the Themer UI's header.
@@ -9,7 +14,7 @@ test("the Overlay floats the sidebar over the real page, which stays usable", as
   page,
 }) => {
   await page.goto("/")
-  await openOverlay(page)
+  await openLayout(page, "Overlay")
 
   await expect(page.getByTestId("themer-preview")).toHaveCount(0)
 
@@ -29,7 +34,7 @@ test("the Overlay floats the sidebar over the real page, which stays usable", as
 
 test("the user's layout survives a reload", async ({ page }) => {
   await page.goto("/")
-  await openOverlay(page)
+  await openLayout(page, "Overlay")
 
   await page.reload()
   await page.getByRole("button", { name: "Open Theme Editor" }).click()
@@ -41,24 +46,18 @@ test("the user's layout survives a reload", async ({ page }) => {
 })
 
 test.describe("the Toolbar", () => {
-  const bar = (page: Page) => page.getByRole("toolbar", { name: "Theme Editor" })
-  const panel = (page: Page, id: string) =>
-    page.getByTestId(`themer-toolbar-panel-${id}`)
-
   test("puts the controls in a bar over the real page, whose panel popup stays open while the page is clicked or scrolled", async ({
     page,
   }) => {
     await page.goto("/")
-    await openToolbar(page)
+    const colors = await openToolbarPanel(page, "Colors")
 
     await expect(
       page.locator('[data-themer-ui] [data-slot="sidebar"]')
     ).toHaveCount(0)
     await expect(page.getByTestId("themer-preview")).toHaveCount(0)
 
-    await bar(page).getByRole("button", { name: "Colors" }).click()
-    await expect(panel(page, "colors")).toBeVisible()
-    const box = await panel(page, "colors").boundingBox()
+    const box = await colors.boundingBox()
     expect((box?.y ?? 0) + (box?.height ?? 0)).toBeLessThanOrEqual(900)
 
     // Beside the popup, the page takes the wheel and the click.
@@ -68,21 +67,21 @@ test.describe("the Toolbar", () => {
       .poll(() => page.evaluate(() => window.scrollY))
       .toBeGreaterThan(0)
     await page.mouse.click(120, 700)
-    await expect(panel(page, "colors")).toBeVisible()
+    await expect(colors).toBeVisible()
 
-    await bar(page).getByRole("button", { name: "Typography" }).click()
-    await expect(panel(page, "typography")).toBeVisible()
-    await expect(panel(page, "colors")).toHaveCount(0)
+    await themerToolbar(page).getByRole("button", { name: "Typography" }).click()
+    await expect(toolbarPanel(page, "typography")).toBeVisible()
+    await expect(colors).toHaveCount(0)
 
     await page.keyboard.press("Escape")
-    await expect(panel(page, "typography")).toHaveCount(0)
+    await expect(toolbarPanel(page, "typography")).toHaveCount(0)
   })
 
   test("layers the colour and font pickers above the panel popup", async ({
     page,
   }) => {
     await page.goto("/")
-    await openToolbar(page)
+    const colors = await openToolbarPanel(page, "Colors")
 
     /** Whether the element is what the browser paints at its own centre. */
     const isOnTop = (locator: Locator) =>
@@ -92,11 +91,8 @@ test.describe("the Toolbar", () => {
         return hit !== null && element.contains(hit)
       })
 
-    await bar(page).getByRole("button", { name: "Colors" }).click()
-    await panel(page, "colors")
-      .getByRole("button", { name: /^Primary & Secondary/ })
-      .click()
-    await panel(page, "colors")
+    await colors.getByRole("button", { name: /^Primary & Secondary/ }).click()
+    await colors
       .getByRole("button", { name: "Open Tailwind colors" })
       .first()
       .click()
@@ -104,13 +100,13 @@ test.describe("the Toolbar", () => {
     await expect(palette).toBeVisible()
     expect(await isOnTop(palette)).toBe(true)
     await page.keyboard.press("Escape")
-    await expect(panel(page, "colors")).toBeVisible()
+    await expect(colors).toBeVisible()
 
-    await bar(page).getByRole("button", { name: "Typography" }).click()
-    await panel(page, "typography")
+    await themerToolbar(page).getByRole("button", { name: "Typography" }).click()
+    await toolbarPanel(page, "typography")
       .getByRole("button", { name: /^Font Families/ })
       .click()
-    await panel(page, "typography")
+    await toolbarPanel(page, "typography")
       .getByRole("combobox", { name: "Sans-serif" })
       .click()
     const fonts = page.locator('[data-slot="popover-content"]').last()
@@ -123,7 +119,7 @@ test("the inspector works on the real page beside the Overlay, never on the Them
   page,
 }) => {
   await page.goto("/")
-  await openOverlay(page)
+  await openLayout(page, "Overlay")
   await page.getByRole("tab", { name: "Typography" }).click()
   await page.getByRole("button", { name: "Inspector" }).click()
   const card = page.getByTestId("themer-inspector-overlay")

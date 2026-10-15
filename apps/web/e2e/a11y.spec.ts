@@ -7,8 +7,7 @@ import { categories, products } from "../lib/mock/catalog"
 import { chatThreads } from "../lib/mock/chat"
 import {
   openLayout,
-  openOverlay,
-  openToolbar,
+  openToolbarPanel,
   settle,
   themerTrigger,
 } from "./themer-ui"
@@ -99,7 +98,7 @@ test("the open Overlay has no serious or critical axe violations", async ({
 }) => {
   await page.goto("/")
   await settlePage(page)
-  await openOverlay(page)
+  await openLayout(page, "Overlay")
   expect(await blockingViolations(page)).toEqual([])
 })
 
@@ -117,15 +116,9 @@ test("the open Toolbar and its panel popup have no serious or critical axe viola
 }) => {
   await page.goto("/")
   await settlePage(page)
-  await openToolbar(page)
-  expect(await blockingViolations(page)).toEqual([])
-
-  await page
-    .getByRole("toolbar", { name: "Theme Editor" })
-    .getByRole("button", { name: "Colors" })
-    .click()
+  const colors = await openToolbarPanel(page, "Colors")
   await expect(
-    page.getByRole("button", { name: /^Primary & Secondary/ })
+    colors.getByRole("button", { name: /^Primary & Secondary/ })
   ).toBeVisible()
   expect(await blockingViolations(page)).toEqual([])
 })

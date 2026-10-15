@@ -3,7 +3,8 @@
 How `themercn` works inside, for contributors. How a Host app uses it is the
 [README](README.md); the words (Themer, Theme, Preset, Host app, Adapter,
 Themer UI, Preview) are defined in the repository's
-[GLOSSARY.md](../../GLOSSARY.md). This file is not published: `files` in
+[GLOSSARY.md](../../GLOSSARY.md), with Themer layout, Workspace, Overlay, Push
+and Toolbar. This file is not published: `files` in
 `package.json` ships only `dist/`, the README, the licences and the changelog.
 
 Origin: adapted from [tweakcn](https://github.com/jnsahaj/tweakcn) @
@@ -56,7 +57,7 @@ Host tree                         <ThemerLoader {...props} />   (themercn/loader
                                      └─ ThemerProvider (config: presets, shortcut, …)
                                         └─ ThemerRoot ── portal to <body> ──► ThemerScope [data-themer]
                                                                                ├─ ThemerTrigger
-                                                                               ├─ ThemerUI
+                                                                               ├─ ThemerUI ─► the layout in force, or the mobile drawer
                                                                                └─ [data-themer-portals]
 ```
 
@@ -68,9 +69,40 @@ Host tree                         <ThemerLoader {...props} />   (themercn/loader
 | [themer.tsx](src/components/themer.tsx) | `<Themer>`: flat props, no children. Skips the server, hydration and frames (`window.self !== window.top`: the Live preview frames the Host page, whose own Themer must not stack). Hydrates the stores, injects the CSS, owns a QueryClient separate from the Host's. |
 | [color-mode.tsx](src/components/color-mode.tsx) | Who owns light/dark (see [Colour mode](#colour-mode)). |
 | [themer-provider.tsx](src/components/themer-provider.tsx) | Registers Host Presets and extra colours during render, applies the Theme to `<html>`, binds the shortcuts, removes everything when the override goes off or it unmounts. |
-| [themer-root.tsx](src/components/themer-root.tsx) | Portals the trigger and the Themer UI into `ThemerScope` on `<body>`; close cleanups (mobile scroll lock, Lenis pause). |
-| [themer-ui/themer-ui.tsx](src/components/themer-ui/themer-ui.tsx) | The Themer UI: sidebar + preview on desktop; below 1280 px a bottom drawer without preview ([use-is-mobile.ts](src/hooks/use-is-mobile.ts); the shadcn Sidebar becomes a Sheet below 768 px, so the breakpoint must stay above it). |
+| [themer-root.tsx](src/components/themer-root.tsx) | Portals the trigger and the Themer UI into `ThemerScope` on `<body>`; the mobile scroll lock, and the Lenis pause while the open Themer UI hides the page (the drawer, a layout with `coversPage`). |
+| [themer-ui/themer-ui.tsx](src/components/themer-ui/themer-ui.tsx) | The Themer UI: on desktop the component of the [Themer layout](#themer-layouts) in force (`LAYOUT_COMPONENTS`); below 1280 px a bottom drawer without preview, whatever the layout ([use-is-mobile.ts](src/hooks/use-is-mobile.ts); the shadcn Sidebar becomes a Sheet below 768 px, so the breakpoint must stay above it). |
 | [themer-trigger.tsx](src/components/themer-trigger.tsx) | The floating button (`showTrigger`). |
+
+## Themer layouts
+
+How the Themer UI sits on screen while open. In-place layouts follow
+[ADR 0001](../../docs/adr/0001-in-place-themer-layouts.md): they render in
+the Themer's portal beside the Host tree and never wrap it.
+
+| Piece | Where | Role |
+| ----- | ----- | ---- |
+| `ThemerLayout` | [types/index.ts](src/types/index.ts) | The union of implemented layouts; `ThemerProps.layout` takes it. |
+| Registry | [themer-ui/layouts/registry.ts](src/components/themer-ui/layouts/registry.ts) | `THEMER_LAYOUTS`: label, icon, `coversPage` per layout; `resolveThemerLayout`: user choice, else Host default, else Workspace, skipping unknown values. |
+| Components | `LAYOUT_COMPONENTS` in [themer-ui.tsx](src/components/themer-ui/themer-ui.tsx) | The one map from layout to component (`ThemerLayoutProps`: `onClose`, `zIndex`). |
+| Layout in force | [hooks/use-themer-layout.ts](src/hooks/use-themer-layout.ts) | `useThemerLayout()`: the `layout` preference over `config.layout`. |
+| Switcher | [themer-ui/layout-switcher.tsx](src/components/themer-ui/layout-switcher.tsx) | `DropdownMenu` of `THEMER_LAYOUTS` in every layout's header; writes the `layout` preference. |
+| Shared sidebar | [themer-ui/themer-sidebar-provider.tsx](src/components/themer-ui/themer-sidebar-provider.tsx), [themer-sidebar.tsx](src/components/themer-sidebar.tsx) | The SidebarProvider bound to `sidebarCollapsed` (collapse is shared), and the sidebar with `headerActions`/`footer` slots for a layout without its own header or action bar. |
+
+- **Workspace** ([workspace-layout.tsx](src/components/themer-ui/layouts/workspace-layout.tsx)):
+  `fixed inset-0`, the sidebar beside `SidebarInset` with `ThemerHeader`
+  (switcher, close) and `PreviewPanel` (action bar, Preview tabs). The only
+  layout with Preview tabs, inspector and fullscreen preview.
+- **Overlay** ([overlay-layout.tsx](src/components/themer-ui/layouts/overlay-layout.tsx)):
+  a `fixed inset-y-0 left-0` container that shrinks to the sidebar's gap, so
+  the page beside it takes clicks and wheel events. The sidebar header holds
+  the collapse toggle and the switcher; `ActionBar variant="stacked"` sits in
+  its footer. No page pause, no scroll lock.
+
+Every editing state (Theme, history, active panel, collapse) lives in the
+stores, so a switch keeps it; the layout components hold none. Adding a
+layout: add it to `ThemerLayout`, `THEMER_LAYOUTS` (the compiler then asks
+for `LAYOUT_COMPONENTS` too), write its component under `layouts/`, and add
+e2e and visual screens in `apps/web/e2e`.
 
 ## Runtime CSS and `@scope`
 
@@ -238,10 +270,12 @@ never read `preset.styles` directly.
 ### PreferencesStore
 
 [stores/preferences-store.ts](src/stores/preferences-store.ts). Persisted
-whole under `<ns>:preferences`, `version: PREFERENCES_VERSION` (0; no
+whole under `<ns>:preferences`, `version: PREFERENCES_VERSION` (1; no
 migrations, another version is dropped):
 `colorFormat` (`oklch` default; Tailwind 3 has no oklch), `tailwindVersion`,
-`packageManager`, `showContrastWarnings`, `previewTab`, `sidebarCollapsed`,
+`packageManager`, `showContrastWarnings`, `previewTab`, `sidebarCollapsed`
+(shared by every sidebar layout), `layout` (the user's Themer layout, `null`
+follows the Host's),
 `themeOverrideEnabled` (read by the head script), `sidebarColorSync`,
 `colorSelectorTab`, `sectionStates`.
 
@@ -424,7 +458,8 @@ packages/themer/
 │   │   ├── color-mode.tsx         # light/dark ownership
 │   │   ├── themer-provider.tsx, themer-root.tsx, …
 │   │   ├── editor/ panels/ sidebar/ actions/ ui/
-│   │   ├── themer-ui/             # ThemerUI: header, preview panel, mobile drawer
+│   │   ├── themer-ui/             # ThemerUI, layout switcher, header, preview panel, mobile drawer
+│   │   │   └── layouts/           # registry and one component per Themer layout
 │   │   └── preview/               # tabs, registry, Live, inspector, example pages
 │   ├── stores/                    # editor, preferences, themer-ui, color-focus; hydrate.ts
 │   ├── selectors/ hooks/ utils/ config/ types/

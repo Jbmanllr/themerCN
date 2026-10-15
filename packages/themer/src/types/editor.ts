@@ -11,6 +11,8 @@ import type {
   ThemeStyles,
 } from "./theme";
 
+import type { ThemerLayout } from "./index";
+
 export type PackageManager = "pnpm" | "npm" | "yarn" | "bun";
 
 /**
@@ -187,8 +189,14 @@ export interface PreferencesState {
    * longer exists falls back to the first tab at render.
    */
   previewTab?: string;
-  /** Sidebar collapsed state */
+  /** Sidebar collapsed state, shared by every sidebar Themer layout */
   sidebarCollapsed: boolean;
+  /**
+   * The Themer layout the user switched to; null follows the Host's
+   * `layout` prop. A value that names no implemented layout is ignored at
+   * render (resolveThemerLayout).
+   */
+  layout: ThemerLayout | null;
   /**
    * Whether the editor theme overrides the host application's production
    * theme. Off: nothing is applied to the page, and utils/theme-script.ts
@@ -216,6 +224,7 @@ export interface PreferencesActions {
   setShowContrastWarnings: (show: boolean) => void;
   setPreviewTab: (tab: string) => void;
   setSidebarCollapsed: (collapsed: boolean) => void;
+  setLayout: (layout: ThemerLayout) => void;
   setThemeOverrideEnabled: (enabled: boolean) => void;
   setSidebarColorSync: (enabled: boolean) => void;
   setColorSelectorTab: (tab: PreferencesState["colorSelectorTab"]) => void;

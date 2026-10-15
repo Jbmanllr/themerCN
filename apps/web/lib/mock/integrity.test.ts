@@ -4,6 +4,7 @@ import {
   authors,
   categories,
   chatThreads,
+  getPostsInCategory,
   getProduct,
   orders,
   plans,
@@ -57,6 +58,18 @@ describe("mock data", () => {
     const fallbacks = scriptedReplies.filter((r) => r.match === "fallback")
     expect(fallbacks).toHaveLength(1)
     expect(scriptedReplies.at(-1)?.match).toBe("fallback")
+  })
+
+  it("lists journal posts newest first, and every category has a post", () => {
+    const dates = posts.map((p) => p.publishedAt)
+    expect(dates).toEqual([...dates].sort().reverse())
+    for (const category of postCategories) {
+      expect(getPostsInCategory(category.slug), category.slug).not.toEqual([])
+    }
+    expect(getPostsInCategory("origins").map((p) => p.slug)).toEqual([
+      "visiting-guji",
+      "decaf-without-apology",
+    ])
   })
 
   it("highlights exactly one plan", () => {

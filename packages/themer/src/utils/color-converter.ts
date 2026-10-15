@@ -10,7 +10,7 @@
 // (hsl-adjust.ts). Applying a theme writes stored colours verbatim
 // (apply-theme.ts); only the computed shadow scale passes through here.
 //
-// See: packages/themer/docs/API.md ("Color Conversion")
+// See: packages/themer/ARCHITECTURE.md ("Color System")
 import * as culori from "culori";
 import type { ColorFormat, TailwindVersion } from "../types";
 

@@ -13,8 +13,8 @@
 // another `size-*` class (see themer-trigger.tsx).
 // Share and Save are not here: they need tweakcn's accounts, which this
 // editor does not port. Keeping a theme means copying the Code dialog's
-// output into packages/ui-tokens/tokens; the editor never writes that source
-// (README "Run it").
+// output into the Host's own CSS; the editor never writes source files
+// (README "Saved Themes and the head script").
 //
 // See: packages/themer/ARCHITECTURE.md
 

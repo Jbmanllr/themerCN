@@ -18,12 +18,26 @@
 
 import { generateThemeScript } from "./utils/theme-script";
 
+/** Options of `getThemerHeadScript`. */
 export interface ThemerHeadScriptOptions {
   /** The `storageNamespace` of the Host's `<Themer>`. Default `"themercn"`. */
   storageNamespace?: string;
 }
 
-/** The body of the pre-paint restore script, for an inline `<script>`. */
+/**
+ * The body of the pre-paint restore script (no `<script>` tag), for an
+ * inline `<script>` at the top of `<head>`. It applies the Theme saved under
+ * `storageNamespace` while the HTML is parsed; with nothing saved, or the
+ * Theme override switched off, it changes nothing.
+ *
+ * @example
+ * ```ts
+ * // A Vite plugin in vite.config.ts
+ * transformIndexHtml: () => [
+ *   { tag: "script", children: getThemerHeadScript(), injectTo: "head-prepend" },
+ * ]
+ * ```
+ */
 export function getThemerHeadScript({
   storageNamespace,
 }: ThemerHeadScriptOptions = {}): string {

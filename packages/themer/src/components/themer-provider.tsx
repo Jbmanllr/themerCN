@@ -16,7 +16,7 @@
 //   are removed when the theme override preference goes off or the provider
 //   unmounts.
 //
-// See: packages/themer/docs/API.md ("ThemerProvider").
+// See: packages/themer/ARCHITECTURE.md ("Core Entry Points").
 
 import * as React from "react";
 import { useShallow } from "zustand/react/shallow";

@@ -131,10 +131,11 @@ export interface PresetSelectProps {
 }
 
 /**
- * A preview tab a host adds next to the built-in ones (Cards, Dashboard, …).
- * The component renders inside the editor's preview area, wrapped by
- * `ThemerConfig.previewWrapper`, and reads the live theme from the CSS
- * variables the editor writes on <html>.
+ * A preview tab a Host adds next to the built-in ones (Live, Cards,
+ * Dashboard, …). The component renders inside the Themer's preview area,
+ * wrapped by `ThemerProps.previewWrapper`, outside the Themer's CSS scope
+ * (the Host's own styles apply), and reads the live Theme from the CSS
+ * variables the Themer writes on `<html>`.
  */
 export interface ThemerPreviewTab {
   /**
@@ -177,8 +178,11 @@ export interface ThemerExtraColor {
  * slug of the title (getColorSectionId).
  */
 export interface ThemerExtraColorGroup {
+  /** Section heading in the colour list; keep it unique. */
   title: string;
+  /** Short text shown under the heading. */
   description?: string;
+  /** The tokens of the group, in display order. */
   colors: readonly ThemerExtraColor[];
 }
 

@@ -1,6 +1,6 @@
 // Documents table of the Dashboard preview tab: a TanStack Table v9 and dnd-kit
 // demo (drag to reorder, row selection, tabs, column visibility, pagination)
-// over the sample rows in ../data.json, not Banter data.
+// over the sample rows in ../data.json, not Host data.
 //
 // Contract: a selected row is marked with `data-state="selected"`, which the
 // stock TableRow styles. Never build the row's className from conditional

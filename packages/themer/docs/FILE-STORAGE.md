@@ -1,5 +1,10 @@
 # File-Based Theme Storage
 
+> **Retired.** This page describes the pre-themercn package (`@banter/themer`)
+> and is no longer maintained or linked. Use the package
+> [README](../README.md) and [ARCHITECTURE.md](../ARCHITECTURE.md). Pending
+> removal by the repository owner.
+
 Generic `'file'` storage mode of the package. **Banter does not use it**: both
 hosts pass `storage: 'indexeddb'` (see [README](../README.md#host-integration-contract)).
 This port also has no save-theme control: `ThemerProvider` creates the chosen

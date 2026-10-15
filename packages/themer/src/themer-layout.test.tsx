@@ -273,6 +273,24 @@ describe("Themer layout", () => {
       expect(group("Typography")?.getAttribute("aria-pressed")).toBe("false");
     });
 
+    it("keeps a toggle inside a popup out of the groups' toggle group", async () => {
+      const errors = vi.spyOn(console, "error").mockImplementation(() => {});
+      await mount({ layout: "toolbar" });
+      await open();
+      await click(group("Colors"));
+      const sync = query('[aria-label="Sync sidebar colors"]');
+      const wasSynced = usePreferencesStore.getState().sidebarColorSync;
+
+      await click(sync);
+
+      expect(usePreferencesStore.getState().sidebarColorSync).toBe(!wasSynced);
+      expect(group("Colors")?.getAttribute("aria-pressed")).toBe("true");
+      expect(openPopups()).toHaveLength(1);
+      expect(
+        errors.mock.calls.flat().join(" "),
+      ).not.toContain("<ToggleGroup>");
+    });
+
     it("keeps the popup open while the page is clicked or scrolled", async () => {
       const page = document.createElement("button");
       page.textContent = "A Host page button";

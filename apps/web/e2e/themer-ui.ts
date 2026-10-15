@@ -11,11 +11,17 @@ export const themerTrigger = (page: Page) =>
  * Workspace header's layout switcher.
  */
 export async function openOverlay(page: Page) {
-  await themerTrigger(page).click()
-  await page.getByRole("button", { name: "Themer layout: Workspace" }).click()
-  await page.getByRole("menuitemradio", { name: "Overlay" }).click()
+  await openLayout(page, "Overlay")
+}
+
+/**
+ * Opens the Themer UI and switches it to the sidebar Themer layout named
+ * `label` from the Workspace header's layout switcher.
+ */
+export async function openLayout(page: Page, label: string) {
+  await switchFromWorkspace(page, label)
   await expect(
-    page.getByRole("button", { name: "Themer layout: Overlay" })
+    page.getByRole("button", { name: `Themer layout: ${label}` })
   ).toBeVisible()
   await expect(
     page.getByRole("button", { name: /^Primary & Secondary/ })
@@ -23,19 +29,20 @@ export async function openOverlay(page: Page) {
 }
 
 /**
- * Opens the Themer UI and switches it to the Themer layout named `label`
- * from the Workspace header's layout switcher.
+ * Opens the Themer UI and switches it to the Toolbar layout, which has no
+ * sidebar: it waits for the bar instead of the switcher and a panel.
  */
-export async function openLayout(page: Page, label: string) {
+export async function openToolbar(page: Page) {
+  await switchFromWorkspace(page, "Toolbar")
+  await expect(
+    page.getByRole("toolbar", { name: "Theme Editor" })
+  ).toBeVisible()
+}
+
+async function switchFromWorkspace(page: Page, label: string) {
   await themerTrigger(page).click()
   await page.getByRole("button", { name: "Themer layout: Workspace" }).click()
   await page.getByRole("menuitemradio", { name: label }).click()
-  await expect(
-    page.getByRole("button", { name: `Themer layout: ${label}` })
-  ).toBeVisible()
-  await expect(
-    page.getByRole("button", { name: /^Primary & Secondary/ })
-  ).toBeVisible()
 }
 
 /**

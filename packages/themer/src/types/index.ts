@@ -194,8 +194,10 @@ export interface ThemerExtraColorGroup {
  *   stays usable beside it.
  * - `"push"`: the sidebar sits beside the Host app's real page and shifts it
  *   aside (`margin-inline-start` on `<html>`, `--themer-inset-inline-start`).
+ * - `"toolbar"`: no sidebar; every control sits in a bar at the top of the
+ *   Host app's real page, each group of controls in its own popup.
  */
-export type ThemerLayout = "workspace" | "overlay" | "push";
+export type ThemerLayout = "workspace" | "overlay" | "push" | "toolbar";
 
 /** Light or dark: the value of `ThemerProps.colorMode`. */
 export type ThemerColorMode = "light" | "dark";

@@ -26,7 +26,6 @@ const LAYOUT_ENTRIES = Object.entries(THEMER_LAYOUTS) as [
 
 export function LayoutSwitcher() {
   const layout = useThemerLayout();
-  const setLayout = usePreferencesStore((state) => state.setLayout);
   const current = THEMER_LAYOUTS[layout];
 
   return (
@@ -45,21 +44,34 @@ export function LayoutSwitcher() {
       <DropdownMenuContent align="end">
         <DropdownMenuGroup>
           <DropdownMenuLabel>Layout</DropdownMenuLabel>
-          <DropdownMenuRadioGroup
-            value={layout}
-            onValueChange={(value) => {
-              if (isThemerLayout(value)) setLayout(value);
-            }}
-          >
-            {LAYOUT_ENTRIES.map(([id, definition]) => (
-              <DropdownMenuRadioItem key={id} value={id} closeOnClick>
-                <definition.icon />
-                {definition.label}
-              </DropdownMenuRadioItem>
-            ))}
-          </DropdownMenuRadioGroup>
+          <LayoutRadioGroup />
         </DropdownMenuGroup>
       </DropdownMenuContent>
     </DropdownMenu>
+  );
+}
+
+/**
+ * The layouts as radio items, the current one checked; picking one saves it.
+ * The switcher's menu draws it, and Toolbar's overflow menu in a submenu.
+ */
+export function LayoutRadioGroup() {
+  const layout = useThemerLayout();
+  const setLayout = usePreferencesStore((state) => state.setLayout);
+
+  return (
+    <DropdownMenuRadioGroup
+      value={layout}
+      onValueChange={(value) => {
+        if (isThemerLayout(value)) setLayout(value);
+      }}
+    >
+      {LAYOUT_ENTRIES.map(([id, definition]) => (
+        <DropdownMenuRadioItem key={id} value={id} closeOnClick>
+          <definition.icon />
+          {definition.label}
+        </DropdownMenuRadioItem>
+      ))}
+    </DropdownMenuRadioGroup>
   );
 }

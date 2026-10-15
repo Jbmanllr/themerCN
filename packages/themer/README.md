@@ -201,7 +201,7 @@ module-level values: a new identity re-registers or rebuilds them.
 | `previewTabs`         | `readonly ThemerPreviewTab[]`            | none               | Preview tabs of your own: `{ id, label, component, scroll?, order? }`. Use `React.lazy` components. A built-in id replaces that tab.                                               |
 | `previewWrapper`      | `ComponentType<{ children: ReactNode }>` | none               | Wraps your preview tabs (not the built-in ones) with the providers your components need: the Themer renders outside your tree.                                                    |
 | `shortcut`            | `string`                                 | `"ctrl+shift+e"`   | Toggles the Themer. Modifiers `ctrl`, `alt`, `shift`, `meta`, joined with `+`; `ctrl` also matches Cmd on macOS.                                                                  |
-| `layout`              | `"workspace" \| "overlay" \| "push"`     | `"workspace"`      | The [Themer layout](#themer-layouts) the Themer opens in. The user's own choice, made in the Themer, wins over it.                                                                 |
+| `layout`              | `"workspace" \| "overlay" \| "push" \| "toolbar"` | `"workspace"`      | The [Themer layout](#themer-layouts) the Themer opens in. The user's own choice, made in the Themer, wins over it.                                                                 |
 | `showTrigger`         | `boolean`                                | `true`             | Shows the floating button.                                                                                                                                                        |
 | `zIndex`              | `number`                                 | `9990` / `10000`   | Layer of the trigger and the Themer UI (by default 9990 and 10000). Popups sit one layer above the Themer UI.                                                                         |
 | `storageNamespace`    | `string`                                 | `"themercn"`       | Prefix of the localStorage keys `<ns>:editor`, `<ns>:preferences` and `<ns>:color-mode`. Give the head script the same value.                                                    |
@@ -320,9 +320,14 @@ How the Themer UI sits on screen while it is open:
   included) and takes clicks.
 - **Push**: the sidebar sits beside your real page and shifts it aside
   instead of covering it. See [Push and your page](#push-and-your-page).
+- **Toolbar**: no sidebar; a bar centred at the top of your real page holds
+  every control. Colors, Typography and Other each open in their own popup,
+  which stays open while you click or scroll the page (Escape, its button or
+  another group closes it); Code, CSS import, reset, the contrast checker,
+  the Theme override and the layout menu are in its `…` menu.
 
 `layout` sets the default. The user switches from the layout menu in the
-Themer UI's header; the choice is saved in `<storageNamespace>:preferences`
+Themer UI's header (Toolbar: its `…` menu); the choice is saved in `<storageNamespace>:preferences`
 and wins over `layout` on the next visit. Switching keeps the Theme, undo
 history and open panel, and the sidebar stays collapsed or expanded across
 layouts. Below 1280 px every layout opens as the same bottom drawer.

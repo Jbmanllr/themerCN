@@ -26,6 +26,7 @@ import { MobileDrawer } from "./mobile-drawer";
 import { useFullscreenSync } from "../../hooks/use-fullscreen";
 import { OverlayLayout } from "./layouts/overlay-layout";
 import { PushLayout } from "./layouts/push-layout";
+import { ToolbarLayout } from "./layouts/toolbar-layout";
 import { WorkspaceLayout } from "./layouts/workspace-layout";
 import type { ThemerLayoutProps } from "./layouts/types";
 
@@ -36,6 +37,7 @@ const LAYOUT_COMPONENTS: Record<
   workspace: WorkspaceLayout,
   overlay: OverlayLayout,
   push: PushLayout,
+  toolbar: ToolbarLayout,
 };
 
 const getFullscreen = () => useThemerUIStore.getState().fullscreenPreview;

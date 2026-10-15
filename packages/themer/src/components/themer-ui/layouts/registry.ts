@@ -16,6 +16,7 @@
 import {
   Layers2,
   LayoutPanelLeft,
+  PanelTop,
   SquareSplitHorizontal,
   type LucideIcon,
 } from "lucide-react";
@@ -37,6 +38,7 @@ export const THEMER_LAYOUTS: Record<ThemerLayout, ThemerLayoutDefinition> = {
   workspace: { label: "Workspace", icon: LayoutPanelLeft, coversPage: true },
   overlay: { label: "Overlay", icon: Layers2, coversPage: false },
   push: { label: "Push", icon: SquareSplitHorizontal, coversPage: false },
+  toolbar: { label: "Toolbar", icon: PanelTop, coversPage: false },
 };
 
 export const DEFAULT_THEMER_LAYOUT: ThemerLayout = "workspace";

@@ -342,8 +342,9 @@ The Themer never wraps your app, so Push moves your page with
 expanded, 48 px collapsed) and animated with the sidebar. The same width is
 exposed as the CSS variable `--themer-inset-inline-start` on `<html>`. The
 margin, the variable and the margin's `transition` are inline styles on
-`<html>`, removed when the Themer closes, switches to another layout, opens as
-the drawer, or unmounts.
+`<html>`. When the Themer closes, switches to another layout, opens as the
+drawer, or unmounts, any inline values your app had set for them come back
+as they were, and the rest are removed.
 
 Two limits, by design:
 

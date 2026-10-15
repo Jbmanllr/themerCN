@@ -94,18 +94,22 @@ the Themer's portal beside the Host tree and never wrap it.
   layout with Preview tabs and fullscreen preview; its inspector works on
   the Preview tabs.
 - **Overlay** ([overlay-layout.tsx](src/components/themer-ui/layouts/overlay-layout.tsx)):
-  a `fixed inset-y-0 left-0` container that shrinks to the sidebar's gap, so
-  the page beside it takes clicks and wheel events. The sidebar header holds
-  the collapse toggle, the inspector toggle and the switcher;
-  `ActionBar variant="stacked"` sits in its footer. No page pause, no scroll
-  lock.
+  the in-place sidebar layout
+  ([in-place-sidebar-layout.tsx](src/components/themer-ui/layouts/in-place-sidebar-layout.tsx)),
+  shared with Push: a `fixed inset-y-0 left-0` container that shrinks to the
+  sidebar's gap, so the page beside it takes clicks and wheel events. The
+  sidebar header holds the collapse toggle, the inspector toggle and the
+  switcher; `ActionBar variant="stacked"` sits in its footer. No page pause,
+  no scroll lock.
 - **Push** ([push-layout.tsx](src/components/themer-ui/layouts/push-layout.tsx)):
-  Overlay's markup, plus a layout effect that sets `margin-inline-start`,
-  `--themer-inset-inline-start` (the sidebar's width from `SIDEBAR_WIDTHS`,
-  per the `sidebarCollapsed` preference) and a 200 ms linear margin
-  transition as inline styles on `<html>`, and removes them on unmount
-  (close, switch, drawer, Themer unmounted). Fixed Host elements opt in
-  through the variable; the viewport does not shrink (ADR 0001).
+  the in-place sidebar layout, plus a layout effect that sets
+  `margin-inline-start`, `--themer-inset-inline-start` (the sidebar's width
+  from `useThemerSidebarWidth`, the mapping `ThemerSidebarProvider` lays the
+  sidebar out with) and a 200 ms linear margin transition as inline styles
+  on `<html>`, and on unmount (close, switch, drawer, Themer unmounted) puts
+  back the Host's own inline values of those properties, or removes them.
+  Fixed Host elements opt in through the variable; the viewport does not
+  shrink (ADR 0001).
 - **Toolbar** ([toolbar-layout.tsx](src/components/themer-ui/layouts/toolbar-layout.tsx)):
   no sidebar; a `fixed` bar centred at the top of the page with auto
   margins, not a transform (a transform would make the bar the containing

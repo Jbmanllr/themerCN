@@ -613,6 +613,28 @@ describe("Themer layout", () => {
       });
     });
 
+    it("puts back the Host's own inline styles on <html> when it gives the place back", async () => {
+      html().style.setProperty("transition", "opacity 300ms ease");
+      html().style.setProperty("margin-inline-start", "4px", "important");
+      await mount({ layout: "push" });
+      await open();
+      const toggle = () => query('[data-slot="sidebar-trigger"]');
+
+      expect(margin()).toBe("20rem");
+      await click(toggle());
+      expect(margin()).toBe("3rem");
+      await click(query('button[aria-label="Close theme editor"]'));
+
+      expect(html().style.getPropertyValue("transition")).toBe(
+        "opacity 300ms ease",
+      );
+      expect(margin()).toBe("4px");
+      expect(html().style.getPropertyPriority("margin-inline-start")).toBe(
+        "important",
+      );
+      expect(inset()).toBe("");
+    });
+
     it("leaves the page alone below 1280 px, where the drawer opens", async () => {
       setViewport(1279);
       await mount({ layout: "push" });

@@ -1,7 +1,8 @@
 "use client";
 
-// The editor's user preferences (colour format, Tailwind version, preview tab,
-// sidebar and section states, theme override and more), persisted in this
+// The editor's user preferences (colour format, Tailwind version, Themer
+// layout, preview tab, sidebar and section states, theme override and more),
+// persisted in this
 // browser's localStorage under `<storageNamespace>:preferences`
 // (getStorageKeys; `<Themer>` hydrates it through stores/hydrate.ts).
 //
@@ -23,7 +24,7 @@ import type { PreferencesStore } from "../types";
 import { getStorageKeys } from "../config/constants";
 
 /** Version of the persisted preferences (zustand persist `version`). */
-export const PREFERENCES_VERSION = 0;
+export const PREFERENCES_VERSION = 1;
 
 const colorFormatsByVersion = {
   "3": ["hex", "rgb", "hsl"],
@@ -45,6 +46,7 @@ export const usePreferencesStore = create<PreferencesStore>()(
       showContrastWarnings: true,
       previewTab: "cards",
       sidebarCollapsed: false,
+      layout: null,
       themeOverrideEnabled: true,
       sidebarColorSync: false,
       colorSelectorTab: "list",
@@ -67,6 +69,7 @@ export const usePreferencesStore = create<PreferencesStore>()(
       setShowContrastWarnings: (show) => set({ showContrastWarnings: show }),
       setPreviewTab: (tab) => set({ previewTab: tab }),
       setSidebarCollapsed: (collapsed) => set({ sidebarCollapsed: collapsed }),
+      setLayout: (layout) => set({ layout }),
       setThemeOverrideEnabled: (enabled) =>
         set({ themeOverrideEnabled: enabled }),
       setSidebarColorSync: (enabled) => set({ sidebarColorSync: enabled }),

@@ -1,12 +1,13 @@
 "use client";
 
-// The desktop Themer UI's top strip over the preview pane: sidebar trigger, a
-// "Preview" label and the close button. ThemerUI unmounts it in
-// fullscreen preview.
+// Workspace's top strip over the preview pane: sidebar trigger, a "Preview"
+// label, the layout switcher and the close button. WorkspaceLayout unmounts
+// it in fullscreen preview.
 
 import { X } from "lucide-react";
 import { SidebarTrigger } from "@workspace/ui/components/sidebar";
 import { ActionButton } from "../ui/action-button";
+import { LayoutSwitcher } from "./layout-switcher";
 
 interface ThemerHeaderProps {
   onClose: () => void;
@@ -23,9 +24,12 @@ export function ThemerHeader({ onClose }: ThemerHeaderProps) {
         <SidebarTrigger />
         <span className="text-sm font-medium">Preview</span>
       </div>
-      <ActionButton label="Close theme editor" onClick={onClose}>
-        <X />
-      </ActionButton>
+      <div className="flex items-center gap-1">
+        <LayoutSwitcher />
+        <ActionButton label="Close theme editor" onClick={onClose}>
+          <X />
+        </ActionButton>
+      </div>
     </div>
   );
 }

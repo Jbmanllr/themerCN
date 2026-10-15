@@ -1,8 +1,9 @@
 "use client";
 
-// The bar above the preview (tweakcn's action bar, minus its account
-// features): contrast check, light/dark, undo/redo, reset, CSS import, the
-// code export and the theme override switch.
+// The Themer's actions (tweakcn's action bar, minus its account features):
+// contrast check, light/dark, undo/redo, reset, CSS import, the code export
+// and the theme override switch. Workspace shows it as the bar above the
+// preview; Overlay at the foot of its sidebar, where it wraps onto two rows.
 //
 // Every value is selected narrowly from the stores so the bar does not
 // re-render on unrelated edits (it re-renders when undo/redo availability or
@@ -21,6 +22,7 @@
 import * as React from "react";
 import { Undo2, Redo2, Code2, RotateCcw, Eye, Upload } from "lucide-react";
 import { Button } from "@workspace/ui/components/button";
+import { cn } from "@workspace/ui/lib/utils";
 import { ButtonGroup } from "@workspace/ui/components/button-group";
 import { Separator } from "@workspace/ui/components/separator";
 import { Switch } from "@workspace/ui/components/switch";
@@ -44,9 +46,14 @@ import { ActionButton } from "./ui/action-button";
 import { ModeToggle } from "./ui/mode-toggle";
 
 /**
- * Action bar for the preview area (tweakcn-style)
+ * The Themer's actions: `bar` is the strip above Workspace's preview,
+ * `stacked` the sidebar footer of the layouts without a preview.
  */
-export function ActionBar() {
+export function ActionBar({
+  variant = "bar",
+}: {
+  variant?: "bar" | "stacked";
+}) {
   const undo = useEditorStore((state) => state.undo);
   const redo = useEditorStore((state) => state.redo);
   const reset = useEditorStore((state) => state.resetToCurrentPreset);
@@ -72,8 +79,18 @@ export function ActionBar() {
     : "Apply the edited theme";
 
   return (
-    <div className="bg-background/95 h-12 shrink-0 border-b backdrop-blur-sm">
-      <div className="flex h-full items-center justify-between px-4">
+    <div
+      className={cn(
+        variant === "bar" &&
+          "bg-background/95 h-12 shrink-0 border-b backdrop-blur-sm",
+      )}
+    >
+      <div
+        className={cn(
+          "flex items-center justify-between",
+          variant === "bar" ? "h-full px-4" : "flex-wrap gap-2",
+        )}
+      >
         <div className="flex items-center gap-1">
           <ActionButton
             label="Contrast checker"

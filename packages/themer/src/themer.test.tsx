@@ -9,7 +9,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { defaultThemeState } from "./config/defaults";
 import { useEditorStore } from "./stores/editor-store";
 import { useThemerUIStore } from "./stores/themer-ui-store";
-import { usePreferencesStore } from "./stores/preferences-store";
+import {
+  PREFERENCES_VERSION,
+  usePreferencesStore,
+} from "./stores/preferences-store";
 import { THEMER_CSS } from "./generated/themer-css";
 import { Themer, type ThemerProps } from "./index";
 
@@ -147,7 +150,7 @@ describe("Themer", () => {
       seedEditor("prefs:editor", "rgb(3, 3, 3)");
       localStorage.setItem(
         "prefs:preferences",
-        JSON.stringify({ state: { themeOverrideEnabled: false }, version: 0 }),
+        JSON.stringify({ state: { themeOverrideEnabled: false }, version: PREFERENCES_VERSION }),
       );
 
       await mount({ storageNamespace: "prefs" });
@@ -174,7 +177,7 @@ describe("Themer", () => {
       addHeadScriptRestore();
       localStorage.setItem(
         "themercn:preferences",
-        JSON.stringify({ state: { themeOverrideEnabled: false }, version: 0 }),
+        JSON.stringify({ state: { themeOverrideEnabled: false }, version: PREFERENCES_VERSION }),
       );
 
       await mount();

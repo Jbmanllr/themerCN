@@ -33,9 +33,29 @@ The look the repo's components are installed with (Nova, Luma, …), fixed in th
 _Avoid_: shadcn preset, Preset
 
 **Themer UI**:
-The Themer's own interface: its sidebar, header, controls and the popups they open. It always shows the Theme being edited.
+The Themer's own interface in any Themer layout: its sidebar or toolbar, header, controls and the popups they open. It always shows the Theme being edited.
 _Avoid_: chrome, editor UI, panel
 
 **Preview**:
 Any surface that exists to display the Theme: a built-in preview page or the Live view of the Host app's page.
 _Avoid_: demo, sample page
+
+**Themer layout**:
+How the Themer UI is arranged on screen while it is open: Workspace, Overlay, Push or Toolbar. The Host app sets the default; the user can switch, and the choice is remembered. Small screens always get the same bottom drawer, whatever the Themer layout.
+_Avoid_: layout (alone; a Host app has its own layouts), mode (that is light/dark), view
+
+**Workspace**:
+The Themer layout that covers the whole page: the sidebar beside the Preview. The only Themer layout with Preview tabs.
+_Avoid_: full-screen mode, studio, overlay
+
+**Overlay**:
+The Themer layout where the sidebar floats over the Host app's real page, which stays usable beside it.
+_Avoid_: floating mode; overlay for the whole Themer UI
+
+**Push**:
+The Themer layout where the sidebar sits beside the Host app's real page and shifts it aside instead of covering it.
+_Avoid_: inset, docked
+
+**Toolbar**:
+The Themer layout with no sidebar: every control sits in a bar over the Host app's real page, each group of controls opening in its own popup.
+_Avoid_: header mode, top bar

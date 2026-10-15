@@ -23,6 +23,22 @@ export async function openOverlay(page: Page) {
 }
 
 /**
+ * Opens the Themer UI and switches it to the Themer layout named `label`
+ * from the Workspace header's layout switcher.
+ */
+export async function openLayout(page: Page, label: string) {
+  await themerTrigger(page).click()
+  await page.getByRole("button", { name: "Themer layout: Workspace" }).click()
+  await page.getByRole("menuitemradio", { name: label }).click()
+  await expect(
+    page.getByRole("button", { name: `Themer layout: ${label}` })
+  ).toBeVisible()
+  await expect(
+    page.getByRole("button", { name: /^Primary & Secondary/ })
+  ).toBeVisible()
+}
+
+/**
  * Waits for the Themer UI (its trigger, or the open panel's close button:
  * the Themer loads lazily after hydration, slowly under parallel load) and
  * for web fonts, then parks the mouse, so nothing shifts or hovers while a

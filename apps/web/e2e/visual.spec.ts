@@ -1,6 +1,6 @@
 import { expect, test, type Page } from "@playwright/test"
 
-import { openOverlay, settle, themerTrigger } from "./themer-ui"
+import { openLayout, openOverlay, settle, themerTrigger } from "./themer-ui"
 
 // Baselines are Linux renders from the pinned mcr.microsoft.com/playwright
 // image (`pnpm e2e:update-snapshots`, which CI's e2e job also runs in).
@@ -120,6 +120,16 @@ const screens: {
       await page.goto("/")
       await expect(heading(page, "Good coffee, slowly.")).toBeVisible()
       await openOverlay(page)
+    },
+  },
+  {
+    // The sidebar beside the real page, which starts after it.
+    name: "themer-push",
+    fullPage: false,
+    show: async (page) => {
+      await page.goto("/")
+      await expect(heading(page, "Good coffee, slowly.")).toBeVisible()
+      await openLayout(page, "Push")
     },
   },
 ]

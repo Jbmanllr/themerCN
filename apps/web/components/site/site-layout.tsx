@@ -12,7 +12,7 @@ export function SiteLayout({ children }: { children: ReactNode }) {
     <div className="flex min-h-svh flex-col">
       <a
         href="#main"
-        className="sr-only z-50 rounded-md bg-primary px-3 py-2 text-primary-foreground focus:not-sr-only focus:fixed focus:top-2 focus:left-2"
+        className="sr-only z-50 rounded-md bg-primary px-3 py-2 text-primary-foreground focus:not-sr-only focus:fixed focus:top-2 focus:left-[calc(var(--themer-inset-inline-start,0px)+--spacing(2))]"
       >
         Skip to content
       </a>

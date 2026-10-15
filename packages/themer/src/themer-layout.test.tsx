@@ -260,16 +260,19 @@ describe("Themer layout", () => {
       });
     }
 
-    it("shows the tokens of a hovered page element in the Overlay", async () => {
-      await mount({ layout: "overlay" });
-      await open();
+    it.each(["overlay", "push"] as const)(
+      "shows the tokens of a hovered page element in the %s layout",
+      async (layout) => {
+        await mount({ layout });
+        await open();
 
-      await click(inspectorToggle());
-      await pointer("mousemove", pageButton);
+        await click(inspectorToggle());
+        await pointer("mousemove", pageButton);
 
-      expect(card()?.textContent).toContain("bg-primary");
-      expect(card()?.textContent).toContain("text-primary-foreground");
-    });
+        expect(card()?.textContent).toContain("bg-primary");
+        expect(card()?.textContent).toContain("text-primary-foreground");
+      },
+    );
 
     it("pins a clicked page element and opens its colour control, without the page acting", async () => {
       await mount({ layout: "overlay" });
@@ -348,6 +351,81 @@ describe("Themer layout", () => {
     });
   });
 
+  describe("Push", () => {
+    const html = () => document.documentElement;
+    const inset = () =>
+      html().style.getPropertyValue("--themer-inset-inline-start");
+    const margin = () => html().style.getPropertyValue("margin-inline-start");
+
+    it("shifts the Host page aside by the expanded sidebar's width", async () => {
+      await mount({ layout: "push" });
+      await open();
+
+      expect(sidebar()).not.toBeNull();
+      expect(preview()).toBeNull();
+      expect(inset()).toBe("20rem");
+      expect(margin()).toBe("20rem");
+    });
+
+    it("follows the sidebar as it collapses and expands", async () => {
+      await mount({ layout: "push" });
+      await open();
+      const toggle = () => query('[data-slot="sidebar-trigger"]');
+
+      await click(toggle());
+      expect(inset()).toBe("3rem");
+      expect(margin()).toBe("3rem");
+
+      await click(toggle());
+      expect(inset()).toBe("20rem");
+      expect(margin()).toBe("20rem");
+    });
+
+    describe("gives the Host page back its place", () => {
+      it("on close", async () => {
+        await mount({ layout: "push" });
+        await open();
+
+        await click(query('button[aria-label="Close theme editor"]'));
+
+        expect(inset()).toBe("");
+        expect(margin()).toBe("");
+      });
+
+      it("on a switch to another layout", async () => {
+        await mount({ layout: "push" });
+        await open();
+
+        await switchLayout("Overlay");
+
+        expect(sidebar()).not.toBeNull();
+        expect(inset()).toBe("");
+        expect(margin()).toBe("");
+      });
+
+      it("when the Host unmounts the Themer", async () => {
+        await mount({ layout: "push" });
+        await open();
+
+        await act(async () => root?.unmount());
+        root = null;
+
+        expect(inset()).toBe("");
+        expect(margin()).toBe("");
+      });
+    });
+
+    it("leaves the page alone below 1280 px, where the drawer opens", async () => {
+      setViewport(1279);
+      await mount({ layout: "push" });
+      await open();
+
+      expect(query('[data-slot="drawer-content"]')).not.toBeNull();
+      expect(inset()).toBe("");
+      expect(margin()).toBe("");
+    });
+  });
+
   describe("switcher", () => {
     it("offers the implemented layouts, the current one checked", async () => {
       await mount();
@@ -355,7 +433,7 @@ describe("Themer layout", () => {
 
       await click(layoutSwitcher());
 
-      expect(layoutChoices()).toEqual(["Workspace", "Overlay"]);
+      expect(layoutChoices()).toEqual(["Workspace", "Overlay", "Push"]);
       const checked = query('[role="menuitemradio"][aria-checked="true"]');
       expect(checked?.textContent?.trim()).toBe("Workspace");
     });

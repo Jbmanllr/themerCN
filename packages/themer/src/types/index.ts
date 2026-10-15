@@ -192,8 +192,10 @@ export interface ThemerExtraColorGroup {
  * - `"workspace"`: covers the whole page, the sidebar beside the Preview.
  * - `"overlay"`: the sidebar floats over the Host app's real page, which
  *   stays usable beside it.
+ * - `"push"`: the sidebar sits beside the Host app's real page and shifts it
+ *   aside (`margin-inline-start` on `<html>`, `--themer-inset-inline-start`).
  */
-export type ThemerLayout = "workspace" | "overlay";
+export type ThemerLayout = "workspace" | "overlay" | "push";
 
 /** Light or dark: the value of `ThemerProps.colorMode`. */
 export type ThemerColorMode = "light" | "dark";

@@ -201,7 +201,7 @@ module-level values: a new identity re-registers or rebuilds them.
 | `previewTabs`         | `readonly ThemerPreviewTab[]`            | none               | Preview tabs of your own: `{ id, label, component, scroll?, order? }`. Use `React.lazy` components. A built-in id replaces that tab.                                               |
 | `previewWrapper`      | `ComponentType<{ children: ReactNode }>` | none               | Wraps your preview tabs (not the built-in ones) with the providers your components need: the Themer renders outside your tree.                                                    |
 | `shortcut`            | `string`                                 | `"ctrl+shift+e"`   | Toggles the Themer. Modifiers `ctrl`, `alt`, `shift`, `meta`, joined with `+`; `ctrl` also matches Cmd on macOS.                                                                  |
-| `layout`              | `"workspace" \| "overlay"`               | `"workspace"`      | The [Themer layout](#themer-layouts) the Themer opens in. The user's own choice, made in the Themer, wins over it.                                                                 |
+| `layout`              | `"workspace" \| "overlay" \| "push"`     | `"workspace"`      | The [Themer layout](#themer-layouts) the Themer opens in. The user's own choice, made in the Themer, wins over it.                                                                 |
 | `showTrigger`         | `boolean`                                | `true`             | Shows the floating button.                                                                                                                                                        |
 | `zIndex`              | `number`                                 | `9990` / `10000`   | Layer of the trigger and the Themer UI (by default 9990 and 10000). Popups sit one layer above the Themer UI.                                                                         |
 | `storageNamespace`    | `string`                                 | `"themercn"`       | Prefix of the localStorage keys `<ns>:editor`, `<ns>:preferences` and `<ns>:color-mode`. Give the head script the same value.                                                    |
@@ -319,12 +319,43 @@ How the Themer UI sits on screen while it is open:
   actions at its foot. Your page stays usable beside it: it scrolls (Lenis
   included) and takes clicks. The inspector (its toggle is in the sidebar's
   header) works on your real page instead of a Preview.
+- **Push**: the sidebar sits beside your real page and shifts it aside
+  instead of covering it. See [Push and your page](#push-and-your-page).
+  The inspector works on your real page here too.
 
 `layout` sets the default. The user switches from the layout menu in the
 Themer UI's header; the choice is saved in `<storageNamespace>:preferences`
 and wins over `layout` on the next visit. Switching keeps the Theme, undo
-history and open panel (it turns the inspector off), and the sidebar stays collapsed or expanded across
-layouts. Below 1280 px every layout opens as the same bottom drawer.
+history and open panel (it turns the inspector off), and the sidebar stays
+collapsed or expanded across layouts. Below 1280 px every layout opens as the same bottom drawer.
+
+### Push and your page
+
+The Themer never wraps your app, so Push moves your page with
+`margin-inline-start` on `<html>`, set to the sidebar's width (320 px
+expanded, 48 px collapsed) and animated with the sidebar. The same width is
+exposed as the CSS variable `--themer-inset-inline-start` on `<html>`. The
+margin, the variable and the margin's `transition` are inline styles on
+`<html>`, removed when the Themer closes, switches to another layout, opens as
+the drawer, or unmounts.
+
+Two limits, by design:
+
+- **`position: fixed` elements stay on the viewport**, so they sit under the
+  sidebar (sticky ones follow the page). Opt one in by offsetting it with the
+  variable, with a fallback for when the Themer is not in Push:
+
+  ```css
+  .my-fixed-sidebar {
+    left: var(--themer-inset-inline-start, 0px);
+    transition: left 200ms linear; /* follows the sidebar's animation */
+  }
+  ```
+
+  In Tailwind: `left-[var(--themer-inset-inline-start,0px)]`.
+- **The viewport does not shrink**, so your breakpoints, media queries and
+  viewport units (`100vw`, `w-screen`) do not react to Push. To see the Theme
+  at other widths, use the Workspace's Live preview.
 
 ## What you can edit
 

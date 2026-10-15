@@ -235,6 +235,119 @@ describe("Themer layout", () => {
     });
   });
 
+  describe("inspector on the Host page", () => {
+    let pageButton: HTMLButtonElement;
+
+    beforeEach(() => {
+      // The Host's page, beside <Themer> (it never wraps the page).
+      pageButton = document.createElement("button");
+      pageButton.className = "bg-primary text-primary-foreground";
+      pageButton.textContent = "Buy";
+      document.body.append(pageButton);
+    });
+
+    const inspectorToggle = () =>
+      query<HTMLElement>('[data-testid="themer-ui"] [aria-label="Inspector"]');
+    const card = () => query('[data-testid="themer-inspector-overlay"]');
+
+    /** Pointer events land after a frame: the inspector measures on one. */
+    async function pointer(type: "mousemove" | "click", target: Element) {
+      await act(async () => {
+        target.dispatchEvent(
+          new MouseEvent(type, { bubbles: true, cancelable: true }),
+        );
+        await new Promise((resolve) => setTimeout(resolve, 50));
+      });
+    }
+
+    it("shows the tokens of a hovered page element in the Overlay", async () => {
+      await mount({ layout: "overlay" });
+      await open();
+
+      await click(inspectorToggle());
+      await pointer("mousemove", pageButton);
+
+      expect(card()?.textContent).toContain("bg-primary");
+      expect(card()?.textContent).toContain("text-primary-foreground");
+    });
+
+    it("pins a clicked page element and opens its colour control, without the page acting", async () => {
+      await mount({ layout: "overlay" });
+      await open();
+      await click(query('[role="tab"][aria-label="Typography"]'));
+      const pageHandler = vi.fn();
+      pageButton.addEventListener("click", pageHandler);
+
+      await click(inspectorToggle());
+      await pointer("click", pageButton);
+
+      expect(pageHandler).not.toHaveBeenCalled();
+      expect(card()?.textContent).toContain("Pinned");
+      expect(
+        query('[role="tab"][aria-label="Colors"]')?.getAttribute(
+          "aria-selected",
+        ),
+      ).toBe("true");
+    });
+
+    it("leaves the Themer UI alone: nothing shows on hover, and its clicks act", async () => {
+      await mount({ layout: "overlay" });
+      await open();
+      const themerSurface = query(
+        '[data-testid="themer-ui"] [data-slot="sidebar-inner"]',
+      );
+      expect(themerSurface?.className).toContain("bg-sidebar");
+
+      await click(inspectorToggle());
+      await pointer("mousemove", themerSurface!);
+      expect(card()).toBeNull();
+
+      await click(query('[role="tab"][aria-label="Typography"]'));
+      expect(
+        query('[role="tab"][aria-label="Typography"]')?.getAttribute(
+          "aria-selected",
+        ),
+      ).toBe("true");
+      expect(card()).toBeNull();
+    });
+
+    const pressed = (toggle: Element | null) =>
+      toggle?.getAttribute("aria-pressed");
+
+    it("turns off when the user switches layout, both ways", async () => {
+      await mount();
+      await open();
+      await click(query('[data-testid="themer-preview-inspector"]'));
+      expect(pressed(query('[data-testid="themer-preview-inspector"]'))).toBe(
+        "true",
+      );
+
+      await switchLayout("Overlay");
+      expect(pressed(inspectorToggle())).toBe("false");
+      await pointer("mousemove", pageButton);
+      expect(card()).toBeNull();
+
+      await click(inspectorToggle());
+      await switchLayout("Workspace");
+      expect(pressed(query('[data-testid="themer-preview-inspector"]'))).toBe(
+        "false",
+      );
+    });
+
+    it("turns off when the Themer UI closes", async () => {
+      await mount({ layout: "overlay" });
+      await open();
+      await click(inspectorToggle());
+
+      await click(query('[aria-label="Close theme editor"]'));
+      await pointer("mousemove", pageButton);
+      expect(card()).toBeNull();
+      await open();
+
+      expect(pressed(inspectorToggle())).toBe("false");
+    });
+  });
+
   describe("switcher", () => {
     it("offers the implemented layouts, the current one checked", async () => {
       await mount();

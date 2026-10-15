@@ -289,7 +289,7 @@ match.
 | `Ctrl+Shift+E` | Open or close the Themer | Always (change it with `shortcut`)                   |
 | `Ctrl+Z`       | Undo                    | Themer open                                           |
 | `Ctrl+Shift+Z` | Redo                    | Themer open                                           |
-| `Ctrl+I`       | Toggle the inspector    | Preview shown, desktop layout, same-origin Live frame |
+| `Ctrl+I`       | Toggle the inspector    | Desktop; in Workspace, a Preview shown and a same-origin Live frame |
 | `Esc`          | Exit fullscreen preview | Fullscreen preview on                                 |
 
 ## Styles and browser support
@@ -317,12 +317,13 @@ How the Themer UI sits on screen while it is open:
   Preview tabs.
 - **Overlay**: the sidebar floats over your real page, on the left, with the
   actions at its foot. Your page stays usable beside it: it scrolls (Lenis
-  included) and takes clicks.
+  included) and takes clicks. The inspector (its toggle is in the sidebar's
+  header) works on your real page instead of a Preview.
 
 `layout` sets the default. The user switches from the layout menu in the
 Themer UI's header; the choice is saved in `<storageNamespace>:preferences`
 and wins over `layout` on the next visit. Switching keeps the Theme, undo
-history and open panel, and the sidebar stays collapsed or expanded across
+history and open panel (it turns the inspector off), and the sidebar stays collapsed or expanded across
 layouts. Below 1280 px every layout opens as the same bottom drawer.
 
 ## What you can edit

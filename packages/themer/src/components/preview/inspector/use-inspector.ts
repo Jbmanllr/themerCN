@@ -23,7 +23,10 @@
 //   does not exit on the same key;
 // - scrolling anywhere (capture phase: scroll does not bubble) and resizing
 //   re-measure the pinned or hovered element instead of hiding it;
-// - moving into the rest of the editor clears the card unless it is pinned.
+// - moving into the rest of the editor clears the card unless it is pinned;
+// - elements matching `ignore` (the page inspector passes the Themer's own
+//   tree) count as the rest of the editor: never inspected, presses not
+//   swallowed.
 // Everything is removed when the inspector turns off, the tab changes or the
 // component unmounts. A cross-origin frame cannot be read: `frameBlocked`
 // tells the toggle to disable itself.
@@ -102,6 +105,7 @@ export function useInspector({
   bindingKey,
   hostRef,
   containerRef,
+  ignore,
   onPick,
 }: {
   enabled: boolean;
@@ -111,6 +115,8 @@ export function useInspector({
   bindingKey: string;
   hostRef: React.RefObject<HTMLElement | null>;
   containerRef: React.RefObject<HTMLElement | null>;
+  /** Selector of elements inside the host that are not inspected. */
+  ignore?: string;
   /** A click picked an element; receives its first token class. */
   onPick: (className: string) => void;
 }): { state: InspectorState; frameBlocked: boolean } {
@@ -210,13 +216,18 @@ export function useInspector({
       return true;
     };
 
+    const isIgnored = (target: EventTarget | null) =>
+      ignore !== undefined &&
+      Boolean((target as Element | null)?.closest?.(ignore));
+
     // Hover inside the inspected tree.
     const handleMove = (event: Event) => {
-      if (!pinned) select(event.target);
+      if (!pinned && !isIgnored(event.target)) select(event.target);
     };
 
     // Swallow presses so the preview does not act; a click pins and picks.
     const intercept = (event: Event) => {
+      if (isIgnored(event.target)) return;
       event.preventDefault();
       event.stopPropagation();
       if (event.type !== "click") return;
@@ -232,7 +243,9 @@ export function useInspector({
     const handleOutsideMove = (event: Event) => {
       if (pinned || !current) return;
       const target = event.target as Node | null;
-      if (target && (iframe ?? host).contains(target)) return;
+      if (target && (iframe ?? host).contains(target) && !isIgnored(target)) {
+        return;
+      }
       if (
         (target as Element | null)?.closest?.(`[${INSPECTOR_CARD_ATTRIBUTE}]`)
       ) {
@@ -320,7 +333,7 @@ export function useInspector({
       ownerWindow.removeEventListener("resize", schedule);
       setState(EMPTY_INSPECTOR_STATE);
     };
-  }, [enabled, frame, bindingKey, hostRef, containerRef, update]);
+  }, [enabled, frame, bindingKey, hostRef, containerRef, ignore, update]);
 
   return { state, frameBlocked };
 }

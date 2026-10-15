@@ -20,7 +20,7 @@
 // See: packages/themer/ARCHITECTURE.md (Preview System)
 
 import * as React from "react";
-import { Inspect, Maximize, Minimize, MoreVertical } from "lucide-react";
+import { Maximize, Minimize, MoreVertical } from "lucide-react";
 import { Button } from "@workspace/ui/components/button";
 import {
   DropdownMenu,
@@ -30,17 +30,10 @@ import {
 } from "@workspace/ui/components/dropdown-menu";
 import { ScrollArea, ScrollBar } from "@workspace/ui/components/scroll-area";
 import { Tabs, TabsContent, TabsList } from "@workspace/ui/components/tabs";
-import { Toggle } from "@workspace/ui/components/toggle";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@workspace/ui/components/tooltip";
 import { cn } from "@workspace/ui/lib/utils";
 import { useColorFocusTrigger } from "../../hooks/use-color-focus";
 import { useIsMobile } from "../../hooks/use-is-mobile";
 import {
-  formatShortcut,
   themerShortcuts,
   useKeyboardShortcut,
 } from "../../hooks/use-keyboard-shortcut";
@@ -51,7 +44,12 @@ import { useThemerContext } from "../themer-provider";
 import { ActionButton } from "../ui/action-button";
 import { ModeToggle } from "../ui/mode-toggle";
 import { BUILTIN_TABS } from "./builtin-tabs";
-import { InspectorOverlay, segmentClassName, useInspector } from "./inspector";
+import {
+  InspectorOverlay,
+  InspectorToggle,
+  segmentClassName,
+  useInspector,
+} from "./inspector";
 import {
   mergePreviewTabs,
   resolveActiveTabId,
@@ -59,8 +57,6 @@ import {
 } from "./preview-tab-registry";
 import ExamplesPreviewContainer from "./theme-preview/examples-preview-container";
 import TabsTriggerPill from "./theme-preview/tabs-trigger-pill";
-
-const INSPECTOR_SHORTCUT = formatShortcut("ctrl+i");
 
 export function PreviewTabs() {
   const { config } = useThemerContext();
@@ -146,6 +142,7 @@ export function PreviewTabs() {
                 : "Pages from another origin cannot be inspected"
             }
             onToggle={toggleInspector}
+            data-testid="themer-preview-inspector"
           />
           <ActionButton
             label={isFullscreen ? "Exit full screen" : "Full screen"}
@@ -295,44 +292,5 @@ function PreviewTabList({
         </DropdownMenu>
       )}
     </div>
-  );
-}
-
-function InspectorToggle({
-  pressed,
-  available,
-  blockedReason,
-  onToggle,
-}: {
-  pressed: boolean;
-  available: boolean;
-  blockedReason: string;
-  onToggle: () => void;
-}) {
-  const toggle = (
-    <Toggle
-      size="sm"
-      pressed={pressed}
-      onPressedChange={onToggle}
-      disabled={!available}
-      aria-label="Inspector"
-      data-testid="themer-preview-inspector"
-    >
-      <Inspect />
-      {pressed && <span className="text-xs tracking-wide uppercase">on</span>}
-    </Toggle>
-  );
-
-  return (
-    <Tooltip>
-      {/* A disabled button gets no pointer events: hover the wrapper. */}
-      {/* react-doctor-disable-next-line react-doctor/no-noninteractive-tabindex -- Base UI's Toggle cannot stay focusable while disabled, so this wrapper is what keeps the disabled reason's tooltip reachable by keyboard */}
-      <TooltipTrigger render={available ? toggle : <span tabIndex={0} />}>
-        {available ? undefined : toggle}
-      </TooltipTrigger>
-      <TooltipContent>
-        {available ? `Inspector (${INSPECTOR_SHORTCUT})` : blockedReason}
-      </TooltipContent>
-    </Tooltip>
   );
 }

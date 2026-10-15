@@ -91,15 +91,25 @@ the Themer's portal beside the Host tree and never wrap it.
 - **Workspace** ([workspace-layout.tsx](src/components/themer-ui/layouts/workspace-layout.tsx)):
   `fixed inset-0`, the sidebar beside `SidebarInset` with `ThemerHeader`
   (switcher, close) and `PreviewPanel` (action bar, Preview tabs). The only
-  layout with Preview tabs, inspector and fullscreen preview.
+  layout with Preview tabs and fullscreen preview; its inspector works on
+  the Preview tabs.
 - **Overlay** ([overlay-layout.tsx](src/components/themer-ui/layouts/overlay-layout.tsx)):
   a `fixed inset-y-0 left-0` container that shrinks to the sidebar's gap, so
   the page beside it takes clicks and wheel events. The sidebar header holds
-  the collapse toggle and the switcher; `ActionBar variant="stacked"` sits in
-  its footer. No page pause, no scroll lock.
+  the collapse toggle, the inspector toggle and the switcher;
+  `ActionBar variant="stacked"` sits in its footer. No page pause, no scroll
+  lock.
+- **Inspector on the Host page** ([page-inspector.tsx](src/components/themer-ui/page-inspector.tsx)):
+  every in-place layout (`coversPage: false`) mounts `<PageInspector />` in
+  its root and `<PageInspectorToggle />` in its header or bar.
+  `useInspector` binds to the Host document with `ignore: "[data-themer]"`,
+  so the Themer's own tree is never inspected and its clicks still act; the
+  card renders in a fixed, pointer-transparent layer. `ThemerUI` turns
+  `inspectorMode` off whenever the layout in force changes.
 
 Every editing state (Theme, history, active panel, collapse) lives in the
-stores, so a switch keeps it; the layout components hold none. Adding a
+stores, so a switch keeps it (the inspector is turned off: each layout
+inspects its own surface); the layout components hold none. Adding a
 layout: add it to `ThemerLayout`, `THEMER_LAYOUTS` (the compiler then asks
 for `LAYOUT_COMPONENTS` too), write its component under `layouts/`, and add
 e2e and visual screens in `apps/web/e2e`.
@@ -386,7 +396,8 @@ go last). Only the active tab mounts; Host tabs render inside
 | ------ | ------- |
 | `PreviewTabs` | Tab bar, inspector toggle (`Ctrl+I`), fullscreen. |
 | `LivePreview` | Same-origin iframe of the Host page; the Theme is applied to its document after each load. The Host must allow same-origin framing. |
-| `InspectorOverlay` + `useInspector` | Hover shows an element's token classes; click pins it and focuses the colour control. Off on mobile and for a cross-origin frame. |
+| `InspectorOverlay` + `useInspector` | Hover shows an element's token classes; click pins it and focuses the colour control. Off on mobile and for a cross-origin frame. `ignore` leaves a subtree alone (the page inspector's `[data-themer]`). |
+| `InspectorToggle` | The toggle, shared by `PreviewTabs` and `PageInspectorToggle`. |
 | `useFullscreenSync` | Keeps `fullscreenPreview` in step with the Fullscreen API; CSS fallback; `Esc` exits. |
 
 ## Color System

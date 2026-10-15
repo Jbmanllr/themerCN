@@ -1,8 +1,8 @@
 "use client";
 
 // Workspace: the Themer layout that covers the whole page, the sidebar beside
-// the Preview. The only layout with Preview tabs, inspector and fullscreen
-// preview.
+// the Preview. The only layout with Preview tabs and fullscreen preview; its
+// inspector works on the Preview tabs (the in-place layouts inspect the page).
 //
 // Contract: the container must not clip overflow (no `overflow-hidden`,
 // `transform` or `contain`): popups position against the viewport.

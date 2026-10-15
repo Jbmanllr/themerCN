@@ -6,9 +6,14 @@
 // (`focusRequest`, hooks/use-color-focus.ts) expands it, so the picker can
 // mount. useThemerSidebarWidth gives the width it lays the sidebar out at,
 // for what must follow it outside the sidebar (Push's page inset).
+//
+// Expanding and collapsing is instant: the stock Sidebar animates its width,
+// which squeezes the panel content mid-way, so its gap and container get no
+// transition here. Popups keep their own animations.
 
 import * as React from "react";
 import { SidebarProvider } from "@workspace/ui/components/sidebar";
+import { cn } from "@workspace/ui/lib/utils";
 import { useColorFocusStore } from "../../stores/color-focus-store";
 import { usePreferencesStore } from "../../stores/preferences-store";
 import { SIDEBAR_WIDTHS } from "../../config/constants";
@@ -44,7 +49,10 @@ export function ThemerSidebarProvider({
     <SidebarProvider
       open={!sidebarCollapsed}
       onOpenChange={(open) => setSidebarCollapsed(!open)}
-      className={className}
+      className={cn(
+        "[&_[data-slot=sidebar-container]]:transition-none [&_[data-slot=sidebar-gap]]:transition-none",
+        className,
+      )}
       style={
         {
           "--sidebar-width": SIDEBAR_WIDTHS.expanded,

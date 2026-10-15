@@ -86,7 +86,8 @@ the Themer's portal beside the Host tree and never wrap it.
 | Components | `LAYOUT_COMPONENTS` in [themer-ui.tsx](src/components/themer-ui/themer-ui.tsx) | The one map from layout to component (`ThemerLayoutProps`: `onClose`, `zIndex`). |
 | Layout in force | [hooks/use-themer-layout.ts](src/hooks/use-themer-layout.ts) | `useThemerLayout()`: the `layout` preference over `config.layout`. |
 | Switcher | [themer-ui/layout-switcher.tsx](src/components/themer-ui/layout-switcher.tsx) | `DropdownMenu` of `THEMER_LAYOUTS` in every layout's header; writes the `layout` preference. Its `LayoutRadioGroup` also fills the submenu of Toolbar's "More actions" menu. |
-| Shared sidebar | [themer-ui/themer-sidebar-provider.tsx](src/components/themer-ui/themer-sidebar-provider.tsx), [themer-sidebar.tsx](src/components/themer-sidebar.tsx) | The SidebarProvider bound to `sidebarCollapsed` (collapse is shared), and the sidebar with `headerActions`/`footer` slots for a layout without its own header or action bar. |
+| Shared sidebar | [themer-ui/themer-sidebar-provider.tsx](src/components/themer-ui/themer-sidebar-provider.tsx), [themer-sidebar.tsx](src/components/themer-sidebar.tsx) | The SidebarProvider bound to `sidebarCollapsed` (collapse is shared and instant: the stock width transition is off), and the sidebar with `headerActions`/`footer` slots for a layout without its own header or action bar. |
+| Panel popups | [sidebar/panel-popover.tsx](src/components/sidebar/panel-popover.tsx) | A panel in a popup, shared by the Toolbar's panel groups and the collapsed rail's icons: one open at a time, it sets the active panel, and stays open while the page is clicked or scrolled. |
 | Actions | [actions/themer-actions.tsx](src/components/actions/themer-actions.tsx) | `useThemerActions`: every action's name, icon, shortcut, state and handler, the Theme override, and the dialogs they open, defined once. `ActionBar` lays them out as buttons; `ThemerActionsMenu` is their "More actions" menu (the Toolbar's, and the collapsed rail's with undo/redo and mode). |
 
 - **Workspace** ([workspace-layout.tsx](src/components/themer-ui/layouts/workspace-layout.tsx)):
@@ -108,9 +109,10 @@ the Themer's portal beside the Host tree and never wrap it.
   the in-place sidebar layout, plus a layout effect that sets
   `margin-inline-start`, `--themer-inset-inline-start` (the sidebar's width
   from `useThemerSidebarWidth`, the mapping `ThemerSidebarProvider` lays the
-  sidebar out with) and a 200 ms linear margin transition as inline styles
-  on `<html>`, and on unmount (close, switch, drawer, Themer unmounted) puts
-  back the Host's own inline values of those properties, or removes them.
+  sidebar out with) as inline styles on `<html>`, with no transition (the
+  sidebar does not animate either), and on unmount (close, switch, drawer,
+  Themer unmounted) puts back the Host's own inline values of those
+  properties, or removes them.
   Fixed Host elements opt in through the variable; the viewport does not
   shrink (ADR 0001).
 - **Toolbar** ([toolbar-layout.tsx](src/components/themer-ui/layouts/toolbar-layout.tsx)):

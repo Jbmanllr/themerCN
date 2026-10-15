@@ -27,12 +27,7 @@ import {
   DropdownMenuSubTrigger,
 } from "@workspace/ui/components/dropdown-menu";
 import { Separator } from "@workspace/ui/components/separator";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@workspace/ui/components/popover";
-import { ScrollArea } from "@workspace/ui/components/scroll-area";
+import { PopoverTrigger } from "@workspace/ui/components/popover";
 import {
   ToggleGroup,
   ToggleGroupItem,
@@ -40,7 +35,6 @@ import {
 import { useThemerLayout } from "../../../hooks/use-themer-layout";
 import { useColorFocusStore } from "../../../stores/color-focus-store";
 import { useEditorStore } from "../../../stores/editor-store";
-import { useThemerUIStore } from "../../../stores/themer-ui-store";
 import { PresetSelect } from "../../actions/preset-select";
 import {
   ThemerActionButton,
@@ -50,7 +44,7 @@ import {
 import { LayoutRadioGroup } from "../layout-switcher";
 import { PageInspector, PageInspectorToggle } from "../page-inspector";
 import { THEMER_LAYOUTS } from "./registry";
-import { PanelContent } from "../../sidebar/panel-content";
+import { PanelPopover, usePanelPopovers } from "../../sidebar/panel-popover";
 import { ActionButton } from "../../ui/action-button";
 import { ModeToggle } from "../../ui/mode-toggle";
 import { PANELS, type Panel } from "../../sidebar/panels-config";
@@ -116,34 +110,23 @@ function LayoutSubmenu() {
   );
 }
 
-/**
- * Why a panel popup does not close: a press or focus outside it. The user is
- * editing the page behind it, so clicking or scrolling the page keeps it
- * open; Escape, its trigger or another group's trigger closes it.
- */
-const STAYS_OPEN_ON: ReadonlySet<string> = new Set([
-  "outside-press",
-  "focus-out",
-]);
-
 const PANEL_POPOVERS = Object.fromEntries(
   PANELS.map((panel) => [panel.id, PopoverPrimitive.createHandle()]),
 ) as Record<Panel, PopoverPrimitive.Handle<unknown>>;
 
 /**
  * Colors, Typography, Other: popover triggers drawn as a ToggleGroup, the
- * pressed item being the open popup. Opening one makes it the active panel;
- * a colour focus jump (`focusRequest`, hooks/use-color-focus.ts) opens
- * Colors so the picker can mount.
+ * pressed item being the open popup (sidebar/panel-popover.tsx). A colour
+ * focus jump (`focusRequest`, hooks/use-color-focus.ts) opens Colors so the
+ * picker can mount.
  */
 function PanelGroups() {
-  const setActivePanel = useThemerUIStore((state) => state.setActivePanel);
   const focusRequest = useColorFocusStore((state) => state.focusRequest);
-  const [openPanel, setOpenPanel] = React.useState<Panel | null>(null);
+  const { openPanel, setOpenPanel, popoverProps } = usePanelPopovers();
 
   React.useEffect(() => {
     if (focusRequest) setOpenPanel("colors");
-  }, [focusRequest]);
+  }, [focusRequest, setOpenPanel]);
 
   return (
     <>
@@ -163,36 +146,13 @@ function PanelGroups() {
           context, and a Toggle in a panel (the Sidebar sync) would join the
           group. The triggers reach them through their handles. */}
       {PANELS.map((panel) => (
-        <Popover
+        <PanelPopover
           key={panel.id}
+          panel={panel.id}
           handle={PANEL_POPOVERS[panel.id]}
-          open={openPanel === panel.id}
-          onOpenChange={(open, { reason }) => {
-            if (open) {
-              setActivePanel(panel.id);
-              setOpenPanel(panel.id);
-            } else if (!STAYS_OPEN_ON.has(reason)) {
-              setOpenPanel((current) => (current === panel.id ? null : current));
-            }
-          }}
-        >
-          <PopoverContent
-            data-testid={`themer-toolbar-panel-${panel.id}`}
-            className="w-md p-0"
-          >
-            {/* Capped to the room left under the bar (Base UI's
-                --available-height); native scrolling in a host running
-                Lenis (see LenisPause). */}
-            <ScrollArea
-              data-lenis-prevent
-              className="*:data-[slot=scroll-area-viewport]:max-h-[calc(var(--available-height)-0.75rem)]"
-            >
-              <div className="p-4">
-                <PanelContent panel={panel.id} />
-              </div>
-            </ScrollArea>
-          </PopoverContent>
-        </Popover>
+          data-testid={`themer-toolbar-panel-${panel.id}`}
+          {...popoverProps(panel.id)}
+        />
       ))}
     </>
   );

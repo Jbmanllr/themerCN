@@ -9,10 +9,10 @@
 // Contract:
 // - While open on desktop, <html> gets `margin-inline-start` and
 //   `--themer-inset-inline-start` set to the sidebar's width (expanded or
-//   collapsed, from useThemerSidebarWidth), and a 200ms linear margin
-//   transition matching the sidebar's, as inline styles. When the layout
+//   collapsed, from useThemerSidebarWidth) as inline styles. Like the
+//   sidebar, the page moves at once, without a transition. When the layout
 //   unmounts (close, a switch to another layout, the drawer below 1280 px,
-//   the Themer unmounted) the Host's own inline values of those three
+//   the Themer unmounted) the Host's own inline values of those two
 //   properties are put back as they were, priority included, and absent
 //   ones removed.
 // - Accepted limits: the Host's `position: fixed` elements stay on the
@@ -29,8 +29,8 @@ import type { ThemerLayoutProps } from "./types";
 const INSET_VARIABLE = "--themer-inset-inline-start";
 
 /**
- * Shifts the Host page aside by `width` (margin-inline-start on <html>, with
- * the sidebar's own 200ms linear width transition) and exposes `width` as
+ * Shifts the Host page aside by `width` (margin-inline-start on <html>) and
+ * exposes `width` as
  * INSET_VARIABLE, until the layout unmounts; then the Host's previous inline
  * values come back.
  */
@@ -40,7 +40,6 @@ function usePageInset(width: string) {
     const inset: Record<string, string> = {
       [INSET_VARIABLE]: width,
       "margin-inline-start": width,
-      transition: "margin-inline-start 200ms linear",
     };
     const previous = Object.keys(inset).map((property) => ({
       property,

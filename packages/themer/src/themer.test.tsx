@@ -154,6 +154,33 @@ describe("Themer", () => {
 
       expect(rootVar("--primary")).toBe("");
     });
+
+    function addHeadScriptRestore() {
+      const style = document.createElement("style");
+      style.id = "themercn-restore";
+      document.head.append(style);
+    }
+
+    it("takes over from the head script's restore once it applies the Theme", async () => {
+      addHeadScriptRestore();
+
+      await mount();
+
+      expect(rootVar("--primary")).toBe(LIGHT_PRIMARY);
+      expect(document.getElementById("themercn-restore")).toBeNull();
+    });
+
+    it("drops the head script's restore when the Theme override is off", async () => {
+      addHeadScriptRestore();
+      localStorage.setItem(
+        "themercn:preferences",
+        JSON.stringify({ state: { themeOverrideEnabled: false }, version: 0 }),
+      );
+
+      await mount();
+
+      expect(document.getElementById("themercn-restore")).toBeNull();
+    });
   });
 
   describe("colour mode, uncontrolled", () => {
@@ -167,6 +194,17 @@ describe("Themer", () => {
       expect(rootVar("--primary")).toBe(DARK_PRIMARY);
     });
 
+    it("saves the mode for the head script to restore on reload", async () => {
+      await mount({ storageNamespace: "acme" });
+      await openThemer();
+
+      await clickModeToggle();
+      expect(localStorage.getItem("acme:color-mode")).toBe("dark");
+
+      await clickModeToggle();
+      expect(localStorage.getItem("acme:color-mode")).toBe("light");
+    });
+
     it("follows a .dark toggle made outside the Themer", async () => {
       await mount();
       expect(rootVar("--primary")).toBe(LIGHT_PRIMARY);
@@ -178,6 +216,14 @@ describe("Themer", () => {
   });
 
   describe("colour mode, controlled", () => {
+    it("saves no mode, so the head script leaves the Host's class alone", async () => {
+      localStorage.setItem("themercn:color-mode", "dark");
+
+      await mount({ colorMode: "light", onColorModeChange: () => {} });
+
+      expect(localStorage.getItem("themercn:color-mode")).toBeNull();
+    });
+
     it("applies the mode the Host passes, whatever the class says", async () => {
       await mount({ colorMode: "dark", onColorModeChange: () => {} });
 

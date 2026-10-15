@@ -17,7 +17,9 @@
 //   mounted, scoped to its `[data-themer]` root (themer-scope.tsx). The Host
 //   app compiles and imports nothing of the Themer's.
 // - The persisted stores hydrate from `<storageNamespace>:editor` and
-//   `<storageNamespace>:preferences` when it first renders on the client.
+//   `<storageNamespace>:preferences` when it first renders on the client; an
+//   uncontrolled light/dark mode is saved under `<storageNamespace>:color-mode`
+//   (color-mode.tsx).
 // - `presets`, `extraColors`, `previewTabs` and `previewWrapper` must be
 //   stable module-level values: a new identity re-registers or rebuilds them.
 
@@ -25,7 +27,10 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useMemo, useState, useSyncExternalStore } from "react";
 
 import type { ThemerConfig, ThemerProps } from "../types";
-import { DEFAULT_STORAGE_NAMESPACE } from "../config/constants";
+import {
+  DEFAULT_STORAGE_NAMESPACE,
+  getStorageKeys,
+} from "../config/constants";
 import { hydrateThemerStores } from "../stores/hydrate";
 
 import { ColorModeProvider } from "./color-mode";
@@ -155,6 +160,7 @@ function ThemerApp({
       <ColorModeProvider
         colorMode={colorMode}
         onColorModeChange={onColorModeChange}
+        storageKey={getStorageKeys(storageNamespace).colorMode}
       >
         <ThemerProvider config={config}>
           <ThemerOverlayOnly />

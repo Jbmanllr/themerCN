@@ -203,8 +203,8 @@ module-level values: a new identity re-registers or rebuilds them.
 | `shortcut`            | `string`                                 | `"ctrl+shift+e"`   | Toggles the Themer. Modifiers `ctrl`, `alt`, `shift`, `meta`, joined with `+`; `ctrl` also matches Cmd on macOS.                                                                  |
 | `showTrigger`         | `boolean`                                | `true`             | Shows the floating button.                                                                                                                                                        |
 | `zIndex`              | `number`                                 | `9990` / `10000`   | Layer of the trigger and the overlay (by default 9990 and 10000). Popups sit one layer above the overlay.                                                                         |
-| `storageNamespace`    | `string`                                 | `"themercn"`       | Prefix of the localStorage keys `<ns>:editor` and `<ns>:preferences`. Give the head script the same value.                                                                        |
-| `colorMode`           | `"light" \| "dark"`                      | none               | Controlled light/dark, for an app with its own mode state. Pass it with `onColorModeChange`; your app keeps the `.dark` class. Unset, the Themer toggles `.dark` on `<html>` and follows changes made by others. |
+| `storageNamespace`    | `string`                                 | `"themercn"`       | Prefix of the localStorage keys `<ns>:editor`, `<ns>:preferences` and `<ns>:color-mode`. Give the head script the same value.                                                    |
+| `colorMode`           | `"light" \| "dark"`                      | none               | Controlled light/dark, for an app with its own mode state. Pass it with `onColorModeChange`; your app keeps the `.dark` class. Unset, the Themer toggles `.dark` on `<html>`, follows changes made by others, and the head script restores the mode on reload. |
 | `onColorModeChange`   | `(mode: "light" \| "dark") => void`      | none               | Called with the mode the user switched to, in controlled mode.                                                                                                                    |
 | `fontCatalogEndpoint` | `string`                                 | none               | URL of a [font catalog](#font-catalog). Unset, the font picker searches the bundled list in the browser.                                                                          |
 
@@ -221,15 +221,20 @@ light values.
 
 The edited Theme and the Themer's preferences persist in the browser's
 localStorage under `<storageNamespace>:editor` and
-`<storageNamespace>:preferences`; nothing is sent anywhere. The Themer never
+`<storageNamespace>:preferences` (and, when the Themer owns light/dark,
+its mode under `<storageNamespace>:color-mode`); nothing is sent anywhere. The Themer never
 writes your source files: copy the Code dialog's CSS into your project to keep
 a Theme.
 
 Without the head script, a reload paints your own Theme first and switches to
 the saved edit once the Themer loads after hydration. The head script applies
-the saved Theme while the HTML is parsed (and requests its Google Fonts). With
-nothing saved, or the Theme override switched off in the Themer, it changes
-nothing, so it is safe to render even in builds where the Themer is off.
+the saved Theme while the HTML is parsed (and requests its Google Fonts), in
+whichever mode the page is in: when your app owns the `.dark` class
+(`colorMode`), its own script may set the class before or after this one.
+When the Themer owns light/dark, the head script also restores the mode it
+saved. With nothing saved, or the Theme override switched off in the Themer,
+it changes nothing, so it is safe to render even in builds where the Themer is
+off.
 
 ## Font catalog
 

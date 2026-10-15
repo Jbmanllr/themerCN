@@ -16,17 +16,19 @@ function save(namespace: string, primary: string) {
     `${namespace}:editor`,
     JSON.stringify({
       state: { themeState: { currentMode: "light", styles: { light: { primary } } } },
-      version: 1,
+      version: 0,
     }),
   );
 }
 
 const primary = () =>
-  document.documentElement.style.getPropertyValue("--primary");
+  getComputedStyle(document.documentElement)
+    .getPropertyValue("--primary")
+    .trim();
 
 beforeEach(() => {
   localStorage.clear();
-  document.documentElement.removeAttribute("style");
+  document.head.innerHTML = "";
 });
 
 it("restores the Theme saved under the Host's storage namespace", () => {

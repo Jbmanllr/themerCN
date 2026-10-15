@@ -302,6 +302,20 @@ describe("applyThemeToDocument", () => {
   });
 });
 
+describe("applyThemeToDocument over the head script", () => {
+  it("replaces the head script's restore sheet in that document", () => {
+    const doc = new FakeDocument();
+    const restore = doc.createElement("style");
+    restore.setAttribute("id", "themercn-restore");
+    doc.head.appendChild(restore);
+
+    applyThemeToDocument(doc.asDocument, themeWith({ primary: "#123456" }));
+
+    expect(doc.getElementById("themercn-restore")).toBeNull();
+    expect(root(doc).style.getPropertyValue("--primary")).toBe("#123456");
+  });
+});
+
 describe("host extra colours", () => {
   afterEach(() => configureExtraColors());
 

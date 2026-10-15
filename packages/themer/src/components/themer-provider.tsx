@@ -15,6 +15,9 @@
 // - The CSS variables, the shadow override sheet and the theme's font links
 //   are removed when the theme override preference goes off or the provider
 //   unmounts.
+// - The head script's restore sheet (RESTORE_STYLE_ID) is removed in the same
+//   effect that first applies the Theme, or at once when the override is off,
+//   so the page never shows a stale copy of the Theme.
 //
 // See: packages/themer/ARCHITECTURE.md ("Core Entry Points").
 
@@ -39,7 +42,7 @@ import {
 import { useColorMode } from "./color-mode";
 import { DynamicFontLoader } from "./dynamic-font-loader";
 import { useSidebarSyncAlignment } from "../hooks/use-sidebar-sync-alignment";
-import { SHORTCUTS } from "../config/constants";
+import { RESTORE_STYLE_ID, SHORTCUTS } from "../config/constants";
 import { configurePresets, getDefaultPresetId } from "../config/presets";
 import { configureExtraColors } from "../config/extra-colors";
 
@@ -164,10 +167,12 @@ export function ThemerProvider({
   // sheet included, is removed only when the override goes off or the editor
   // unmounts.
   React.useEffect(() => {
-    if (!themeOverrideEnabled) return;
-    applyThemeToElement(appliedThemeState, document.documentElement, {
-      updateClass: false,
-    });
+    if (themeOverrideEnabled) {
+      applyThemeToElement(appliedThemeState, document.documentElement, {
+        updateClass: false,
+      });
+    }
+    document.getElementById(RESTORE_STYLE_ID)?.remove();
   }, [appliedThemeState, themeOverrideEnabled]);
 
   React.useEffect(() => {

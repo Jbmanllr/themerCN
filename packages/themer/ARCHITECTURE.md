@@ -134,9 +134,10 @@ components and sets no positioner props of its own.
 
 - **Controlled** (`colorMode` or `onColorModeChange` set): the mode is
   `colorMode`; the toggle calls `onColorModeChange`; the Host (for example
-  `next-themes`) sets the class.
+  `next-themes`) sets the class. No mode is saved (a saved one is removed).
 - **Uncontrolled**: the class is the mode. The toggle flips it, and a
-  `MutationObserver` follows changes made by anyone else.
+  `MutationObserver` follows changes made by anyone else. The mode is saved
+  under `<ns>:color-mode` so the head script restores the class on reload.
 
 `ThemerProvider` mirrors the mode into the editor store and writes variables,
 never the class (`applyThemeToElement(..., { updateClass: false })`).
@@ -147,16 +148,25 @@ the switch inside a View Transition with a circular reveal where supported.
 
 - Stores use `skipHydration: true`; `hydrateThemerStores(ns)`
   ([stores/hydrate.ts](src/stores/hydrate.ts)) points them at
-  `getStorageKeys(ns)` (`<ns>:editor`, `<ns>:preferences`;
+  `getStorageKeys(ns)` (`<ns>:editor`, `<ns>:preferences`, plus
+  `<ns>:color-mode` written by an uncontrolled `ColorModeProvider`;
   `DEFAULT_STORAGE_NAMESPACE` is `"themercn"`) and hydrates them during
   `<Themer>`'s first client render, so nothing is read from a key the Host
   did not choose.
 - [utils/theme-script.ts](src/utils/theme-script.ts) generates the head
-  script string: it reads both keys, picks the style set from the persisted
-  `currentMode`, writes the variables and font links, and does nothing when
-  nothing is saved or `themeOverrideEnabled` is false. It embeds what it
-  needs with `JSON.stringify` and imports constants only. A change to the
-  persisted shape is a change to this script.
+  script string. It sets `.dark` from `<ns>:color-mode` when an uncontrolled
+  Themer saved one (otherwise the Host owns the class, and its script may
+  run later). It writes both modes of the saved Theme into one
+  `<style id="themercn-restore">` (`RESTORE_STYLE_ID`) as
+  `html:root:not(.dark)` and `html:root.dark` rules, which outrank the Host's
+  `:root` and `.dark`, so the first paint has the right tokens whichever mode
+  the page ends up in; it also adds the font links. It writes nothing when
+  nothing is saved or `themeOverrideEnabled` is false, and drops a saved
+  value that could end its declaration. `ThemerProvider` (and
+  `applyThemeToDocument`, for the Live frame) removes the sheet once it
+  applies the Theme itself. It embeds what it needs with `JSON.stringify` and
+  imports constants only. A change to the persisted shape is a change to this
+  script.
 - `getThemerHeadScript` (`themercn/head-script`) returns that string;
   `<ThemerHeadScript>` (`themercn/next`) renders it as a raw `<script>` (not
   `next/script`, whose inline `beforeInteractive` need not run before first

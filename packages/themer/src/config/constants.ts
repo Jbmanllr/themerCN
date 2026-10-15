@@ -95,15 +95,24 @@ export const DEFAULT_STORAGE_NAMESPACE = "themercn";
 
 /**
  * localStorage keys of a storage namespace. `editor` and `preferences` are
- * the persisted stores (editor-store.ts, preferences-store.ts) and are also
- * read by the pre-hydration script (utils/theme-script.ts).
+ * the persisted stores (editor-store.ts, preferences-store.ts); `colorMode`
+ * is the light/dark mode an uncontrolled Themer owns (components/color-mode.tsx),
+ * absent while the Host app controls the mode. The pre-hydration script
+ * (utils/theme-script.ts) reads all three.
  */
 export function getStorageKeys(namespace: string = DEFAULT_STORAGE_NAMESPACE) {
   return {
     editor: `${namespace}:editor`,
     preferences: `${namespace}:preferences`,
+    colorMode: `${namespace}:color-mode`,
   } as const;
 }
+
+/**
+ * Id of the <style> the pre-hydration script writes the saved Theme into.
+ * ThemerProvider removes it once it applies the Theme itself.
+ */
+export const RESTORE_STYLE_ID = "themercn-restore";
 
 /**
  * WCAG contrast ratio thresholds that utils/contrast-checker.ts grades a

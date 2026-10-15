@@ -1,8 +1,6 @@
 // Barrel for the editor's components, re-exported by the package root
 // Internal: the package root (src/index.ts) exports only <Themer> and its
-// types. Not listed here: Themer, ThemerRoot, LenisPause, and the
-// legacy ./themer-header.tsx, which nothing imports (the ThemerHeader below
-// is ./overlay/themer-header.tsx).
+// types. Not listed here: Themer, ThemerRoot and LenisPause.
 
 // Main components
 export { ThemerProvider, useThemerContext } from "./themer-provider";

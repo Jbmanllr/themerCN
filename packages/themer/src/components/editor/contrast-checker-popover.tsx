@@ -2,8 +2,7 @@
 
 // The contrast checker as a dialog (the file is still named "popover"). The
 // action bar opens it controlled (`open`, from its own Contrast checker
-// button); the legacy components/themer-header.tsx (imported by nothing)
-// mounts it with its own trigger.
+// button).
 //
 // See: packages/themer/ARCHITECTURE.md (Contrast Checker).
 

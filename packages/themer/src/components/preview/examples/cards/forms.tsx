@@ -80,7 +80,7 @@ export function CardsForms() {
                 >
                   <RadioGroupItem
                     value={plan.id}
-                    id={plan.name}
+                    aria-label={plan.name}
                     className="data-checked:border-primary"
                   />
                   <div className="grid gap-1 font-normal">

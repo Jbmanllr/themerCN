@@ -224,7 +224,7 @@ export function SubscriptionCard({
             <li key={coffee.slug}>
               <Link
                 href={`/shop/p/${coffee.slug}`}
-                className="text-foreground underline-offset-4 hover:underline"
+                className="text-foreground underline underline-offset-4"
               >
                 {coffee.name}
               </Link>

@@ -36,9 +36,16 @@ jobs:
       # plus the Vite app's off-build check (no `data-themer` in its dist).
       - run: pnpm turbo check:package
 
+  # Smoke, visual and a11y Playwright projects. Runs in the Playwright image
+  # pinned to the @playwright/test version (apps/web, apps/vite): the visual
+  # baselines are rendered there (`pnpm e2e:update-snapshots`), so CI must
+  # render the same way. The image ships the browsers.
   e2e:
     name: E2E (Playwright, Chromium)
     runs-on: ubuntu-latest
+    container:
+      image: mcr.microsoft.com/playwright:v1.64.0-noble
+      options: --ipc=host --init
     steps:
       - uses: actions/checkout@v7
 
@@ -50,9 +57,6 @@ jobs:
           cache: pnpm
 
       - run: pnpm install --frozen-lockfile
-
-      # Browser version follows the @playwright/test pin in apps/vite.
-      - run: pnpm --filter vite-app exec playwright install --with-deps chromium
 
       - run: pnpm turbo e2e
 

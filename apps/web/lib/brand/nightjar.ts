@@ -79,7 +79,7 @@ const dark = {
   "muted-foreground": "oklch(0.74 0.03 285)",
   accent: "oklch(0.34 0.06 285)",
   "accent-foreground": "oklch(0.95 0.01 85)",
-  destructive: "oklch(0.68 0.19 25)",
+  destructive: "oklch(0.73 0.17 25)",
   "destructive-foreground": "oklch(0.16 0.03 25)",
   border: "oklch(1 0 0 / 12%)",
   input: "oklch(1 0 0 / 16%)",

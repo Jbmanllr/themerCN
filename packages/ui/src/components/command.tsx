@@ -140,6 +140,9 @@ function CommandSeparator({
 }: React.ComponentProps<typeof CommandPrimitive.Separator>) {
   return (
     <CommandPrimitive.Separator
+      // Decorative: a listbox may only own options and groups, and cmdk
+      // hard-codes role="separator", so hide it from assistive tech.
+      aria-hidden
       data-slot="command-separator"
       className={cn("my-1.5 h-px bg-border/50", className)}
       {...props}

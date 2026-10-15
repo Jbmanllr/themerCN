@@ -13,7 +13,7 @@
 //
 // See: packages/themer/ARCHITECTURE.md ("Themer layouts").
 
-import { LayoutPanelLeft, PanelLeft, type LucideIcon } from "lucide-react";
+import { Layers2, LayoutPanelLeft, type LucideIcon } from "lucide-react";
 import type { ThemerLayout } from "../../../types";
 
 export interface ThemerLayoutDefinition {
@@ -30,7 +30,7 @@ export interface ThemerLayoutDefinition {
 
 export const THEMER_LAYOUTS: Record<ThemerLayout, ThemerLayoutDefinition> = {
   workspace: { label: "Workspace", icon: LayoutPanelLeft, coversPage: true },
-  overlay: { label: "Overlay", icon: PanelLeft, coversPage: false },
+  overlay: { label: "Overlay", icon: Layers2, coversPage: false },
 };
 
 export const DEFAULT_THEMER_LAYOUT: ThemerLayout = "workspace";

@@ -52,7 +52,7 @@ export function LayoutSwitcher() {
             }}
           >
             {LAYOUT_ENTRIES.map(([id, definition]) => (
-              <DropdownMenuRadioItem key={id} value={id}>
+              <DropdownMenuRadioItem key={id} value={id} closeOnClick>
                 <definition.icon />
                 {definition.label}
               </DropdownMenuRadioItem>

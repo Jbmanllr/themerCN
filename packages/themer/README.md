@@ -178,7 +178,7 @@ itself) beside your tree, and put `getThemerHeadScript()` in an inline
 
 | Import                 | Exports                                                                                    | Notes                                                                                     |
 | ---------------------- | ------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------- |
-| `themercn`             | `Themer`; types `ThemerProps`, `ThemePreset`, `ThemerExtraColorGroup`, `ThemerPreviewTab` | The Themer itself (client only). Usually loaded through the loader.                      |
+| `themercn`             | `Themer`; types `ThemerProps`, `ThemePreset`, `ThemerExtraColorGroup`, `ThemerLayout`, `ThemerPreviewTab` | The Themer itself (client only). Usually loaded through the loader.                      |
 | `themercn/loader`      | `createThemerLoader`, type `ThemerModule`                                                  | About 1 kB. Reaches no Themer code; with `null` nothing of the Themer ships.              |
 | `themercn/head-script` | `getThemerHeadScript`, type `ThemerHeadScriptOptions`                                      | A string generator with no imports: safe in a build config or on a server.                |
 | `themercn/next`        | `ThemerHeadScript`, type `ThemerHeadScriptProps`                                           | Client component for the root layout's `<head>`.                                          |
@@ -201,6 +201,7 @@ module-level values: a new identity re-registers or rebuilds them.
 | `previewTabs`         | `readonly ThemerPreviewTab[]`            | none               | Preview tabs of your own: `{ id, label, component, scroll?, order? }`. Use `React.lazy` components. A built-in id replaces that tab.                                               |
 | `previewWrapper`      | `ComponentType<{ children: ReactNode }>` | none               | Wraps your preview tabs (not the built-in ones) with the providers your components need: the Themer renders outside your tree.                                                    |
 | `shortcut`            | `string`                                 | `"ctrl+shift+e"`   | Toggles the Themer. Modifiers `ctrl`, `alt`, `shift`, `meta`, joined with `+`; `ctrl` also matches Cmd on macOS.                                                                  |
+| `layout`              | `"workspace" \| "overlay"`               | `"workspace"`      | The [Themer layout](#themer-layouts) the Themer opens in. The user's own choice, made in the Themer, wins over it.                                                                 |
 | `showTrigger`         | `boolean`                                | `true`             | Shows the floating button.                                                                                                                                                        |
 | `zIndex`              | `number`                                 | `9990` / `10000`   | Layer of the trigger and the Themer UI (by default 9990 and 10000). Popups sit one layer above the Themer UI.                                                                         |
 | `storageNamespace`    | `string`                                 | `"themercn"`       | Prefix of the localStorage keys `<ns>:editor`, `<ns>:preferences` and `<ns>:color-mode`. Give the head script the same value.                                                    |
@@ -308,6 +309,22 @@ Known leak: your unlayered element rules (for example
 properties Preflight does not reset, because they win on specificity. Layered
 CSS, which is what Tailwind emits, does not leak.
 
+## Themer layouts
+
+How the Themer UI sits on screen while it is open:
+
+- **Workspace** (default): covers the whole page, the sidebar beside the
+  Preview tabs.
+- **Overlay**: the sidebar floats over your real page, on the left, with the
+  actions at its foot. Your page stays usable beside it: it scrolls (Lenis
+  included) and takes clicks.
+
+`layout` sets the default. The user switches from the layout menu in the
+Themer UI's header; the choice is saved in `<storageNamespace>:preferences`
+and wins over `layout` on the next visit. Switching keeps the Theme, undo
+history and open panel, and the sidebar stays collapsed or expanded across
+layouts. Below 1280 px every layout opens as the same bottom drawer.
+
 ## What you can edit
 
 - **Presets**: a searchable picker with the built-in tweakcn catalogue plus
@@ -329,7 +346,8 @@ CSS, which is what Tailwind emits, does not leak.
   pages, plus your own tabs; an inspector that shows an element's token
   classes and jumps to the colour; fullscreen.
 
-Below 1280 px wide the Themer opens as a bottom drawer without the preview.
+Below 1280 px wide the Themer opens as a bottom drawer without the preview,
+whatever the [Themer layout](#themer-layouts).
 
 ## Credits and licences
 

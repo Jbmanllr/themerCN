@@ -5,7 +5,7 @@ import { uiComponents } from "../lib/design-system"
 import { postCategories, posts } from "../lib/mock/blog"
 import { categories, products } from "../lib/mock/catalog"
 import { chatThreads } from "../lib/mock/chat"
-import { openOverlay, settle, themerTrigger } from "./themer-ui"
+import { openLayout, openOverlay, settle, themerTrigger } from "./themer-ui"
 
 // Every Playground route, read from the same data the pages are generated
 // from, so a new product, post or ui component is checked without edits here.
@@ -94,5 +94,14 @@ test("the open Overlay has no serious or critical axe violations", async ({
   await page.goto("/")
   await settlePage(page)
   await openOverlay(page)
+  expect(await blockingViolations(page)).toEqual([])
+})
+
+test("the open Push has no serious or critical axe violations", async ({
+  page,
+}) => {
+  await page.goto("/")
+  await settlePage(page)
+  await openLayout(page, "Push")
   expect(await blockingViolations(page)).toEqual([])
 })

@@ -1,13 +1,29 @@
-// Placeholder from the Playground foundation (#23). #24 replaces this page.
+import { CategoryNav } from "@/components/blog/category-nav"
+import { PostCard } from "@/components/blog/post-card"
+import { PageIntro } from "@/components/marketing/page-intro"
+import { posts } from "@/lib/mock"
+
 export const metadata = { title: "Journal" }
 
-export default function Page() {
+export default function JournalPage() {
+  const [latest, ...rest] = posts
   return (
-    <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6">
-      <h1 className="font-heading text-4xl">Journal</h1>
-      <p className="mt-3 text-muted-foreground">
-        Brew guides, origin stories and gear notes are on their way.
-      </p>
-    </div>
+    <>
+      <PageIntro
+        title="Journal"
+        lede="Brew guides, trips to origin and gear we would buy again, written by the people who roast your coffee."
+        className="md:grid-cols-1"
+      >
+        <CategoryNav />
+      </PageIntro>
+      <div className="mx-auto flex max-w-6xl flex-col gap-16 px-4 pt-4 pb-20 sm:px-6">
+        {latest ? <PostCard post={latest} featured /> : null}
+        <div className="grid gap-x-8 gap-y-14 sm:grid-cols-2 lg:grid-cols-3">
+          {rest.map((post) => (
+            <PostCard key={post.slug} post={post} />
+          ))}
+        </div>
+      </div>
+    </>
   )
 }

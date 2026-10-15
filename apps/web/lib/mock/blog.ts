@@ -1,4 +1,10 @@
-import type { Author, AuthorId, Post, PostCategory } from "./types"
+import type {
+  Author,
+  AuthorId,
+  Post,
+  PostCategory,
+  PostCategorySlug,
+} from "./types"
 
 export const authors: Author[] = [
   {
@@ -169,6 +175,15 @@ export const posts: Post[] = [
 
 export function getPost(slug: string): Post | undefined {
   return posts.find((post) => post.slug === slug)
+}
+
+export function getPostCategory(slug: string): PostCategory | undefined {
+  return postCategories.find((category) => category.slug === slug)
+}
+
+/** The posts in a journal category, newest first (as `posts` is ordered). */
+export function getPostsInCategory(slug: PostCategorySlug): Post[] {
+  return posts.filter((post) => post.category === slug)
 }
 
 export function getAuthor(id: AuthorId): Author {

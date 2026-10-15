@@ -403,7 +403,7 @@ describe("Themer layout", () => {
       });
     }
 
-    it.each(["overlay", "push"] as const)(
+    it.each(["overlay", "push", "toolbar"] as const)(
       "shows the tokens of a hovered page element in the %s layout",
       async (layout) => {
         await mount({ layout });

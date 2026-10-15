@@ -107,19 +107,23 @@ the Themer's portal beside the Host tree and never wrap it.
   (close, switch, drawer, Themer unmounted). Fixed Host elements opt in
   through the variable; the viewport does not shrink (ADR 0001).
 - **Toolbar** ([toolbar-layout.tsx](src/components/themer-ui/layouts/toolbar-layout.tsx)):
-  no sidebar; a `fixed` bar centred at the top of the page. Colors,
-  Typography and Other are `Popover` triggers drawn as a `ToggleGroup`; each
-  popup holds `PanelContent` in a `ScrollArea` capped to Base UI's
-  `--available-height`, and opening one sets the active panel. The popups
-  ignore outside presses and focus-out, so the page can be clicked and
-  scrolled while one is open; Escape, the trigger or another group closes
-  it. Undo/redo, mode and Close are a `ButtonGroup`; the rest of the
-  ActionBar, the override switch and the layouts (`LayoutRadioGroup` in a
-  submenu) are a `DropdownMenu`. Nested popups (colour, font pickers) portal
-  after the panel popup, so they paint above it. No page pause.
+  no sidebar; a `fixed` bar centred at the top of the page with auto
+  margins, not a transform (a transform would make the bar the containing
+  block of the page inspector's fixed layer). Colors, Typography and Other
+  are `Popover` triggers drawn as a `ToggleGroup`; each popup holds
+  `PanelContent` in a `ScrollArea` capped to Base UI's `--available-height`,
+  and opening one sets the active panel. The popups ignore outside presses
+  and focus-out, so the page can be clicked and scrolled while one is open;
+  Escape, the trigger or another group closes it. Undo/redo, the inspector
+  toggle, mode and Close are a `ButtonGroup`; the rest of the ActionBar, the
+  override switch and the layouts (`LayoutRadioGroup` in a submenu) are a
+  `DropdownMenu`. Nested popups (colour, font pickers) portal after the
+  panel popup, so they paint above it. No page pause.
 - **Inspector on the Host page** ([page-inspector.tsx](src/components/themer-ui/page-inspector.tsx)):
-  every in-place layout (`coversPage: false`) mounts `<PageInspector />` in
-  its root and `<PageInspectorToggle />` in its header or bar.
+  every in-place layout (`coversPage: false`: Overlay, Push, Toolbar) mounts
+  `<PageInspector />` in its root and `<PageInspectorToggle />` in its
+  sidebar header (Overlay, Push) or its bar (Toolbar, `size="default"` to
+  match the `ButtonGroup`).
   `useInspector` binds to the Host document with `ignore: "[data-themer]"`,
   so the Themer's own tree is never inspected and its clicks still act; the
   card renders in a fixed, pointer-transparent layer. `ThemerUI` turns

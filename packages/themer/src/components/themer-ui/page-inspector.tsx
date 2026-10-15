@@ -8,7 +8,8 @@
 // - <PageInspector />, once, inside its root: binds useInspector to the Host
 //   document, renders the highlight and card in a viewport-sized layer that
 //   ignores the pointer, and registers Ctrl+I;
-// - <PageInspectorToggle />, in its header or bar.
+// - <PageInspectorToggle />, in its header or bar (`size="default"` beside
+//   icon Buttons, as in the Toolbar's ButtonGroup).
 //
 // Contract:
 // - The Themer's own tree (`[data-themer]`: the Themer UI, its trigger and
@@ -76,7 +77,11 @@ export function PageInspector() {
   );
 }
 
-export function PageInspectorToggle() {
+export function PageInspectorToggle({
+  size,
+}: {
+  size?: "sm" | "default";
+}) {
   const inspectorMode = useThemerUIStore((state) => state.inspectorMode);
   const toggleInspector = useThemerUIStore((state) => state.toggleInspector);
 
@@ -84,6 +89,7 @@ export function PageInspectorToggle() {
     <InspectorToggle
       pressed={inspectorMode}
       onToggle={toggleInspector}
+      size={size}
       data-testid="themer-page-inspector-toggle"
     />
   );

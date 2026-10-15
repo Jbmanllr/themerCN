@@ -326,7 +326,8 @@ How the Themer UI sits on screen while it is open:
   every control. Colors, Typography and Other each open in their own popup,
   which stays open while you click or scroll the page (Escape, its button or
   another group closes it); Code, CSS import, reset, the contrast checker,
-  the Theme override and the layout menu are in its `…` menu.
+  the Theme override and the layout menu are in its `…` menu. The inspector
+  (its toggle is in the bar) works on your real page too.
 
 `layout` sets the default. The user switches from the layout menu in the
 Themer UI's header (Toolbar: its `…` menu); the choice is saved in `<storageNamespace>:preferences`

@@ -12,6 +12,8 @@
 // - A panel popup stays open while the page is clicked or scrolled; Escape,
 //   its trigger or another group's trigger closes it. Opening one makes its
 //   panel the active panel (kept across a layout switch).
+// - The inspector works on the real page (PageInspector); its toggle sits in
+//   the bar's ButtonGroup, beside undo/redo.
 // - No Preview, no page pause, no scroll lock. Nested popups portal after
 //   the panel popup, into the same layer, so they paint above it.
 
@@ -66,6 +68,7 @@ import { CssImportDialog } from "../../actions/css-import-dialog";
 import { PresetSelect } from "../../actions/preset-select";
 import { ContrastCheckerDialog } from "../../editor/contrast-checker-popover";
 import { LayoutRadioGroup } from "../layout-switcher";
+import { PageInspector, PageInspectorToggle } from "../page-inspector";
 import { THEMER_LAYOUTS } from "./registry";
 import { PanelContent } from "../../sidebar/panel-content";
 import { ActionButton } from "../../ui/action-button";
@@ -88,9 +91,10 @@ export function ToolbarLayout({ onClose, zIndex }: ThemerLayoutProps) {
       data-testid="themer-ui"
       role="toolbar"
       aria-label="Theme Editor"
-      className="bg-background fixed top-3 left-1/2 flex -translate-x-1/2 items-center gap-2 rounded-4xl border p-1.5 shadow-lg"
+      className="bg-background fixed inset-x-0 top-3 mx-auto flex w-fit items-center gap-2 rounded-4xl border p-1.5 shadow-lg"
       style={{ zIndex }}
     >
+      <PageInspector />
       <PanelGroups />
 
       <Separator orientation="vertical" className="h-6.5" />
@@ -118,6 +122,7 @@ export function ToolbarLayout({ onClose, zIndex }: ThemerLayoutProps) {
         >
           <Redo2 />
         </ActionButton>
+        <PageInspectorToggle size="default" />
         <ModeToggle data-testid="themer-mode-toggle" />
         <ActionButton label="Close theme editor" onClick={onClose}>
           <X />

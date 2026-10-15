@@ -20,6 +20,7 @@ export function InspectorToggle({
   available = true,
   blockedReason,
   onToggle,
+  size = "sm",
   "data-testid": testId,
 }: {
   pressed: boolean;
@@ -27,11 +28,13 @@ export function InspectorToggle({
   /** Tooltip of a disabled toggle. */
   blockedReason?: string;
   onToggle: () => void;
+  /** `default` matches icon Buttons, as in the Toolbar's ButtonGroup. */
+  size?: "sm" | "default";
   "data-testid"?: string;
 }) {
   const toggle = (
     <Toggle
-      size="sm"
+      size={size}
       pressed={pressed}
       onPressedChange={onToggle}
       disabled={!available}

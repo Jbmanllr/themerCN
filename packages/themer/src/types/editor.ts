@@ -247,6 +247,13 @@ export interface ColorFocusState {
   highlightTarget: string | null;
   /** Colour list search query; kept across panel switches, reset on close. */
   colorSearch: string;
+  /**
+   * The token a focusColor jump is opening, until its picker is highlighted
+   * or the jump ends. Each Themer layout shows the Colors panel while it is
+   * set: the sidebar layouts expand their sidebar, the Toolbar opens its
+   * Colors popup.
+   */
+  focusRequest: string | null;
 }
 
 /**

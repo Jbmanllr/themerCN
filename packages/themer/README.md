@@ -316,7 +316,8 @@ How the Themer UI sits on screen while it is open:
 - **Workspace** (default): covers the whole page, the sidebar beside the
   Preview tabs.
 - **Overlay**: the sidebar floats over your real page, on the left, with the
-  actions at its foot. Your page stays usable beside it: it scrolls (Lenis
+  actions at its foot (collapsed to its icon rail, they are in the rail's
+  `…` menu). Your page stays usable beside it: it scrolls (Lenis
   included) and takes clicks. The inspector (its toggle is in the sidebar's
   header) works on your real page instead of a Preview.
 - **Push**: the sidebar sits beside your real page and shifts it aside
@@ -342,8 +343,9 @@ The Themer never wraps your app, so Push moves your page with
 expanded, 48 px collapsed) and animated with the sidebar. The same width is
 exposed as the CSS variable `--themer-inset-inline-start` on `<html>`. The
 margin, the variable and the margin's `transition` are inline styles on
-`<html>`, removed when the Themer closes, switches to another layout, opens as
-the drawer, or unmounts.
+`<html>`. When the Themer closes, switches to another layout, opens as the
+drawer, or unmounts, any inline values your app had set for them come back
+as they were, and the rest are removed.
 
 Two limits, by design:
 

@@ -7,14 +7,6 @@ export const themerTrigger = (page: Page) =>
   page.getByRole("button", { name: "Open Theme Editor" })
 
 /**
- * Opens the Themer UI and switches it to the Overlay layout from the
- * Workspace header's layout switcher.
- */
-export async function openOverlay(page: Page) {
-  await openLayout(page, "Overlay")
-}
-
-/**
  * Opens the Themer UI and switches it to the sidebar Themer layout named
  * `label` from the Workspace header's layout switcher.
  */
@@ -28,15 +20,33 @@ export async function openLayout(page: Page, label: string) {
   ).toBeVisible()
 }
 
+/** The Toolbar layout's bar. */
+export const themerToolbar = (page: Page) =>
+  page.getByRole("toolbar", { name: "Theme Editor" })
+
+/** The Toolbar's popup for the panel group `id` (colors, typography, other). */
+export const toolbarPanel = (page: Page, id: string) =>
+  page.getByTestId(`themer-toolbar-panel-${id}`)
+
 /**
  * Opens the Themer UI and switches it to the Toolbar layout, which has no
  * sidebar: it waits for the bar instead of the switcher and a panel.
  */
 export async function openToolbar(page: Page) {
   await switchFromWorkspace(page, "Toolbar")
-  await expect(
-    page.getByRole("toolbar", { name: "Theme Editor" })
-  ).toBeVisible()
+  await expect(themerToolbar(page)).toBeVisible()
+}
+
+/**
+ * Opens the Toolbar and the popup of its panel group `label` ("Colors",
+ * "Typography", "Other"), and returns the popup once it shows.
+ */
+export async function openToolbarPanel(page: Page, label: string) {
+  await openToolbar(page)
+  await themerToolbar(page).getByRole("button", { name: label }).click()
+  const popup = toolbarPanel(page, label.toLowerCase())
+  await expect(popup).toBeVisible()
+  return popup
 }
 
 async function switchFromWorkspace(page: Page, label: string) {

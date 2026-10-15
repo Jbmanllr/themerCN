@@ -2,8 +2,7 @@ import { expect, test, type Page } from "@playwright/test"
 
 import {
   openLayout,
-  openOverlay,
-  openToolbar,
+  openToolbarPanel,
   settle,
   themerTrigger,
 } from "./themer-ui"
@@ -125,7 +124,7 @@ const screens: {
     show: async (page) => {
       await page.goto("/")
       await expect(heading(page, "Good coffee, slowly.")).toBeVisible()
-      await openOverlay(page)
+      await openLayout(page, "Overlay")
     },
   },
   {
@@ -145,13 +144,9 @@ const screens: {
     show: async (page) => {
       await page.goto("/")
       await expect(heading(page, "Good coffee, slowly.")).toBeVisible()
-      await openToolbar(page)
-      await page
-        .getByRole("toolbar", { name: "Theme Editor" })
-        .getByRole("button", { name: "Colors" })
-        .click()
+      const colors = await openToolbarPanel(page, "Colors")
       await expect(
-        page.getByRole("button", { name: /^Primary & Secondary/ })
+        colors.getByRole("button", { name: /^Primary & Secondary/ })
       ).toBeVisible()
     },
   },

@@ -7,6 +7,7 @@ import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { useEditorStore } from "./stores/editor-store";
+import { useColorFocusStore } from "./stores/color-focus-store";
 import { useThemerUIStore } from "./stores/themer-ui-store";
 import {
   PREFERENCES_VERSION,
@@ -198,6 +199,54 @@ describe("Themer layout", () => {
       expect(query('[role="dialog"]')?.textContent).toContain("Import");
     });
   });
+
+  describe.each(["overlay", "push"] as const)(
+    "the %s layout's collapsed rail",
+    (layout) => {
+      const moreActions = () =>
+        query('[data-testid="themer-ui"] button[aria-label="More actions"]');
+      const menuItems = () => [...document.querySelectorAll('[role^="menuitem"]')];
+
+      it("offers the actions of the hidden footer in a menu", async () => {
+        usePreferencesStore.setState({ sidebarCollapsed: true });
+        await mount({ layout });
+        await open();
+
+        await click(moreActions());
+        expect(menuItems().map((item) => item.textContent?.trim())).toEqual([
+          "Undo",
+          "Redo",
+          "Switch to dark mode",
+          "Code",
+          "Import CSS",
+          "Contrast checker",
+          "Reset to preset",
+          "Theme override",
+        ]);
+
+        const override = menuItems().find((item) =>
+          item.textContent?.includes("Theme override"),
+        );
+        await click(override);
+        expect(usePreferencesStore.getState().themeOverrideEnabled).toBe(false);
+
+        await click(
+          menuItems().find((item) => item.textContent?.trim() === "Import CSS"),
+        );
+        expect(query('[role="dialog"]')?.textContent).toContain("Import");
+      });
+
+      it("has no such menu while the sidebar is expanded: the footer holds the actions", async () => {
+        await mount({ layout });
+        await open();
+
+        expect(moreActions()).toBeNull();
+        expect(
+          query('[data-testid="themer-ui"] [data-testid="themer-import-trigger"]'),
+        ).not.toBeNull();
+      });
+    },
+  );
 
   describe("the Toolbar's panel groups", () => {
     const group = (label: string) =>
@@ -417,23 +466,77 @@ describe("Themer layout", () => {
       },
     );
 
-    it("pins a clicked page element and opens its colour control, without the page acting", async () => {
-      await mount({ layout: "overlay" });
+    it.each(["overlay", "push"] as const)(
+      "pins a clicked page element and opens its colour control in the %s layout, without the page acting",
+      async (layout) => {
+        await mount({ layout });
+        await open();
+        await click(query('[role="tab"][aria-label="Typography"]'));
+        const pageHandler = vi.fn();
+        pageButton.addEventListener("click", pageHandler);
+
+        await click(inspectorToggle());
+        await pointer("click", pageButton);
+
+        expect(pageHandler).not.toHaveBeenCalled();
+        expect(card()?.textContent).toContain("Pinned");
+        expect(
+          query('[role="tab"][aria-label="Colors"]')?.getAttribute(
+            "aria-selected",
+          ),
+        ).toBe("true");
+      },
+    );
+
+    it.each(["overlay", "push"] as const)(
+      "expands the collapsed sidebar on a pinned element's colour control in the %s layout",
+      async (layout) => {
+        usePreferencesStore.setState({ sidebarCollapsed: true });
+        await mount({ layout });
+        await open();
+
+        await click(inspectorToggle());
+        await pointer("click", pageButton);
+
+        expect(usePreferencesStore.getState().sidebarCollapsed).toBe(false);
+        expect(
+          query('[data-testid="themer-ui"] [data-slot="sidebar"]')?.getAttribute(
+            "data-state",
+          ),
+        ).toBe("expanded");
+      },
+    );
+
+    it("pins a clicked page element in the Toolbar: the Colors popup opens on its control, the sidebar preference untouched", async () => {
+      // happy-dom runs animation frames back to back; give them a browser's
+      // pace so focusColor's wait for the picker spans the popup's render.
+      vi.spyOn(window, "requestAnimationFrame").mockImplementation(
+        (callback) => window.setTimeout(() => callback(performance.now()), 16),
+      );
+      vi.spyOn(window, "cancelAnimationFrame").mockImplementation((id) =>
+        window.clearTimeout(id),
+      );
+      usePreferencesStore.setState({ sidebarCollapsed: true });
+      await mount({ layout: "toolbar" });
       await open();
-      await click(query('[role="tab"][aria-label="Typography"]'));
       const pageHandler = vi.fn();
       pageButton.addEventListener("click", pageHandler);
 
       await click(inspectorToggle());
       await pointer("click", pageButton);
+      await act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 200));
+      });
 
       expect(pageHandler).not.toHaveBeenCalled();
       expect(card()?.textContent).toContain("Pinned");
+      const popup = query('[data-testid="themer-toolbar-panel-colors"]');
+      expect(popup).not.toBeNull();
       expect(
-        query('[role="tab"][aria-label="Colors"]')?.getAttribute(
-          "aria-selected",
-        ),
-      ).toBe("true");
+        popup?.querySelector('[data-color-picker="primary"]'),
+      ).not.toBeNull();
+      expect(useColorFocusStore.getState().highlightTarget).toBe("primary");
+      expect(usePreferencesStore.getState().sidebarCollapsed).toBe(true);
     });
 
     it("leaves the Themer UI alone: nothing shows on hover, and its clicks act", async () => {
@@ -556,6 +659,28 @@ describe("Themer layout", () => {
         expect(inset()).toBe("");
         expect(margin()).toBe("");
       });
+    });
+
+    it("puts back the Host's own inline styles on <html> when it gives the place back", async () => {
+      html().style.setProperty("transition", "opacity 300ms ease");
+      html().style.setProperty("margin-inline-start", "4px", "important");
+      await mount({ layout: "push" });
+      await open();
+      const toggle = () => query('[data-slot="sidebar-trigger"]');
+
+      expect(margin()).toBe("20rem");
+      await click(toggle());
+      expect(margin()).toBe("3rem");
+      await click(query('button[aria-label="Close theme editor"]'));
+
+      expect(html().style.getPropertyValue("transition")).toBe(
+        "opacity 300ms ease",
+      );
+      expect(margin()).toBe("4px");
+      expect(html().style.getPropertyPriority("margin-inline-start")).toBe(
+        "important",
+      );
+      expect(inset()).toBe("");
     });
 
     it("leaves the page alone below 1280 px, where the drawer opens", async () => {

@@ -14,8 +14,9 @@ interface ThemerHeaderProps {
 }
 
 /**
- * Header with sidebar trigger and close button
- * Fixed height h-12, matches sidebar header
+ * Workspace's header: sidebar trigger and "Preview" label on the left, the
+ * layout switcher and Close on the right. Fixed height h-12, matching the
+ * sidebar header.
  */
 export function ThemerHeader({ onClose }: ThemerHeaderProps) {
   return (

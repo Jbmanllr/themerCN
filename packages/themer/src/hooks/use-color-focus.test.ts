@@ -1,7 +1,8 @@
-// focusColor opens the Colors panel, the sidebar and the token's section
-// first, then waits for the picker to mount (a frame more for its section to
-// open) before it scrolls and highlights; a newer jump cancels the older one,
-// and one whose picker never mounts gives up. The registry removes only the
+// focusColor opens the Colors panel and the token's section, and posts the
+// token as the focus request the Themer layout answers, first; then waits for
+// the picker to mount (a frame more for its section to open) before it
+// scrolls and highlights, withdrawing the request; a newer jump cancels the
+// older one, and one whose picker never mounts gives up. The registry removes only the
 // element it registered, and closing the editor resets the colour search. A
 // frame queue stands in for requestAnimationFrame.
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
@@ -60,14 +61,28 @@ describe("focusColor", () => {
     while (cleanups.length) cleanups.pop()?.();
   });
 
-  it("opens the Colors panel, the sidebar and the token's section first", () => {
+  it("opens the Colors panel and the token's section, and requests the token's control, first", () => {
     cleanups.push(focusColor("sidebar-ring", frames));
     expect(useThemerUIStore.getState().activePanel).toBe("colors");
-    expect(usePreferencesStore.getState().sidebarCollapsed).toBe(false);
+    expect(useColorFocusStore.getState().focusRequest).toBe("sidebar-ring");
     expect(usePreferencesStore.getState().sectionStates).toEqual({
       "colors-sidebar": true,
     });
     expect(useColorFocusStore.getState().highlightTarget).toBeNull();
+  });
+
+  it("withdraws the request once the control is highlighted, or the jump gives up", () => {
+    const { element } = fakeElement();
+    cleanups.push(registerColorElement("primary", element));
+    cleanups.push(focusColor("primary", frames));
+    frames.flush();
+    frames.flush();
+    expect(useColorFocusStore.getState().highlightTarget).toBe("primary");
+    expect(useColorFocusStore.getState().focusRequest).toBeNull();
+
+    cleanups.push(focusColor("ring", frames));
+    for (let i = 0; i < 30; i += 1) frames.flush();
+    expect(useColorFocusStore.getState().focusRequest).toBeNull();
   });
 
   it("leaves fullscreen preview so the picker can mount", () => {

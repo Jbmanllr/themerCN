@@ -1,9 +1,13 @@
 "use client";
 
-// The Themer's actions (tweakcn's action bar, minus its account features):
-// contrast check, light/dark, undo/redo, reset, CSS import, the code export
-// and the theme override switch. Workspace shows it as the bar above the
-// preview; Overlay at the foot of its sidebar, where it wraps onto two rows.
+// The Themer's actions as a bar (tweakcn's action bar, minus its account
+// features): contrast check, light/dark, undo/redo, reset, CSS import, the
+// code export and the theme override switch. Workspace shows it as the bar
+// above the preview; Overlay and Push at the foot of their expanded sidebar
+// (`stacked`), where it wraps onto two rows. The actions themselves (names,
+// icons, state, handlers, dialogs) are defined in
+// ./actions/themer-actions.tsx, shared with the Toolbar and the collapsed
+// rail's menus; this file only lays them out.
 //
 // Every value is selected narrowly from the stores so the bar does not
 // re-render on unrelated edits (it re-renders when undo/redo availability or
@@ -19,8 +23,6 @@
 //
 // See: packages/themer/ARCHITECTURE.md
 
-import * as React from "react";
-import { Undo2, Redo2, Code2, RotateCcw, Eye, Upload } from "lucide-react";
 import { Button } from "@workspace/ui/components/button";
 import { cn } from "@workspace/ui/lib/utils";
 import { ButtonGroup } from "@workspace/ui/components/button-group";
@@ -31,52 +33,23 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@workspace/ui/components/tooltip";
-import { useEditorStore } from "../stores/editor-store";
-import { usePreferencesStore } from "../stores/preferences-store";
 import {
-  selectCanRedo,
-  selectCanResetToPreset,
-  selectCanUndo,
-} from "../selectors";
-import { SHORTCUTS } from "../config/constants";
-import { CodePanelDialog } from "./actions/code-panel-dialog";
-import { CssImportDialog } from "./actions/css-import-dialog";
-import { ContrastCheckerDialog } from "./editor/contrast-checker-popover";
-import { ActionButton } from "./ui/action-button";
+  ThemerActionButton,
+  useThemerActions,
+} from "./actions/themer-actions";
 import { ModeToggle } from "./ui/mode-toggle";
 
 /**
  * The Themer's actions: `bar` is the strip above Workspace's preview,
- * `stacked` the sidebar footer of the layouts without a preview.
+ * `stacked` the sidebar footer of the in-place sidebar layouts (Overlay,
+ * Push).
  */
 export function ActionBar({
   variant = "bar",
 }: {
   variant?: "bar" | "stacked";
 }) {
-  const undo = useEditorStore((state) => state.undo);
-  const redo = useEditorStore((state) => state.redo);
-  const reset = useEditorStore((state) => state.resetToCurrentPreset);
-  const canUndo = useEditorStore(selectCanUndo);
-  const canRedo = useEditorStore(selectCanRedo);
-  const sidebarColorSync = usePreferencesStore(
-    (state) => state.sidebarColorSync,
-  );
-  const canReset = useEditorStore(selectCanResetToPreset(sidebarColorSync));
-  const themeOverrideEnabled = usePreferencesStore(
-    (state) => state.themeOverrideEnabled,
-  );
-  const setThemeOverrideEnabled = usePreferencesStore(
-    (state) => state.setThemeOverrideEnabled,
-  );
-
-  const [contrastOpen, setContrastOpen] = React.useState(false);
-  const [codeDialogOpen, setCodeDialogOpen] = React.useState(false);
-  const [importDialogOpen, setImportDialogOpen] = React.useState(false);
-
-  const overrideLabel = themeOverrideEnabled
-    ? "Show the production theme"
-    : "Apply the edited theme";
+  const { actions, override, dialogs } = useThemerActions();
 
   return (
     <div
@@ -92,12 +65,7 @@ export function ActionBar({
         )}
       >
         <div className="flex items-center gap-1">
-          <ActionButton
-            label="Contrast checker"
-            onClick={() => setContrastOpen(true)}
-          >
-            <Eye />
-          </ActionButton>
+          <ThemerActionButton action={actions.contrast} />
 
           <Separator orientation="vertical" className="h-6.5" />
 
@@ -106,51 +74,20 @@ export function ActionBar({
           <Separator orientation="vertical" className="h-6.5" />
 
           <ButtonGroup aria-label="History">
-            <ActionButton
-              label="Undo"
-              shortcut={SHORTCUTS.undo}
-              onClick={undo}
-              disabled={!canUndo}
-            >
-              <Undo2 />
-            </ActionButton>
-            <ActionButton
-              label="Redo"
-              shortcut={SHORTCUTS.redo}
-              onClick={redo}
-              disabled={!canRedo}
-            >
-              <Redo2 />
-            </ActionButton>
+            <ThemerActionButton action={actions.undo} />
+            <ThemerActionButton action={actions.redo} />
           </ButtonGroup>
 
           <Separator orientation="vertical" className="h-6.5" />
 
-          <ActionButton
-            label="Reset to preset"
-            onClick={reset}
-            disabled={!canReset}
-          >
-            <RotateCcw />
-          </ActionButton>
-
-          <ActionButton
-            label="Import CSS"
-            data-testid="themer-import-trigger"
-            onClick={() => setImportDialogOpen(true)}
-          >
-            <Upload />
-          </ActionButton>
+          <ThemerActionButton action={actions.reset} />
+          <ThemerActionButton action={actions.importCss} />
         </div>
 
         <div className="flex items-center gap-1">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setCodeDialogOpen(true)}
-          >
-            <Code2 data-icon="inline-start" />
-            Code
+          <Button variant="outline" size="sm" onClick={actions.code.onSelect}>
+            <actions.code.icon data-icon="inline-start" />
+            {actions.code.label}
           </Button>
 
           <Tooltip>
@@ -160,30 +97,19 @@ export function ActionBar({
               }
             >
               <Switch
-                aria-label="Theme override"
-                checked={themeOverrideEnabled}
-                data-testid="themer-theme-override-switch"
-                onCheckedChange={setThemeOverrideEnabled}
+                aria-label={override.label}
+                checked={override.checked}
+                data-testid={override.testId}
+                onCheckedChange={override.onCheckedChange}
                 size="sm"
               />
             </TooltipTrigger>
-            <TooltipContent>{overrideLabel}</TooltipContent>
+            <TooltipContent>{override.description}</TooltipContent>
           </Tooltip>
         </div>
       </div>
 
-      <ContrastCheckerDialog
-        open={contrastOpen}
-        onOpenChange={setContrastOpen}
-      />
-      <CssImportDialog
-        open={importDialogOpen}
-        onOpenChange={setImportDialogOpen}
-      />
-      {/* Mounted only while open: it builds three exports of the theme. */}
-      {codeDialogOpen ? (
-        <CodePanelDialog open onOpenChange={setCodeDialogOpen} />
-      ) : null}
+      {dialogs}
     </div>
   );
 }

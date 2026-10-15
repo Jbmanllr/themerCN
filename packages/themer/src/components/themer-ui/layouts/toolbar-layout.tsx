@@ -60,6 +60,7 @@ import {
   selectCanResetToPreset,
   selectCanUndo,
 } from "../../../selectors";
+import { useColorFocusStore } from "../../../stores/color-focus-store";
 import { useEditorStore } from "../../../stores/editor-store";
 import { usePreferencesStore } from "../../../stores/preferences-store";
 import { useThemerUIStore } from "../../../stores/themer-ui-store";
@@ -241,11 +242,18 @@ const STAYS_OPEN_ON: ReadonlySet<string> = new Set([
 
 /**
  * Colors, Typography, Other: popover triggers drawn as a ToggleGroup, the
- * pressed item being the open popup. Opening one makes it the active panel.
+ * pressed item being the open popup. Opening one makes it the active panel;
+ * a colour focus jump (`focusRequest`, hooks/use-color-focus.ts) opens
+ * Colors so the picker can mount.
  */
 function PanelGroups() {
   const setActivePanel = useThemerUIStore((state) => state.setActivePanel);
+  const focusRequest = useColorFocusStore((state) => state.focusRequest);
   const [openPanel, setOpenPanel] = React.useState<Panel | null>(null);
+
+  React.useEffect(() => {
+    if (focusRequest) setOpenPanel("colors");
+  }, [focusRequest]);
 
   return (
     <ToggleGroup value={openPanel ? [openPanel] : []} aria-label="Panels">

@@ -7,6 +7,7 @@ import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { useEditorStore } from "./stores/editor-store";
+import { useColorFocusStore } from "./stores/color-focus-store";
 import { useThemerUIStore } from "./stores/themer-ui-store";
 import {
   PREFERENCES_VERSION,
@@ -417,23 +418,77 @@ describe("Themer layout", () => {
       },
     );
 
-    it("pins a clicked page element and opens its colour control, without the page acting", async () => {
-      await mount({ layout: "overlay" });
+    it.each(["overlay", "push"] as const)(
+      "pins a clicked page element and opens its colour control in the %s layout, without the page acting",
+      async (layout) => {
+        await mount({ layout });
+        await open();
+        await click(query('[role="tab"][aria-label="Typography"]'));
+        const pageHandler = vi.fn();
+        pageButton.addEventListener("click", pageHandler);
+
+        await click(inspectorToggle());
+        await pointer("click", pageButton);
+
+        expect(pageHandler).not.toHaveBeenCalled();
+        expect(card()?.textContent).toContain("Pinned");
+        expect(
+          query('[role="tab"][aria-label="Colors"]')?.getAttribute(
+            "aria-selected",
+          ),
+        ).toBe("true");
+      },
+    );
+
+    it.each(["overlay", "push"] as const)(
+      "expands the collapsed sidebar on a pinned element's colour control in the %s layout",
+      async (layout) => {
+        usePreferencesStore.setState({ sidebarCollapsed: true });
+        await mount({ layout });
+        await open();
+
+        await click(inspectorToggle());
+        await pointer("click", pageButton);
+
+        expect(usePreferencesStore.getState().sidebarCollapsed).toBe(false);
+        expect(
+          query('[data-testid="themer-ui"] [data-slot="sidebar"]')?.getAttribute(
+            "data-state",
+          ),
+        ).toBe("expanded");
+      },
+    );
+
+    it("pins a clicked page element in the Toolbar: the Colors popup opens on its control, the sidebar preference untouched", async () => {
+      // happy-dom runs animation frames back to back; give them a browser's
+      // pace so focusColor's wait for the picker spans the popup's render.
+      vi.spyOn(window, "requestAnimationFrame").mockImplementation(
+        (callback) => window.setTimeout(() => callback(performance.now()), 16),
+      );
+      vi.spyOn(window, "cancelAnimationFrame").mockImplementation((id) =>
+        window.clearTimeout(id),
+      );
+      usePreferencesStore.setState({ sidebarCollapsed: true });
+      await mount({ layout: "toolbar" });
       await open();
-      await click(query('[role="tab"][aria-label="Typography"]'));
       const pageHandler = vi.fn();
       pageButton.addEventListener("click", pageHandler);
 
       await click(inspectorToggle());
       await pointer("click", pageButton);
+      await act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 200));
+      });
 
       expect(pageHandler).not.toHaveBeenCalled();
       expect(card()?.textContent).toContain("Pinned");
+      const popup = query('[data-testid="themer-toolbar-panel-colors"]');
+      expect(popup).not.toBeNull();
       expect(
-        query('[role="tab"][aria-label="Colors"]')?.getAttribute(
-          "aria-selected",
-        ),
-      ).toBe("true");
+        popup?.querySelector('[data-color-picker="primary"]'),
+      ).not.toBeNull();
+      expect(useColorFocusStore.getState().highlightTarget).toBe("primary");
+      expect(usePreferencesStore.getState().sidebarCollapsed).toBe(true);
     });
 
     it("leaves the Themer UI alone: nothing shows on hover, and its clicks act", async () => {

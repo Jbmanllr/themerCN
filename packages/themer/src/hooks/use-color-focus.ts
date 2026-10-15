@@ -2,10 +2,11 @@
 
 // Jump to a colour control from anywhere (contrast dialog, palette preview,
 // inspector): open the Colors panel (leaving fullscreen preview, which covers
-// the sidebar, and expanding the desktop sidebar; on
-// mobile the same activePanel selects the drawer tab), open the token's
-// section, clear a search that hides it, then, once the picker has rendered,
-// scroll it into view and highlight it.
+// the sidebar; on mobile the same activePanel selects the drawer tab), post
+// the token as `focusRequest` so the Themer layout shows that panel (the
+// sidebar layouts expand their sidebar, the Toolbar opens its Colors popup),
+// open the token's section, clear a search that hides it, then, once the
+// picker has rendered, scroll it into view and highlight it.
 //
 // The element registry is a module-level Map, not store state: registering a
 // picker per colour token must not re-render anyone, and DOM nodes do not
@@ -74,8 +75,8 @@ export function focusColor(
   // The picker lives in the sidebar, which fullscreen preview covers: leave it
   // (useFullscreenSync then leaves native fullscreen too).
   useThemerUIStore.setState({ activePanel: "colors", fullscreenPreview: false });
+  useColorFocusStore.setState({ focusRequest: name });
   const preferences = usePreferencesStore.getState();
-  if (preferences.sidebarCollapsed) preferences.setSidebarCollapsed(false);
 
   const group = findColorGroup(name);
   if (group) preferences.setSectionOpen(getColorSectionId(group), true);
@@ -97,7 +98,10 @@ export function focusColor(
   const cancel = () => {
     if (frameId !== null) scheduler.cancelFrame(frameId);
     frameId = null;
-    if (cancelPendingFocus === cancel) cancelPendingFocus = null;
+    if (cancelPendingFocus === cancel) {
+      cancelPendingFocus = null;
+      useColorFocusStore.setState({ focusRequest: null });
+    }
   };
 
   const tick = () => {

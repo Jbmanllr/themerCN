@@ -112,7 +112,8 @@ the Themer's portal beside the Host tree and never wrap it.
   block of the page inspector's fixed layer). Colors, Typography and Other
   are `Popover` triggers drawn as a `ToggleGroup`; each popup holds
   `PanelContent` in a `ScrollArea` capped to Base UI's `--available-height`,
-  and opening one sets the active panel. The popups ignore outside presses
+  and opening one sets the active panel; a colour focus jump (`focusRequest`,
+  e.g. a pinned inspector element) opens Colors. The popups ignore outside presses
   and focus-out, so the page can be clicked and scrolled while one is open;
   Escape, the trigger or another group closes it. Undo/redo, the inspector
   toggle, mode and Close are a `ButtonGroup`; the rest of the ActionBar, the
@@ -321,7 +322,11 @@ follows the Host's),
 ### ColorFocusStore
 
 [stores/color-focus-store.ts](src/stores/color-focus-store.ts), transient:
-`highlightTarget` and `colorSearch` (cleared on close). DOM elements live in a
+`highlightTarget`, `colorSearch` and `focusRequest` (cleared on close).
+`focusColor` posts the token as `focusRequest` until its picker is highlighted
+or the jump gives up; each layout answers it by showing the Colors panel:
+`ThemerSidebarProvider` expands the sidebar (Workspace, Overlay, Push), the
+Toolbar opens its Colors popup. DOM elements live in a
 module-level `Map` in [use-color-focus.ts](src/hooks/use-color-focus.ts), so
 registering one picker per token re-renders nobody.
 

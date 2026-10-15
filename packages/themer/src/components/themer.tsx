@@ -24,7 +24,7 @@
 //   stable module-level values: a new identity re-registers or rebuilds them.
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 
 import type { ThemerConfig, ThemerProps } from "../types";
 import {
@@ -55,57 +55,21 @@ const DAY_MS = 24 * 60 * 60 * 1000;
  * </body>
  * ```
  */
-export function Themer({
-  colorMode,
-  defaultPreset,
-  extraColors,
-  fontCatalogEndpoint,
-  onColorModeChange,
-  presets,
-  previewTabs,
-  previewWrapper,
-  shortcut,
-  showTrigger,
-  storageNamespace = DEFAULT_STORAGE_NAMESPACE,
-  zIndex,
-}: ThemerProps) {
+export function Themer(props: ThemerProps) {
   // Everything under it may assume a hydrated client.
   const hydrated = useHydrated();
 
   if (!hydrated || window.self !== window.top) return null;
 
-  return (
-    <ThemerApp
-      colorMode={colorMode}
-      defaultPreset={defaultPreset}
-      extraColors={extraColors}
-      fontCatalogEndpoint={fontCatalogEndpoint}
-      onColorModeChange={onColorModeChange}
-      presets={presets}
-      previewTabs={previewTabs}
-      previewWrapper={previewWrapper}
-      shortcut={shortcut}
-      showTrigger={showTrigger}
-      storageNamespace={storageNamespace}
-      zIndex={zIndex}
-    />
-  );
+  return <ThemerApp {...props} />;
 }
 
 function ThemerApp({
   colorMode,
-  defaultPreset,
-  extraColors,
-  fontCatalogEndpoint,
   onColorModeChange,
-  presets,
-  previewTabs,
-  previewWrapper,
-  shortcut,
-  showTrigger,
-  storageNamespace,
-  zIndex,
-}: ThemerProps & { storageNamespace: string }) {
+  storageNamespace = DEFAULT_STORAGE_NAMESPACE,
+  ...editorProps
+}: ThemerProps) {
   // Before any child reads the stores, so the first render already shows
   // the persisted Theme of this namespace.
   hydrateThemerStores(storageNamespace);
@@ -125,30 +89,7 @@ function ThemerApp({
       }),
   );
 
-  const config = useMemo<ThemerConfig>(
-    () => ({
-      defaultPreset,
-      extraColors,
-      fontCatalogEndpoint,
-      presets,
-      previewTabs,
-      previewWrapper,
-      shortcut,
-      showTrigger,
-      zIndex,
-    }),
-    [
-      defaultPreset,
-      extraColors,
-      fontCatalogEndpoint,
-      presets,
-      previewTabs,
-      previewWrapper,
-      shortcut,
-      showTrigger,
-      zIndex,
-    ],
-  );
+  const config = useShallowStable<ThemerConfig>(editorProps);
 
   return (
     <QueryClientProvider client={queryClient}>
@@ -162,5 +103,30 @@ function ThemerApp({
         </ThemerProvider>
       </ColorModeProvider>
     </QueryClientProvider>
+  );
+}
+
+/**
+ * `value` itself, or the previous value while every field is the same, so a
+ * Host re-render with unchanged props keeps the config's identity.
+ */
+function useShallowStable<T extends object>(value: T): T {
+  const [stable, setStable] = useState(value);
+  if (stable === value || isShallowEqual(stable, value)) return stable;
+  setStable(value);
+  return value;
+}
+
+function isShallowEqual(a: object, b: object): boolean {
+  const aKeys = Object.keys(a);
+  const bKeys = Object.keys(b);
+  return (
+    aKeys.length === bKeys.length &&
+    aKeys.every((key) =>
+      Object.is(
+        (a as Record<string, unknown>)[key],
+        (b as Record<string, unknown>)[key],
+      ),
+    )
   );
 }

@@ -46,10 +46,6 @@ import { RESTORE_STYLE_ID, SHORTCUTS } from "../config/constants";
 import { configurePresets, getDefaultPresetId } from "../config/presets";
 import { configureExtraColors } from "../config/extra-colors";
 
-const subscribeToHydration = () => () => {};
-const getHydratedSnapshot = () => true;
-const getServerSnapshot = () => false;
-
 /**
  * Themer context
  */
@@ -126,16 +122,6 @@ export function ThemerProvider({
     config.presets,
   ]);
 
-  // Client-side ready check
-  const isClientReady = React.useSyncExternalStore(
-    subscribeToHydration,
-    getHydratedSnapshot,
-    getServerSnapshot,
-  );
-
-  // isReady when client is ready (theme from localStorage is available immediately)
-  const isReady = isClientReady;
-
   const { mode } = useColorMode();
 
   // Apply live editor variables; the root light/dark class is not ours.
@@ -195,7 +181,6 @@ export function ThemerProvider({
     key,
     modifiers,
     callback: toggle,
-    enabled: isReady,
   });
 
   // Undo keyboard shortcut (Ctrl+Z / Cmd+Z)
@@ -207,7 +192,7 @@ export function ThemerProvider({
         undo();
       }
     },
-    enabled: isReady && isOpen,
+    enabled: isOpen,
   });
 
   // Redo keyboard shortcut (Ctrl+Shift+Z / Cmd+Shift+Z)
@@ -219,15 +204,12 @@ export function ThemerProvider({
         redo();
       }
     },
-    enabled: isReady && isOpen,
+    enabled: isOpen,
   });
 
   const contextValue = React.useMemo<ThemerContextValue>(
-    () => ({
-      config,
-      isReady,
-    }),
-    [config, isReady],
+    () => ({ config }),
+    [config],
   );
 
   return (

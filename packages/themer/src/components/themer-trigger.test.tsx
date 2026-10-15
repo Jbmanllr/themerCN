@@ -7,7 +7,6 @@ import { expect, it, vi } from "vitest";
 vi.mock("./themer-provider", () => ({
   useThemerContext: () => ({
     config: { showTrigger: true },
-    isReady: true,
   }),
 }));
 vi.mock("../stores/overlay-store", () => ({

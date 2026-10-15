@@ -24,25 +24,23 @@
 //   stable module-level values: a new identity re-registers or rebuilds them.
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { useMemo, useState, useSyncExternalStore } from "react";
+import { useMemo, useState } from "react";
 
 import type { ThemerConfig, ThemerProps } from "../types";
 import {
   DEFAULT_STORAGE_NAMESPACE,
   getStorageKeys,
 } from "../config/constants";
+import { useHydrated } from "../hooks/use-hydrated";
 import { hydrateThemerStores } from "../stores/hydrate";
 
 import { ColorModeProvider } from "./color-mode";
 import { ThemerProvider } from "./themer-provider";
-import { ThemerOverlayOnly } from "./themer-root";
+import { ThemerRoot } from "./themer-root";
 import { useThemerStyle } from "./themer-scope";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
-const subscribeNever = () => () => {};
-const isTopWindow = () => window.self === window.top;
-const onServer = () => false;
 
 /**
  * The Themer: a live editor for the page's shadcn Theme. Mount it once, next
@@ -71,13 +69,10 @@ export function Themer({
   storageNamespace = DEFAULT_STORAGE_NAMESPACE,
   zIndex,
 }: ThemerProps) {
-  const shouldRender = useSyncExternalStore(
-    subscribeNever,
-    isTopWindow,
-    onServer,
-  );
+  // Everything under it may assume a hydrated client.
+  const hydrated = useHydrated();
 
-  if (!shouldRender) return null;
+  if (!hydrated || window.self !== window.top) return null;
 
   return (
     <ThemerApp
@@ -163,7 +158,7 @@ function ThemerApp({
         storageKey={getStorageKeys(storageNamespace).colorMode}
       >
         <ThemerProvider config={config}>
-          <ThemerOverlayOnly />
+          <ThemerRoot />
         </ThemerProvider>
       </ColorModeProvider>
     </QueryClientProvider>

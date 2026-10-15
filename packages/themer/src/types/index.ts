@@ -270,6 +270,4 @@ export type ThemerConfig = Omit<
 export interface ThemerContextValue {
   /** Current configuration: the host's `config` merged over the defaults. */
   config: ThemerConfig;
-  /** True once the client has hydrated (persisted theme state is readable). */
-  isReady: boolean;
 }

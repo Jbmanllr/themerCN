@@ -1,9 +1,10 @@
 "use client";
 
-// Puts the editor beside the host's tree: the floating trigger and the
+// Puts the Themer UI beside the Host app's tree: the floating trigger and the
 // overlay, portaled to document.body inside the Themer's CSS scope
-// (ThemerScope), and the cleanups that run when it closes. The host's
-// children must stay un-wrapped (see ThemerRoot below).
+// (ThemerScope), and the cleanups that run while it is open. It wraps
+// nothing: the Host's page renders beside `<Themer>`, never under it.
+// `<Themer>` renders it only on a hydrated client, so it portals at once.
 //
 // See: packages/themer/ARCHITECTURE.md ("Core Entry Points").
 
@@ -18,25 +19,13 @@ import { ThemerScope } from "./themer-scope";
 import { ThemerTrigger } from "./themer-trigger";
 import { LenisPause } from "./lenis-pause";
 
-const subscribeToHydration = () => () => {};
-const getHydratedSnapshot = () => true;
-const getServerSnapshot = () => false;
-
-interface ThemerRootProps {
-  children: React.ReactNode;
-}
-
 /**
- * Root component that wraps the app and adds the themer overlay.
- *
- * The host's children render as they are, with no wrapper element: a
- * transformed (or `will-change: transform`) ancestor becomes the containing
- * block of every `position: fixed` descendant, which broke host headers and
- * dialogs, and adding the wrapper after hydration remounted the whole app.
+ * The Themer UI's root: the trigger and overlay in a portal on <body>, the
+ * Lenis pause, and the body scroll lock while the overlay is open on mobile.
  */
-export function ThemerRoot({ children }: ThemerRootProps) {
+export function ThemerRoot() {
   const isOpen = useOverlayStore((state) => state.isOpen);
-  const { config, isReady } = useThemerContext();
+  const { config } = useThemerContext();
   const isMobile = useIsMobile();
 
   // Disable body scroll when open on mobile
@@ -52,44 +41,18 @@ export function ThemerRoot({ children }: ThemerRootProps) {
     };
   }, [isOpen, isMobile]);
 
-  // Wait for client-side hydration to complete before rendering portal
-  // This prevents hydration mismatch between server and client
-  const isClient = React.useSyncExternalStore(
-    subscribeToHydration,
-    getHydratedSnapshot,
-    getServerSnapshot,
-  );
-
-  if (!isReady) {
-    return <>{children}</>;
-  }
-
   return (
     <>
-      {children}
-
       {/* Pause Lenis when overlay is open */}
       <LenisPause />
 
-      {/* The trigger and overlay, in the Themer's CSS scope on <body>; only
-          on the client to avoid a hydration mismatch. */}
-      {isClient &&
-        createPortal(
-          <ThemerScope popupLayer={(config.zIndex ?? Z_INDEX.sidebar) + 1}>
-            <ThemerTrigger />
-            <ThemerOverlay />
-          </ThemerScope>,
-          document.body,
-        )}
+      {createPortal(
+        <ThemerScope popupLayer={(config.zIndex ?? Z_INDEX.sidebar) + 1}>
+          <ThemerTrigger />
+          <ThemerOverlay />
+        </ThemerScope>,
+        document.body,
+      )}
     </>
   );
-}
-
-/**
- * The trigger and overlay with no host content: ThemerRoot around nothing, so
- * it shares the root's close cleanup (mobile scroll lock, Lenis
- * pause) and renders nothing until the themer context is ready.
- */
-export function ThemerOverlayOnly() {
-  return <ThemerRoot>{null}</ThemerRoot>;
 }

@@ -25,11 +25,11 @@ interface ThemerTriggerProps {
  * (apps/web/src/components/ai-dev-inspector.tsx).
  */
 export function ThemerTrigger({ className }: ThemerTriggerProps) {
-  const { config, isReady } = useThemerContext();
+  const { config } = useThemerContext();
   const isOpen = useOverlayStore((state) => state.isOpen);
   const toggle = useOverlayStore((state) => state.toggle);
 
-  if (!isReady || !config.showTrigger || isOpen) {
+  if (!config.showTrigger || isOpen) {
     return null;
   }
 

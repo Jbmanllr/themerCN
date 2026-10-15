@@ -1,6 +1,6 @@
 import { expect, test, type Page } from "@playwright/test"
 
-import { openOverlay, settle, themerTrigger } from "./themer-ui"
+import { openOverlay, openToolbar, settle, themerTrigger } from "./themer-ui"
 
 // Baselines are Linux renders from the pinned mcr.microsoft.com/playwright
 // image (`pnpm e2e:update-snapshots`, which CI's e2e job also runs in).
@@ -120,6 +120,23 @@ const screens: {
       await page.goto("/")
       await expect(heading(page, "Good coffee, slowly.")).toBeVisible()
       await openOverlay(page)
+    },
+  },
+  {
+    // The bar over the real page, its Colors popup open.
+    name: "themer-toolbar",
+    fullPage: false,
+    show: async (page) => {
+      await page.goto("/")
+      await expect(heading(page, "Good coffee, slowly.")).toBeVisible()
+      await openToolbar(page)
+      await page
+        .getByRole("toolbar", { name: "Theme Editor" })
+        .getByRole("button", { name: "Colors" })
+        .click()
+      await expect(
+        page.getByRole("button", { name: /^Primary & Secondary/ })
+      ).toBeVisible()
     },
   },
 ]

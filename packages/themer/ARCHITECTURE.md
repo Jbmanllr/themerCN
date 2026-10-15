@@ -85,7 +85,7 @@ the Themer's portal beside the Host tree and never wrap it.
 | Registry | [themer-ui/layouts/registry.ts](src/components/themer-ui/layouts/registry.ts) | `THEMER_LAYOUTS`: label, icon, `coversPage` per layout; `resolveThemerLayout`: user choice, else Host default, else Workspace, skipping unknown values. |
 | Components | `LAYOUT_COMPONENTS` in [themer-ui.tsx](src/components/themer-ui/themer-ui.tsx) | The one map from layout to component (`ThemerLayoutProps`: `onClose`, `zIndex`). |
 | Layout in force | [hooks/use-themer-layout.ts](src/hooks/use-themer-layout.ts) | `useThemerLayout()`: the `layout` preference over `config.layout`. |
-| Switcher | [themer-ui/layout-switcher.tsx](src/components/themer-ui/layout-switcher.tsx) | `DropdownMenu` of `THEMER_LAYOUTS` in every layout's header; writes the `layout` preference. |
+| Switcher | [themer-ui/layout-switcher.tsx](src/components/themer-ui/layout-switcher.tsx) | `DropdownMenu` of `THEMER_LAYOUTS` in every layout's header; writes the `layout` preference. Its `LayoutRadioGroup` also fills Toolbar's overflow submenu. |
 | Shared sidebar | [themer-ui/themer-sidebar-provider.tsx](src/components/themer-ui/themer-sidebar-provider.tsx), [themer-sidebar.tsx](src/components/themer-sidebar.tsx) | The SidebarProvider bound to `sidebarCollapsed` (collapse is shared), and the sidebar with `headerActions`/`footer` slots for a layout without its own header or action bar. |
 
 - **Workspace** ([workspace-layout.tsx](src/components/themer-ui/layouts/workspace-layout.tsx)):
@@ -97,9 +97,21 @@ the Themer's portal beside the Host tree and never wrap it.
   the page beside it takes clicks and wheel events. The sidebar header holds
   the collapse toggle and the switcher; `ActionBar variant="stacked"` sits in
   its footer. No page pause, no scroll lock.
+- **Toolbar** ([toolbar-layout.tsx](src/components/themer-ui/layouts/toolbar-layout.tsx)):
+  no sidebar; a `fixed` bar centred at the top of the page. Colors,
+  Typography and Other are `Popover` triggers drawn as a `ToggleGroup`; each
+  popup holds `PanelContent` in a `ScrollArea` capped to Base UI's
+  `--available-height`, and opening one sets the active panel. The popups
+  ignore outside presses and focus-out, so the page can be clicked and
+  scrolled while one is open; Escape, the trigger or another group closes
+  it. Undo/redo, mode and Close are a `ButtonGroup`; the rest of the
+  ActionBar, the override switch and the layouts (`LayoutRadioGroup` in a
+  submenu) are a `DropdownMenu`. Nested popups (colour, font pickers) portal
+  after the panel popup, so they paint above it. No page pause.
 
 Every editing state (Theme, history, active panel, collapse) lives in the
-stores, so a switch keeps it; the layout components hold none. Adding a
+stores, so a switch keeps it; the layout components hold none (Toolbar
+keeps only which popup is open). Adding a
 layout: add it to `ThemerLayout`, `THEMER_LAYOUTS` (the compiler then asks
 for `LAYOUT_COMPONENTS` too), write its component under `layouts/`, and add
 e2e and visual screens in `apps/web/e2e`.

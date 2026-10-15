@@ -192,8 +192,10 @@ export interface ThemerExtraColorGroup {
  * - `"workspace"`: covers the whole page, the sidebar beside the Preview.
  * - `"overlay"`: the sidebar floats over the Host app's real page, which
  *   stays usable beside it.
+ * - `"toolbar"`: no sidebar; every control sits in a bar at the top of the
+ *   Host app's real page, each group of controls in its own popup.
  */
-export type ThemerLayout = "workspace" | "overlay";
+export type ThemerLayout = "workspace" | "overlay" | "toolbar";
 
 /** Light or dark: the value of `ThemerProps.colorMode`. */
 export type ThemerColorMode = "light" | "dark";

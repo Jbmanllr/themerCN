@@ -80,6 +80,7 @@ const query = (selector: string) => document.querySelector(selector);
 const preview = () => query('[data-testid="themer-preview"]');
 const sidebar = () => query('[data-testid="themer-ui"] [data-slot="sidebar"]');
 const drawer = () => query('[data-testid="themer-mobile-drawer"]');
+const toolbar = () => query('[data-testid="themer-ui"][role="toolbar"]');
 
 const layoutSwitcher = () =>
   query<HTMLElement>('[aria-label^="Themer layout"]');
@@ -131,6 +132,140 @@ describe("Themer layout", () => {
 
     expect(sidebar()).not.toBeNull();
     expect(preview()).toBeNull();
+  });
+
+  it("opens the Toolbar, a bar without sidebar or Preview, when the Host sets it", async () => {
+    await mount({ layout: "toolbar" });
+    await open();
+
+    expect(toolbar()).not.toBeNull();
+    expect(sidebar()).toBeNull();
+    expect(preview()).toBeNull();
+  });
+
+  describe("the Toolbar's controls", () => {
+    const inBar = (label: string) =>
+      query(`[role="toolbar"] [aria-label="${label}"]`);
+
+    it("has the preset picker, undo/redo, the colour mode and Close in the bar", async () => {
+      await mount({ layout: "toolbar" });
+      await open();
+
+      expect(
+        query('[role="toolbar"] [data-testid="themer-preset-trigger"]'),
+      ).not.toBeNull();
+      for (const label of [
+        "Undo",
+        "Redo",
+        "Switch to dark mode",
+        "Close theme editor",
+      ]) {
+        expect(inBar(label), label).not.toBeNull();
+      }
+
+      await click(inBar("Close theme editor"));
+      expect(toolbar()).toBeNull();
+    });
+
+    it("has the other actions, the override switch and the layouts in its overflow menu", async () => {
+      await mount({ layout: "toolbar" });
+      await open();
+
+      await click(inBar("More actions"));
+      const items = [...document.querySelectorAll('[role^="menuitem"]')];
+      expect(items.map((item) => item.textContent?.trim())).toEqual([
+        "Code",
+        "Import CSS",
+        "Contrast checker",
+        "Reset to preset",
+        "Theme override",
+        "Layout: Toolbar",
+      ]);
+
+      const override = items.find((item) =>
+        item.textContent?.includes("Theme override"),
+      );
+      expect(override?.getAttribute("aria-checked")).toBe("true");
+      await click(override);
+      expect(usePreferencesStore.getState().themeOverrideEnabled).toBe(false);
+
+      // The menu stays open after a checkbox item.
+      await click(
+        [...document.querySelectorAll('[role="menuitem"]')].find(
+          (item) => item.textContent?.trim() === "Import CSS",
+        ),
+      );
+      expect(query('[role="dialog"]')?.textContent).toContain("Import");
+    });
+  });
+
+  describe("the Toolbar's panel groups", () => {
+    const group = (label: string) =>
+      query(`[role="toolbar"] button[aria-label="${label}"]`);
+    const openPopups = () =>
+      [...document.querySelectorAll('[data-slot="popover-content"]')].map(
+        (popup) => popup.textContent ?? "",
+      );
+
+    it("opens a group's panel in a popup, and another group swaps it", async () => {
+      await mount({ layout: "toolbar" });
+      await open();
+
+      await click(group("Typography"));
+      expect(openPopups()).toEqual([
+        expect.stringContaining("Font Families"),
+      ]);
+
+      await click(group("Other"));
+      expect(openPopups()).toEqual([
+        expect.stringContaining("Border Radius"),
+      ]);
+      expect(group("Other")?.getAttribute("aria-pressed")).toBe("true");
+      expect(group("Typography")?.getAttribute("aria-pressed")).toBe("false");
+    });
+
+    it("keeps the popup open while the page is clicked or scrolled", async () => {
+      const page = document.createElement("button");
+      page.textContent = "A Host page button";
+      document.body.append(page);
+      await mount({ layout: "toolbar" });
+      await open();
+      await click(group("Colors"));
+
+      await act(async () => {
+        for (const type of ["pointerdown", "mousedown"]) {
+          page.dispatchEvent(
+            new PointerEvent(type, { bubbles: true, button: 0 }),
+          );
+        }
+        page.focus();
+        for (const type of ["pointerup", "mouseup", "click"]) {
+          page.dispatchEvent(
+            new PointerEvent(type, { bubbles: true, button: 0 }),
+          );
+        }
+        window.dispatchEvent(new Event("scroll"));
+      });
+
+      expect(openPopups()).toHaveLength(1);
+    });
+
+    it("closes the popup on Escape, and on its trigger", async () => {
+      await mount({ layout: "toolbar" });
+      await open();
+
+      await click(group("Colors"));
+      await act(async () => {
+        document.activeElement?.dispatchEvent(
+          new KeyboardEvent("keydown", { key: "Escape", bubbles: true }),
+        );
+      });
+      expect(openPopups()).toEqual([]);
+
+      await click(group("Colors"));
+      await click(group("Colors"));
+      expect(openPopups()).toEqual([]);
+    });
   });
 
   describe("the user's choice", () => {
@@ -223,6 +358,14 @@ describe("Themer layout", () => {
       expect(lenis.stop).not.toHaveBeenCalled();
     });
 
+    it("keeps scrolling while the Toolbar is open", async () => {
+      const lenis = installLenis();
+      await mount({ layout: "toolbar" });
+      await open();
+
+      expect(lenis.stop).not.toHaveBeenCalled();
+    });
+
     it("pauses under the Workspace, and resumes when the user switches to Overlay", async () => {
       const lenis = installLenis();
       await mount();
@@ -242,7 +385,7 @@ describe("Themer layout", () => {
 
       await click(layoutSwitcher());
 
-      expect(layoutChoices()).toEqual(["Workspace", "Overlay"]);
+      expect(layoutChoices()).toEqual(["Workspace", "Overlay", "Toolbar"]);
       const checked = query('[role="menuitemradio"][aria-checked="true"]');
       expect(checked?.textContent?.trim()).toBe("Workspace");
     });
@@ -257,6 +400,46 @@ describe("Themer layout", () => {
 
       await switchLayout("Workspace");
       expect(preview()).not.toBeNull();
+    });
+
+    it("switches to the Toolbar, and back from its overflow menu, keeping the Theme, history and the panel opened there", async () => {
+      await mount();
+      await open();
+      await click(query('[data-testid="themer-preset-trigger"]'));
+      await click(query('[data-testid="themer-preset-random"]'));
+      const editedPrimary =
+        document.documentElement.style.getPropertyValue("--primary");
+
+      await switchLayout("Toolbar");
+      expect(toolbar()).not.toBeNull();
+      expect(
+        query<HTMLButtonElement>('[role="toolbar"] button[aria-label="Undo"]')
+          ?.disabled,
+      ).toBe(false);
+      await click(query('[role="toolbar"] button[aria-label="Typography"]'));
+
+      await click(query('[role="toolbar"] [aria-label="More actions"]'));
+      await click(
+        [...document.querySelectorAll('[role="menuitem"]')].find((item) =>
+          item.textContent?.startsWith("Layout"),
+        ),
+      );
+      await click(
+        [...document.querySelectorAll('[role="menuitemradio"]')].find(
+          (item) => item.textContent?.trim() === "Overlay",
+        ),
+      );
+
+      expect(toolbar()).toBeNull();
+      expect(sidebar()).not.toBeNull();
+      expect(
+        document.documentElement.style.getPropertyValue("--primary"),
+      ).toBe(editedPrimary);
+      expect(
+        query('[role="tab"][aria-label="Typography"]')?.getAttribute(
+          "aria-selected",
+        ),
+      ).toBe("true");
     });
   });
 });

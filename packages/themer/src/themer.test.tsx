@@ -116,7 +116,7 @@ describe("Themer", () => {
         key,
         JSON.stringify({
           state: { themeState, themeCheckpoint: themeState, presetBaseline: null },
-          version: 3,
+          version: 0,
         }),
       );
     }
@@ -147,7 +147,7 @@ describe("Themer", () => {
       seedEditor("prefs:editor", "rgb(3, 3, 3)");
       localStorage.setItem(
         "prefs:preferences",
-        JSON.stringify({ state: { themeOverrideEnabled: false }, version: 2 }),
+        JSON.stringify({ state: { themeOverrideEnabled: false }, version: 0 }),
       );
 
       await mount({ storageNamespace: "prefs" });

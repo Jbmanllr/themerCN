@@ -7,8 +7,8 @@
 //
 // Contract:
 // - The whole state persists (no partialize), versioned by
-//   PREFERENCES_VERSION: when a persisted field changes meaning, bump it and
-//   add a step to migratePreferences.
+//   PREFERENCES_VERSION with no migrations (pre-release): stored preferences
+//   of another version are dropped.
 // - utils/theme-script.ts reads `state.themeOverrideEnabled` from this entry
 //   before hydration (absent means on): keep that path and the storage key.
 // - colorFormat is always one of getAvailableColorFormats(): Tailwind 3 has
@@ -23,23 +23,7 @@ import type { PreferencesStore } from "../types";
 import { getStorageKeys } from "../config/constants";
 
 /** Version of the persisted preferences (zustand persist `version`). */
-export const PREFERENCES_VERSION = 2;
-
-/**
- * Upgrade persisted preferences to PREFERENCES_VERSION.
- * v0 -> v1: the "custom" preview tab merged into "live". Other unknown tab
- * ids are left as stored; the preview tabs fall back to their first tab.
- */
-export function migratePreferences(
-  persistedState: unknown,
-  version: number,
-): Partial<PreferencesStore> {
-  let state = (persistedState ?? {}) as Partial<PreferencesStore>;
-  if (version < 1 && state.previewTab === "custom") {
-    state = { ...state, previewTab: "live" };
-  }
-  return state;
-}
+export const PREFERENCES_VERSION = 0;
 
 const colorFormatsByVersion = {
   "3": ["hex", "rgb", "hsl"],
@@ -101,8 +85,6 @@ export const usePreferencesStore = create<PreferencesStore>()(
       // <Themer> names the namespace and hydrates (stores/hydrate.ts).
       skipHydration: true,
       version: PREFERENCES_VERSION,
-      migrate: (persistedState, version) =>
-        migratePreferences(persistedState, version) as PreferencesStore,
     },
   ),
 );

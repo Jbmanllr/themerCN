@@ -5,8 +5,7 @@
 // and the fullscreen controls.
 //
 // - The selected tab is persisted; an unknown id (removed host tab, old
-//   build) shows the first tab, derived in render (preferences' migrate
-//   handles the renamed "custom" tab).
+//   build) shows the first tab, derived in render.
 // - Only the active tab mounts. PreviewTabs subscribes to no theme state:
 //   each tab subscribes to what it needs (the palette to styles, Live to the
 //   whole theme it injects), so an edit does not re-render the demos.

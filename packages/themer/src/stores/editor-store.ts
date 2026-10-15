@@ -13,8 +13,9 @@
 // - Preset colours always come from resolvePresetStyles (config/presets.ts).
 // - Only themeState, themeCheckpoint and presetBaseline persist; history and
 //   future do not.
-//   The persisted shape is versioned: migrateEditorState upgrades older
-//   states. utils/theme-script.ts reads `state.themeState` (currentMode,
+//   The persisted shape is versioned by EDITOR_STATE_VERSION with no
+//   migrations (pre-release): a stored state of another version is dropped.
+//   utils/theme-script.ts reads `state.themeState` (currentMode,
 //   styles) straight from this localStorage entry before hydration: keep
 //   that path and getStorageKeys().editor when the shape or key changes.
 // - themeCheckpoint is the theme before the first HSL adjustment (the base
@@ -61,7 +62,7 @@ import {
 import { isDeepEqual } from "../utils/deep-equal";
 
 /** Version of the persisted editor state (zustand persist `version`). */
-export const EDITOR_STATE_VERSION = 3;
+export const EDITOR_STATE_VERSION = 0;
 
 type PersistedEditorState = Pick<
   EditorStoreState,
@@ -106,65 +107,6 @@ function presetThemeState(
 /** The baseline for a theme just put on `presetId`. */
 function baselineOf(presetId: string, styles: ThemeStyles): PresetBaseline {
   return { preset: presetId, styles: copyStyles(styles) };
-}
-
-/** True when a state is the library's `default` preset with no edits. */
-function isUntouchedLibraryDefault(state: unknown): boolean {
-  if (!state || typeof state !== "object") return false;
-  const themeState = state as Partial<ThemeEditorState>;
-  return (
-    themeState.preset === defaultThemeState.preset &&
-    isDeepEqual(
-      themeState.styles,
-      resolvePresetStyles(defaultThemeState.preset ?? "default"),
-    ) &&
-    isDeepEqual(
-      themeState.hslAdjustments ?? defaultHSLAdjustments,
-      defaultHSLAdjustments,
-    )
-  );
-}
-
-/**
- * Upgrade a persisted editor state to EDITOR_STATE_VERSION.
- * v2 -> v3: use the light typography in both modes, preserving edited colours.
- * v1 -> v2: a stored, unedited library `default` was saved before hosts had
- * a default preset (and before fonts reached the page), so it is dropped:
- * the store then counts as fresh and adoptDefaultPreset applies the host's
- * preset instead of swapping the page's fonts to shadcn's system stack.
- */
-export function migrateEditorState(
-  persistedState: unknown,
-  version: number,
-): PersistedEditorState {
-  const state = (persistedState ?? {}) as Partial<PersistedEditorState>;
-  if (version >= EDITOR_STATE_VERSION) {
-    return state as PersistedEditorState;
-  }
-  if (version < 2 && isUntouchedLibraryDefault(state.themeState)) {
-    return {} as PersistedEditorState;
-  }
-  return {
-    ...state,
-    ...(state.themeState && {
-      themeState: {
-        ...state.themeState,
-        styles: copyStyles(state.themeState.styles),
-      },
-    }),
-    ...(state.themeCheckpoint && {
-      themeCheckpoint: {
-        ...state.themeCheckpoint,
-        styles: copyStyles(state.themeCheckpoint.styles),
-      },
-    }),
-    ...(state.presetBaseline && {
-      presetBaseline: {
-        ...state.presetBaseline,
-        styles: copyStyles(state.presetBaseline.styles),
-      },
-    }),
-  } as PersistedEditorState;
 }
 
 /**
@@ -378,8 +320,8 @@ export const useEditorStore = create<EditorStore>()(
         if (!neutral) return;
         const fresh = resolvePresetStyles(presetId);
 
-        // A state stored before the baseline existed: it can only be trusted
-        // when the theme already is its preset.
+        // No preset was ever put on this theme (the fresh default, then
+        // edited): it can only be trusted when it already is its preset.
         if (!presetBaseline) {
           if (isDeepEqual(themeState.styles, fresh)) {
             set({ presetBaseline: baselineOf(presetId, fresh) });
@@ -458,10 +400,9 @@ export const useEditorStore = create<EditorStore>()(
       // <Themer> names the namespace and hydrates (stores/hydrate.ts).
       skipHydration: true,
       version: EDITOR_STATE_VERSION,
-      migrate: migrateEditorState,
-      // Called with `undefined` when nothing is stored, and with an empty
-      // object when migrateEditorState dropped the stored state; the flag
-      // lets adoptDefaultPreset tell a fresh store from a restored one.
+      // Called with `undefined` when nothing (or a state of another version)
+      // is stored; the flag lets adoptDefaultPreset tell a fresh store from a
+      // restored one.
       merge: (persistedState, currentState) =>
         (persistedState as Partial<PersistedEditorState> | undefined)
           ?.themeState

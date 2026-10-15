@@ -172,11 +172,11 @@ Zustand stores. Two persist; two are transient.
 ### EditorStore
 
 [stores/editor-store.ts](src/stores/editor-store.ts). Persisted under
-`<ns>:editor`, `version: EDITOR_STATE_VERSION` (3). Only `themeState`,
+`<ns>:editor`, `version: EDITOR_STATE_VERSION` (0). Only `themeState`,
 `themeCheckpoint` and `presetBaseline` persist; `history`, `future` and
-`restoredFromStorage` do not. `migrateEditorState`: v1→v2 drops a stored,
-unedited library `default` (so the Host's `defaultPreset` applies); v2→v3
-uses the light typography in both modes.
+`restoredFromStorage` do not. The package is pre-release: there are no
+migrations, and a stored state of another version is dropped (the store
+starts fresh).
 
 ```typescript
 {
@@ -228,12 +228,12 @@ never read `preset.styles` directly.
 ### PreferencesStore
 
 [stores/preferences-store.ts](src/stores/preferences-store.ts). Persisted
-whole under `<ns>:preferences`, `version: PREFERENCES_VERSION` (2):
+whole under `<ns>:preferences`, `version: PREFERENCES_VERSION` (0; no
+migrations, another version is dropped):
 `colorFormat` (`oklch` default; Tailwind 3 has no oklch), `tailwindVersion`,
 `packageManager`, `showContrastWarnings`, `previewTab`, `sidebarCollapsed`,
 `themeOverrideEnabled` (read by the head script), `sidebarColorSync`,
-`colorSelectorTab`, `sectionStates`. `migratePreferences` maps the old
-`custom` preview tab to `live`.
+`colorSelectorTab`, `sectionStates`.
 
 ### OverlayStore
 

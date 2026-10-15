@@ -2,8 +2,7 @@
 // entries, HISTORY_DEBOUNCE_MS batching, mode-only changes not recorded,
 // redo dropped on any recorded edit), preset apply and reset, the
 // shared-style and CSS import actions, default-preset adoption,
-// refreshUntouchedPreset, host extra colours in the theme, and the
-// persisted-state migration.
+// refreshUntouchedPreset and host extra colours in the theme.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { defaultHSLAdjustments, defaultThemeState } from "../config/defaults";
@@ -15,11 +14,7 @@ import {
 } from "../selectors/editor-selectors";
 import { applySidebarSync, isSidebarSynced } from "../utils/sidebar-sync";
 import type { ThemeEditorState } from "../types";
-import {
-  EDITOR_STATE_VERSION,
-  migrateEditorState,
-  useEditorStore,
-} from "./editor-store";
+import { useEditorStore } from "./editor-store";
 
 const store = useEditorStore;
 
@@ -269,33 +264,6 @@ describe("adoptDefaultPreset", () => {
     setRadius("2rem");
     store.getState().adoptDefaultPreset("neo-brutalism");
     expect(store.getState().themeState.preset).toBe("default");
-  });
-});
-
-describe("migrateEditorState", () => {
-  it("drops an unedited library default so the host preset applies", () => {
-    const stored = { themeState: defaultThemeState, themeCheckpoint: null };
-    expect(migrateEditorState(stored, 1)).toEqual({});
-  });
-
-  it("keeps an edited default", () => {
-    const edited: ThemeEditorState = {
-      ...defaultThemeState,
-      styles: {
-        light: { ...defaultThemeState.styles.light, radius: "0rem" },
-        dark: defaultThemeState.styles.dark,
-      },
-    };
-    const migrated = migrateEditorState(
-      { themeState: edited, themeCheckpoint: null },
-      1,
-    );
-    expect(migrated.themeState.styles.light.radius).toBe("0rem");
-  });
-
-  it("leaves a current state untouched", () => {
-    const current = { themeState: defaultThemeState, themeCheckpoint: null };
-    expect(migrateEditorState(current, EDITOR_STATE_VERSION)).toBe(current);
   });
 });
 

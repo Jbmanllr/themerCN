@@ -2,7 +2,7 @@
 
 // The editor sidebar's expanded body (ThemerSidebar renders it while the
 // SidebarProvider is open): the preset select, then PanelTabs with each
-// panel in its own scroll container. The mobile drawer (overlay/
+// panel in its own scroll container. The mobile drawer (themer-ui/
 // mobile-drawer.tsx) has its own preset select and draws the same PanelTabs
 // through MobilePanelContent.
 

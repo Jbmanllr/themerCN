@@ -1,5 +1,5 @@
 // State and action shapes of the editor, preferences, colour focus and
-// overlay stores in src/stores/.
+// Themer UI stores in src/stores/.
 // Behaviour rules (undo batching, persistence versions, what resets on close)
 // are written in the store files.
 
@@ -10,6 +10,8 @@ import type {
   ThemeMode,
   ThemeStyles,
 } from "./theme";
+
+import type { ThemerLayout } from "./index";
 
 export type PackageManager = "pnpm" | "npm" | "yarn" | "bun";
 
@@ -187,8 +189,14 @@ export interface PreferencesState {
    * longer exists falls back to the first tab at render.
    */
   previewTab?: string;
-  /** Sidebar collapsed state */
+  /** Sidebar collapsed state, shared by every sidebar Themer layout */
   sidebarCollapsed: boolean;
+  /**
+   * The Themer layout the user switched to; null follows the Host's
+   * `layout` prop. A value that names no implemented layout is ignored at
+   * render (resolveThemerLayout).
+   */
+  layout: ThemerLayout | null;
   /**
    * Whether the editor theme overrides the host application's production
    * theme. Off: nothing is applied to the page, and utils/theme-script.ts
@@ -216,6 +224,7 @@ export interface PreferencesActions {
   setShowContrastWarnings: (show: boolean) => void;
   setPreviewTab: (tab: string) => void;
   setSidebarCollapsed: (collapsed: boolean) => void;
+  setLayout: (layout: ThemerLayout) => void;
   setThemeOverrideEnabled: (enabled: boolean) => void;
   setSidebarColorSync: (enabled: boolean) => void;
   setColorSelectorTab: (tab: PreferencesState["colorSelectorTab"]) => void;
@@ -238,6 +247,13 @@ export interface ColorFocusState {
   highlightTarget: string | null;
   /** Colour list search query; kept across panel switches, reset on close. */
   colorSearch: string;
+  /**
+   * The token a focusColor jump is opening, until its picker is highlighted
+   * or the jump ends. Each Themer layout shows the Colors panel while it is
+   * set: the sidebar layouts expand their sidebar, the Toolbar opens its
+   * Colors popup.
+   */
+  focusRequest: string | null;
 }
 
 /**
@@ -256,9 +272,9 @@ export interface ColorFocusActions {
 export type ColorFocusStore = ColorFocusState & ColorFocusActions;
 
 /**
- * Themer overlay state
+ * Themer UI state
  */
-export interface ThemerOverlayState {
+export interface ThemerUIState {
   /** Whether the themer is open */
   isOpen: boolean;
   /** Current active panel. */
@@ -270,9 +286,9 @@ export interface ThemerOverlayState {
 }
 
 /**
- * Themer overlay actions
+ * Themer UI actions
  */
-export interface ThemerOverlayActions {
+export interface ThemerUIActions {
   /** Open the themer */
   open: () => void;
   /** Close the themer */
@@ -280,7 +296,7 @@ export interface ThemerOverlayActions {
   /** Toggle the themer */
   toggle: () => void;
   /** Set active panel */
-  setActivePanel: (panel: ThemerOverlayState["activePanel"]) => void;
+  setActivePanel: (panel: ThemerUIState["activePanel"]) => void;
   /** Toggle inspector mode */
   toggleInspector: () => void;
   /** Toggle fullscreen preview */
@@ -288,6 +304,6 @@ export interface ThemerOverlayActions {
 }
 
 /**
- * Complete themer overlay store type
+ * Complete Themer UI store type
  */
-export type ThemerOverlayStore = ThemerOverlayState & ThemerOverlayActions;
+export type ThemerUIStore = ThemerUIState & ThemerUIActions;

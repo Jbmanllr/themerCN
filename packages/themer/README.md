@@ -178,7 +178,7 @@ itself) beside your tree, and put `getThemerHeadScript()` in an inline
 
 | Import                 | Exports                                                                                    | Notes                                                                                     |
 | ---------------------- | ------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------- |
-| `themercn`             | `Themer`; types `ThemerProps`, `ThemePreset`, `ThemerExtraColorGroup`, `ThemerPreviewTab` | The Themer itself (client only). Usually loaded through the loader.                      |
+| `themercn`             | `Themer`; types `ThemerProps`, `ThemePreset`, `ThemerExtraColorGroup`, `ThemerLayout`, `ThemerPreviewTab` | The Themer itself (client only). Usually loaded through the loader.                      |
 | `themercn/loader`      | `createThemerLoader`, type `ThemerModule`                                                  | About 1 kB. Reaches no Themer code; with `null` nothing of the Themer ships.              |
 | `themercn/head-script` | `getThemerHeadScript`, type `ThemerHeadScriptOptions`                                      | A string generator with no imports: safe in a build config or on a server.                |
 | `themercn/next`        | `ThemerHeadScript`, type `ThemerHeadScriptProps`                                           | Client component for the root layout's `<head>`.                                          |
@@ -201,8 +201,9 @@ module-level values: a new identity re-registers or rebuilds them.
 | `previewTabs`         | `readonly ThemerPreviewTab[]`            | none               | Preview tabs of your own: `{ id, label, component, scroll?, order? }`. Use `React.lazy` components. A built-in id replaces that tab.                                               |
 | `previewWrapper`      | `ComponentType<{ children: ReactNode }>` | none               | Wraps your preview tabs (not the built-in ones) with the providers your components need: the Themer renders outside your tree.                                                    |
 | `shortcut`            | `string`                                 | `"ctrl+shift+e"`   | Toggles the Themer. Modifiers `ctrl`, `alt`, `shift`, `meta`, joined with `+`; `ctrl` also matches Cmd on macOS.                                                                  |
+| `layout`              | `"workspace" \| "overlay" \| "push" \| "toolbar"` | `"workspace"`      | The [Themer layout](#themer-layouts) the Themer opens in. The user's own choice, made in the Themer, wins over it.                                                                 |
 | `showTrigger`         | `boolean`                                | `true`             | Shows the floating button.                                                                                                                                                        |
-| `zIndex`              | `number`                                 | `9990` / `10000`   | Layer of the trigger and the overlay (by default 9990 and 10000). Popups sit one layer above the overlay.                                                                         |
+| `zIndex`              | `number`                                 | `9990` / `10000`   | Layer of the trigger and the Themer UI (by default 9990 and 10000). Popups sit one layer above the Themer UI.                                                                         |
 | `storageNamespace`    | `string`                                 | `"themercn"`       | Prefix of the localStorage keys `<ns>:editor`, `<ns>:preferences` and `<ns>:color-mode`. Give the head script the same value.                                                    |
 | `colorMode`           | `"light" \| "dark"`                      | none               | Controlled light/dark, for an app with its own mode state. Pass it with `onColorModeChange`; your app keeps the `.dark` class. Unset, the Themer toggles `.dark` on `<html>`, follows changes made by others, and the head script restores the mode on reload. |
 | `onColorModeChange`   | `(mode: "light" \| "dark") => void`      | none               | Called with the mode the user switched to, in controlled mode.                                                                                                                    |
@@ -288,7 +289,7 @@ match.
 | `Ctrl+Shift+E` | Open or close the Themer | Always (change it with `shortcut`)                   |
 | `Ctrl+Z`       | Undo                    | Themer open                                           |
 | `Ctrl+Shift+Z` | Redo                    | Themer open                                           |
-| `Ctrl+I`       | Toggle the inspector    | Preview shown, desktop layout, same-origin Live frame |
+| `Ctrl+I`       | Toggle the inspector    | Desktop; in Workspace, a Preview shown and a same-origin Live frame |
 | `Esc`          | Exit fullscreen preview | Fullscreen preview on                                 |
 
 ## Styles and browser support
@@ -307,6 +308,62 @@ Known leak: your unlayered element rules (for example
 `button { border: 3px dashed red }`) still reach the Themer's elements on
 properties Preflight does not reset, because they win on specificity. Layered
 CSS, which is what Tailwind emits, does not leak.
+
+## Themer layouts
+
+How the Themer UI sits on screen while it is open:
+
+- **Workspace** (default): covers the whole page, the sidebar beside the
+  Preview tabs.
+- **Overlay**: the sidebar floats over your real page, on the left, with the
+  actions at its foot (collapsed to its icon rail, they are in the rail's
+  `…` menu). Your page stays usable beside it: it scrolls (Lenis
+  included) and takes clicks. The inspector (its toggle is in the sidebar's
+  header) works on your real page instead of a Preview.
+- **Push**: the sidebar sits beside your real page and shifts it aside
+  instead of covering it. See [Push and your page](#push-and-your-page).
+  The inspector works on your real page here too.
+- **Toolbar**: no sidebar; a bar centred at the top of your real page holds
+  every control. Colors, Typography and Other each open in their own popup,
+  which stays open while you click or scroll the page (Escape, its button or
+  another group closes it); Code, CSS import, reset, the contrast checker,
+  the Theme override and the layout menu are in its `…` menu. The inspector
+  (its toggle is in the bar) works on your real page too.
+
+`layout` sets the default. The user switches from the layout menu in the
+Themer UI's header (Toolbar: its `…` menu); the choice is saved in `<storageNamespace>:preferences`
+and wins over `layout` on the next visit. Switching keeps the Theme, undo
+history and open panel (it turns the inspector off), and the sidebar stays
+collapsed or expanded across layouts. Below 1280 px every layout opens as the same bottom drawer.
+
+### Push and your page
+
+The Themer never wraps your app, so Push moves your page with
+`margin-inline-start` on `<html>`, set to the sidebar's width (320 px
+expanded, 48 px collapsed) and animated with the sidebar. The same width is
+exposed as the CSS variable `--themer-inset-inline-start` on `<html>`. The
+margin, the variable and the margin's `transition` are inline styles on
+`<html>`. When the Themer closes, switches to another layout, opens as the
+drawer, or unmounts, any inline values your app had set for them come back
+as they were, and the rest are removed.
+
+Two limits, by design:
+
+- **`position: fixed` elements stay on the viewport**, so they sit under the
+  sidebar (sticky ones follow the page). Opt one in by offsetting it with the
+  variable, with a fallback for when the Themer is not in Push:
+
+  ```css
+  .my-fixed-sidebar {
+    left: var(--themer-inset-inline-start, 0px);
+    transition: left 200ms linear; /* follows the sidebar's animation */
+  }
+  ```
+
+  In Tailwind: `left-[var(--themer-inset-inline-start,0px)]`.
+- **The viewport does not shrink**, so your breakpoints, media queries and
+  viewport units (`100vw`, `w-screen`) do not react to Push. To see the Theme
+  at other widths, use the Workspace's Live preview.
 
 ## What you can edit
 
@@ -329,7 +386,8 @@ CSS, which is what Tailwind emits, does not leak.
   pages, plus your own tabs; an inspector that shows an element's token
   classes and jumps to the colour; fullscreen.
 
-Below 1280 px wide the Themer opens as a bottom drawer without the preview.
+Below 1280 px wide the Themer opens as a bottom drawer without the preview,
+whatever the [Themer layout](#themer-layouts).
 
 ## Credits and licences
 

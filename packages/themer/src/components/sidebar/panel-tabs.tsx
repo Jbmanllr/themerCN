@@ -21,7 +21,7 @@ import {
   TooltipTrigger,
 } from "@workspace/ui/components/tooltip";
 import { cn } from "@workspace/ui/lib/utils";
-import { useOverlayStore } from "../../stores/overlay-store";
+import { useThemerUIStore } from "../../stores/themer-ui-store";
 import { PanelContent } from "./panel-content";
 import { PANELS } from "./panels-config";
 
@@ -38,8 +38,8 @@ export function PanelTabs({
   listClassName,
   contentClassName,
 }: PanelTabsProps) {
-  const activePanel = useOverlayStore((state) => state.activePanel);
-  const setActivePanel = useOverlayStore((state) => state.setActivePanel);
+  const activePanel = useThemerUIStore((state) => state.activePanel);
+  const setActivePanel = useThemerUIStore((state) => state.setActivePanel);
 
   const handleValueChange = React.useCallback(
     (value: unknown) => {

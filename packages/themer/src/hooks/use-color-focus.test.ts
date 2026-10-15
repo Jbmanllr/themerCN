@@ -1,13 +1,14 @@
-// focusColor opens the Colors panel, the sidebar and the token's section
-// first, then waits for the picker to mount (a frame more for its section to
-// open) before it scrolls and highlights; a newer jump cancels the older one,
-// and one whose picker never mounts gives up. The registry removes only the
+// focusColor opens the Colors panel and the token's section, and posts the
+// token as the focus request the Themer layout answers, first; then waits for
+// the picker to mount (a frame more for its section to open) before it
+// scrolls and highlights, withdrawing the request; a newer jump cancels the
+// older one, and one whose picker never mounts gives up. The registry removes only the
 // element it registered, and closing the editor resets the colour search. A
 // frame queue stands in for requestAnimationFrame.
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import { useColorFocusStore } from "../stores/color-focus-store";
-import { useOverlayStore } from "../stores/overlay-store";
+import { useThemerUIStore } from "../stores/themer-ui-store";
 import { usePreferencesStore } from "../stores/preferences-store";
 import {
   focusColor,
@@ -51,7 +52,7 @@ describe("focusColor", () => {
 
   beforeEach(() => {
     frames = new FrameQueue();
-    useOverlayStore.setState({ activePanel: "other", isOpen: true });
+    useThemerUIStore.setState({ activePanel: "other", isOpen: true });
     usePreferencesStore.setState({ sidebarCollapsed: true, sectionStates: {} });
     useColorFocusStore.setState({ highlightTarget: null, colorSearch: "" });
   });
@@ -60,21 +61,35 @@ describe("focusColor", () => {
     while (cleanups.length) cleanups.pop()?.();
   });
 
-  it("opens the Colors panel, the sidebar and the token's section first", () => {
+  it("opens the Colors panel and the token's section, and requests the token's control, first", () => {
     cleanups.push(focusColor("sidebar-ring", frames));
-    expect(useOverlayStore.getState().activePanel).toBe("colors");
-    expect(usePreferencesStore.getState().sidebarCollapsed).toBe(false);
+    expect(useThemerUIStore.getState().activePanel).toBe("colors");
+    expect(useColorFocusStore.getState().focusRequest).toBe("sidebar-ring");
     expect(usePreferencesStore.getState().sectionStates).toEqual({
       "colors-sidebar": true,
     });
     expect(useColorFocusStore.getState().highlightTarget).toBeNull();
   });
 
-  it("leaves fullscreen preview so the picker can mount", () => {
-    useOverlayStore.setState({ fullscreenPreview: true });
+  it("withdraws the request once the control is highlighted, or the jump gives up", () => {
+    const { element } = fakeElement();
+    cleanups.push(registerColorElement("primary", element));
     cleanups.push(focusColor("primary", frames));
-    expect(useOverlayStore.getState().fullscreenPreview).toBe(false);
-    expect(useOverlayStore.getState().activePanel).toBe("colors");
+    frames.flush();
+    frames.flush();
+    expect(useColorFocusStore.getState().highlightTarget).toBe("primary");
+    expect(useColorFocusStore.getState().focusRequest).toBeNull();
+
+    cleanups.push(focusColor("ring", frames));
+    for (let i = 0; i < 30; i += 1) frames.flush();
+    expect(useColorFocusStore.getState().focusRequest).toBeNull();
+  });
+
+  it("leaves fullscreen preview so the picker can mount", () => {
+    useThemerUIStore.setState({ fullscreenPreview: true });
+    cleanups.push(focusColor("primary", frames));
+    expect(useThemerUIStore.getState().fullscreenPreview).toBe(false);
+    expect(useThemerUIStore.getState().activePanel).toBe("colors");
   });
 
   it("waits for the picker to mount, then scrolls and highlights a frame later", () => {
@@ -127,9 +142,9 @@ describe("color registry", () => {
 
 describe("colour search lifetime", () => {
   it("resets the search when the editor closes", () => {
-    useOverlayStore.setState({ isOpen: true });
+    useThemerUIStore.setState({ isOpen: true });
     useColorFocusStore.setState({ colorSearch: "chart" });
-    useOverlayStore.getState().close();
+    useThemerUIStore.getState().close();
     expect(useColorFocusStore.getState().colorSearch).toBe("");
   });
 });

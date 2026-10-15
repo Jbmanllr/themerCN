@@ -8,6 +8,7 @@ export { Themer } from "./components/themer";
 export type {
   ThemePreset,
   ThemerExtraColorGroup,
+  ThemerLayout,
   ThemerPreviewTab,
   ThemerProps,
 } from "./types";

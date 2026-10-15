@@ -13,12 +13,12 @@ import {
   SidebarMenuItem,
   SidebarMenuButton,
 } from "@workspace/ui/components/sidebar";
-import { useOverlayStore } from "../../stores/overlay-store";
+import { useThemerUIStore } from "../../stores/themer-ui-store";
 import { PANELS } from "./panels-config";
 
 export function CollapsedNavigation() {
-  const activePanel = useOverlayStore((state) => state.activePanel);
-  const setActivePanel = useOverlayStore((state) => state.setActivePanel);
+  const activePanel = useThemerUIStore((state) => state.activePanel);
+  const setActivePanel = useThemerUIStore((state) => state.setActivePanel);
 
   return (
     <SidebarGroup>

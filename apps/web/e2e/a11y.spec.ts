@@ -5,7 +5,12 @@ import { uiComponents } from "../lib/design-system"
 import { postCategories, posts } from "../lib/mock/blog"
 import { categories, products } from "../lib/mock/catalog"
 import { chatThreads } from "../lib/mock/chat"
-import { settle, themerTrigger } from "./themer-ui"
+import {
+  openLayout,
+  openToolbarPanel,
+  settle,
+  themerTrigger,
+} from "./themer-ui"
 
 // Every Playground route, read from the same data the pages are generated
 // from, so a new product, post or ui component is checked without edits here.
@@ -84,6 +89,36 @@ test("the open Themer UI has no serious or critical axe violations", async ({
   await themerTrigger(page).click()
   await expect(
     page.getByRole("button", { name: /^Primary & Secondary/ })
+  ).toBeVisible()
+  expect(await blockingViolations(page)).toEqual([])
+})
+
+test("the open Overlay has no serious or critical axe violations", async ({
+  page,
+}) => {
+  await page.goto("/")
+  await settlePage(page)
+  await openLayout(page, "Overlay")
+  expect(await blockingViolations(page)).toEqual([])
+})
+
+test("the open Push has no serious or critical axe violations", async ({
+  page,
+}) => {
+  await page.goto("/")
+  await settlePage(page)
+  await openLayout(page, "Push")
+  expect(await blockingViolations(page)).toEqual([])
+})
+
+test("the open Toolbar and its panel popup have no serious or critical axe violations", async ({
+  page,
+}) => {
+  await page.goto("/")
+  await settlePage(page)
+  const colors = await openToolbarPanel(page, "Colors")
+  await expect(
+    colors.getByRole("button", { name: /^Primary & Secondary/ })
   ).toBeVisible()
   expect(await blockingViolations(page)).toEqual([])
 })

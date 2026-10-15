@@ -8,8 +8,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { defaultThemeState } from "./config/defaults";
 import { useEditorStore } from "./stores/editor-store";
-import { useOverlayStore } from "./stores/overlay-store";
-import { usePreferencesStore } from "./stores/preferences-store";
+import { useThemerUIStore } from "./stores/themer-ui-store";
+import {
+  PREFERENCES_VERSION,
+  usePreferencesStore,
+} from "./stores/preferences-store";
 import { THEMER_CSS } from "./generated/themer-css";
 import { Themer, type ThemerProps } from "./index";
 
@@ -47,7 +50,7 @@ function rootVar(name: string) {
 const LIGHT_PRIMARY = defaultThemeState.styles.light.primary;
 const DARK_PRIMARY = defaultThemeState.styles.dark.primary;
 
-// Opens the desktop overlay (the mobile drawer has no mode toggle).
+// Opens the desktop Themer UI (the mobile drawer has no mode toggle).
 async function openThemer() {
   (
     window as unknown as {
@@ -69,7 +72,7 @@ async function clickModeToggle() {
 beforeEach(() => {
   useEditorStore.setState(useEditorStore.getInitialState(), true);
   usePreferencesStore.setState(usePreferencesStore.getInitialState(), true);
-  useOverlayStore.setState(useOverlayStore.getInitialState(), true);
+  useThemerUIStore.setState(useThemerUIStore.getInitialState(), true);
   localStorage.clear();
   document.documentElement.className = "";
   document.documentElement.removeAttribute("style");
@@ -147,7 +150,7 @@ describe("Themer", () => {
       seedEditor("prefs:editor", "rgb(3, 3, 3)");
       localStorage.setItem(
         "prefs:preferences",
-        JSON.stringify({ state: { themeOverrideEnabled: false }, version: 0 }),
+        JSON.stringify({ state: { themeOverrideEnabled: false }, version: PREFERENCES_VERSION }),
       );
 
       await mount({ storageNamespace: "prefs" });
@@ -174,7 +177,7 @@ describe("Themer", () => {
       addHeadScriptRestore();
       localStorage.setItem(
         "themercn:preferences",
-        JSON.stringify({ state: { themeOverrideEnabled: false }, version: 0 }),
+        JSON.stringify({ state: { themeOverrideEnabled: false }, version: PREFERENCES_VERSION }),
       );
 
       await mount();
@@ -294,10 +297,10 @@ describe("Themer", () => {
         ),
       );
 
-      const overlay = document.querySelector<HTMLElement>(
-        '[data-testid="themer-overlay"]',
+      const themerUI = document.querySelector<HTMLElement>(
+        '[data-testid="themer-ui"]',
       );
-      expect(overlay?.style.zIndex).toBe("42");
+      expect(themerUI?.style.zIndex).toBe("42");
     });
   });
 
@@ -324,7 +327,7 @@ describe("Themer", () => {
       await openThemer();
 
       const scopeRoot = document
-        .querySelector('[data-testid="themer-overlay"]')
+        .querySelector('[data-testid="themer-ui"]')
         ?.closest("[data-themer]");
       expect(scopeRoot).toBeInstanceOf(HTMLElement);
       expect(triggerRoot).toBe(scopeRoot);
@@ -332,7 +335,7 @@ describe("Themer", () => {
       expect(scopeRoot?.getAttribute("style")).toBeNull();
     });
 
-    it("mounts its popups inside its root, above the overlay", async () => {
+    it("mounts its popups inside its root, above the Themer UI", async () => {
       await mount({ zIndex: 42 });
       await openThemer();
 

@@ -1,6 +1,8 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { X } from "lucide-react";
+import { cn } from "@workspace/ui/lib/utils";
 import { Button } from "@workspace/ui/components/button";
 import {
   Sidebar,
@@ -18,6 +20,13 @@ import { CollapsedNavigation, ExpandedContent } from "./sidebar";
 
 interface ThemerSidebarProps {
   onClose: () => void;
+  /**
+   * Controls placed before the Close button, for a layout with no header of
+   * its own (Overlay). The collapsed rail stacks them above Close.
+   */
+  headerActions?: ReactNode;
+  /** Rendered after the panels, for a layout with no action bar of its own. */
+  footer?: ReactNode;
 }
 
 /**
@@ -30,7 +39,11 @@ interface ThemerSidebarProps {
  * the tooltip shows only beside the collapsed rail, where the "Theme Editor"
  * title is hidden (themer-sidebar.test.tsx).
  */
-export function ThemerSidebar({ onClose }: ThemerSidebarProps) {
+export function ThemerSidebar({
+  onClose,
+  headerActions,
+  footer,
+}: ThemerSidebarProps) {
   // The tooltip renders in a portal, outside the sidebar's `group`, so it is
   // shown from the sidebar state (as the stock SidebarMenuButton does).
   const { state, isMobile } = useSidebar();
@@ -38,11 +51,27 @@ export function ThemerSidebar({ onClose }: ThemerSidebarProps) {
   return (
     <Sidebar collapsible="icon">
       {/* Header - fixed height, matches content header */}
-      <SidebarHeader className="h-12 shrink-0 border-b p-0">
-        <div className="flex h-full items-center justify-between px-2 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0">
+      <SidebarHeader
+        className={cn(
+          "h-12 shrink-0 border-b p-0",
+          headerActions && "group-data-[collapsible=icon]:h-auto",
+        )}
+      >
+        <div
+          className={cn(
+            "flex h-full items-center justify-between px-2 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0",
+            headerActions &&
+              "gap-1 group-data-[collapsible=icon]:flex-col group-data-[collapsible=icon]:py-2",
+          )}
+        >
           <span className="truncate text-sm font-semibold group-data-[collapsible=icon]:hidden">
             Theme Editor
           </span>
+          {headerActions && (
+            <div className="ms-auto flex items-center gap-1 group-data-[collapsible=icon]:ms-0 group-data-[collapsible=icon]:flex-col">
+              {headerActions}
+            </div>
+          )}
           <Tooltip>
             <TooltipTrigger
               render={
@@ -69,6 +98,8 @@ export function ThemerSidebar({ onClose }: ThemerSidebarProps) {
       <SidebarContent>
         <SidebarInnerContent />
       </SidebarContent>
+
+      {footer}
 
       <SidebarRail />
     </Sidebar>

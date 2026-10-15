@@ -1,6 +1,11 @@
 import { expect, test, type Page } from "@playwright/test"
 
-import { settle, themerTrigger } from "./themer-ui"
+import {
+  openLayout,
+  openToolbarPanel,
+  settle,
+  themerTrigger,
+} from "./themer-ui"
 
 // Baselines are Linux renders from the pinned mcr.microsoft.com/playwright
 // image (`pnpm e2e:update-snapshots`, which CI's e2e job also runs in).
@@ -20,7 +25,7 @@ const heading = (page: Page, name: string, level = 1) =>
 const screens: {
   name: string
   show: (page: Page) => Promise<void>
-  // The Themer is a fixed overlay, so its screen is the viewport only.
+  // The Themer UI is fixed to the viewport, so its screen is the viewport only.
   fullPage?: false
 }[] = [
   {
@@ -109,6 +114,39 @@ const screens: {
       await themerTrigger(page).click()
       await expect(
         page.getByRole("button", { name: /^Primary & Secondary/ })
+      ).toBeVisible()
+    },
+  },
+  {
+    // The sidebar over the real page: the page shows beside it.
+    name: "themer-overlay",
+    fullPage: false,
+    show: async (page) => {
+      await page.goto("/")
+      await expect(heading(page, "Good coffee, slowly.")).toBeVisible()
+      await openLayout(page, "Overlay")
+    },
+  },
+  {
+    // The sidebar beside the real page, which starts after it.
+    name: "themer-push",
+    fullPage: false,
+    show: async (page) => {
+      await page.goto("/")
+      await expect(heading(page, "Good coffee, slowly.")).toBeVisible()
+      await openLayout(page, "Push")
+    },
+  },
+  {
+    // The bar over the real page, its Colors popup open.
+    name: "themer-toolbar",
+    fullPage: false,
+    show: async (page) => {
+      await page.goto("/")
+      await expect(heading(page, "Good coffee, slowly.")).toBeVisible()
+      const colors = await openToolbarPanel(page, "Colors")
+      await expect(
+        colors.getByRole("button", { name: /^Primary & Secondary/ })
       ).toBeVisible()
     },
   },

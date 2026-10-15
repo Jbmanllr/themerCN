@@ -3,7 +3,8 @@
 How `themercn` works inside, for contributors. How a Host app uses it is the
 [README](README.md); the words (Themer, Theme, Preset, Host app, Adapter,
 Themer UI, Preview) are defined in the repository's
-[GLOSSARY.md](../../GLOSSARY.md). This file is not published: `files` in
+[GLOSSARY.md](../../GLOSSARY.md), with Themer layout, Workspace, Overlay, Push
+and Toolbar. This file is not published: `files` in
 `package.json` ships only `dist/`, the README, the licences and the changelog.
 
 Origin: adapted from [tweakcn](https://github.com/jnsahaj/tweakcn) @
@@ -56,7 +57,7 @@ Host tree                         <ThemerLoader {...props} />   (themercn/loader
                                      └─ ThemerProvider (config: presets, shortcut, …)
                                         └─ ThemerRoot ── portal to <body> ──► ThemerScope [data-themer]
                                                                                ├─ ThemerTrigger
-                                                                               ├─ ThemerOverlay
+                                                                               ├─ ThemerUI ─► the layout in force, or the mobile drawer
                                                                                └─ [data-themer-portals]
 ```
 
@@ -68,9 +69,81 @@ Host tree                         <ThemerLoader {...props} />   (themercn/loader
 | [themer.tsx](src/components/themer.tsx) | `<Themer>`: flat props, no children. Skips the server, hydration and frames (`window.self !== window.top`: the Live preview frames the Host page, whose own Themer must not stack). Hydrates the stores, injects the CSS, owns a QueryClient separate from the Host's. |
 | [color-mode.tsx](src/components/color-mode.tsx) | Who owns light/dark (see [Colour mode](#colour-mode)). |
 | [themer-provider.tsx](src/components/themer-provider.tsx) | Registers Host Presets and extra colours during render, applies the Theme to `<html>`, binds the shortcuts, removes everything when the override goes off or it unmounts. |
-| [themer-root.tsx](src/components/themer-root.tsx) | Portals the trigger and overlay into `ThemerScope` on `<body>`; close cleanups (mobile scroll lock, Lenis pause). |
-| [themer-overlay.tsx](src/components/themer-overlay.tsx) | The Themer UI: sidebar + preview on desktop; below 1280 px a bottom drawer without preview ([use-is-mobile.ts](src/hooks/use-is-mobile.ts); the shadcn Sidebar becomes a Sheet below 768 px, so the breakpoint must stay above it). |
+| [themer-root.tsx](src/components/themer-root.tsx) | Portals the trigger and the Themer UI into `ThemerScope` on `<body>`; the mobile scroll lock, and the Lenis pause while the open Themer UI hides the page (the drawer, a layout with `coversPage`). |
+| [themer-ui/themer-ui.tsx](src/components/themer-ui/themer-ui.tsx) | The Themer UI: on desktop the component of the [Themer layout](#themer-layouts) in force (`LAYOUT_COMPONENTS`); below 1280 px a bottom drawer without preview, whatever the layout ([use-is-mobile.ts](src/hooks/use-is-mobile.ts); the shadcn Sidebar becomes a Sheet below 768 px, so the breakpoint must stay above it). |
 | [themer-trigger.tsx](src/components/themer-trigger.tsx) | The floating button (`showTrigger`). |
+
+## Themer layouts
+
+How the Themer UI sits on screen while open. In-place layouts follow
+[ADR 0001](../../docs/adr/0001-in-place-themer-layouts.md): they render in
+the Themer's portal beside the Host tree and never wrap it.
+
+| Piece | Where | Role |
+| ----- | ----- | ---- |
+| `ThemerLayout` | [types/index.ts](src/types/index.ts) | The union of implemented layouts; `ThemerProps.layout` takes it. |
+| Registry | [themer-ui/layouts/registry.ts](src/components/themer-ui/layouts/registry.ts) | `THEMER_LAYOUTS`: label, icon, `coversPage` per layout; `resolveThemerLayout`: user choice, else Host default, else Workspace, skipping unknown values. |
+| Components | `LAYOUT_COMPONENTS` in [themer-ui.tsx](src/components/themer-ui/themer-ui.tsx) | The one map from layout to component (`ThemerLayoutProps`: `onClose`, `zIndex`). |
+| Layout in force | [hooks/use-themer-layout.ts](src/hooks/use-themer-layout.ts) | `useThemerLayout()`: the `layout` preference over `config.layout`. |
+| Switcher | [themer-ui/layout-switcher.tsx](src/components/themer-ui/layout-switcher.tsx) | `DropdownMenu` of `THEMER_LAYOUTS` in every layout's header; writes the `layout` preference. Its `LayoutRadioGroup` also fills the submenu of Toolbar's "More actions" menu. |
+| Shared sidebar | [themer-ui/themer-sidebar-provider.tsx](src/components/themer-ui/themer-sidebar-provider.tsx), [themer-sidebar.tsx](src/components/themer-sidebar.tsx) | The SidebarProvider bound to `sidebarCollapsed` (collapse is shared), and the sidebar with `headerActions`/`footer` slots for a layout without its own header or action bar. |
+| Actions | [actions/themer-actions.tsx](src/components/actions/themer-actions.tsx) | `useThemerActions`: every action's name, icon, shortcut, state and handler, the Theme override, and the dialogs they open, defined once. `ActionBar` lays them out as buttons; `ThemerActionsMenu` is their "More actions" menu (the Toolbar's, and the collapsed rail's with undo/redo and mode). |
+
+- **Workspace** ([workspace-layout.tsx](src/components/themer-ui/layouts/workspace-layout.tsx)):
+  `fixed inset-0`, the sidebar beside `SidebarInset` with `ThemerHeader`
+  (switcher, close) and `PreviewPanel` (action bar, Preview tabs). The only
+  layout with Preview tabs and fullscreen preview; its inspector works on
+  the Preview tabs.
+- **Overlay** ([overlay-layout.tsx](src/components/themer-ui/layouts/overlay-layout.tsx)):
+  the in-place sidebar layout
+  ([in-place-sidebar-layout.tsx](src/components/themer-ui/layouts/in-place-sidebar-layout.tsx)),
+  shared with Push: a `fixed inset-y-0 left-0` container that shrinks to the
+  sidebar's gap, so the page beside it takes clicks and wheel events. The
+  sidebar header holds the collapse toggle, the inspector toggle and the
+  switcher; `ActionBar variant="stacked"` sits in its footer. The collapsed
+  rail hides the footer, so its header adds `ThemerActionsMenu withHistory`
+  (undo/redo, mode, then the footer's other actions and the override). No
+  page pause, no scroll lock.
+- **Push** ([push-layout.tsx](src/components/themer-ui/layouts/push-layout.tsx)):
+  the in-place sidebar layout, plus a layout effect that sets
+  `margin-inline-start`, `--themer-inset-inline-start` (the sidebar's width
+  from `useThemerSidebarWidth`, the mapping `ThemerSidebarProvider` lays the
+  sidebar out with) and a 200 ms linear margin transition as inline styles
+  on `<html>`, and on unmount (close, switch, drawer, Themer unmounted) puts
+  back the Host's own inline values of those properties, or removes them.
+  Fixed Host elements opt in through the variable; the viewport does not
+  shrink (ADR 0001).
+- **Toolbar** ([toolbar-layout.tsx](src/components/themer-ui/layouts/toolbar-layout.tsx)):
+  no sidebar; a `fixed` bar centred at the top of the page with auto
+  margins, not a transform (a transform would make the bar the containing
+  block of the page inspector's fixed layer). Colors, Typography and Other
+  are `Popover` triggers drawn as a `ToggleGroup`; each popup holds
+  `PanelContent` in a `ScrollArea` capped to Base UI's `--available-height`,
+  and opening one sets the active panel; a colour focus jump (`focusRequest`,
+  e.g. a pinned inspector element) opens Colors. The popups ignore outside presses
+  and focus-out, so the page can be clicked and scrolled while one is open;
+  Escape, the trigger or another group closes it. Undo/redo, the inspector
+  toggle, mode and Close are a `ButtonGroup`; the rest of the actions, the
+  override switch and the layouts (`LayoutRadioGroup` in a submenu) are
+  `ThemerActionsMenu`. Nested popups (colour, font pickers) portal after the
+  panel popup, so they paint above it. No page pause.
+- **Inspector on the Host page** ([page-inspector.tsx](src/components/themer-ui/page-inspector.tsx)):
+  every in-place layout (`coversPage: false`: Overlay, Push, Toolbar) mounts
+  `<PageInspector />` in its root and `<PageInspectorToggle />` in its
+  sidebar header (Overlay, Push) or its bar (Toolbar, `size="default"` to
+  match the `ButtonGroup`).
+  `useInspector` binds to the Host document with `ignore: "[data-themer]"`,
+  so the Themer's own tree is never inspected and its clicks still act; the
+  card renders in a fixed, pointer-transparent layer. `ThemerUI` turns
+  `inspectorMode` off whenever the layout in force changes.
+
+Every editing state (Theme, history, active panel, collapse) lives in the
+stores, so a switch keeps it (the inspector is turned off: each layout
+inspects its own surface); the layout components hold none (Toolbar keeps
+only which popup is open). Adding a
+layout: add it to `ThemerLayout`, `THEMER_LAYOUTS` (the compiler then asks
+for `LAYOUT_COMPONENTS` too), write its component under `layouts/`, and add
+e2e and visual screens in `apps/web/e2e`.
 
 ## Runtime CSS and `@scope`
 
@@ -121,7 +194,7 @@ Popover, Select, DropdownMenu, Tooltip, Dialog, Sheet and Drawer pass
 `<body>` as stock shadcn does.
 [portal-container.test.tsx](src/components/portal-container.test.tsx) fails if
 a `shadcn add -o` reinstall drops it. The container is a sibling of the
-overlay (it also serves the mobile drawer and the closed state), fixed at the
+Themer UI (it also serves the mobile drawer and the closed state), fixed at the
 viewport origin with no size and no clipping, at `(zIndex ?? 10000) + 1`.
 Every popup shares that layer; one opened from inside another is portalled
 later, so it paints on top. The Themer UI uses stock `@workspace/ui`
@@ -238,23 +311,29 @@ never read `preset.styles` directly.
 ### PreferencesStore
 
 [stores/preferences-store.ts](src/stores/preferences-store.ts). Persisted
-whole under `<ns>:preferences`, `version: PREFERENCES_VERSION` (0; no
+whole under `<ns>:preferences`, `version: PREFERENCES_VERSION` (1; no
 migrations, another version is dropped):
 `colorFormat` (`oklch` default; Tailwind 3 has no oklch), `tailwindVersion`,
-`packageManager`, `showContrastWarnings`, `previewTab`, `sidebarCollapsed`,
+`packageManager`, `showContrastWarnings`, `previewTab`, `sidebarCollapsed`
+(shared by every sidebar layout), `layout` (the user's Themer layout, `null`
+follows the Host's),
 `themeOverrideEnabled` (read by the head script), `sidebarColorSync`,
 `colorSelectorTab`, `sectionStates`.
 
-### OverlayStore
+### ThemerUIStore
 
-[stores/overlay-store.ts](src/stores/overlay-store.ts), transient: `isOpen`,
+[stores/themer-ui-store.ts](src/stores/themer-ui-store.ts), transient: `isOpen`,
 `activePanel` (`colors` | `typography` | `other`), `inspectorMode`,
 `fullscreenPreview`.
 
 ### ColorFocusStore
 
 [stores/color-focus-store.ts](src/stores/color-focus-store.ts), transient:
-`highlightTarget` and `colorSearch` (cleared on close). DOM elements live in a
+`highlightTarget`, `colorSearch` and `focusRequest` (cleared on close).
+`focusColor` posts the token as `focusRequest` until its picker is highlighted
+or the jump gives up; each layout answers it by showing the Colors panel:
+`ThemerSidebarProvider` expands the sidebar (Workspace, Overlay, Push), the
+Toolbar opens its Colors popup. DOM elements live in a
 module-level `Map` in [use-color-focus.ts](src/hooks/use-color-focus.ts), so
 registering one picker per token re-renders nobody.
 
@@ -352,7 +431,8 @@ go last). Only the active tab mounts; Host tabs render inside
 | ------ | ------- |
 | `PreviewTabs` | Tab bar, inspector toggle (`Ctrl+I`), fullscreen. |
 | `LivePreview` | Same-origin iframe of the Host page; the Theme is applied to its document after each load. The Host must allow same-origin framing. |
-| `InspectorOverlay` + `useInspector` | Hover shows an element's token classes; click pins it and focuses the colour control. Off on mobile and for a cross-origin frame. |
+| `InspectorOverlay` + `useInspector` | Hover shows an element's token classes; click pins it and focuses the colour control. Off on mobile and for a cross-origin frame. `ignore` leaves a subtree alone (the page inspector's `[data-themer]`). |
+| `InspectorToggle` | The toggle, shared by `PreviewTabs` and `PageInspectorToggle`. |
 | `useFullscreenSync` | Keeps `fullscreenPreview` in step with the Fullscreen API; CSS fallback; `Esc` exits. |
 
 ## Color System
@@ -422,10 +502,12 @@ packages/themer/
 │   │   ├── themer.tsx             # <Themer>
 │   │   ├── themer-scope.tsx       # [data-themer] root, style injection, portal container
 │   │   ├── color-mode.tsx         # light/dark ownership
-│   │   ├── themer-provider.tsx, themer-root.tsx, themer-overlay.tsx, …
-│   │   ├── editor/ panels/ sidebar/ overlay/ actions/ ui/
+│   │   ├── themer-provider.tsx, themer-root.tsx, …
+│   │   ├── editor/ panels/ sidebar/ actions/ ui/
+│   │   ├── themer-ui/             # ThemerUI, layout switcher, header, preview panel, mobile drawer
+│   │   │   └── layouts/           # registry and one component per Themer layout
 │   │   └── preview/               # tabs, registry, Live, inspector, example pages
-│   ├── stores/                    # editor, preferences, overlay, color-focus; hydrate.ts
+│   ├── stores/                    # editor, preferences, themer-ui, color-focus; hydrate.ts
 │   ├── selectors/ hooks/ utils/ config/ types/
 │   ├── api/font-catalog.ts        # catalog response (no gating)
 │   ├── styles/                    # themer.css, view-transition.css (CSS build input)

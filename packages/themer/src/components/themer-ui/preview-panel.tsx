@@ -20,7 +20,7 @@ import {
 } from "../preview/preview-tab-registry";
 import { useThemerContext } from "../themer-provider";
 import { usePreferencesStore } from "../../stores/preferences-store";
-import { useOverlayStore } from "../../stores/overlay-store";
+import { useThemerUIStore } from "../../stores/themer-ui-store";
 
 /**
  * Right preview panel with action bar.
@@ -32,7 +32,7 @@ import { useOverlayStore } from "../../stores/overlay-store";
  */
 export function PreviewPanel() {
   const previewTab = usePreferencesStore((state) => state.previewTab);
-  const isFullscreen = useOverlayStore((state) => state.fullscreenPreview);
+  const isFullscreen = useThemerUIStore((state) => state.fullscreenPreview);
   const { config } = useThemerContext();
   const tabs = React.useMemo(
     () => mergePreviewTabs(BUILTIN_TABS, config.previewTabs),

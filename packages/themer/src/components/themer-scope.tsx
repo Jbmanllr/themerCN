@@ -11,7 +11,7 @@
 //   @workspace/ui's PortalContainerContext), never to <body>, where the
 //   scoped CSS would not reach them. The container is fixed at the viewport
 //   origin with no size and no overflow clipping, one layer above the
-//   overlay, so popups position against the viewport and show above it.
+//   Themer UI, so popups position against the viewport and show above it.
 // - The <style> is injected while a Themer is mounted and removed after.
 
 import * as React from "react";
@@ -34,7 +34,7 @@ export function useThemerStyle() {
 
 interface ThemerScopeProps {
   children: React.ReactNode;
-  /** The z-index of the popup layer; above the overlay's. */
+  /** The z-index of the popup layer; above the Themer UI's. */
   popupLayer: number;
 }
 

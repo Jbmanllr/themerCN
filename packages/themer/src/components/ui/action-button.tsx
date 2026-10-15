@@ -3,7 +3,7 @@
 // The editor's icon button: a Button named by `label` (its aria-label and its
 // Tooltip text), with the shortcut beside the name in the tooltip when given.
 // Every plain icon action draws it (the action bar, the preview toolbars, the
-// preset cycle buttons, the overlay header, the floating trigger), so none is
+// preset cycle buttons, the Themer UI header, the floating trigger), so none is
 // left unnamed or without a tooltip; menu triggers and toggles keep their own
 // controls.
 //

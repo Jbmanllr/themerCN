@@ -9,8 +9,8 @@ vi.mock("./themer-provider", () => ({
     config: { showTrigger: true },
   }),
 }));
-vi.mock("../stores/overlay-store", () => ({
-  useOverlayStore: (
+vi.mock("../stores/themer-ui-store", () => ({
+  useThemerUIStore: (
     select: (state: { isOpen: boolean; toggle: () => void }) => unknown,
   ) => select({ isOpen: false, toggle: vi.fn() }),
 }));

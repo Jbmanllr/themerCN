@@ -12,7 +12,7 @@ vi.mock("../themer-provider", () => ({
 }));
 
 import { SidebarProvider } from "@workspace/ui/components/sidebar";
-import { useOverlayStore } from "../../stores/overlay-store";
+import { useThemerUIStore } from "../../stores/themer-ui-store";
 import { CollapsedNavigation } from "./collapsed-navigation";
 
 (
@@ -28,7 +28,7 @@ beforeEach(async () => {
     addEventListener: () => {},
     removeEventListener: () => {},
   })) as unknown as typeof window.matchMedia;
-  useOverlayStore.setState({ activePanel: "colors" });
+  useThemerUIStore.setState({ activePanel: "colors" });
   container = document.createElement("div");
   document.body.append(container);
   root = createRoot(container);
@@ -60,6 +60,6 @@ describe("CollapsedNavigation", () => {
       'button[aria-label="Typography"]',
     );
     await act(async () => typography?.click());
-    expect(useOverlayStore.getState().activePanel).toBe("typography");
+    expect(useThemerUIStore.getState().activePanel).toBe("typography");
   });
 });

@@ -16,7 +16,7 @@ import { expect, it, vi } from "vitest";
 
 const seen = vi.hoisted(() => ({ editor: undefined as unknown }));
 
-// The editor's provider and overlay touch the DOM; the client wiring is what
+// The editor's provider and Themer UI touch the DOM; the client wiring is what
 // is tested here.
 vi.mock("./themer-provider", () => ({
   ThemerProvider: ({ children }: { children: ReactNode }) => children,

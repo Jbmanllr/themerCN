@@ -1,7 +1,7 @@
 "use client";
 
 // Puts the Themer UI beside the Host app's tree: the floating trigger and the
-// overlay, portaled to document.body inside the Themer's CSS scope
+// Themer UI, portaled to document.body inside the Themer's CSS scope
 // (ThemerScope), and the cleanups that run while it is open. It wraps
 // nothing: the Host's page renders beside `<Themer>`, never under it.
 // `<Themer>` renders it only on a hydrated client, so it portals at once.
@@ -10,23 +10,29 @@
 
 import * as React from "react";
 import { createPortal } from "react-dom";
-import { useOverlayStore } from "../stores/overlay-store";
+import { useThemerUIStore } from "../stores/themer-ui-store";
 import { useThemerContext } from "./themer-provider";
 import { useIsMobile } from "../hooks/use-is-mobile";
+import { useThemerLayout } from "../hooks/use-themer-layout";
 import { Z_INDEX } from "../config/constants";
-import { ThemerOverlay } from "./themer-overlay";
+import { ThemerUI } from "./themer-ui";
+import { THEMER_LAYOUTS } from "./themer-ui/layouts/registry";
 import { ThemerScope } from "./themer-scope";
 import { ThemerTrigger } from "./themer-trigger";
 import { LenisPause } from "./lenis-pause";
 
 /**
- * The Themer UI's root: the trigger and overlay in a portal on <body>, the
- * Lenis pause, and the body scroll lock while the overlay is open on mobile.
+ * The Themer UI's root: the trigger and ThemerUI in a portal on <body>, the
+ * Lenis pause while the open Themer UI hides the page (the mobile drawer, a
+ * layout that covers the page), and the body scroll lock while it is open on
+ * mobile.
  */
 export function ThemerRoot() {
-  const isOpen = useOverlayStore((state) => state.isOpen);
+  const isOpen = useThemerUIStore((state) => state.isOpen);
   const { config } = useThemerContext();
   const isMobile = useIsMobile();
+  const layout = useThemerLayout();
+  const hidesPage = isMobile || THEMER_LAYOUTS[layout].coversPage;
 
   // Disable body scroll when open on mobile
   // Save/restore previous overflow value to avoid conflicts
@@ -43,13 +49,12 @@ export function ThemerRoot() {
 
   return (
     <>
-      {/* Pause Lenis when overlay is open */}
-      <LenisPause />
+      <LenisPause active={isOpen && hidesPage} />
 
       {createPortal(
         <ThemerScope popupLayer={(config.zIndex ?? Z_INDEX.sidebar) + 1}>
           <ThemerTrigger />
-          <ThemerOverlay />
+          <ThemerUI />
         </ThemerScope>,
         document.body,
       )}

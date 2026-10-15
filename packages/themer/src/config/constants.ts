@@ -32,15 +32,14 @@ export const COLOR_INPUT_DEBOUNCE_MS = 150;
 export const HIGHLIGHT_ANIMATION_MS = 1500;
 
 /**
- * Layers of the editor chrome. Read today: `trigger` and `sidebar` (the
- * floating trigger and the overlay, each unless the host sets
- * ThemerConfig.zIndex). Popups take the layer above the overlay's
- * (themer-scope.tsx). `overlay`, `header`, `popover`, `modal` and
- * `inspector` have no reader.
+ * Layers of the editor chrome. Read today: `trigger` (the floating trigger)
+ * and `sidebar` (the Themer UI, whatever its layout), each unless the Host
+ * sets ThemerConfig.zIndex. Popups take the layer one above the Themer UI's:
+ * themer-root.tsx passes it to ThemerScope as `popupLayer`. `header`,
+ * `popover`, `modal` and `inspector` have no reader.
  */
 export const Z_INDEX = {
   trigger: 9990,
-  overlay: 9999,
   sidebar: 10000,
   header: 10001,
   popover: 10002,

@@ -61,9 +61,9 @@ export type {
   ColorFocusState,
   ColorFocusActions,
   ColorFocusStore,
-  ThemerOverlayState,
-  ThemerOverlayActions,
-  ThemerOverlayStore,
+  ThemerUIState,
+  ThemerUIActions,
+  ThemerUIStore,
 } from "./editor";
 
 // Import for use in interfaces below
@@ -186,6 +186,19 @@ export interface ThemerExtraColorGroup {
   colors: readonly ThemerExtraColor[];
 }
 
+/**
+ * How the Themer UI is arranged on screen while it is open: the value of
+ * `ThemerProps.layout`.
+ * - `"workspace"`: covers the whole page, the sidebar beside the Preview.
+ * - `"overlay"`: the sidebar floats over the Host app's real page, which
+ *   stays usable beside it.
+ * - `"push"`: the sidebar sits beside the Host app's real page and shifts it
+ *   aside (`margin-inline-start` on `<html>`, `--themer-inset-inline-start`).
+ * - `"toolbar"`: no sidebar; every control sits in a bar at the top of the
+ *   Host app's real page, each group of controls in its own popup.
+ */
+export type ThemerLayout = "workspace" | "overlay" | "push" | "toolbar";
+
 /** Light or dark: the value of `ThemerProps.colorMode`. */
 export type ThemerColorMode = "light" | "dark";
 
@@ -229,9 +242,16 @@ export interface ThemerProps {
    * macOS Cmd stands in for ctrl).
    */
   shortcut?: string;
+  /**
+   * Themer layout the Themer opens in (default `"workspace"`). The user can
+   * switch from the Themer UI's header; their choice is remembered in this
+   * browser and wins over this default. Below 1280 px every layout opens as
+   * the same bottom drawer.
+   */
+  layout?: ThemerLayout;
   /** Show the floating trigger button (default `true`). */
   showTrigger?: boolean;
-  /** Z-index of the overlay and the trigger (default: the Themer's own layers). */
+  /** Z-index of the Themer UI and the trigger (default: the Themer's own layers). */
   zIndex?: number;
   /**
    * Prefix of the localStorage keys the Themer persists to:

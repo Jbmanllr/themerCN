@@ -4,7 +4,7 @@
 // header, action bar) and, where the browser allows it, the page itself goes
 // fullscreen through the Fullscreen API on <html>.
 //
-// The flag lives in the overlay store (`fullscreenPreview`) so the overlay,
+// The flag lives in the Themer UI store (`fullscreenPreview`) so the Themer UI,
 // the preview tab bar and `useThemer()` agree. This module holds the document
 // logic only and never imports the store, so the store can call it:
 // - `enterFullscreen` sets the flag at once (the CSS layout is the fallback)
@@ -121,7 +121,7 @@ export function subscribeFullscreen(
 
 /**
  * Mount the fullscreen subscription while the editor is open. Call once, from
- * the overlay. `active` is the store flag, `setActive` writes it.
+ * the Themer UI. `active` is the store flag, `setActive` writes it.
  */
 export function useFullscreenSync({
   enabled,

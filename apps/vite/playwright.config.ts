@@ -1,6 +1,8 @@
 import { defineConfig, devices } from "@playwright/test"
 
-const port = 4173
+// Override with VITE_E2E_PORT so parallel runs (other worktrees, other
+// agents) don't share, or silently reuse, one server.
+const port = Number(process.env.VITE_E2E_PORT ?? 4173)
 
 // The smoke test runs against a production build with the Themer on
 // (VITE_THEMER=1), written to dist-e2e so `dist` stays the off build.

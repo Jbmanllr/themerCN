@@ -25,7 +25,7 @@ vi.mock("./themer-root", async () => {
   const { useQueryClient: editorClient } =
     await import("@tanstack/react-query");
   return {
-    ThemerOverlayOnly: function OverlayOnly() {
+    ThemerRoot: function Root() {
       seen.editor = editorClient();
       return null;
     },

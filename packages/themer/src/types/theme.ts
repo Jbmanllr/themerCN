@@ -142,7 +142,7 @@ export type ThemeStyleProps = {
 };
 
 /**
- * Values of host extra colours (ThemerConfig.extraColors) by CSS custom
+ * Values of Host extra colours (ThemerConfig.extraColors) by CSS custom
  * property name without `--`. Optional by nature: an extra a theme does not
  * set is absent, and the host's own CSS value shows.
  */
@@ -150,7 +150,7 @@ export type ExtraColorValues = { [extraKey: string]: string | undefined };
 
 /**
  * One mode's styles as the editor stores them: every built-in key (typed as
- * in ThemeStyleProps) plus any host extra colours that have a value.
+ * in ThemeStyleProps) plus any Host extra colours that have a value.
  */
 export type ThemeModeStyles = ThemeStyleProps & ExtraColorValues;
 

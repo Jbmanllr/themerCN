@@ -17,27 +17,30 @@
 //   mounted, scoped to its `[data-themer]` root (themer-scope.tsx). The Host
 //   app compiles and imports nothing of the Themer's.
 // - The persisted stores hydrate from `<storageNamespace>:editor` and
-//   `<storageNamespace>:preferences` when it first renders on the client.
+//   `<storageNamespace>:preferences` when it first renders on the client; an
+//   uncontrolled light/dark mode is saved under `<storageNamespace>:color-mode`
+//   (color-mode.tsx).
 // - `presets`, `extraColors`, `previewTabs` and `previewWrapper` must be
 //   stable module-level values: a new identity re-registers or rebuilds them.
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { useMemo, useState, useSyncExternalStore } from "react";
+import { useState } from "react";
 
 import type { ThemerConfig, ThemerProps } from "../types";
-import { DEFAULT_STORAGE_NAMESPACE } from "../config/constants";
+import {
+  DEFAULT_STORAGE_NAMESPACE,
+  getStorageKeys,
+} from "../config/constants";
+import { useHydrated } from "../hooks/use-hydrated";
 import { hydrateThemerStores } from "../stores/hydrate";
 
 import { ColorModeProvider } from "./color-mode";
 import { ThemerProvider } from "./themer-provider";
-import { ThemerOverlayOnly } from "./themer-root";
+import { ThemerRoot } from "./themer-root";
 import { useThemerStyle } from "./themer-scope";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
-const subscribeNever = () => () => {};
-const isTopWindow = () => window.self === window.top;
-const onServer = () => false;
 
 /**
  * The Themer: a live editor for the page's shadcn Theme. Mount it once, next
@@ -52,60 +55,21 @@ const onServer = () => false;
  * </body>
  * ```
  */
-export function Themer({
-  colorMode,
-  defaultPreset,
-  extraColors,
-  fontCatalogEndpoint,
-  onColorModeChange,
-  presets,
-  previewTabs,
-  previewWrapper,
-  shortcut,
-  showTrigger,
-  storageNamespace = DEFAULT_STORAGE_NAMESPACE,
-  zIndex,
-}: ThemerProps) {
-  const shouldRender = useSyncExternalStore(
-    subscribeNever,
-    isTopWindow,
-    onServer,
-  );
+export function Themer(props: ThemerProps) {
+  // Everything under it may assume a hydrated client.
+  const hydrated = useHydrated();
 
-  if (!shouldRender) return null;
+  if (!hydrated || window.self !== window.top) return null;
 
-  return (
-    <ThemerApp
-      colorMode={colorMode}
-      defaultPreset={defaultPreset}
-      extraColors={extraColors}
-      fontCatalogEndpoint={fontCatalogEndpoint}
-      onColorModeChange={onColorModeChange}
-      presets={presets}
-      previewTabs={previewTabs}
-      previewWrapper={previewWrapper}
-      shortcut={shortcut}
-      showTrigger={showTrigger}
-      storageNamespace={storageNamespace}
-      zIndex={zIndex}
-    />
-  );
+  return <ThemerApp {...props} />;
 }
 
 function ThemerApp({
   colorMode,
-  defaultPreset,
-  extraColors,
-  fontCatalogEndpoint,
   onColorModeChange,
-  presets,
-  previewTabs,
-  previewWrapper,
-  shortcut,
-  showTrigger,
-  storageNamespace,
-  zIndex,
-}: ThemerProps & { storageNamespace: string }) {
+  storageNamespace = DEFAULT_STORAGE_NAMESPACE,
+  ...editorProps
+}: ThemerProps) {
   // Before any child reads the stores, so the first render already shows
   // the persisted Theme of this namespace.
   hydrateThemerStores(storageNamespace);
@@ -125,41 +89,44 @@ function ThemerApp({
       }),
   );
 
-  const config = useMemo<ThemerConfig>(
-    () => ({
-      defaultPreset,
-      extraColors,
-      fontCatalogEndpoint,
-      presets,
-      previewTabs,
-      previewWrapper,
-      shortcut,
-      showTrigger,
-      zIndex,
-    }),
-    [
-      defaultPreset,
-      extraColors,
-      fontCatalogEndpoint,
-      presets,
-      previewTabs,
-      previewWrapper,
-      shortcut,
-      showTrigger,
-      zIndex,
-    ],
-  );
+  const config = useShallowStable<ThemerConfig>(editorProps);
 
   return (
     <QueryClientProvider client={queryClient}>
       <ColorModeProvider
         colorMode={colorMode}
         onColorModeChange={onColorModeChange}
+        storageKey={getStorageKeys(storageNamespace).colorMode}
       >
         <ThemerProvider config={config}>
-          <ThemerOverlayOnly />
+          <ThemerRoot />
         </ThemerProvider>
       </ColorModeProvider>
     </QueryClientProvider>
+  );
+}
+
+/**
+ * `value` itself, or the previous value while every field is the same, so a
+ * Host re-render with unchanged props keeps the config's identity.
+ */
+function useShallowStable<T extends object>(value: T): T {
+  const [stable, setStable] = useState(value);
+  if (stable === value || isShallowEqual(stable, value)) return stable;
+  setStable(value);
+  return value;
+}
+
+function isShallowEqual(a: object, b: object): boolean {
+  const aKeys = Object.keys(a);
+  const bKeys = Object.keys(b);
+  return (
+    aKeys.length === bKeys.length &&
+    aKeys.every((key) =>
+      Object.is(
+        (a as Record<string, unknown>)[key],
+        (b as Record<string, unknown>)[key],
+      ),
+    )
   );
 }

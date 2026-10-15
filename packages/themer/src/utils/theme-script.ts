@@ -9,17 +9,24 @@
 // reaches no Themer code (scripts/check-entries.mjs).
 
 import { COMMON_STYLE_KEYS } from "../types/theme";
-import { getStorageKeys } from "../config/constants";
+import { RESTORE_STYLE_ID, getStorageKeys } from "../config/constants";
 import { GENERIC_FONT_FAMILIES, LOCAL_FONT_FAMILY_NAMES } from "./font-loader";
 
 /**
- * The script that runs before hydration to apply persisted theme variables without a flash.
- * With nothing persisted (or the theme override off) it does nothing: the host CSS already
- * shows the unedited theme. It never touches the `.dark` class, which the host's next-themes
- * owns; it picks the style set from the persisted `currentMode`, which ThemerProvider keeps
- * in step with next-themes. It writes every saved variable but not the shadow override sheet
- * or the tracking variables, and preloads Google fonts for the sans, serif and mono slots
- * only (DynamicFontLoader loads the heading font after hydration).
+ * The script that runs before hydration so the first paint already shows the saved Theme
+ * in the right mode.
+ * - Mode: when an uncontrolled Themer saved its mode (`<ns>:color-mode`), it sets the `.dark`
+ *   class on <html> to match. Otherwise the Host app owns the class (next-themes or its
+ *   own script, which may run after this one) and the class is left alone.
+ * - Theme: with nothing saved (or the Theme override off) it writes nothing and the Host's
+ *   CSS shows. Otherwise it writes both modes of the saved Theme into one
+ *   `<style id="themercn-restore">`, keyed on whether <html> has `.dark`, so the page shows
+ *   the tokens of whichever mode it is in, whenever the class is set. The rules outrank the
+ *   Host's `:root` and `.dark` rules; ThemerProvider removes the sheet once it applies the
+ *   Theme. A saved value that could end its declaration is dropped.
+ * It writes every saved variable but not the shadow override sheet or the tracking
+ * variables, and preloads Google fonts for the sans, serif and mono slots only
+ * (DynamicFontLoader loads the heading font after hydration).
  */
 export function generateThemeScript({
   storageNamespace,
@@ -58,10 +65,13 @@ export function generateThemeScript({
     (function() {
       var storageKey = ${JSON.stringify(storageKeys.editor)};
       var preferencesStorageKey = ${JSON.stringify(storageKeys.preferences)};
+      var colorModeStorageKey = ${JSON.stringify(storageKeys.colorMode)};
+      var styleId = ${JSON.stringify(RESTORE_STYLE_ID)};
       var root = document.documentElement;
 
       var themeState = null;
       var themeOverrideEnabled = true;
+      var colorMode = null;
       try {
         var persisted = localStorage.getItem(storageKey);
         if (persisted) {
@@ -72,41 +82,60 @@ export function generateThemeScript({
         if (persistedPreferences) {
           themeOverrideEnabled = JSON.parse(persistedPreferences)?.state?.themeOverrideEnabled !== false;
         }
+
+        colorMode = localStorage.getItem(colorModeStorageKey);
       } catch (e) {
         console.warn("ThemeScript: Failed to read localStorage:", e);
       }
 
-      if (!themeState || !themeOverrideEnabled) {
+      // Only an uncontrolled Themer saves its mode; a Host-controlled class is left alone.
+      if (colorMode === "dark" || colorMode === "light") {
+        root.classList.toggle("dark", colorMode === "dark");
+      }
+
+      var styles = themeState && themeState.styles;
+      if (!styles || !themeOverrideEnabled) {
         return;
       }
 
-      var activeStyles = themeState.currentMode === "dark"
-        ? themeState.styles?.dark
-        : themeState.styles?.light;
-      if (!activeStyles) {
-        return;
-      }
-
-      // Match restored editor typography before hydration, including old saved themes.
-      activeStyles = Object.assign({}, activeStyles);
+      // Typography is shared: both modes take the light fonts.
+      var light = Object.assign({}, styles.light);
+      var dark = Object.assign({}, styles.dark);
       var fontKeys = ${JSON.stringify(COMMON_STYLE_KEYS.filter((key) => key.startsWith("font-")))};
       fontKeys.forEach(function(key) {
-        var value = themeState.styles?.light?.[key];
-        if (value !== undefined) activeStyles[key] = value;
+        if (light[key] !== undefined) dark[key] = light[key];
       });
 
-      // Apply all CSS variables
-      for (var key in activeStyles) {
-        if (activeStyles.hasOwnProperty(key) && activeStyles[key] !== undefined) {
-          root.style.setProperty("--" + key, activeStyles[key]);
+      // One declaration per line; a key or value that could leave it is dropped.
+      function declarations(values) {
+        var css = "";
+        for (var key in values) {
+          if (!Object.prototype.hasOwnProperty.call(values, key)) continue;
+          var value = values[key];
+          if (value === undefined || value === null) continue;
+          value = String(value);
+          if (!/^[a-zA-Z0-9-]+$/.test(key)) continue;
+          if (/[{};<>\\\\\\r\\n\\f]|\\/\\*|\\*\\//.test(value)) continue;
+          css += "  --" + key + ": " + value + ";\\n";
         }
+        return css;
       }
+
+      var style = document.getElementById(styleId);
+      if (!style) {
+        style = document.createElement("style");
+        style.id = styleId;
+        document.head.appendChild(style);
+      }
+      style.textContent =
+        "html:root:not(.dark) {\\n" + declarations(light) + "}\\n" +
+        "html:root.dark {\\n" + declarations(dark) + "}\\n";
 
       // Load Google Fonts immediately
       try {
-        var fontSans = extractFontFamily(activeStyles["font-sans"]);
-        var fontSerif = extractFontFamily(activeStyles["font-serif"]);
-        var fontMono = extractFontFamily(activeStyles["font-mono"]);
+        var fontSans = extractFontFamily(light["font-sans"]);
+        var fontSerif = extractFontFamily(light["font-serif"]);
+        var fontMono = extractFontFamily(light["font-mono"]);
         if (fontSans) loadGoogleFont(fontSans);
         if (fontSerif) loadGoogleFont(fontSerif);
         if (fontMono) loadGoogleFont(fontMono);

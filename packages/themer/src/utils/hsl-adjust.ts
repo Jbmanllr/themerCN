@@ -65,7 +65,7 @@ function adjustMode(
 
 /**
  * Apply an adjustment to every per-mode colour of both modes, plus the given
- * host extra colours (getExtraColorKeys()) that are set.
+ * Host extra colours (getExtraColorKeys()) that are set.
  */
 export function adjustThemeStyles(
   base: ThemeStyles,

@@ -1,7 +1,7 @@
 // Preset resolution follows tweakcn's mergePresetWithDefaults: dark inherits
 // the preset's light values before its own dark ones, and a preset with no
 // heading font uses its serif for headings. The built-in catalog is
-// "default" plus tweakcn's 42 presets, host presets win on an id clash (and
+// "default" plus tweakcn's 42 presets, Host Presets win on an id clash (and
 // a replaced built-in comes back when the host drops it), and the picker
 // lists "default" first.
 import { afterEach, describe, expect, it } from "vitest";

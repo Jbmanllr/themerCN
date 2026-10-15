@@ -32,6 +32,7 @@
 // removing the theme removes the sheet with it.
 //
 // See: packages/themer/ARCHITECTURE.md ("Applying a theme").
+import { RESTORE_STYLE_ID } from "../config/constants";
 import { defaultLightStyles } from "../config/defaults";
 import { getExtraColorKeys } from "../config/extra-colors";
 import type { ThemeEditorState, ThemeMode } from "../types";
@@ -396,7 +397,8 @@ export function removeThemeFromElement(
 /**
  * Apply the theme to a whole document: variables on its <html>, the shadow
  * override sheet in its <head> and, with `loadFonts`, the theme's Google
- * fonts. Works for a same-origin iframe's `contentDocument`; call again on
+ * fonts. The head script's restore sheet (RESTORE_STYLE_ID) in that document
+ * is removed: the theme applied here replaces it. Works for a same-origin iframe's `contentDocument`; call again on
  * every theme change and once more after the frame navigates (a new
  * document).
  */
@@ -411,6 +413,7 @@ export function applyThemeToDocument(
     doc.documentElement,
     applyOptions,
   );
+  doc.getElementById(RESTORE_STYLE_ID)?.remove();
 
   if (loadFonts) {
     setThemeFonts(

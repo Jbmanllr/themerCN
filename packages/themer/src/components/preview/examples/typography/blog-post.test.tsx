@@ -1,5 +1,5 @@
 // Every image the Typography demo draws must carry its own data (a `data:`
-// URI), never ask the host for a file. The demo runs inside the host app,
+// URI), never ask the host for a file. The demo runs inside the Host app,
 // which serves no /placeholder.svg: asking for it shows a broken image and
 // logs a 404 in the host.
 import { renderToStaticMarkup } from "react-dom/server";

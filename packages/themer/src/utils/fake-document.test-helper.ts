@@ -119,6 +119,10 @@ export class FakeDocument {
     return new FakeElement(tagName, this);
   }
 
+  getElementById(id: string) {
+    return this.head.children.find((child) => child.getAttribute("id") === id) ?? null;
+  }
+
   /** The <head> children with a tag name, e.g. every injected <link>. */
   headChildren(tagName: string) {
     return this.head.children.filter((child) => child.tagName === tagName);

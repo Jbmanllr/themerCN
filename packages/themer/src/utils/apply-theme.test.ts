@@ -2,7 +2,7 @@
 // written verbatim, tracking derives from letter spacing, the shadow
 // variables and override sheet exist only for a theme that declares shadows
 // (the sheet also mirrors the host's variant shadow rules), a re-apply or a
-// removal touches exactly what was written, and host extra colours are
+// removal touches exactly what was written, and Host extra colours are
 // ordinary keys.
 import { afterEach, describe, expect, it } from "vitest";
 import { defaultThemeState } from "../config/defaults";
@@ -299,6 +299,20 @@ describe("applyThemeToDocument", () => {
     removeThemeFromDocument(doc.asDocument);
     expect(doc.head.children).toEqual([]);
     expect(doc.documentElement.style.length).toBe(0);
+  });
+});
+
+describe("applyThemeToDocument over the head script", () => {
+  it("replaces the head script's restore sheet in that document", () => {
+    const doc = new FakeDocument();
+    const restore = doc.createElement("style");
+    restore.setAttribute("id", "themercn-restore");
+    doc.head.appendChild(restore);
+
+    applyThemeToDocument(doc.asDocument, themeWith({ primary: "#123456" }));
+
+    expect(doc.getElementById("themercn-restore")).toBeNull();
+    expect(root(doc).style.getPropertyValue("--primary")).toBe("#123456");
   });
 });
 

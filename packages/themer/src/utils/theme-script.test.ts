@@ -1,10 +1,12 @@
 // @vitest-environment happy-dom
 
 // The pre-paint script (getThemerHeadScript) runs before React, on whatever the
-// host page already has. It must read the keys the editor really writes, do
-// nothing without a saved edit (the host's own CSS stays), leave the `.dark`
-// class to the host's next-themes, and ask Google only for families Google
-// serves. The text is run here the way a browser runs it.
+// Host app's page already has. It must read the keys the editor really writes,
+// do nothing without a saved edit (the Host's own CSS stays), paint the saved
+// Theme in whichever mode the page is in (a Host-controlled `.dark` class may
+// be set after it runs), restore the `.dark` class only when an uncontrolled
+// Themer saved one, and ask Google only for families Google serves. The text
+// is run here the way a browser runs it.
 import {
   afterEach,
   beforeAll,
@@ -23,12 +25,29 @@ import { generateThemeScript } from "./theme-script";
 function saveEditor(themeState: unknown) {
   localStorage.setItem(
     STORAGE_KEYS.editor,
-    JSON.stringify({ state: { themeState }, version: 1 }),
+    JSON.stringify({ state: { themeState }, version: 0 }),
   );
 }
 
 function savePreferences(state: unknown) {
   localStorage.setItem(STORAGE_KEYS.preferences, JSON.stringify({ state }));
+}
+
+function saveColorMode(mode: string) {
+  localStorage.setItem(STORAGE_KEYS.colorMode, mode);
+}
+
+/** A variable of the page, as the cascade resolves it on <html>. */
+function rootVar(name: string) {
+  return getComputedStyle(document.documentElement)
+    .getPropertyValue(name)
+    .trim();
+}
+
+const primary = () => rootVar("--primary");
+
+function setDark(dark: boolean) {
+  document.documentElement.classList.toggle("dark", dark);
 }
 
 function runScript() {
@@ -74,27 +93,60 @@ afterEach(() => {
 });
 
 describe("generateThemeScript", () => {
-  it("applies the saved edit's styles for the saved mode", () => {
+  it("paints the saved Theme in the mode the page is in, whatever mode was saved", () => {
     saveEditor({ currentMode: "dark", styles });
     runScript();
-    expect(document.documentElement.style.getPropertyValue("--primary")).toBe(
-      "#eeeeee",
-    );
+    expect(primary()).toBe("#111111");
 
-    document.documentElement.removeAttribute("style");
+    // A Host's theme switcher (next-themes) sets the class after this script.
+    setDark(true);
+    expect(primary()).toBe("#eeeeee");
+
+    setDark(false);
+    expect(primary()).toBe("#111111");
+  });
+
+  it("paints the dark tokens on a page that is already dark", () => {
+    setDark(true);
     saveEditor({ currentMode: "light", styles });
     runScript();
-    expect(document.documentElement.style.getPropertyValue("--primary")).toBe(
-      "#111111",
-    );
+    expect(primary()).toBe("#eeeeee");
+  });
+
+  it("restores the mode an uncontrolled Themer saved", () => {
+    saveColorMode("dark");
+    runScript();
+    expect(document.documentElement.classList.contains("dark")).toBe(true);
+
+    saveColorMode("light");
+    runScript();
+    expect(document.documentElement.classList.contains("dark")).toBe(false);
+  });
+
+  it("restores the saved mode even without a saved Theme", () => {
+    saveColorMode("dark");
+    runScript();
+    expect(document.documentElement.classList.contains("dark")).toBe(true);
+    expect(primary()).toBe("");
+  });
+
+  it("runs again without stacking a second restore", () => {
+    saveEditor({ currentMode: "light", styles });
+    runScript();
+    saveEditor({
+      currentMode: "light",
+      styles: { light: { primary: "#222222" }, dark: {} },
+    });
+    runScript();
+    expect(primary()).toBe("#222222");
+    expect(document.head.querySelectorAll("style")).toHaveLength(1);
   });
 
   it("leaves the host's own CSS alone when nothing is saved", () => {
     document.documentElement.style.setProperty("--primary", "hotpink");
     runScript();
-    expect(document.documentElement.style.getPropertyValue("--primary")).toBe(
-      "hotpink",
-    );
+    expect(primary()).toBe("hotpink");
+    expect(document.head.querySelector("style")).toBeNull();
     expect(fontLinks()).toEqual([]);
   });
 
@@ -102,9 +154,7 @@ describe("generateThemeScript", () => {
     saveEditor({ currentMode: "light", styles });
     savePreferences({ themeOverrideEnabled: false });
     runScript();
-    expect(document.documentElement.style.getPropertyValue("--primary")).toBe(
-      "",
-    );
+    expect(primary()).toBe("");
     expect(fontLinks()).toEqual([]);
   });
 
@@ -112,12 +162,10 @@ describe("generateThemeScript", () => {
     saveEditor({ currentMode: "light", styles });
     savePreferences({});
     runScript();
-    expect(document.documentElement.style.getPropertyValue("--primary")).toBe(
-      "#111111",
-    );
+    expect(primary()).toBe("#111111");
   });
 
-  it("never touches the dark class, which the host's theme switcher owns", () => {
+  it("leaves the dark class alone when no mode is saved (a Host-controlled mode)", () => {
     document.documentElement.classList.add("dark");
     saveEditor({ currentMode: "light", styles });
     runScript();
@@ -133,7 +181,8 @@ describe("generateThemeScript", () => {
     vi.spyOn(console, "warn").mockImplementation(() => undefined);
     localStorage.setItem(STORAGE_KEYS.editor, "{not json");
     expect(runScript).not.toThrow();
-    expect(document.documentElement.getAttribute("style")).toBeNull();
+    expect(primary()).toBe("");
+    expect(document.documentElement.className).toBe("");
   });
 
   it("loads only the families Google serves, once each", () => {
@@ -166,6 +215,20 @@ describe("generateThemeScript", () => {
     });
     runScript();
     expect(fontLinks()).toEqual([]);
+  });
+
+  it("drops a saved value that would break out of its declaration", () => {
+    saveEditor({
+      currentMode: "light",
+      styles: {
+        light: { primary: "red} body{display:none", accent: "#123456" },
+        dark: {},
+      },
+    });
+    runScript();
+    expect(primary()).toBe("");
+    expect(rootVar("--accent")).toBe("#123456");
+    expect(getComputedStyle(document.body).display).not.toBe("none");
   });
 
   it("skips the generic and CSS-wide values the font loader skips", () => {

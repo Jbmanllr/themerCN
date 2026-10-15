@@ -8,7 +8,7 @@
 // its own dark ones. Reading `preset.styles` directly shows stale or default
 // dark colours for presets that only define light.
 //
-// Registry order: "default", tweakcn's catalog, then host presets from
+// Registry order: "default", tweakcn's catalog, then Host Presets from
 // ThemerConfig.presets, which win on an id clash. Host specifics (a host's own brand preset) live in the host. The
 // picker's order is not this one: getPresetIds lists "default" first, then
 // sorts by label.
@@ -60,7 +60,7 @@ const builtInThemePresets: Readonly<Record<string, ThemePreset>> = {
 export const FALLBACK_PRESET_ID = "default";
 
 /**
- * Live preset registry: built-ins plus registered host presets. The object
+ * Live preset registry: built-ins plus registered Host Presets. The object
  * identity is stable (callers may hold it); `configurePresets` adds and
  * removes host entries in place.
  */
@@ -81,9 +81,9 @@ export interface PresetRegistryConfig {
 }
 
 /**
- * Register host presets and the default preset id. Idempotent for the same
- * array; a new array replaces the previous host presets (restoring any
- * built-in a host preset had shadowed). Called by ThemerProvider during
+ * Register Host Presets and the default preset id. Idempotent for the same
+ * array; a new array replaces the previous Host Presets (restoring any
+ * built-in a Host Preset had shadowed). Called by ThemerProvider during
  * render so the registry is complete before any child reads it.
  */
 export function configurePresets({

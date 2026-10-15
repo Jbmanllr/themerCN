@@ -18,11 +18,8 @@
 //   hydration, so the hydrated markup matches the server's.
 // - No CSP nonce or next.config helper: CSP is the Host app's job.
 
-import { useSyncExternalStore } from "react";
-
 import { getThemerHeadScript } from "../head-script";
-
-const subscribeToHydration = () => () => {};
+import { useHydrated } from "../hooks/use-hydrated";
 
 /** Props of `<ThemerHeadScript>`. */
 export interface ThemerHeadScriptProps {
@@ -35,11 +32,7 @@ export interface ThemerHeadScriptProps {
  * layout's `<head>`, with the same `storageNamespace` as your `<Themer>`.
  */
 export function ThemerHeadScript({ storageNamespace }: ThemerHeadScriptProps) {
-  const hydrated = useSyncExternalStore(
-    subscribeToHydration,
-    () => true,
-    () => false,
-  );
+  const hydrated = useHydrated();
   return (
     <script
       dangerouslySetInnerHTML={{

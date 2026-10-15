@@ -15,7 +15,9 @@ This package contains code adapted from other projects.
    modified for themercn."
 
 2. shadcn/ui examples - https://github.com/shadcn-ui/ui
-   Licensed under the MIT License (LICENSES/shadcn-ui-MIT.txt).
+   shadcn CLI 4.21.4 (the version in pnpm-lock.yaml that generated
+   packages/ui: Base UI, Luma style). Licensed under the MIT License
+   (LICENSES/shadcn-ui-MIT.txt).
    The demo pages under src/components/preview/examples (cards, dashboard,
    mail, pricing) derive from the shadcn/ui example blocks, rendered here
    with shadcn/ui primitives.

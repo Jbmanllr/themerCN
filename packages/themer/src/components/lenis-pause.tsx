@@ -1,7 +1,7 @@
 "use client";
 
 // Keeps the editor's native scrolling working in a host that uses Lenis smooth
-// scroll. Mounted by ThemerRoot. In a host without Lenis the fallback below
+// scroll. Mounted by ThemerRoot. In a Host app without Lenis the fallback below
 // only sets a `lenis-paused` class that nothing styles.
 
 import { useEffect } from "react";

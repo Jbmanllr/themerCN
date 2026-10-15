@@ -134,9 +134,10 @@ components and sets no positioner props of its own.
 
 - **Controlled** (`colorMode` or `onColorModeChange` set): the mode is
   `colorMode`; the toggle calls `onColorModeChange`; the Host (for example
-  `next-themes`) sets the class.
+  `next-themes`) sets the class. No mode is saved (a saved one is removed).
 - **Uncontrolled**: the class is the mode. The toggle flips it, and a
-  `MutationObserver` follows changes made by anyone else.
+  `MutationObserver` follows changes made by anyone else. The mode is saved
+  under `<ns>:color-mode` so the head script restores the class on reload.
 
 `ThemerProvider` mirrors the mode into the editor store and writes variables,
 never the class (`applyThemeToElement(..., { updateClass: false })`).
@@ -147,16 +148,25 @@ the switch inside a View Transition with a circular reveal where supported.
 
 - Stores use `skipHydration: true`; `hydrateThemerStores(ns)`
   ([stores/hydrate.ts](src/stores/hydrate.ts)) points them at
-  `getStorageKeys(ns)` (`<ns>:editor`, `<ns>:preferences`;
+  `getStorageKeys(ns)` (`<ns>:editor`, `<ns>:preferences`, plus
+  `<ns>:color-mode` written by an uncontrolled `ColorModeProvider`;
   `DEFAULT_STORAGE_NAMESPACE` is `"themercn"`) and hydrates them during
   `<Themer>`'s first client render, so nothing is read from a key the Host
   did not choose.
 - [utils/theme-script.ts](src/utils/theme-script.ts) generates the head
-  script string: it reads both keys, picks the style set from the persisted
-  `currentMode`, writes the variables and font links, and does nothing when
-  nothing is saved or `themeOverrideEnabled` is false. It embeds what it
-  needs with `JSON.stringify` and imports constants only. A change to the
-  persisted shape is a change to this script.
+  script string. It sets `.dark` from `<ns>:color-mode` when an uncontrolled
+  Themer saved one (otherwise the Host owns the class, and its script may
+  run later). It writes both modes of the saved Theme into one
+  `<style id="themercn-restore">` (`RESTORE_STYLE_ID`) as
+  `html:root:not(.dark)` and `html:root.dark` rules, which outrank the Host's
+  `:root` and `.dark`, so the first paint has the right tokens whichever mode
+  the page ends up in; it also adds the font links. It writes nothing when
+  nothing is saved or `themeOverrideEnabled` is false, and drops a saved
+  value that could end its declaration. `ThemerProvider` (and
+  `applyThemeToDocument`, for the Live frame) removes the sheet once it
+  applies the Theme itself. It embeds what it needs with `JSON.stringify` and
+  imports constants only. A change to the persisted shape is a change to this
+  script.
 - `getThemerHeadScript` (`themercn/head-script`) returns that string;
   `<ThemerHeadScript>` (`themercn/next`) renders it as a raw `<script>` (not
   `next/script`, whose inline `beforeInteractive` need not run before first
@@ -172,11 +182,11 @@ Zustand stores. Two persist; two are transient.
 ### EditorStore
 
 [stores/editor-store.ts](src/stores/editor-store.ts). Persisted under
-`<ns>:editor`, `version: EDITOR_STATE_VERSION` (3). Only `themeState`,
+`<ns>:editor`, `version: EDITOR_STATE_VERSION` (0). Only `themeState`,
 `themeCheckpoint` and `presetBaseline` persist; `history`, `future` and
-`restoredFromStorage` do not. `migrateEditorState`: v1→v2 drops a stored,
-unedited library `default` (so the Host's `defaultPreset` applies); v2→v3
-uses the light typography in both modes.
+`restoredFromStorage` do not. The package is pre-release: there are no
+migrations, and a stored state of another version is dropped (the store
+starts fresh).
 
 ```typescript
 {
@@ -228,12 +238,12 @@ never read `preset.styles` directly.
 ### PreferencesStore
 
 [stores/preferences-store.ts](src/stores/preferences-store.ts). Persisted
-whole under `<ns>:preferences`, `version: PREFERENCES_VERSION` (2):
+whole under `<ns>:preferences`, `version: PREFERENCES_VERSION` (0; no
+migrations, another version is dropped):
 `colorFormat` (`oklch` default; Tailwind 3 has no oklch), `tailwindVersion`,
 `packageManager`, `showContrastWarnings`, `previewTab`, `sidebarCollapsed`,
 `themeOverrideEnabled` (read by the head script), `sidebarColorSync`,
-`colorSelectorTab`, `sectionStates`. `migratePreferences` maps the old
-`custom` preview tab to `live`.
+`colorSelectorTab`, `sectionStates`.
 
 ### OverlayStore
 

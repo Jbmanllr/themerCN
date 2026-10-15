@@ -21,7 +21,7 @@ interface ThemerSidebarProps {
 }
 
 /**
- * The editor's control sidebar, a stock @workspace/ui Sidebar in `icon`
+ * The Themer UI's control sidebar, a stock @workspace/ui Sidebar in `icon`
  * collapsible mode.
  * - Expanded: preset picker and the horizontal panel tabs (ExpandedContent)
  * - Collapsed: a vertical icon menu (CollapsedNavigation)

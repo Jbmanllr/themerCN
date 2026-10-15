@@ -1,8 +1,8 @@
 "use client";
 
 // The editor's context root, mounted by <Themer> (components/themer.tsx)
-// beside the host's tree: registers host presets and extra colours, applies
-// the edited theme to the host document, and binds the keyboard shortcuts.
+// beside the Host app's tree: registers Host Presets and extra colours, applies
+// the edited theme to the Host app's document, and binds the keyboard shortcuts.
 //
 // Contract:
 // - Registration (configurePresets, configureExtraColors) happens during
@@ -15,6 +15,9 @@
 // - The CSS variables, the shadow override sheet and the theme's font links
 //   are removed when the theme override preference goes off or the provider
 //   unmounts.
+// - The head script's restore sheet (RESTORE_STYLE_ID) is removed in the same
+//   effect that first applies the Theme, or at once when the override is off,
+//   so the page never shows a stale copy of the Theme.
 //
 // See: packages/themer/ARCHITECTURE.md ("Core Entry Points").
 
@@ -39,13 +42,9 @@ import {
 import { useColorMode } from "./color-mode";
 import { DynamicFontLoader } from "./dynamic-font-loader";
 import { useSidebarSyncAlignment } from "../hooks/use-sidebar-sync-alignment";
-import { SHORTCUTS } from "../config/constants";
+import { RESTORE_STYLE_ID, SHORTCUTS } from "../config/constants";
 import { configurePresets, getDefaultPresetId } from "../config/presets";
 import { configureExtraColors } from "../config/extra-colors";
-
-const subscribeToHydration = () => () => {};
-const getHydratedSnapshot = () => true;
-const getServerSnapshot = () => false;
 
 /**
  * Themer context
@@ -80,7 +79,7 @@ export function ThemerProvider({
   // Merge user config with defaults
   // Unset (undefined) props keep the defaults. No zIndex default: the
   // overlay and the trigger fall back to their own Z_INDEX layers
-  // (config/constants.ts); a host value applies to both. No font endpoint
+  // (config/constants.ts); a Host value applies to both. No font endpoint
   // default: without one the picker searches the bundled list.
   const config = React.useMemo<ThemerConfig>(
     () => ({
@@ -101,7 +100,7 @@ export function ThemerProvider({
   // Host extra colours likewise (colour list, search, inspector, apply).
   configureExtraColors(config.extraColors);
 
-  // A fresh store (nothing persisted) starts on the host's default preset.
+  // A fresh store (nothing persisted) starts on the Host app's default preset.
   const adoptDefaultPreset = useEditorStore(
     (state) => state.adoptDefaultPreset,
   );
@@ -109,10 +108,10 @@ export function ThemerProvider({
     (state) => state.refreshUntouchedPreset,
   );
   // A layout effect, so a first visit never paints the library default
-  // before the host preset replaces it. Then a restored, unedited preset is
+  // before the Host Preset replaces it. Then a restored, unedited preset is
   // brought up to its current source (host tokens may have changed since it
   // was stored); this must run after configurePresets above, never at
-  // module-load hydration, when host presets are not registered yet.
+  // module-load hydration, when Host Presets are not registered yet.
   React.useLayoutEffect(() => {
     adoptDefaultPreset(getDefaultPresetId());
     refreshUntouchedPreset();
@@ -122,16 +121,6 @@ export function ThemerProvider({
     config.defaultPreset,
     config.presets,
   ]);
-
-  // Client-side ready check
-  const isClientReady = React.useSyncExternalStore(
-    subscribeToHydration,
-    getHydratedSnapshot,
-    getServerSnapshot,
-  );
-
-  // isReady when client is ready (theme from localStorage is available immediately)
-  const isReady = isClientReady;
 
   const { mode } = useColorMode();
 
@@ -164,10 +153,12 @@ export function ThemerProvider({
   // sheet included, is removed only when the override goes off or the editor
   // unmounts.
   React.useEffect(() => {
-    if (!themeOverrideEnabled) return;
-    applyThemeToElement(appliedThemeState, document.documentElement, {
-      updateClass: false,
-    });
+    if (themeOverrideEnabled) {
+      applyThemeToElement(appliedThemeState, document.documentElement, {
+        updateClass: false,
+      });
+    }
+    document.getElementById(RESTORE_STYLE_ID)?.remove();
   }, [appliedThemeState, themeOverrideEnabled]);
 
   React.useEffect(() => {
@@ -190,7 +181,6 @@ export function ThemerProvider({
     key,
     modifiers,
     callback: toggle,
-    enabled: isReady,
   });
 
   // Undo keyboard shortcut (Ctrl+Z / Cmd+Z)
@@ -202,7 +192,7 @@ export function ThemerProvider({
         undo();
       }
     },
-    enabled: isReady && isOpen,
+    enabled: isOpen,
   });
 
   // Redo keyboard shortcut (Ctrl+Shift+Z / Cmd+Shift+Z)
@@ -214,15 +204,12 @@ export function ThemerProvider({
         redo();
       }
     },
-    enabled: isReady && isOpen,
+    enabled: isOpen,
   });
 
   const contextValue = React.useMemo<ThemerContextValue>(
-    () => ({
-      config,
-      isReady,
-    }),
-    [config, isReady],
+    () => ({ config }),
+    [config],
   );
 
   return (

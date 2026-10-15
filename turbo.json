@@ -28,7 +28,7 @@
     },
     "e2e": {
       "dependsOn": ["build"],
-      "passThroughEnv": ["WEB_E2E_PORT"]
+      "passThroughEnv": ["WEB_E2E_PORT", "VITE_E2E_PORT"]
     },
     "dev": {
       "cache": false,

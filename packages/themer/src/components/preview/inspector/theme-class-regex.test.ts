@@ -3,7 +3,7 @@
 // important markers allowed; shadow-color and unknown tokens ignored), the
 // ancestor walk over duck-typed nodes (`findThemeClasses`, SVG `baseVal`),
 // how a class splits for display (`segmentClassName`, e.g. `ring-offset` +
-// `background`), and that registered host extra colours become inspectable.
+// `background`), and that registered Host extra colours become inspectable.
 import { afterEach, describe, expect, it } from "vitest";
 import { configureExtraColors } from "../../../config/extra-colors";
 import { segmentClassName } from "./segment-classname";

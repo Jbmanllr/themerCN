@@ -97,6 +97,13 @@ the Themer's portal beside the Host tree and never wrap it.
   the page beside it takes clicks and wheel events. The sidebar header holds
   the collapse toggle and the switcher; `ActionBar variant="stacked"` sits in
   its footer. No page pause, no scroll lock.
+- **Push** ([push-layout.tsx](src/components/themer-ui/layouts/push-layout.tsx)):
+  Overlay's markup, plus a layout effect that sets `margin-inline-start`,
+  `--themer-inset-inline-start` (the sidebar's width from `SIDEBAR_WIDTHS`,
+  per the `sidebarCollapsed` preference) and a 200 ms linear margin
+  transition as inline styles on `<html>`, and removes them on unmount
+  (close, switch, drawer, Themer unmounted). Fixed Host elements opt in
+  through the variable; the viewport does not shrink (ADR 0001).
 
 Every editing state (Theme, history, active panel, collapse) lives in the
 stores, so a switch keeps it; the layout components hold none. Adding a

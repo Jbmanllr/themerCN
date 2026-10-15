@@ -59,7 +59,12 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   return (
     <SidebarProvider>
-      <Sidebar collapsible="icon">
+      {/* Fixed to the viewport, so it opts in to the Themer's Push layout:
+          it starts after the Themer sidebar (themercn README, "Push"). */}
+      <Sidebar
+        collapsible="icon"
+        className="data-[side=left]:left-[var(--themer-inset-inline-start,0px)]"
+      >
         <SidebarHeader>
           <SidebarMenu>
             <SidebarMenuItem>

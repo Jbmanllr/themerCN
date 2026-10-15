@@ -60,6 +60,12 @@ function undocumented(): string[] {
   return missing;
 }
 
-it("documents every public export and every member of its interfaces", () => {
-  expect(undocumented()).toEqual([]);
-});
+// Type-checks the whole package (several seconds alone); under a loaded,
+// parallel run it overran the 20s default.
+it(
+  "documents every public export and every member of its interfaces",
+  { timeout: 90_000 },
+  () => {
+    expect(undocumented()).toEqual([]);
+  },
+);

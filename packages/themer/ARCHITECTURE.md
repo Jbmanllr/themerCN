@@ -85,8 +85,9 @@ the Themer's portal beside the Host tree and never wrap it.
 | Registry | [themer-ui/layouts/registry.ts](src/components/themer-ui/layouts/registry.ts) | `THEMER_LAYOUTS`: label, icon, `coversPage` per layout; `resolveThemerLayout`: user choice, else Host default, else Workspace, skipping unknown values. |
 | Components | `LAYOUT_COMPONENTS` in [themer-ui.tsx](src/components/themer-ui/themer-ui.tsx) | The one map from layout to component (`ThemerLayoutProps`: `onClose`, `zIndex`). |
 | Layout in force | [hooks/use-themer-layout.ts](src/hooks/use-themer-layout.ts) | `useThemerLayout()`: the `layout` preference over `config.layout`. |
-| Switcher | [themer-ui/layout-switcher.tsx](src/components/themer-ui/layout-switcher.tsx) | `DropdownMenu` of `THEMER_LAYOUTS` in every layout's header; writes the `layout` preference. Its `LayoutRadioGroup` also fills Toolbar's overflow submenu. |
+| Switcher | [themer-ui/layout-switcher.tsx](src/components/themer-ui/layout-switcher.tsx) | `DropdownMenu` of `THEMER_LAYOUTS` in every layout's header; writes the `layout` preference. Its `LayoutRadioGroup` also fills the submenu of Toolbar's "More actions" menu. |
 | Shared sidebar | [themer-ui/themer-sidebar-provider.tsx](src/components/themer-ui/themer-sidebar-provider.tsx), [themer-sidebar.tsx](src/components/themer-sidebar.tsx) | The SidebarProvider bound to `sidebarCollapsed` (collapse is shared), and the sidebar with `headerActions`/`footer` slots for a layout without its own header or action bar. |
+| Actions | [actions/themer-actions.tsx](src/components/actions/themer-actions.tsx) | `useThemerActions`: every action's name, icon, shortcut, state and handler, the Theme override, and the dialogs they open, defined once. `ActionBar` lays them out as buttons; `ThemerActionsMenu` is their "More actions" menu (the Toolbar's, and the collapsed rail's with undo/redo and mode). |
 
 - **Workspace** ([workspace-layout.tsx](src/components/themer-ui/layouts/workspace-layout.tsx)):
   `fixed inset-0`, the sidebar beside `SidebarInset` with `ThemerHeader`
@@ -99,8 +100,10 @@ the Themer's portal beside the Host tree and never wrap it.
   shared with Push: a `fixed inset-y-0 left-0` container that shrinks to the
   sidebar's gap, so the page beside it takes clicks and wheel events. The
   sidebar header holds the collapse toggle, the inspector toggle and the
-  switcher; `ActionBar variant="stacked"` sits in its footer. No page pause,
-  no scroll lock.
+  switcher; `ActionBar variant="stacked"` sits in its footer. The collapsed
+  rail hides the footer, so its header adds `ThemerActionsMenu withHistory`
+  (undo/redo, mode, then the footer's other actions and the override). No
+  page pause, no scroll lock.
 - **Push** ([push-layout.tsx](src/components/themer-ui/layouts/push-layout.tsx)):
   the in-place sidebar layout, plus a layout effect that sets
   `margin-inline-start`, `--themer-inset-inline-start` (the sidebar's width
@@ -120,9 +123,9 @@ the Themer's portal beside the Host tree and never wrap it.
   e.g. a pinned inspector element) opens Colors. The popups ignore outside presses
   and focus-out, so the page can be clicked and scrolled while one is open;
   Escape, the trigger or another group closes it. Undo/redo, the inspector
-  toggle, mode and Close are a `ButtonGroup`; the rest of the ActionBar, the
-  override switch and the layouts (`LayoutRadioGroup` in a submenu) are a
-  `DropdownMenu`. Nested popups (colour, font pickers) portal after the
+  toggle, mode and Close are a `ButtonGroup`; the rest of the actions, the
+  override switch and the layouts (`LayoutRadioGroup` in a submenu) are
+  `ThemerActionsMenu`. Nested popups (colour, font pickers) portal after the
   panel popup, so they paint above it. No page pause.
 - **Inspector on the Host page** ([page-inspector.tsx](src/components/themer-ui/page-inspector.tsx)):
   every in-place layout (`coversPage: false`: Overlay, Push, Toolbar) mounts

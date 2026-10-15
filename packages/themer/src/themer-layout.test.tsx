@@ -200,6 +200,54 @@ describe("Themer layout", () => {
     });
   });
 
+  describe.each(["overlay", "push"] as const)(
+    "the %s layout's collapsed rail",
+    (layout) => {
+      const moreActions = () =>
+        query('[data-testid="themer-ui"] button[aria-label="More actions"]');
+      const menuItems = () => [...document.querySelectorAll('[role^="menuitem"]')];
+
+      it("offers the actions of the hidden footer in a menu", async () => {
+        usePreferencesStore.setState({ sidebarCollapsed: true });
+        await mount({ layout });
+        await open();
+
+        await click(moreActions());
+        expect(menuItems().map((item) => item.textContent?.trim())).toEqual([
+          "Undo",
+          "Redo",
+          "Switch to dark mode",
+          "Code",
+          "Import CSS",
+          "Contrast checker",
+          "Reset to preset",
+          "Theme override",
+        ]);
+
+        const override = menuItems().find((item) =>
+          item.textContent?.includes("Theme override"),
+        );
+        await click(override);
+        expect(usePreferencesStore.getState().themeOverrideEnabled).toBe(false);
+
+        await click(
+          menuItems().find((item) => item.textContent?.trim() === "Import CSS"),
+        );
+        expect(query('[role="dialog"]')?.textContent).toContain("Import");
+      });
+
+      it("has no such menu while the sidebar is expanded: the footer holds the actions", async () => {
+        await mount({ layout });
+        await open();
+
+        expect(moreActions()).toBeNull();
+        expect(
+          query('[data-testid="themer-ui"] [data-testid="themer-import-trigger"]'),
+        ).not.toBeNull();
+      });
+    },
+  );
+
   describe("the Toolbar's panel groups", () => {
     const group = (label: string) =>
       query(`[role="toolbar"] button[aria-label="${label}"]`);

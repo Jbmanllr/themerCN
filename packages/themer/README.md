@@ -316,7 +316,8 @@ How the Themer UI sits on screen while it is open:
 - **Workspace** (default): covers the whole page, the sidebar beside the
   Preview tabs.
 - **Overlay**: the sidebar floats over your real page, on the left, with the
-  actions at its foot. Your page stays usable beside it: it scrolls (Lenis
+  actions at its foot (collapsed to its icon rail, they are in the rail's
+  `…` menu). Your page stays usable beside it: it scrolls (Lenis
   included) and takes clicks. The inspector (its toggle is in the sidebar's
   header) works on your real page instead of a Preview.
 - **Push**: the sidebar sits beside your real page and shifts it aside

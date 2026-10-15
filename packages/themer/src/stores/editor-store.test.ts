@@ -2,7 +2,7 @@
 // entries, HISTORY_DEBOUNCE_MS batching, mode-only changes not recorded,
 // redo dropped on any recorded edit), preset apply and reset, the
 // shared-style and CSS import actions, default-preset adoption,
-// refreshUntouchedPreset and host extra colours in the theme.
+// refreshUntouchedPreset and Host extra colours in the theme.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { defaultHSLAdjustments, defaultThemeState } from "../config/defaults";

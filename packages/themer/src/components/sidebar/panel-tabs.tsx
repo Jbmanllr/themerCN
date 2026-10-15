@@ -1,6 +1,6 @@
 "use client";
 
-// The editor's panel tabs (Colors, Typography, Other),
+// The Themer UI's panel tabs (Colors, Typography, Other),
 // shared by the desktop sidebar (ExpandedContent) and the mobile drawer
 // (MobilePanelContent), so both show exactly the same panels. Icon-only
 // triggers carry an aria-label and a Tooltip.

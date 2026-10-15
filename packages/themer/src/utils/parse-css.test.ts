@@ -1,9 +1,9 @@
-// Proves parseThemeCss on a host app's generated token sheet
+// Proves parseThemeCss on a Host app's generated token sheet
 // (fixtures/host-tokens.css: root and .dark colours verbatim, the light-only
 // radius mirrored into dark, .theme-inverse never read, host-only tokens
 // listed once as ignored, next/font variables kept in font stacks) and on hand-written CSS: braces in comments and strings, nested
 // at-rules, selector lists, repeated blocks, unit and colour normalisation,
-// var() chains and cycles, and host extra colour keys.
+// var() chains and cycles, and Host extra colour keys.
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";

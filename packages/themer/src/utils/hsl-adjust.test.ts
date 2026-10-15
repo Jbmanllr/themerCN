@@ -2,7 +2,7 @@
 // (so adjusting from a base at neutral restores it exactly), pure black is
 // never lifted while a dimmed colour keeps a 10% lightness floor, per-mode
 // colours of both modes are adjusted while fonts and radius are left alone, and
-// host extra colours follow only when their keys are passed and the theme
+// Host extra colours follow only when their keys are passed and the theme
 // sets them.
 import * as culori from "culori";
 import { describe, expect, it } from "vitest";

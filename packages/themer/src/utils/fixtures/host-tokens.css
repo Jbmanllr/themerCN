@@ -1,5 +1,5 @@
 /*
- * Test fixture for parse-css.test.ts: a host app's generated token sheet,
+ * Test fixture for parse-css.test.ts: a Host app's generated token sheet,
  * with shadcn tokens, host-only tokens (--blush, --evidence, --signal), a
  * light-only radius, a mode-swapping .theme-inverse block, next/font
  * variables in font stacks, and an @theme inline mapping.

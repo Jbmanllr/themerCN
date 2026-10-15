@@ -1,8 +1,8 @@
 "use client";
 
 // The editor's context root, mounted by <Themer> (components/themer.tsx)
-// beside the host's tree: registers host presets and extra colours, applies
-// the edited theme to the host document, and binds the keyboard shortcuts.
+// beside the Host app's tree: registers Host Presets and extra colours, applies
+// the edited theme to the Host app's document, and binds the keyboard shortcuts.
 //
 // Contract:
 // - Registration (configurePresets, configureExtraColors) happens during
@@ -79,7 +79,7 @@ export function ThemerProvider({
   // Merge user config with defaults
   // Unset (undefined) props keep the defaults. No zIndex default: the
   // overlay and the trigger fall back to their own Z_INDEX layers
-  // (config/constants.ts); a host value applies to both. No font endpoint
+  // (config/constants.ts); a Host value applies to both. No font endpoint
   // default: without one the picker searches the bundled list.
   const config = React.useMemo<ThemerConfig>(
     () => ({
@@ -100,7 +100,7 @@ export function ThemerProvider({
   // Host extra colours likewise (colour list, search, inspector, apply).
   configureExtraColors(config.extraColors);
 
-  // A fresh store (nothing persisted) starts on the host's default preset.
+  // A fresh store (nothing persisted) starts on the Host app's default preset.
   const adoptDefaultPreset = useEditorStore(
     (state) => state.adoptDefaultPreset,
   );
@@ -108,10 +108,10 @@ export function ThemerProvider({
     (state) => state.refreshUntouchedPreset,
   );
   // A layout effect, so a first visit never paints the library default
-  // before the host preset replaces it. Then a restored, unedited preset is
+  // before the Host Preset replaces it. Then a restored, unedited preset is
   // brought up to its current source (host tokens may have changed since it
   // was stored); this must run after configurePresets above, never at
-  // module-load hydration, when host presets are not registered yet.
+  // module-load hydration, when Host Presets are not registered yet.
   React.useLayoutEffect(() => {
     adoptDefaultPreset(getDefaultPresetId());
     refreshUntouchedPreset();

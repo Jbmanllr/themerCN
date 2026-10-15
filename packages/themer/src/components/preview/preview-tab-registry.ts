@@ -37,7 +37,7 @@ export type BuiltinPreviewTab = Omit<PreviewTabDefinition, "source">;
 
 /**
  * Merge built-in and host tabs, sorted by `order`. A host tab replaces a
- * built-in tab with the same id (as host presets do); a host tab without
+ * built-in tab with the same id (as Host Presets do); a Host tab without
  * `order` goes after every built-in tab, keeping array order. Duplicate host
  * ids keep the first.
  */

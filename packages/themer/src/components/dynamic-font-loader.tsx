@@ -14,7 +14,7 @@ import {
 } from "../utils/font-loader";
 
 /**
- * Loads the active theme's Google fonts into the host document after
+ * Loads the active theme's Google fonts into the Host app's document after
  * hydration and keeps them in step with the editor.
  *
  * The document's theme-font slot (utils/font-loader.ts) holds one reference

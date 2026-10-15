@@ -23,7 +23,7 @@ export interface ThemeEditorState {
   currentMode: ThemeMode;
   /**
    * Id of the preset the theme started from. On reset, a stale id (a removed
-   * host preset) falls back to the host's default preset.
+   * Host Preset) falls back to the Host app's default preset.
    */
   preset?: string;
   /** HSL adjustment values; absent or neutral means no adjustment */
@@ -119,7 +119,7 @@ export interface EditorStoreActions {
   /** Return to the checkpoint as a new undo entry, keeping the current mode. */
   restoreThemeCheckpoint: () => void;
   /**
-   * Reset to the current preset's resolved styles (the host's default preset
+   * Reset to the current preset's resolved styles (the Host app's default preset
    * when that id is no longer registered). Clears undo and redo and moves the
    * checkpoint.
    */
@@ -150,7 +150,7 @@ export interface EditorStoreActions {
   ) => void;
   /**
    * Start a fresh store (nothing restored from storage, nothing edited) on
-   * the host's default preset, without an undo entry. No-op otherwise.
+   * the Host app's default preset, without an undo entry. No-op otherwise.
    */
   adoptDefaultPreset: (presetId: string) => void;
   /**
@@ -160,7 +160,7 @@ export interface EditorStoreActions {
    * baseline with the fresh preset, keeping the mode and adding no undo
    * entry. An edited, imported, AI-made or undone theme is left alone. A
    * store with no baseline gets one when its theme equals its preset. Call
-   * after the host presets are registered.
+   * after the Host Presets are registered.
    */
   refreshUntouchedPreset: () => void;
 }

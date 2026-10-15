@@ -29,7 +29,7 @@
 //   import, an AI theme, an undo or an edit leaves the theme different from it.
 // - A restored theme that is still exactly its baseline (neutral HSL) follows
 //   the preset's current source: refreshUntouchedPreset, run by ThemerProvider
-//   once host presets are registered, so a token change in the host reaches
+//   once Host Presets are registered, so a token change in the Host app reaches
 //   the page instead of the stored copy. A restored theme with no baseline
 //   gets one only when it already equals its preset.
 //
@@ -225,8 +225,8 @@ export const useEditorStore = create<EditorStore>()(
 
       resetToCurrentPreset: () => {
         const currentThemeState = get().themeState;
-        // A preset id that is no longer registered (a removed host preset)
-        // resets to the host's default preset instead of shadcn defaults.
+        // A preset id that is no longer registered (a removed Host Preset)
+        // resets to the Host app's default preset instead of shadcn defaults.
         const presetId =
           currentThemeState.preset && hasPreset(currentThemeState.preset)
             ? currentThemeState.preset

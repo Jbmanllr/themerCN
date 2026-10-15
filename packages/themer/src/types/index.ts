@@ -153,13 +153,13 @@ export interface ThemerPreviewTab {
   /** Scrolling of the tab body: vertical (default), both axes, or none. */
   scroll?: "y" | "xy" | "none";
   /**
-   * Sort position among all tabs. Built-in tabs use 0, 10, 20, …; a host tab
+   * Sort position among all tabs. Built-in tabs use 0, 10, 20, …; a Host tab
    * without `order` goes after them, in array order.
    */
   order?: number;
 }
 
-/** One host extra colour: a CSS custom property the editor also edits. */
+/** One Host extra colour: a CSS custom property the editor also edits. */
 export interface ThemerExtraColor {
   /**
    * CSS custom property name without `--`, kebab-case (`signal`,
@@ -173,7 +173,7 @@ export interface ThemerExtraColor {
 }
 
 /**
- * A group of host extra colours, listed after the built-in colour groups.
+ * A group of Host extra colours, listed after the built-in colour groups.
  * Titles should be unique: the section's persisted open state is keyed by a
  * slug of the title (getColorSectionId).
  */

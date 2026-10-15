@@ -2,7 +2,7 @@
 
 // The HSL adjustment controls: a grid of presets (hslPresets) and three
 // sliders (hue shift, saturation and lightness multipliers) that transform
-// every colour of the theme at once (host extra colours the theme sets
+// every colour of the theme at once (Host extra colours the theme sets
 // included; an unset extra stays unset).
 //
 // Contract: adjustments are applied from the checkpoint (the theme before the

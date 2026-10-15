@@ -2,7 +2,7 @@
 // written verbatim, tracking derives from letter spacing, the shadow
 // variables and override sheet exist only for a theme that declares shadows
 // (the sheet also mirrors the host's variant shadow rules), a re-apply or a
-// removal touches exactly what was written, and host extra colours are
+// removal touches exactly what was written, and Host extra colours are
 // ordinary keys.
 import { afterEach, describe, expect, it } from "vitest";
 import { defaultThemeState } from "../config/defaults";

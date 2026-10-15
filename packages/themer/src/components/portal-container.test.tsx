@@ -8,6 +8,24 @@ import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, describe, expect, it } from "vitest";
 
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogTitle,
+} from "@workspace/ui/components/alert-dialog";
+import {
+  Combobox,
+  ComboboxContent,
+  ComboboxInput,
+  ComboboxItem,
+  ComboboxList,
+} from "@workspace/ui/components/combobox";
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuTrigger,
+} from "@workspace/ui/components/context-menu";
 import { Dialog, DialogContent, DialogTitle } from "@workspace/ui/components/dialog";
 import { Drawer, DrawerContent, DrawerTitle } from "@workspace/ui/components/drawer";
 import {
@@ -16,6 +34,19 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@workspace/ui/components/dropdown-menu";
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "@workspace/ui/components/hover-card";
+import {
+  NavigationMenu,
+  NavigationMenuContent,
+  NavigationMenuItem,
+  NavigationMenuList,
+  NavigationMenuPositioner,
+  NavigationMenuTrigger,
+} from "@workspace/ui/components/navigation-menu";
 import {
   Popover,
   PopoverContent,
@@ -88,6 +119,52 @@ const portalled: Record<string, () => React.ReactNode> = {
         <SheetTitle>Sheet</SheetTitle>
       </SheetContent>
     </Sheet>
+  ),
+  AlertDialog: () => (
+    <AlertDialog open>
+      <AlertDialogContent data-testid={POPUP}>
+        <AlertDialogTitle>Alert</AlertDialogTitle>
+      </AlertDialogContent>
+    </AlertDialog>
+  ),
+  Combobox: () => (
+    <Combobox open items={["a"]}>
+      <ComboboxInput />
+      <ComboboxContent data-testid={POPUP}>
+        <ComboboxList>
+          {(item: string) => (
+            <ComboboxItem key={item} value={item}>
+              {item}
+            </ComboboxItem>
+          )}
+        </ComboboxList>
+      </ComboboxContent>
+    </Combobox>
+  ),
+  ContextMenu: () => (
+    <ContextMenu open>
+      <ContextMenuTrigger>Area</ContextMenuTrigger>
+      <ContextMenuContent data-testid={POPUP}>
+        <ContextMenuItem>Item</ContextMenuItem>
+      </ContextMenuContent>
+    </ContextMenu>
+  ),
+  HoverCard: () => (
+    <HoverCard open>
+      <HoverCardTrigger>Hover</HoverCardTrigger>
+      <HoverCardContent data-testid={POPUP}>Card</HoverCardContent>
+    </HoverCard>
+  ),
+  NavigationMenu: () => (
+    <NavigationMenu value="a">
+      <NavigationMenuList>
+        <NavigationMenuItem value="a">
+          <NavigationMenuTrigger>Menu</NavigationMenuTrigger>
+          <NavigationMenuContent>Content</NavigationMenuContent>
+        </NavigationMenuItem>
+      </NavigationMenuList>
+      <NavigationMenuPositioner data-testid={POPUP} />
+    </NavigationMenu>
   ),
   Drawer: () => (
     <Drawer open>

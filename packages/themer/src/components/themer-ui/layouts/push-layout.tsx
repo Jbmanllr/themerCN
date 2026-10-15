@@ -15,8 +15,8 @@
 //   viewport unless they opt in with
 //   `left: var(--themer-inset-inline-start, 0)`; the viewport does not
 //   shrink, so breakpoints and viewport units do not react.
-// - Otherwise as Overlay: same sidebar, header and stacked actions; no
-//   Preview, no page pause.
+// - Otherwise as Overlay: same sidebar, header and stacked actions, the
+//   inspector on the real page; no Preview, no page pause.
 
 import * as React from "react";
 import {
@@ -28,6 +28,7 @@ import { usePreferencesStore } from "../../../stores/preferences-store";
 import { ActionBar } from "../../action-bar";
 import { ThemerSidebar } from "../../themer-sidebar";
 import { LayoutSwitcher } from "../layout-switcher";
+import { PageInspector, PageInspectorToggle } from "../page-inspector";
 import { ThemerSidebarProvider } from "../themer-sidebar-provider";
 import type { ThemerLayoutProps } from "./types";
 
@@ -72,12 +73,14 @@ export function PushLayout({ onClose, zIndex }: ThemerLayoutProps) {
       className="fixed inset-y-0 left-0"
       style={{ zIndex }}
     >
+      <PageInspector />
       <ThemerSidebarProvider className="min-h-0 w-auto">
         <ThemerSidebar
           onClose={onClose}
           headerActions={
             <>
               <SidebarTrigger />
+              <PageInspectorToggle />
               <LayoutSwitcher />
             </>
           }

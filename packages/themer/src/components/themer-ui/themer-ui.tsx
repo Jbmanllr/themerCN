@@ -11,11 +11,13 @@
 // - The layer is `config.zIndex`, else Z_INDEX.sidebar (config/constants.ts).
 //   Popups portal into ThemerScope's container one layer above.
 // - Layouts read every editing state from the stores, so switching layout
-//   keeps the Theme, undo history and active panel.
+//   keeps the Theme, undo history and active panel. The inspector is the
+//   exception: each layout inspects its own surface (Preview tabs or the
+//   Host page), so a switch turns it off, as closing does.
 //
 // See: packages/themer/ARCHITECTURE.md ("Themer layouts").
 
-import type { ComponentType } from "react";
+import { useEffect, type ComponentType } from "react";
 import { useThemerUIStore } from "../../stores/themer-ui-store";
 import { useThemerContext } from "../themer-provider";
 import { useIsMobile } from "../../hooks/use-is-mobile";
@@ -61,6 +63,10 @@ export function ThemerUI() {
     getActive: getFullscreen,
     setActive: setFullscreen,
   });
+
+  useEffect(() => {
+    useThemerUIStore.setState({ inspectorMode: false });
+  }, [layout]);
 
   if (!isOpen) {
     return null;

@@ -11,6 +11,8 @@
 // - Its header is the sidebar's: collapse toggle, layout switcher, Close.
 //   The actions Workspace shows above its preview (undo/redo, mode, Code, …)
 //   sit at the foot of the expanded sidebar.
+// - The inspector works on the real page (PageInspector); its toggle sits in
+//   the header.
 // - Like Workspace, it must not clip overflow: popups position against the
 //   viewport.
 
@@ -21,6 +23,7 @@ import {
 import { ActionBar } from "../../action-bar";
 import { ThemerSidebar } from "../../themer-sidebar";
 import { LayoutSwitcher } from "../layout-switcher";
+import { PageInspector, PageInspectorToggle } from "../page-inspector";
 import { ThemerSidebarProvider } from "../themer-sidebar-provider";
 import type { ThemerLayoutProps } from "./types";
 
@@ -33,12 +36,14 @@ export function OverlayLayout({ onClose, zIndex }: ThemerLayoutProps) {
       className="fixed inset-y-0 left-0"
       style={{ zIndex }}
     >
+      <PageInspector />
       <ThemerSidebarProvider className="min-h-0 w-auto">
         <ThemerSidebar
           onClose={onClose}
           headerActions={
             <>
               <SidebarTrigger />
+              <PageInspectorToggle />
               <LayoutSwitcher />
             </>
           }

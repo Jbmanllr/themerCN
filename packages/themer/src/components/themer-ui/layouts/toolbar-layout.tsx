@@ -18,6 +18,7 @@
 //   the panel popup, into the same layer, so they paint above it.
 
 import * as React from "react";
+import { Popover as PopoverPrimitive } from "@base-ui/react/popover";
 import { X } from "lucide-react";
 import { ButtonGroup } from "@workspace/ui/components/button-group";
 import {
@@ -125,6 +126,10 @@ const STAYS_OPEN_ON: ReadonlySet<string> = new Set([
   "focus-out",
 ]);
 
+const PANEL_POPOVERS = Object.fromEntries(
+  PANELS.map((panel) => [panel.id, PopoverPrimitive.createHandle()]),
+) as Record<Panel, PopoverPrimitive.Handle<unknown>>;
+
 /**
  * Colors, Typography, Other: popover triggers drawn as a ToggleGroup, the
  * pressed item being the open popup. Opening one makes it the active panel;
@@ -141,10 +146,26 @@ function PanelGroups() {
   }, [focusRequest]);
 
   return (
-    <ToggleGroup value={openPanel ? [openPanel] : []} aria-label="Panels">
+    <>
+      <ToggleGroup value={openPanel ? [openPanel] : []} aria-label="Panels">
+        {PANELS.map((panel) => (
+          <PopoverTrigger
+            key={panel.id}
+            handle={PANEL_POPOVERS[panel.id]}
+            render={<ToggleGroupItem value={panel.id} aria-label={panel.label} />}
+          >
+            <panel.icon aria-hidden />
+            {panel.label}
+          </PopoverTrigger>
+        ))}
+      </ToggleGroup>
+      {/* The popups sit outside the ToggleGroup: a portal keeps React
+          context, and a Toggle in a panel (the Sidebar sync) would join the
+          group. The triggers reach them through their handles. */}
       {PANELS.map((panel) => (
         <Popover
           key={panel.id}
+          handle={PANEL_POPOVERS[panel.id]}
           open={openPanel === panel.id}
           onOpenChange={(open, { reason }) => {
             if (open) {
@@ -155,12 +176,6 @@ function PanelGroups() {
             }
           }}
         >
-          <PopoverTrigger
-            render={<ToggleGroupItem value={panel.id} aria-label={panel.label} />}
-          >
-            <panel.icon aria-hidden />
-            {panel.label}
-          </PopoverTrigger>
           <PopoverContent
             data-testid={`themer-toolbar-panel-${panel.id}`}
             className="w-md p-0"
@@ -179,6 +194,6 @@ function PanelGroups() {
           </PopoverContent>
         </Popover>
       ))}
-    </ToggleGroup>
+    </>
   );
 }

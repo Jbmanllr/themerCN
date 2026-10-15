@@ -1,6 +1,7 @@
 import { expect, test, type Page } from "@playwright/test"
 
 import { nightjarPreset } from "../lib/brand/nightjar"
+import { themerTrigger } from "./themer-ui"
 
 // Resolves a colour on the page to sRGB `rgb(r, g, b)`, through a probe
 // element and a canvas pixel, so values compare whatever syntax the Themer
@@ -37,7 +38,7 @@ test("the page starts on Nightjar, and the Themer applying it changes nothing", 
   )
   expect(await pagePrimary(page)).toBe(nightjarPrimary)
 
-  await page.getByRole("button", { name: "Open Theme Editor" }).click()
+  await themerTrigger(page).click()
   await expect(
     page.getByRole("button", { name: /^Primary & Secondary/ })
   ).toBeVisible()
@@ -51,7 +52,7 @@ test("a token edited in the Themer restyles the page and survives a reload", asy
   await expect(home(page)).toBeVisible()
   expect(await pagePrimary(page)).not.toBe("rgb(255, 0, 0)")
 
-  await page.getByRole("button", { name: "Open Theme Editor" }).click()
+  await themerTrigger(page).click()
   await page.getByRole("button", { name: /^Primary & Secondary/ }).click()
   await page.getByLabel("Primary", { exact: true }).fill("#ff0000")
 
@@ -67,7 +68,7 @@ test("a reload paints the saved Theme in the mode next-themes restores, whatever
 }) => {
   await page.goto("/")
   await expect(home(page)).toBeVisible()
-  await page.getByRole("button", { name: "Open Theme Editor" }).click()
+  await themerTrigger(page).click()
   await page.getByRole("button", { name: /^Primary & Secondary/ }).click()
   const primary = page.getByLabel("Primary", { exact: true })
 

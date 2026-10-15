@@ -5,6 +5,7 @@ import { uiComponents } from "../lib/design-system"
 import { postCategories, posts } from "../lib/mock/blog"
 import { categories, products } from "../lib/mock/catalog"
 import { chatThreads } from "../lib/mock/chat"
+import { settle, themerTrigger } from "./themer-ui"
 
 // Every Playground route, read from the same data the pages are generated
 // from, so a new product, post or ui component is checked without edits here.
@@ -50,14 +51,11 @@ async function blockingViolations(page: Page) {
     }))
 }
 
-// The Themer loads lazily after hydration; under parallel load the heavier
-// design-system pages can take a while, hence the longer waits.
-async function settle(page: Page) {
+// Under parallel load the heavier design-system pages can take a while,
+// hence the longer wait.
+async function settlePage(page: Page) {
   await expect(page.locator("main#main")).toBeVisible({ timeout: 15_000 })
-  await expect(
-    page.getByRole("button", { name: "Open Theme Editor" })
-  ).toBeVisible({ timeout: 15_000 })
-  await page.evaluate(() => document.fonts.ready)
+  await settle(page)
 }
 
 test.describe.configure({ mode: "parallel", timeout: 60_000 })
@@ -71,7 +69,7 @@ for (const colorScheme of ["light", "dark"] as const) {
         page,
       }) => {
         await page.goto(route)
-        await settle(page)
+        await settlePage(page)
         expect(await blockingViolations(page)).toEqual([])
       })
     }
@@ -82,8 +80,8 @@ test("the open Themer UI has no serious or critical axe violations", async ({
   page,
 }) => {
   await page.goto("/")
-  await settle(page)
-  await page.getByRole("button", { name: "Open Theme Editor" }).click()
+  await settlePage(page)
+  await themerTrigger(page).click()
   await expect(
     page.getByRole("button", { name: /^Primary & Secondary/ })
   ).toBeVisible()

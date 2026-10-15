@@ -1,5 +1,7 @@
 import { expect, test, type Page } from "@playwright/test"
 
+import { settle, themerTrigger } from "./themer-ui"
+
 // Baselines are Linux renders from the pinned mcr.microsoft.com/playwright
 // image (`pnpm e2e:update-snapshots`, which CI's e2e job also runs in).
 // Elsewhere fonts and anti-aliasing differ, so the comparison is skipped
@@ -9,19 +11,8 @@ test.skip(
   "visual baselines are Linux-only: run `pnpm e2e:visual` (Docker) instead"
 )
 
-const openThemer = (page: Page) =>
-  page.getByRole("button", { name: "Open Theme Editor" })
-
-// Every screen waits for its own content, then for the Themer (its launcher
-// or open panel mounts after hydration) and web fonts, so nothing shifts
-// mid-capture.
-async function settle(page: Page) {
-  await expect(
-    page.getByRole("button", { name: /^(Open|Close) theme editor$/i }).first()
-  ).toBeVisible({ timeout: 15_000 })
-  await page.evaluate(() => document.fonts.ready)
-  await page.mouse.move(0, 0)
-}
+// Every screen waits for its own content, then settles (the Themer UI and
+// web fonts), so nothing shifts mid-capture.
 
 const heading = (page: Page, name: string, level = 1) =>
   page.getByRole("heading", { level, name, exact: true })
@@ -60,7 +51,7 @@ const screens: {
     show: async (page) => {
       await page.goto("/shop/p/night-owl-blend")
       await expect(heading(page, "Night Owl Blend")).toBeVisible()
-      await expect(openThemer(page)).toBeVisible({ timeout: 15_000 })
+      await expect(themerTrigger(page)).toBeVisible({ timeout: 15_000 })
       await page.getByRole("button", { name: "Add to cart" }).click()
       await page.getByRole("link", { name: "Cart, 1 item" }).click()
       await expect(page).toHaveURL(/\/cart$/)
@@ -115,7 +106,7 @@ const screens: {
     show: async (page) => {
       await page.goto("/")
       await expect(heading(page, "Good coffee, slowly.")).toBeVisible()
-      await openThemer(page).click()
+      await themerTrigger(page).click()
       await expect(
         page.getByRole("button", { name: /^Primary & Secondary/ })
       ).toBeVisible()

@@ -9,7 +9,7 @@
 import * as React from "react";
 import { Paintbrush } from "lucide-react";
 import { cn } from "@workspace/ui/lib/utils";
-import { useOverlayStore } from "../stores/overlay-store";
+import { useThemerUIStore } from "../stores/themer-ui-store";
 import { useThemerContext } from "./themer-provider";
 import { SHORTCUTS, Z_INDEX } from "../config/constants";
 import { ActionButton } from "./ui/action-button";
@@ -26,8 +26,8 @@ interface ThemerTriggerProps {
  */
 export function ThemerTrigger({ className }: ThemerTriggerProps) {
   const { config } = useThemerContext();
-  const isOpen = useOverlayStore((state) => state.isOpen);
-  const toggle = useOverlayStore((state) => state.toggle);
+  const isOpen = useThemerUIStore((state) => state.isOpen);
+  const toggle = useThemerUIStore((state) => state.toggle);
 
   if (!config.showTrigger || isOpen) {
     return null;

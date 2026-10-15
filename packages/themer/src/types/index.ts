@@ -61,9 +61,9 @@ export type {
   ColorFocusState,
   ColorFocusActions,
   ColorFocusStore,
-  ThemerOverlayState,
-  ThemerOverlayActions,
-  ThemerOverlayStore,
+  ThemerUIState,
+  ThemerUIActions,
+  ThemerUIStore,
 } from "./editor";
 
 // Import for use in interfaces below
@@ -231,7 +231,7 @@ export interface ThemerProps {
   shortcut?: string;
   /** Show the floating trigger button (default `true`). */
   showTrigger?: boolean;
-  /** Z-index of the overlay and the trigger (default: the Themer's own layers). */
+  /** Z-index of the Themer UI and the trigger (default: the Themer's own layers). */
   zIndex?: number;
   /**
    * Prefix of the localStorage keys the Themer persists to:

@@ -5,7 +5,7 @@
 // Main components
 export { ThemerProvider, useThemerContext } from "./themer-provider";
 export { ThemerTrigger } from "./themer-trigger";
-export { ThemerOverlay } from "./themer-overlay";
+export { ThemerUI } from "./themer-ui";
 export { ThemerSidebar } from "./themer-sidebar";
 export { ActionBar } from "./action-bar";
 
@@ -40,13 +40,13 @@ export { InspectorOverlay } from "./preview/inspector-overlay";
 export { PreviewCards } from "./preview/preview-cards";
 export { PreviewTabs } from "./preview/preview-tabs";
 
-// Overlay components
+// Themer UI parts
 export {
   MobileDrawer,
   MobilePanelContent,
   ThemerHeader,
   PreviewPanel,
-} from "./overlay";
+} from "./themer-ui";
 
 // Panel components
 export {

@@ -1,7 +1,7 @@
 "use client";
 
-// The desktop overlay's top strip over the preview pane: sidebar trigger, a
-// "Preview" label and the close button. ThemerOverlay unmounts it in
+// The desktop Themer UI's top strip over the preview pane: sidebar trigger, a
+// "Preview" label and the close button. ThemerUI unmounts it in
 // fullscreen preview.
 
 import { X } from "lucide-react";

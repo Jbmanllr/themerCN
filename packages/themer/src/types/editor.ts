@@ -1,5 +1,5 @@
 // State and action shapes of the editor, preferences, colour focus and
-// overlay stores in src/stores/.
+// Themer UI stores in src/stores/.
 // Behaviour rules (undo batching, persistence versions, what resets on close)
 // are written in the store files.
 
@@ -256,9 +256,9 @@ export interface ColorFocusActions {
 export type ColorFocusStore = ColorFocusState & ColorFocusActions;
 
 /**
- * Themer overlay state
+ * Themer UI state
  */
-export interface ThemerOverlayState {
+export interface ThemerUIState {
   /** Whether the themer is open */
   isOpen: boolean;
   /** Current active panel. */
@@ -270,9 +270,9 @@ export interface ThemerOverlayState {
 }
 
 /**
- * Themer overlay actions
+ * Themer UI actions
  */
-export interface ThemerOverlayActions {
+export interface ThemerUIActions {
   /** Open the themer */
   open: () => void;
   /** Close the themer */
@@ -280,7 +280,7 @@ export interface ThemerOverlayActions {
   /** Toggle the themer */
   toggle: () => void;
   /** Set active panel */
-  setActivePanel: (panel: ThemerOverlayState["activePanel"]) => void;
+  setActivePanel: (panel: ThemerUIState["activePanel"]) => void;
   /** Toggle inspector mode */
   toggleInspector: () => void;
   /** Toggle fullscreen preview */
@@ -288,6 +288,6 @@ export interface ThemerOverlayActions {
 }
 
 /**
- * Complete themer overlay store type
+ * Complete Themer UI store type
  */
-export type ThemerOverlayStore = ThemerOverlayState & ThemerOverlayActions;
+export type ThemerUIStore = ThemerUIState & ThemerUIActions;

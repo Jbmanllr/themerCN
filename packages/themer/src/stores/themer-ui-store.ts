@@ -1,6 +1,6 @@
 "use client";
 
-// Overlay state: open/closed, the active sidebar panel, and the two preview
+// Themer UI state: open/closed, the active sidebar panel, and the two preview
 // modes (inspector, fullscreen). Transient: nothing here persists.
 //
 // Contract:
@@ -10,17 +10,17 @@
 //   not that the browser is in native fullscreen: enterFullscreen
 //   (hooks/use-fullscreen.ts) sets it before asking for native fullscreen,
 //   and a refused request leaves it on. That module also keeps it in step
-//   with the Fullscreen API (ThemerOverlay mounts that sync).
+//   with the Fullscreen API (ThemerUI mounts that sync).
 // - toggleFullscreen must run inside the user's click handler, because
 //   requestFullscreen needs that gesture.
 //
-// See: packages/themer/ARCHITECTURE.md (OverlayStore)
+// See: packages/themer/ARCHITECTURE.md (ThemerUIStore)
 
 import { create } from "zustand";
-import type { ThemerOverlayStore } from "../types";
+import type { ThemerUIStore } from "../types";
 import { enterFullscreen, exitFullscreen } from "../hooks/use-fullscreen";
 
-export const useOverlayStore = create<ThemerOverlayStore>()((set, get) => {
+export const useThemerUIStore = create<ThemerUIStore>()((set, get) => {
   const setFullscreen = (fullscreenPreview: boolean) =>
     set({ fullscreenPreview });
 

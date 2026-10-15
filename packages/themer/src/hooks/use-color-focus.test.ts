@@ -7,7 +7,7 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import { useColorFocusStore } from "../stores/color-focus-store";
-import { useOverlayStore } from "../stores/overlay-store";
+import { useThemerUIStore } from "../stores/themer-ui-store";
 import { usePreferencesStore } from "../stores/preferences-store";
 import {
   focusColor,
@@ -51,7 +51,7 @@ describe("focusColor", () => {
 
   beforeEach(() => {
     frames = new FrameQueue();
-    useOverlayStore.setState({ activePanel: "other", isOpen: true });
+    useThemerUIStore.setState({ activePanel: "other", isOpen: true });
     usePreferencesStore.setState({ sidebarCollapsed: true, sectionStates: {} });
     useColorFocusStore.setState({ highlightTarget: null, colorSearch: "" });
   });
@@ -62,7 +62,7 @@ describe("focusColor", () => {
 
   it("opens the Colors panel, the sidebar and the token's section first", () => {
     cleanups.push(focusColor("sidebar-ring", frames));
-    expect(useOverlayStore.getState().activePanel).toBe("colors");
+    expect(useThemerUIStore.getState().activePanel).toBe("colors");
     expect(usePreferencesStore.getState().sidebarCollapsed).toBe(false);
     expect(usePreferencesStore.getState().sectionStates).toEqual({
       "colors-sidebar": true,
@@ -71,10 +71,10 @@ describe("focusColor", () => {
   });
 
   it("leaves fullscreen preview so the picker can mount", () => {
-    useOverlayStore.setState({ fullscreenPreview: true });
+    useThemerUIStore.setState({ fullscreenPreview: true });
     cleanups.push(focusColor("primary", frames));
-    expect(useOverlayStore.getState().fullscreenPreview).toBe(false);
-    expect(useOverlayStore.getState().activePanel).toBe("colors");
+    expect(useThemerUIStore.getState().fullscreenPreview).toBe(false);
+    expect(useThemerUIStore.getState().activePanel).toBe("colors");
   });
 
   it("waits for the picker to mount, then scrolls and highlights a frame later", () => {
@@ -127,9 +127,9 @@ describe("color registry", () => {
 
 describe("colour search lifetime", () => {
   it("resets the search when the editor closes", () => {
-    useOverlayStore.setState({ isOpen: true });
+    useThemerUIStore.setState({ isOpen: true });
     useColorFocusStore.setState({ colorSearch: "chart" });
-    useOverlayStore.getState().close();
+    useThemerUIStore.getState().close();
     expect(useColorFocusStore.getState().colorSearch).toBe("");
   });
 });

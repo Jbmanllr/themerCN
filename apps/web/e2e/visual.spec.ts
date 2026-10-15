@@ -20,7 +20,7 @@ const heading = (page: Page, name: string, level = 1) =>
 const screens: {
   name: string
   show: (page: Page) => Promise<void>
-  // The Themer is a fixed overlay, so its screen is the viewport only.
+  // The Themer UI is fixed to the viewport, so its screen is the viewport only.
   fullPage?: false
 }[] = [
   {

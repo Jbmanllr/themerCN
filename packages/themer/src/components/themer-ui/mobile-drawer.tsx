@@ -2,7 +2,7 @@
 
 // The editor on a phone-sized viewport: a bottom drawer with the preset
 // select and the same panel tabs as the desktop sidebar (MobilePanelContent).
-// ThemerOverlay renders it instead of the desktop layout when useIsMobile() is
+// ThemerUI renders it instead of the desktop layout when useIsMobile() is
 // true; there is no preview pane here. `data-lenis-prevent` leaves the
 // drawer's scrolling native in a host that runs Lenis smooth scroll (see
 // LenisPause).

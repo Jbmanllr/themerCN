@@ -56,7 +56,7 @@ Host tree                         <ThemerLoader {...props} />   (themercn/loader
                                      └─ ThemerProvider (config: presets, shortcut, …)
                                         └─ ThemerRoot ── portal to <body> ──► ThemerScope [data-themer]
                                                                                ├─ ThemerTrigger
-                                                                               ├─ ThemerOverlay
+                                                                               ├─ ThemerUI
                                                                                └─ [data-themer-portals]
 ```
 
@@ -68,8 +68,8 @@ Host tree                         <ThemerLoader {...props} />   (themercn/loader
 | [themer.tsx](src/components/themer.tsx) | `<Themer>`: flat props, no children. Skips the server, hydration and frames (`window.self !== window.top`: the Live preview frames the Host page, whose own Themer must not stack). Hydrates the stores, injects the CSS, owns a QueryClient separate from the Host's. |
 | [color-mode.tsx](src/components/color-mode.tsx) | Who owns light/dark (see [Colour mode](#colour-mode)). |
 | [themer-provider.tsx](src/components/themer-provider.tsx) | Registers Host Presets and extra colours during render, applies the Theme to `<html>`, binds the shortcuts, removes everything when the override goes off or it unmounts. |
-| [themer-root.tsx](src/components/themer-root.tsx) | Portals the trigger and overlay into `ThemerScope` on `<body>`; close cleanups (mobile scroll lock, Lenis pause). |
-| [themer-overlay.tsx](src/components/themer-overlay.tsx) | The Themer UI: sidebar + preview on desktop; below 1280 px a bottom drawer without preview ([use-is-mobile.ts](src/hooks/use-is-mobile.ts); the shadcn Sidebar becomes a Sheet below 768 px, so the breakpoint must stay above it). |
+| [themer-root.tsx](src/components/themer-root.tsx) | Portals the trigger and the Themer UI into `ThemerScope` on `<body>`; close cleanups (mobile scroll lock, Lenis pause). |
+| [themer-ui/themer-ui.tsx](src/components/themer-ui/themer-ui.tsx) | The Themer UI: sidebar + preview on desktop; below 1280 px a bottom drawer without preview ([use-is-mobile.ts](src/hooks/use-is-mobile.ts); the shadcn Sidebar becomes a Sheet below 768 px, so the breakpoint must stay above it). |
 | [themer-trigger.tsx](src/components/themer-trigger.tsx) | The floating button (`showTrigger`). |
 
 ## Runtime CSS and `@scope`
@@ -121,7 +121,7 @@ Popover, Select, DropdownMenu, Tooltip, Dialog, Sheet and Drawer pass
 `<body>` as stock shadcn does.
 [portal-container.test.tsx](src/components/portal-container.test.tsx) fails if
 a `shadcn add -o` reinstall drops it. The container is a sibling of the
-overlay (it also serves the mobile drawer and the closed state), fixed at the
+Themer UI (it also serves the mobile drawer and the closed state), fixed at the
 viewport origin with no size and no clipping, at `(zIndex ?? 10000) + 1`.
 Every popup shares that layer; one opened from inside another is portalled
 later, so it paints on top. The Themer UI uses stock `@workspace/ui`
@@ -245,9 +245,9 @@ migrations, another version is dropped):
 `themeOverrideEnabled` (read by the head script), `sidebarColorSync`,
 `colorSelectorTab`, `sectionStates`.
 
-### OverlayStore
+### ThemerUIStore
 
-[stores/overlay-store.ts](src/stores/overlay-store.ts), transient: `isOpen`,
+[stores/themer-ui-store.ts](src/stores/themer-ui-store.ts), transient: `isOpen`,
 `activePanel` (`colors` | `typography` | `other`), `inspectorMode`,
 `fullscreenPreview`.
 
@@ -422,10 +422,11 @@ packages/themer/
 │   │   ├── themer.tsx             # <Themer>
 │   │   ├── themer-scope.tsx       # [data-themer] root, style injection, portal container
 │   │   ├── color-mode.tsx         # light/dark ownership
-│   │   ├── themer-provider.tsx, themer-root.tsx, themer-overlay.tsx, …
-│   │   ├── editor/ panels/ sidebar/ overlay/ actions/ ui/
+│   │   ├── themer-provider.tsx, themer-root.tsx, …
+│   │   ├── editor/ panels/ sidebar/ actions/ ui/
+│   │   ├── themer-ui/             # ThemerUI: header, preview panel, mobile drawer
 │   │   └── preview/               # tabs, registry, Live, inspector, example pages
-│   ├── stores/                    # editor, preferences, overlay, color-focus; hydrate.ts
+│   ├── stores/                    # editor, preferences, themer-ui, color-focus; hydrate.ts
 │   ├── selectors/ hooks/ utils/ config/ types/
 │   ├── api/font-catalog.ts        # catalog response (no gating)
 │   ├── styles/                    # themer.css, view-transition.css (CSS build input)

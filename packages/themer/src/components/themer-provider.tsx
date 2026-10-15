@@ -32,7 +32,7 @@ import {
   parseShortcut,
   themerShortcuts,
 } from "../hooks/use-keyboard-shortcut";
-import { useOverlayStore } from "../stores/overlay-store";
+import { useThemerUIStore } from "../stores/themer-ui-store";
 import { useEditorStore } from "../stores/editor-store";
 import { usePreferencesStore } from "../stores/preferences-store";
 import {
@@ -78,7 +78,7 @@ export function ThemerProvider({
 }: ThemerProviderProps) {
   // Merge user config with defaults
   // Unset (undefined) props keep the defaults. No zIndex default: the
-  // overlay and the trigger fall back to their own Z_INDEX layers
+  // Themer UI and the trigger fall back to their own Z_INDEX layers
   // (config/constants.ts); a Host value applies to both. No font endpoint
   // default: without one the picker searches the bundled list.
   const config = React.useMemo<ThemerConfig>(
@@ -173,8 +173,8 @@ export function ThemerProvider({
   // Keyboard shortcuts. useKeyboardShortcut keys its listener on the
   // shortcut string, so the fresh arrays and inline callbacks below do not
   // re-add listeners on every theme edit.
-  const toggle = useOverlayStore((state) => state.toggle);
-  const isOpen = useOverlayStore((state) => state.isOpen);
+  const toggle = useThemerUIStore((state) => state.toggle);
+  const isOpen = useThemerUIStore((state) => state.isOpen);
   const { key, modifiers } = parseShortcut(config.shortcut ?? SHORTCUTS.toggle);
 
   useKeyboardShortcut({

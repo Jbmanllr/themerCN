@@ -13,7 +13,7 @@
 //   (the editor is portaled outside the host tree).
 // - Inspector: toggle and Ctrl+I here; disabled on mobile and for a
 //   cross-origin Live frame. Clicking a class focuses its colour control.
-// - Fullscreen: this area goes `fixed` over the editor; ThemerOverlay unmounts
+// - Fullscreen: this area goes `fixed` over the editor; ThemerUI unmounts
 //   the sidebar and header. The light/dark toggle (ModeToggle) shows here
 //   meanwhile, since the action bar is covered.
 //
@@ -44,7 +44,7 @@ import {
   themerShortcuts,
   useKeyboardShortcut,
 } from "../../hooks/use-keyboard-shortcut";
-import { useOverlayStore } from "../../stores/overlay-store";
+import { useThemerUIStore } from "../../stores/themer-ui-store";
 import { usePreferencesStore } from "../../stores/preferences-store";
 import type { ThemerConfig } from "../../types";
 import { useThemerContext } from "../themer-provider";
@@ -67,10 +67,10 @@ export function PreviewTabs() {
   const { previewTabs, previewWrapper } = config;
   const previewTab = usePreferencesStore((state) => state.previewTab);
   const setPreviewTab = usePreferencesStore((state) => state.setPreviewTab);
-  const inspectorMode = useOverlayStore((state) => state.inspectorMode);
-  const toggleInspector = useOverlayStore((state) => state.toggleInspector);
-  const isFullscreen = useOverlayStore((state) => state.fullscreenPreview);
-  const toggleFullscreen = useOverlayStore((state) => state.toggleFullscreen);
+  const inspectorMode = useThemerUIStore((state) => state.inspectorMode);
+  const toggleInspector = useThemerUIStore((state) => state.toggleInspector);
+  const isFullscreen = useThemerUIStore((state) => state.fullscreenPreview);
+  const toggleFullscreen = useThemerUIStore((state) => state.toggleFullscreen);
   const isMobile = useIsMobile();
   const { focusColor } = useColorFocusTrigger();
 

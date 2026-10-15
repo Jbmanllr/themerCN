@@ -10,3 +10,9 @@
   --font-serif: var(--font-serif);
   --font-mono: var(--font-mono);
 }
+
+/* The design-system specimens pin a mode on part of the page with
+   `data-mode="light|dark"` (components/design-system/mode-scope.ts), so
+   `dark:` follows the nearest pin, else the page's `.dark`. Same specificity
+   as the shared `&:is(.dark *)`; without a `data-mode` it matches the same. */
+@custom-variant dark (&:is(.dark *, [data-mode="dark"] *):not(:where([data-mode="light"] *)));

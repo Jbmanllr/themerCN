@@ -334,16 +334,19 @@ How the Themer UI sits on screen while it is open:
 Themer UI's header (Toolbar: its `…` menu); the choice is saved in `<storageNamespace>:preferences`
 and wins over `layout` on the next visit. Switching keeps the Theme, undo
 history and open panel (it turns the inspector off), and the sidebar stays
-collapsed or expanded across layouts. Below 1280 px every layout opens as the same bottom drawer.
+collapsed or expanded across layouts. Expanding or collapsing it is instant.
+Collapsed to its icon rail, the sidebar stays usable: each icon opens its
+panel in a popup beside the rail, which behaves like the Toolbar's. Below
+1280 px every layout opens as the same bottom drawer.
 
 ### Push and your page
 
 The Themer never wraps your app, so Push moves your page with
 `margin-inline-start` on `<html>`, set to the sidebar's width (320 px
-expanded, 48 px collapsed) and animated with the sidebar. The same width is
-exposed as the CSS variable `--themer-inset-inline-start` on `<html>`. The
-margin, the variable and the margin's `transition` are inline styles on
-`<html>`. When the Themer closes, switches to another layout, opens as the
+expanded, 48 px collapsed). Like the sidebar, it moves at once, with no
+animation. The same width is exposed as the CSS variable
+`--themer-inset-inline-start` on `<html>`. The margin and the variable are
+inline styles on `<html>`. When the Themer closes, switches to another layout, opens as the
 drawer, or unmounts, any inline values your app had set for them come back
 as they were, and the rest are removed.
 
@@ -356,7 +359,6 @@ Two limits, by design:
   ```css
   .my-fixed-sidebar {
     left: var(--themer-inset-inline-start, 0px);
-    transition: left 200ms linear; /* follows the sidebar's animation */
   }
   ```
 

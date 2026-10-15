@@ -150,3 +150,68 @@ test("the inspector works on the real page beside the Overlay, never on the Them
   await link.click()
   await expect(page).toHaveURL(/\/design-system$/)
 })
+
+test.describe("the sidebar", () => {
+  for (const layout of ["Workspace", "Push"]) {
+    test(`expands and collapses at once, without animating, in ${layout}`, async ({
+      page,
+    }) => {
+      await page.goto("/")
+      await openLayout(page, layout)
+      const sidebar = page.locator(
+        '[data-themer-ui] [data-slot="sidebar-container"]'
+      )
+      await expect(sidebar).toHaveCSS("width", "320px")
+
+      // One frame after the press: a transition would still be mid-way.
+      const widthsAfterPress = () =>
+        page.evaluate(async () => {
+          document
+            .querySelector<HTMLButtonElement>(
+              '[data-themer-ui] [data-slot="sidebar-trigger"]'
+            )
+            ?.click()
+          await new Promise((resolve) =>
+            requestAnimationFrame(() => requestAnimationFrame(resolve))
+          )
+          const container = document.querySelector(
+            '[data-themer-ui] [data-slot="sidebar-container"]'
+          )
+          return {
+            sidebar: container?.getBoundingClientRect().width,
+            page: getComputedStyle(document.documentElement).marginInlineStart,
+          }
+        })
+
+      const collapsed = await widthsAfterPress()
+      expect(collapsed.sidebar).toBe(48)
+      if (layout === "Push") expect(collapsed.page).toBe("48px")
+
+      const expanded = await widthsAfterPress()
+      expect(expanded.sidebar).toBe(320)
+      if (layout === "Push") expect(expanded.page).toBe("320px")
+    })
+  }
+
+  test("collapsed, opens a panel beside the rail and stays collapsed", async ({
+    page,
+  }) => {
+    await page.goto("/")
+    await openLayout(page, "Overlay")
+    await page
+      .locator('[data-themer-ui] [data-slot="sidebar-trigger"]')
+      .click()
+
+    await page
+      .locator('[data-themer-ui] [data-slot="sidebar"]')
+      .getByRole("button", { name: "Typography" })
+      .click()
+
+    const popup = page.getByTestId("themer-rail-panel-typography")
+    await expect(popup).toBeVisible()
+    await expect(popup).toContainText("Font Families")
+    await expect(
+      page.locator('[data-themer-ui] [data-slot="sidebar-container"]')
+    ).toHaveCSS("width", "48px")
+  })
+})

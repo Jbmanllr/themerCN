@@ -335,6 +335,45 @@ describe("Themer layout", () => {
     });
   });
 
+  describe("the collapsed sidebar", () => {
+    const railButton = (label: string) =>
+      query(`[data-slot="sidebar"] button[aria-label="${label}"]`);
+    const openPopups = () =>
+      [...document.querySelectorAll('[data-slot="popover-content"]')].map(
+        (popup) => popup.textContent ?? "",
+      );
+
+    it.each(["workspace", "overlay", "push"] as const)(
+      "opens a panel's controls in a popup from the rail in %s, still collapsed",
+      async (layout) => {
+        usePreferencesStore.setState({ sidebarCollapsed: true });
+        await mount({ layout });
+        await open();
+
+        await click(railButton("Typography"));
+
+        expect(openPopups()).toEqual([
+          expect.stringContaining("Font Families"),
+        ]);
+        expect(useThemerUIStore.getState().activePanel).toBe("typography");
+        expect(usePreferencesStore.getState().sidebarCollapsed).toBe(true);
+      },
+    );
+
+    it("swaps the popup for another panel, and closes it on its button", async () => {
+      usePreferencesStore.setState({ sidebarCollapsed: true });
+      await mount({ layout: "overlay" });
+      await open();
+
+      await click(railButton("Typography"));
+      await click(railButton("Other"));
+      expect(openPopups()).toEqual([expect.stringContaining("Border Radius")]);
+
+      await click(railButton("Other"));
+      expect(openPopups()).toEqual([]);
+    });
+  });
+
   describe("the user's choice", () => {
     function seedPreferences(state: object, version: number) {
       localStorage.setItem(

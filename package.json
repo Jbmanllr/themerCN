@@ -11,7 +11,9 @@
     "format": "turbo format",
     "typecheck": "turbo typecheck",
     "test": "turbo test",
-    "e2e": "turbo e2e"
+    "e2e": "turbo e2e",
+    "e2e:visual": "scripts/playwright-docker.sh",
+    "e2e:update-snapshots": "scripts/playwright-docker.sh --update-snapshots"
   },
   "devDependencies": {
     "@changesets/changelog-github": "^1.0.1",

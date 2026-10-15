@@ -312,7 +312,9 @@ const slides = [
 export function CarouselDemo() {
   return (
     <State label="First slide, with arrows" className="grid px-12">
-      <Carousel>
+      {/* min-w-0: a grid item defaults to its min-content width, which the
+          off-screen slides would push past the specimen and the page. */}
+      <Carousel className="min-w-0">
         <CarouselContent>
           {slides.map((slide) => (
             <CarouselItem key={slide.seed} className="basis-2/3">
@@ -365,7 +367,7 @@ export function ItemDemo() {
       <State label="A group with separators" className="grid">
         <ItemGroup>
           {["Ethiopia Guji", "Colombia Huila"].map((name, index) => (
-            <div key={name}>
+            <div key={name} role="listitem">
               {index > 0 && <ItemSeparator />}
               <Item size="sm">
                 <ItemMedia variant="icon">

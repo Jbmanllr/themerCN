@@ -1,6 +1,14 @@
 import { defineConfig, devices } from "@playwright/test"
 
-const port = 3100
+// Override with WEB_E2E_PORT so parallel runs (other worktrees, other
+// agents) don't share, or silently reuse, one server.
+const port = Number(process.env.WEB_E2E_PORT ?? 3100)
+
+// 1440px wide: below 1280px the Themer opens as a mobile drawer.
+const desktop = {
+  ...devices["Desktop Chrome"],
+  viewport: { width: 1440, height: 900 },
+}
 
 // Runs against the production build (`turbo e2e` builds first): the Themer is
 // on in production too. Run `pnpm build` before `pnpm e2e` locally.
@@ -13,15 +21,17 @@ export default defineConfig({
     baseURL: `http://localhost:${port}`,
     trace: "retain-on-failure",
   },
+  // Visual baselines are produced only in the pinned Playwright image
+  // (`pnpm e2e:update-snapshots`); a run never writes missing ones.
+  updateSnapshots: "none",
   projects: [
     {
       name: "chromium",
-      // 1440px wide: below 1280px the Themer opens as a mobile drawer.
-      use: {
-        ...devices["Desktop Chrome"],
-        viewport: { width: 1440, height: 900 },
-      },
+      testIgnore: ["visual.spec.ts", "a11y.spec.ts"],
+      use: desktop,
     },
+    { name: "visual", testMatch: "visual.spec.ts", use: desktop },
+    { name: "a11y", testMatch: "a11y.spec.ts", use: desktop },
   ],
   webServer: {
     command: `next start --port ${port}`,

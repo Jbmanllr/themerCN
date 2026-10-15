@@ -159,6 +159,7 @@ function ContrastResultItem({ result, canFocus }: ContrastResultItemProps) {
 
   return (
     <Item
+      role="listitem"
       variant="outline"
       size="sm"
       className={

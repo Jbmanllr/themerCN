@@ -27,7 +27,8 @@
       "dependsOn": ["^build", "build:css"]
     },
     "e2e": {
-      "dependsOn": ["build"]
+      "dependsOn": ["build"],
+      "passThroughEnv": ["WEB_E2E_PORT"]
     },
     "dev": {
       "cache": false,

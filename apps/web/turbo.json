@@ -4,6 +4,13 @@
   "tasks": {
     "typecheck": {
       "dependsOn": ["^typecheck", "^build"]
+    },
+    "test": {
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "$TURBO_ROOT$/.github/workflows/ci.yml",
+        "$TURBO_ROOT$/apps/vite/package.json"
+      ]
     }
   }
 }

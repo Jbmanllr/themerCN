@@ -1,6 +1,6 @@
 "use client";
 
-// Adapted from tweakcn (Apache-2.0, github.com/jnsahaj/tweakcn @ a3b47b37); modified by Banter.
+// Adapted from tweakcn (Apache-2.0, github.com/jnsahaj/tweakcn @ a3b47b37); modified for themercn.
 //
 // Preset picker (tweakcn components/editor/theme-preset-select.tsx): a
 // searchable list with swatches, a theme count, a shuffle button and a "New"
@@ -12,14 +12,14 @@
 // preset (selectHasUnsavedChanges).
 //
 // Differences: Base UI composition (`render`), and the popover sized from its
-// trigger with `--anchor-width` (no ResizeObserver). It sits above the overlay
-// through host/themer.css, which lifts every portalled popup.
+// trigger with `--anchor-width` (no ResizeObserver). It portals into the
+// Themer's popup container, above the overlay (themer-scope.tsx).
 
 import * as React from "react";
 import { ChevronDown, ArrowLeft, ArrowRight, Shuffle } from "lucide-react";
 import { useShallow } from "zustand/react/shallow";
-import { Badge } from "@villa/ui/components/badge";
-import { Button } from "@villa/ui/components/button";
+import { Badge } from "@workspace/ui/components/badge";
+import { Button } from "@workspace/ui/components/button";
 import {
   Command,
   CommandEmpty,
@@ -27,13 +27,13 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
-} from "@villa/ui/components/command";
+} from "@workspace/ui/components/command";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@villa/ui/components/popover";
-import { Separator } from "@villa/ui/components/separator";
+} from "@workspace/ui/components/popover";
+import { Separator } from "@workspace/ui/components/separator";
 import {
   themePresets,
   getPresetIds,

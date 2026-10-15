@@ -142,7 +142,7 @@ export type ThemeStyleProps = {
 };
 
 /**
- * Values of host extra colours (ThemerConfig.extraColors) by CSS custom
+ * Values of Host extra colours (ThemerConfig.extraColors) by CSS custom
  * property name without `--`. Optional by nature: an extra a theme does not
  * set is absent, and the host's own CSS value shows.
  */
@@ -150,7 +150,7 @@ export type ExtraColorValues = { [extraKey: string]: string | undefined };
 
 /**
  * One mode's styles as the editor stores them: every built-in key (typed as
- * in ThemeStyleProps) plus any host extra colours that have a value.
+ * in ThemeStyleProps) plus any Host extra colours that have a value.
  */
 export type ThemeModeStyles = ThemeStyleProps & ExtraColorValues;
 
@@ -195,22 +195,37 @@ export interface PartialThemeStyles {
 }
 
 /**
- * Theme preset definition. `styles` lists only the keys the preset changes;
- * use resolvePresetStyles for the full styles. `createdAt` (a date string)
- * drives the picker's "new" badge.
+ * A Preset: a named Theme the preset picker offers as a starting point.
+ * `styles` lists only the keys the Preset changes; the Themer fills the rest
+ * from the built-in defaults (internally, resolvePresetStyles).
  */
 export interface ThemePreset {
+  /**
+   * Unique id, persisted as the Theme's preset. A Host Preset with a
+   * built-in id replaces that built-in Preset.
+   */
   id: string;
+  /** Name shown in the preset picker, which sorts by it. */
   label: string;
+  /** Free-form description; the Themer UI does not show it. */
   description?: string;
+  /** Free-form origin tag; the Themer UI does not read it. */
   source?: string;
+  /**
+   * Date string (ISO 8601). The picker shows a "New" badge for 5 days after
+   * it.
+   */
   createdAt?: string;
+  /**
+   * Token values by mode, CSS custom property names without `--` (`primary`,
+   * `font-sans`, `radius`, and any Host extra colour). Light is laid over the
+   * defaults; dark is laid over the Preset's resolved light values.
+   */
   styles: PartialThemeStyles;
 }
 
 /**
- * A theme as the storage adapters read and write it. Nothing in Banter's
- * editor UI saves or lists these.
+ * A saved theme record. Nothing in the Themer UI saves or lists these.
  */
 export interface SavedTheme {
   id: string;

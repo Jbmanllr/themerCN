@@ -17,21 +17,21 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from "@villa/ui/components/dialog";
-import { Button } from "@villa/ui/components/button";
+} from "@workspace/ui/components/dialog";
+import { Button } from "@workspace/ui/components/button";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@villa/ui/components/select";
+} from "@workspace/ui/components/select";
 import {
   Tabs,
   TabsContent,
   TabsList,
   TabsTrigger,
-} from "@villa/ui/components/tabs";
+} from "@workspace/ui/components/tabs";
 import { useShallow } from "zustand/react/shallow";
 import { isTweakcnPreset } from "../../config/presets";
 import { useEditorStore } from "../../stores/editor-store";

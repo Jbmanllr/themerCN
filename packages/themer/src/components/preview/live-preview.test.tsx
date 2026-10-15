@@ -1,4 +1,5 @@
 // @vitest-environment happy-dom
+// @vitest-environment-options { "settings": { "enableIframePageLoading": true } }
 
 // The Live tab's address bar writes the frame's src itself. React refuses a
 // javascript: URL in a src prop, so that guard is gone once the bar sets the
@@ -22,7 +23,7 @@ const panel = vi.hoisted(() => ({ resize: vi.fn() }));
 
 // The real panels measure the layout, which a test DOM has none of; the page
 // asks the panel for a width through its imperative handle, which is recorded.
-vi.mock("@villa/ui/components/resizable", () => ({
+vi.mock("@workspace/ui/components/resizable", () => ({
   ResizablePanelGroup: ({ children }: { children: ReactNode }) => (
     <div>{children}</div>
   ),

@@ -6,15 +6,15 @@ import {
   Avatar,
   AvatarFallback,
   AvatarImage,
-} from "@villa/ui/components/avatar";
-import { Button } from "@villa/ui/components/button";
+} from "@workspace/ui/components/avatar";
+import { Button } from "@workspace/ui/components/button";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@villa/ui/components/card";
+} from "@workspace/ui/components/card";
 import {
   Command,
   CommandEmpty,
@@ -22,12 +22,12 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
-} from "@villa/ui/components/command";
+} from "@workspace/ui/components/command";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@villa/ui/components/popover";
+} from "@workspace/ui/components/popover";
 import { avatarDataUri } from "../avatar-data-uri";
 
 const teamMembers = [

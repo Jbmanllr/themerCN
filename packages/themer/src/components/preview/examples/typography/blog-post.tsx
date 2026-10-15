@@ -1,7 +1,7 @@
 // The sample article of the Typography preview tab: headings, body text, a list
 // and a quote that show the theme's fonts and colours.
 //
-// Contract: the demo runs inside the host app, which serves no image files, so
+// Contract: the demo runs inside the Host app, which serves no image files, so
 // every <img> uses an inline `data:` URI (`avatarDataUri`) and the featured
 // image is a plain block. Never point an image at a file path (pinned by
 // blog-post.test.tsx).
@@ -10,11 +10,11 @@ import {
   Avatar,
   AvatarFallback,
   AvatarImage,
-} from "@villa/ui/components/avatar";
-import { Badge } from "@villa/ui/components/badge";
-import { Button } from "@villa/ui/components/button";
-import { Card, CardContent } from "@villa/ui/components/card";
-import { Separator } from "@villa/ui/components/separator";
+} from "@workspace/ui/components/avatar";
+import { Badge } from "@workspace/ui/components/badge";
+import { Button } from "@workspace/ui/components/button";
+import { Card, CardContent } from "@workspace/ui/components/card";
+import { Separator } from "@workspace/ui/components/separator";
 import {
   Bookmark,
   Calendar,

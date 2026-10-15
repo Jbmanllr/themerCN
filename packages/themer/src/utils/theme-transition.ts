@@ -1,4 +1,4 @@
-// Adapted from tweakcn (Apache-2.0, github.com/jnsahaj/tweakcn @ a3b47b37); modified by Banter.
+// Adapted from tweakcn (Apache-2.0, github.com/jnsahaj/tweakcn @ a3b47b37); modified for themercn.
 //
 // The circular "reveal" when the editor flips light/dark (tweakcn
 // components/theme-provider.tsx handleThemeToggle + app/globals.css). The
@@ -6,7 +6,7 @@
 // the viewport for keyboard and programmatic toggles.
 //
 // Differences from tweakcn, and why:
-// - The CSS (packages/themer/src/host/themer.css) only matches while
+// - The CSS (packages/themer/src/styles/view-transition.css) only matches while
 //   `html[data-themer-vt]` is set, so the host's own view transitions (page
 //   navigations) keep their animation. The attribute and the origin
 //   variables (`--themer-vt-x/-y`, not tweakcn's bare `--x/--y`, which a
@@ -18,7 +18,7 @@
 // - No View Transitions API, or prefers-reduced-motion: the update runs
 //   directly, with no animation.
 //
-// See: packages/themer/docs/API.md ("useToggleMode").
+// See: packages/themer/ARCHITECTURE.md ("Colour mode").
 
 // react-doctor-disable-next-line react-doctor/no-flush-sync -- flushSync runs only inside document.startViewTransition's update callback, from event handlers: it is what puts the committed mode in the browser's "new" snapshot (next-themes sets the class in an effect React's <ViewTransition> does not capture)
 import { flushSync } from "react-dom";

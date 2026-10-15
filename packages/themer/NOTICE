@@ -1,21 +1,26 @@
-@banter/themer
-Copyright (c) Banter
+themercn, Copyright (c) Jean-Baptiste Manillier
+
+Licensed under the Apache License, Version 2.0 (LICENSE).
 
 This package contains code adapted from other projects.
 
 1. tweakcn - https://github.com/jnsahaj/tweakcn
    Commit a3b47b37. Licensed under the Apache License, Version 2.0
    (LICENSES/tweakcn-Apache-2.0.txt).
-   Adapted by Banter: the editor's state, preset, shadow, font, CSS-import,
+   Adapted for themercn: the editor's state, preset, shadow, font, CSS-import,
    inspector, colour-list and preview logic, and the theme preset catalogue
-   (src/config/tweakcn-presets.ts). Banter changed these files; each ported
-   or adapted source file carries the header line
+   (src/config/tweakcn-presets.ts). These files were changed; each ported or
+   adapted source file carries the header line
    "Adapted from tweakcn (Apache-2.0, github.com/jnsahaj/tweakcn @ a3b47b37);
-   modified by Banter." The package also descends from the editor in the
-   p0rtal monorepo (@workspace/themer), which was itself inspired by tweakcn.
+   modified for themercn."
 
 2. shadcn/ui examples - https://github.com/shadcn-ui/ui
-   Licensed under the MIT License (LICENSES/shadcn-ui-MIT.txt).
+   shadcn CLI 4.21.4 (the version in pnpm-lock.yaml that generated
+   packages/ui: Base UI, Luma style). Licensed under the MIT License
+   (LICENSES/shadcn-ui-MIT.txt).
    The demo pages under src/components/preview/examples (cards, dashboard,
    mail, pricing) derive from the shadcn/ui example blocks, rendered here
-   with @banter/ui primitives.
+   with shadcn/ui primitives.
+
+History: themercn descends from @banter/themer, which grew from the p0rtal
+monorepo's editor (@workspace/themer), itself inspired by tweakcn.

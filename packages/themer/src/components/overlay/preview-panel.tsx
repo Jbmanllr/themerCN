@@ -10,7 +10,7 @@
 // See: packages/themer/ARCHITECTURE.md (Preview System).
 
 import * as React from "react";
-import { cn } from "@villa/ui/lib/utils";
+import { cn } from "@workspace/ui/lib/utils";
 import { ActionBar } from "../action-bar";
 import { PreviewTabs } from "../preview/preview-tabs";
 import { BUILTIN_TABS } from "../preview/builtin-tabs";

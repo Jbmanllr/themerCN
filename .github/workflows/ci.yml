@@ -1,0 +1,68 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    name: Lint, typecheck, test, build, package checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      # pnpm version comes from "packageManager" in package.json.
+      - uses: pnpm/action-setup@v6
+
+      # pnpm 11 needs Node >= 22.13; Next 16 needs >= 20.9.
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - run: pnpm turbo lint typecheck test build
+
+      # publint, attw and the packed-file check, against the built package;
+      # plus the Vite app's off-build check (no `data-themer` in its dist).
+      - run: pnpm turbo check:package
+
+  # Smoke, visual and a11y Playwright projects. Runs in the Playwright image
+  # pinned to the @playwright/test version (apps/web, apps/vite): the visual
+  # baselines are rendered there (`pnpm e2e:update-snapshots`), so CI must
+  # render the same way. The image ships the browsers.
+  e2e:
+    name: E2E (Playwright, Chromium)
+    runs-on: ubuntu-latest
+    container:
+      image: mcr.microsoft.com/playwright:v1.64.0-noble
+      options: --ipc=host --init
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: pnpm/action-setup@v6
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - run: pnpm turbo e2e
+
+      - if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-report
+          path: apps/*/playwright-report
+          retention-days: 7

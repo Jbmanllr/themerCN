@@ -1,20 +1,16 @@
 // Barrel for the editor's components, re-exported by the package root
-// (src/index.ts). Not exported here: ThemerDevShell and ThemerOverlayOnly
-// (reachable by file path, `@villa/themer/components/<file>`; docs/API.md),
-// LenisPause, and the legacy ./themer-header.tsx, which nothing imports (the
-// ThemerHeader below is ./overlay/themer-header.tsx).
+// Internal: the package root (src/index.ts) exports only <Themer> and its
+// types. Not listed here: Themer, ThemerRoot and LenisPause.
 
 // Main components
 export { ThemerProvider, useThemerContext } from "./themer-provider";
 export { ThemerTrigger } from "./themer-trigger";
-export { ThemerRoot } from "./themer-root";
 export { ThemerOverlay } from "./themer-overlay";
 export { ThemerSidebar } from "./themer-sidebar";
 export { ActionBar } from "./action-bar";
 
-// Theme initialization: ThemeScript goes in a host's <head> (Banter's hosts use
-// host/head-script.tsx instead); ThemerProvider mounts DynamicFontLoader itself
-export { ThemeScript } from "./theme-script";
+// Theme initialization: the pre-paint script is src/head-script.ts (the
+// `themercn/head-script` entry); ThemerProvider mounts DynamicFontLoader itself
 export { DynamicFontLoader } from "./dynamic-font-loader";
 
 // Editor components
@@ -44,12 +40,6 @@ export { InspectorOverlay } from "./preview/inspector-overlay";
 export { PreviewCards } from "./preview/preview-cards";
 export { PreviewTabs } from "./preview/preview-tabs";
 
-// AI components
-export { AIChat } from "./ai/ai-chat";
-export { AIPromptInput } from "./ai/ai-prompt-input";
-export { AISuggestions } from "./ai/ai-suggestions";
-export { AIMessageItem } from "./ai/ai-message";
-
 // Overlay components
 export {
   MobileDrawer,
@@ -63,16 +53,11 @@ export {
   ColorsPanel,
   TypographyPanel,
   OtherPanel,
-  GeneratePanel,
 } from "./panels";
 
 // Sidebar components
 export {
-  AI_PANEL,
-  BASE_PANELS,
   PANELS,
-  getPanelConfigs,
-  getVisiblePanel,
   type Panel,
   type PanelConfig,
   CollapsedNavigation,

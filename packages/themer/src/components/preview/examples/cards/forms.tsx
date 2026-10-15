@@ -1,6 +1,6 @@
 "use client";
 
-import { Button } from "@villa/ui/components/button";
+import { Button } from "@workspace/ui/components/button";
 import {
   Card,
   CardContent,
@@ -8,12 +8,12 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@villa/ui/components/card";
-import { Checkbox } from "@villa/ui/components/checkbox";
-import { Input } from "@villa/ui/components/input";
-import { Label } from "@villa/ui/components/label";
-import { RadioGroup, RadioGroupItem } from "@villa/ui/components/radio-group";
-import { Textarea } from "@villa/ui/components/textarea";
+} from "@workspace/ui/components/card";
+import { Checkbox } from "@workspace/ui/components/checkbox";
+import { Input } from "@workspace/ui/components/input";
+import { Label } from "@workspace/ui/components/label";
+import { RadioGroup, RadioGroupItem } from "@workspace/ui/components/radio-group";
+import { Textarea } from "@workspace/ui/components/textarea";
 
 const plans = [
   {
@@ -80,7 +80,7 @@ export function CardsForms() {
                 >
                   <RadioGroupItem
                     value={plan.id}
-                    id={plan.name}
+                    aria-label={plan.name}
                     className="data-checked:border-primary"
                   />
                   <div className="grid gap-1 font-normal">

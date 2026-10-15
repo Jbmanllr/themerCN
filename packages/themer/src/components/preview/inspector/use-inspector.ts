@@ -1,6 +1,6 @@
 "use client";
 
-// Adapted from tweakcn (Apache-2.0, github.com/jnsahaj/tweakcn @ a3b47b37); modified by Banter.
+// Adapted from tweakcn (Apache-2.0, github.com/jnsahaj/tweakcn @ a3b47b37); modified for themercn.
 // Sources: hooks/inspector/use-theme-inspector.ts, use-inspector-state.ts,
 // use-inspector-mouse-events.ts, use-inspector-scroll.ts.
 //

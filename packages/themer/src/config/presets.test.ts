@@ -1,9 +1,9 @@
 // Preset resolution follows tweakcn's mergePresetWithDefaults: dark inherits
 // the preset's light values before its own dark ones, and a preset with no
-// heading font uses its serif for headings. The renamed local presets must
-// not shadow tweakcn's, host presets win on an id clash (and a replaced
-// built-in comes back when the host drops it), the picker lists "default"
-// first, and retired preset ids migrate to their current ones.
+// heading font uses its serif for headings. The built-in catalog is
+// "default" plus tweakcn's 42 presets, Host Presets win on an id clash (and
+// a replaced built-in comes back when the host drops it), and the picker
+// lists "default" first.
 import { afterEach, describe, expect, it } from "vitest";
 
 import type { ThemePreset } from "../types";
@@ -15,7 +15,6 @@ import {
   getPresetLabel,
   hasPreset,
   isTweakcnPreset,
-  migratePresetId,
   resolvePresetStyles,
   themePresets,
 } from "./presets";
@@ -80,26 +79,13 @@ describe("resolvePresetStyles", () => {
 });
 
 describe("preset catalog", () => {
-  const renamed = [
-    "violet-bloom",
-    "ocean-breeze",
-    "mocha-mousse",
-    "nature",
-    "cyberpunk",
-    "sunset-horizon",
-    "graphite",
-  ];
-
-  it("keeps tweakcn's themes and the renamed local ones side by side", () => {
-    for (const id of renamed) {
-      expect(isTweakcnPreset(id)).toBe(true);
+  it("is default plus tweakcn's 42 presets", () => {
+    const ids = getPresetIds();
+    expect(ids).toHaveLength(43);
+    expect(ids.filter((id) => !isTweakcnPreset(id))).toEqual(["default"]);
+    for (const id of ["graphite", "violet-bloom", "neo-brutalism"]) {
       expect(themePresets[id]?.styles).toBe(
         tweakcnThemePresets[id as keyof typeof tweakcnThemePresets].styles,
-      );
-      expect(hasPreset(`themer-${id}`)).toBe(true);
-      expect(isTweakcnPreset(`themer-${id}`)).toBe(false);
-      expect(getPresetLabel(`themer-${id}`)).toBe(
-        `${getPresetLabel(id)} (Themer)`,
       );
     }
   });
@@ -149,13 +135,5 @@ describe("host presets", () => {
     configurePresets({ presets: [host] });
     configurePresets({ presets: [] });
     expect(hasPreset("host-brand")).toBe(false);
-  });
-});
-
-describe("migratePresetId", () => {
-  it("maps retired ids to their current ones", () => {
-    expect(migratePresetId("graphite")).toBe("themer-graphite");
-    expect(migratePresetId("neo-brutalism")).toBe("neo-brutalism");
-    expect(migratePresetId(undefined)).toBeUndefined();
   });
 });

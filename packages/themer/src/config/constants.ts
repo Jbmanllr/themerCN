@@ -3,9 +3,8 @@
 //
 // Contract: a constant is only as live as its readers. The notes below say
 // which ones code reads today; a constant marked "no reader" changes no
-// behavior when edited. A value mirrored in another file (Z_INDEX.portalPopup
-// in host/themer.css, SHORTCUTS.undo and .redo in themerShortcuts) must be
-// edited in both places.
+// behavior when edited. A value mirrored in another file (SHORTCUTS.undo and
+// .redo in themerShortcuts) must be edited in both places.
 
 /**
  * Most undo entries editor-store keeps; the oldest is dropped first. History
@@ -35,8 +34,8 @@ export const HIGHLIGHT_ANIMATION_MS = 1500;
 /**
  * Layers of the editor chrome. Read today: `trigger` and `sidebar` (the
  * floating trigger and the overlay, each unless the host sets
- * ThemerConfig.zIndex). `portalPopup` has no code reader: host/themer.css
- * repeats its value as a literal. `overlay`, `header`, `popover`, `modal` and
+ * ThemerConfig.zIndex). Popups take the layer above the overlay's
+ * (themer-scope.tsx). `overlay`, `header`, `popover`, `modal` and
  * `inspector` have no reader.
  */
 export const Z_INDEX = {
@@ -47,17 +46,12 @@ export const Z_INDEX = {
   popover: 10002,
   modal: 10003,
   inspector: 10004,
-  /**
-   * Every Base UI popup layer while the editor is mounted. Mirrored as a
-   * literal in host/themer.css (CSS cannot import it); keep the two equal.
-   */
-  portalPopup: 10060,
 } as const;
 
 /**
  * Editor sidebar widths, set as `--sidebar-width`/`--sidebar-width-icon` on
  * its own SidebarProvider. Wider than the app Sidebar's 16rem default in
- * @banter/ui (packages/ui/src/components/sidebar.tsx) to fit the controls.
+ * @workspace/ui (packages/ui/src/components/sidebar.tsx) to fit the controls.
  */
 export const SIDEBAR_WIDTHS = {
   expanded: "20rem", // --sidebar-width (320px) - wider for better control layout
@@ -96,31 +90,29 @@ export const SHORTCUTS = {
   inspector: "ctrl+i",
 } as const;
 
-/**
- * localStorage keys. `editor` and `preferences` are the persisted stores
- * (editor-store.ts, preferences-store.ts) and are also read by the
- * pre-hydration script (utils/theme-script.ts). `themes` has no reader: the
- * editor has no save-theme action.
- */
-export const STORAGE_KEYS = {
-  editor: "villa-themer-editor-state",
-  preferences: "villa-themer-preferences",
-  themes: "themer-saved-themes",
-} as const;
+/** Default `storageNamespace` of `<Themer>`. */
+export const DEFAULT_STORAGE_NAMESPACE = "themercn";
 
 /**
- * IndexedDB defaults for IndexedDBStorageAdapter, the saved-theme store that
- * no editor UI calls (README "Run it"). Only `name` and `stores.themes` are
- * read; `version` and `stores.preferences` have no reader.
+ * localStorage keys of a storage namespace. `editor` and `preferences` are
+ * the persisted stores (editor-store.ts, preferences-store.ts); `colorMode`
+ * is the light/dark mode an uncontrolled Themer owns (components/color-mode.tsx),
+ * absent while the Host app controls the mode. The pre-hydration script
+ * (utils/theme-script.ts) reads all three.
  */
-export const INDEXED_DB = {
-  name: "themer-db",
-  version: 1,
-  stores: {
-    themes: "themes",
-    preferences: "preferences",
-  },
-} as const;
+export function getStorageKeys(namespace: string = DEFAULT_STORAGE_NAMESPACE) {
+  return {
+    editor: `${namespace}:editor`,
+    preferences: `${namespace}:preferences`,
+    colorMode: `${namespace}:color-mode`,
+  } as const;
+}
+
+/**
+ * Id of the <style> the pre-hydration script writes the saved Theme into.
+ * ThemerProvider removes it once it applies the Theme itself.
+ */
+export const RESTORE_STYLE_ID = "themercn-restore";
 
 /**
  * WCAG contrast ratio thresholds that utils/contrast-checker.ts grades a
@@ -151,7 +143,7 @@ export const GOOGLE_FONTS = {
     "Lato",
     "Montserrat",
     "Poppins",
-    "Source Sans Pro",
+    "Source Sans 3",
     "Nunito",
     "Raleway",
     "Ubuntu",

@@ -1,9 +1,9 @@
 import { ComponentProps } from "react";
 import { formatDistanceToNow } from "date-fns";
 
-import { cn } from "@villa/ui/lib/utils";
-import { Badge } from "@villa/ui/components/badge";
-import { ScrollArea } from "@villa/ui/components/scroll-area";
+import { cn } from "@workspace/ui/lib/utils";
+import { Badge } from "@workspace/ui/components/badge";
+import { ScrollArea } from "@workspace/ui/components/scroll-area";
 import { Mail } from "../data";
 import { useMail } from "../use-mail";
 

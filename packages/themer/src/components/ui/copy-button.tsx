@@ -12,12 +12,12 @@
 
 import * as React from "react";
 import { toast } from "sonner";
-import { Button } from "@villa/ui/components/button";
+import { Button } from "@workspace/ui/components/button";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from "@villa/ui/components/tooltip";
+} from "@workspace/ui/components/tooltip";
 import { useCopyFeedback } from "../../hooks/use-copy-feedback";
 
 type ButtonClickEvent = Parameters<

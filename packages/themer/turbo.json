@@ -1,0 +1,32 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  "extends": ["//"],
+  "tasks": {
+    "build:css": {
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "!src/generated/**",
+        "$TURBO_ROOT$/packages/ui/src/**"
+      ],
+      "outputs": ["src/generated/**"]
+    },
+    "build": {
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "!src/generated/**",
+        "$TURBO_ROOT$/packages/ui/src/**"
+      ],
+      "outputs": ["dist/**"]
+    },
+    "test": {
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "$TURBO_ROOT$/apps/web/app/layout.tsx",
+        "$TURBO_ROOT$/apps/web/app/api/themer/fonts/route.ts",
+        "$TURBO_ROOT$/apps/web/components/themer/playground-themer.tsx",
+        "$TURBO_ROOT$/apps/vite/src/main.tsx",
+        "$TURBO_ROOT$/apps/vite/vite.config.ts"
+      ]
+    }
+  }
+}

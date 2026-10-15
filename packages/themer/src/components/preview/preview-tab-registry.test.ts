@@ -1,4 +1,4 @@
-// Pins how built-in and host preview tabs merge (sorted by `order`; a host tab
+// Pins how built-in and host preview tabs merge (sorted by `order`; a Host tab
 // without `order` after the built-ins; a host id replacing a built-in; the
 // first of duplicate host ids) and how a persisted tab id resolves to the
 // shown tab.

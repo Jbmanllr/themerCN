@@ -14,7 +14,7 @@ vi.mock("./sidebar", () => ({
   ExpandedContent: () => <div>expanded</div>,
 }));
 
-import { SidebarProvider } from "@villa/ui/components/sidebar";
+import { SidebarProvider } from "@workspace/ui/components/sidebar";
 import { ThemerSidebar } from "./themer-sidebar";
 
 (

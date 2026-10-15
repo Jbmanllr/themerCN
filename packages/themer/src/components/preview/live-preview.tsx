@@ -17,11 +17,11 @@
 // - next-themes inside the frame owns its light/dark class, as on the page.
 // - A cross-origin URL cannot be themed (or inspected); reading it throws or
 //   yields null, which is ignored.
-// - Each host sends same-origin framing headers only while its editor gate is
-//   on; that is what lets this frame load the host's pages.
+// - The Host must allow same-origin framing (`frame-ancestors 'self'`,
+//   `X-Frame-Options: SAMEORIGIN`); a page that refuses it stays empty here.
 //
 // See: packages/themer/ARCHITECTURE.md (Preview System, Applying a theme) and
-// packages/themer/README.md (Host integration contract, framing headers)
+// packages/themer/README.md ("Content Security Policy")
 
 import * as React from "react";
 import {
@@ -32,16 +32,16 @@ import {
   Tablet,
 } from "lucide-react";
 import type { PanelImperativeHandle } from "react-resizable-panels";
-import { Input } from "@villa/ui/components/input";
+import { Input } from "@workspace/ui/components/input";
 import {
   ResizableHandle,
   ResizablePanel,
   ResizablePanelGroup,
-} from "@villa/ui/components/resizable";
+} from "@workspace/ui/components/resizable";
 import {
   ToggleGroup,
   ToggleGroupItem,
-} from "@villa/ui/components/toggle-group";
+} from "@workspace/ui/components/toggle-group";
 import { useEditorStore } from "../../stores/editor-store";
 import { usePreferencesStore } from "../../stores/preferences-store";
 import {

@@ -1,6 +1,6 @@
 "use client";
 
-// Adapted from tweakcn (Apache-2.0, github.com/jnsahaj/tweakcn @ a3b47b37); modified by Banter.
+// Adapted from tweakcn (Apache-2.0, github.com/jnsahaj/tweakcn @ a3b47b37); modified for themercn.
 // Source: components/editor/inspector-overlay.tsx.
 //
 // Highlight box and class card for the inspector. tweakcn opens a HoverCard
@@ -12,8 +12,8 @@
 
 import { memo } from "react";
 import { Inspect, Pin } from "lucide-react";
-import { Separator } from "@villa/ui/components/separator";
-import { cn } from "@villa/ui/lib/utils";
+import { Separator } from "@workspace/ui/components/separator";
+import { cn } from "@workspace/ui/lib/utils";
 import { InspectorClassItem } from "./inspector-class-item";
 import { INSPECTOR_CARD_ATTRIBUTE, type InspectorState } from "./use-inspector";
 

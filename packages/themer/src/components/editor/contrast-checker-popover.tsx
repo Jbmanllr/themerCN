@@ -2,8 +2,7 @@
 
 // The contrast checker as a dialog (the file is still named "popover"). The
 // action bar opens it controlled (`open`, from its own Contrast checker
-// button); the legacy components/themer-header.tsx (imported by nothing)
-// mounts it with its own trigger.
+// button).
 //
 // See: packages/themer/ARCHITECTURE.md (Contrast Checker).
 
@@ -15,9 +14,9 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@villa/ui/components/dialog";
-import { ScrollArea } from "@villa/ui/components/scroll-area";
-import { Button } from "@villa/ui/components/button";
+} from "@workspace/ui/components/dialog";
+import { ScrollArea } from "@workspace/ui/components/scroll-area";
+import { Button } from "@workspace/ui/components/button";
 import { ContrastChecker } from "./contrast-checker";
 
 interface ContrastCheckerDialogProps {

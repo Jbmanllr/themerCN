@@ -1,0 +1,154 @@
+/*
+ * The Themer UI's own Tailwind v4 CSS: the entry scripts/build-css.mjs
+ * compiles into src/generated/themer-css.ts, which <Themer> injects as a
+ * <style> when it mounts. The Host app compiles nothing of the Themer's.
+ *
+ * Contract:
+ * - Sources: this package and @workspace/ui only (`source(none)`).
+ * - The theme is inlined (`theme(inline)`, `@theme inline`): utilities read
+ *   the page's own variables, so the Themer UI follows every Theme edit and
+ *   declares no theme variables of its own. Keys whose name matches the
+ *   page's (`--spacing: var(--spacing)`) compile to a self-reference, which
+ *   the build strips. Non-colour keys fall back to Tailwind's defaults for a
+ *   page that does not set them.
+ * - The build moves Preflight, this base rule and the utilities out of their
+ *   layers into `@scope ([data-themer]) to ([data-themer-host])`, unlayered,
+ *   so they beat the Host's layered CSS inside the Themer root and reach
+ *   nothing outside it (nor Host content inside `[data-themer-host]`).
+ * - view-transition.css is appended as is, outside the scope: it targets
+ *   <html>.
+ */
+@import "tailwindcss/theme.css" layer(theme) theme(inline);
+@import "tailwindcss/preflight.css" layer(base);
+@tailwind utilities source(none);
+@source "..";
+@source not "../**/*.test.{ts,tsx}";
+@source not "../generated";
+@source "../../../ui/src";
+
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --spacing: var(--spacing, 0.25rem);
+  --font-sans: var(
+    --font-sans,
+    ui-sans-serif,
+    system-ui,
+    sans-serif,
+    "Apple Color Emoji",
+    "Segoe UI Emoji",
+    "Segoe UI Symbol",
+    "Noto Color Emoji"
+  );
+  --font-serif: var(
+    --font-serif,
+    ui-serif,
+    Georgia,
+    Cambria,
+    "Times New Roman",
+    Times,
+    serif
+  );
+  --font-mono: var(
+    --font-mono,
+    ui-monospace,
+    SFMono-Regular,
+    Menlo,
+    Monaco,
+    Consolas,
+    "Liberation Mono",
+    "Courier New",
+    monospace
+  );
+  --font-heading: var(--font-heading, var(--font-sans, ui-sans-serif, system-ui, sans-serif));
+  --tracking-tighter: var(--tracking-tighter, -0.05em);
+  --tracking-tight: var(--tracking-tight, -0.025em);
+  --tracking-normal: var(--tracking-normal, 0em);
+  --tracking-wide: var(--tracking-wide, 0.025em);
+  --tracking-wider: var(--tracking-wider, 0.05em);
+  --tracking-widest: var(--tracking-widest, 0.1em);
+  --shadow-2xs: var(--shadow-2xs, 0 1px rgb(0 0 0 / 0.05));
+  --shadow-xs: var(--shadow-xs, 0 1px 2px 0 rgb(0 0 0 / 0.05));
+  --shadow-sm: var(
+    --shadow-sm,
+    0 1px 3px 0 rgb(0 0 0 / 0.1),
+    0 1px 2px -1px rgb(0 0 0 / 0.1)
+  );
+  --shadow: var(
+    --shadow,
+    0 1px 3px 0 rgb(0 0 0 / 0.1),
+    0 1px 2px -1px rgb(0 0 0 / 0.1)
+  );
+  --shadow-md: var(
+    --shadow-md,
+    0 4px 6px -1px rgb(0 0 0 / 0.1),
+    0 2px 4px -2px rgb(0 0 0 / 0.1)
+  );
+  --shadow-lg: var(
+    --shadow-lg,
+    0 10px 15px -3px rgb(0 0 0 / 0.1),
+    0 4px 6px -4px rgb(0 0 0 / 0.1)
+  );
+  --shadow-xl: var(
+    --shadow-xl,
+    0 20px 25px -5px rgb(0 0 0 / 0.1),
+    0 8px 10px -6px rgb(0 0 0 / 0.1)
+  );
+  --shadow-2xl: var(--shadow-2xl, 0 25px 50px -12px rgb(0 0 0 / 0.25));
+
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+}
+
+/* shadcn's app-level base rules (packages/ui globals.css); the Host's copy
+ * does not reach the Themer UI, so the Themer ships its own. `html` becomes
+ * the scope root, as in Preflight; the background stays on the panels. */
+@layer base {
+  html {
+    color: var(--foreground);
+  }
+  * {
+    border-color: var(--border);
+    outline-color: color-mix(in oklab, var(--ring) 50%, transparent);
+  }
+}

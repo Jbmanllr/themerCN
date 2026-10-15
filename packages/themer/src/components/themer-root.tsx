@@ -1,48 +1,32 @@
 "use client";
 
-// Puts the editor beside the host's tree: the floating trigger, the overlay
-// portaled to document.body, and the cleanups that run when it closes. The
-// host's children must stay un-wrapped (see ThemerRoot below).
+// Puts the Themer UI beside the Host app's tree: the floating trigger and the
+// overlay, portaled to document.body inside the Themer's CSS scope
+// (ThemerScope), and the cleanups that run while it is open. It wraps
+// nothing: the Host's page renders beside `<Themer>`, never under it.
+// `<Themer>` renders it only on a hydrated client, so it portals at once.
 //
-// See: packages/themer/docs/API.md ("ThemerRoot").
+// See: packages/themer/ARCHITECTURE.md ("Core Entry Points").
 
 import * as React from "react";
 import { createPortal } from "react-dom";
 import { useOverlayStore } from "../stores/overlay-store";
-import { useAIStore } from "../stores/ai-store";
 import { useThemerContext } from "./themer-provider";
 import { useIsMobile } from "../hooks/use-is-mobile";
+import { Z_INDEX } from "../config/constants";
 import { ThemerOverlay } from "./themer-overlay";
+import { ThemerScope } from "./themer-scope";
 import { ThemerTrigger } from "./themer-trigger";
 import { LenisPause } from "./lenis-pause";
 
-const subscribeToHydration = () => () => {};
-const getHydratedSnapshot = () => true;
-const getServerSnapshot = () => false;
-
-interface ThemerRootProps {
-  children: React.ReactNode;
-}
-
 /**
- * Root component that wraps the app and adds the themer overlay.
- *
- * The host's children render as they are, with no wrapper element: a
- * transformed (or `will-change: transform`) ancestor becomes the containing
- * block of every `position: fixed` descendant, which broke host headers and
- * dialogs, and adding the wrapper after hydration remounted the whole app.
+ * The Themer UI's root: the trigger and overlay in a portal on <body>, the
+ * Lenis pause, and the body scroll lock while the overlay is open on mobile.
  */
-export function ThemerRoot({ children }: ThemerRootProps) {
+export function ThemerRoot() {
   const isOpen = useOverlayStore((state) => state.isOpen);
-  const { isReady } = useThemerContext();
+  const { config } = useThemerContext();
   const isMobile = useIsMobile();
-
-  // The AI chat (hidden behind showTabAI) holds messages and pasted images as
-  // data URLs; drop them when the editor closes instead of keeping them for
-  // the page's lifetime.
-  React.useEffect(() => {
-    if (!isOpen) useAIStore.getState().reset();
-  }, [isOpen]);
 
   // Disable body scroll when open on mobile
   // Save/restore previous overflow value to avoid conflicts
@@ -57,39 +41,18 @@ export function ThemerRoot({ children }: ThemerRootProps) {
     };
   }, [isOpen, isMobile]);
 
-  // Wait for client-side hydration to complete before rendering portal
-  // This prevents hydration mismatch between server and client
-  const isClient = React.useSyncExternalStore(
-    subscribeToHydration,
-    getHydratedSnapshot,
-    getServerSnapshot,
-  );
-
-  if (!isReady) {
-    return <>{children}</>;
-  }
-
   return (
     <>
-      {children}
-
-      {/* Floating trigger button */}
-      <ThemerTrigger />
-
       {/* Pause Lenis when overlay is open */}
       <LenisPause />
 
-      {/* Overlay portal - only render on client to avoid hydration mismatch */}
-      {isClient && createPortal(<ThemerOverlay />, document.body)}
+      {createPortal(
+        <ThemerScope popupLayer={(config.zIndex ?? Z_INDEX.sidebar) + 1}>
+          <ThemerTrigger />
+          <ThemerOverlay />
+        </ThemerScope>,
+        document.body,
+      )}
     </>
   );
-}
-
-/**
- * The trigger and overlay with no host content: ThemerRoot around nothing, so
- * it shares the root's close cleanup (AI chat reset, mobile scroll lock, Lenis
- * pause) and renders nothing until the themer context is ready.
- */
-export function ThemerOverlayOnly() {
-  return <ThemerRoot>{null}</ThemerRoot>;
 }

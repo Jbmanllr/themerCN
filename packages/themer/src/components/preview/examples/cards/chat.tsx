@@ -14,14 +14,14 @@ import {
   Avatar,
   AvatarFallback,
   AvatarImage,
-} from "@villa/ui/components/avatar";
-import { Button } from "@villa/ui/components/button";
+} from "@workspace/ui/components/avatar";
+import { Button } from "@workspace/ui/components/button";
 import {
   Card,
   CardContent,
   CardFooter,
   CardHeader,
-} from "@villa/ui/components/card";
+} from "@workspace/ui/components/card";
 import {
   Command,
   CommandEmpty,
@@ -29,8 +29,8 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
-} from "@villa/ui/components/command";
-import { Input } from "@villa/ui/components/input";
+} from "@workspace/ui/components/command";
+import { Input } from "@workspace/ui/components/input";
 import {
   Dialog,
   DialogContent,
@@ -38,14 +38,14 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@villa/ui/components/dialog";
+} from "@workspace/ui/components/dialog";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "@villa/ui/components/tooltip";
-import { cn } from "@villa/ui/lib/utils";
+} from "@workspace/ui/components/tooltip";
+import { cn } from "@workspace/ui/lib/utils";
 import { ArrowUpIcon, PlusIcon } from "lucide-react";
 import { avatarDataUri } from "../avatar-data-uri";
 

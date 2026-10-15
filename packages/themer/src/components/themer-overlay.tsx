@@ -2,18 +2,19 @@
 
 // The editor's UI: a full-viewport overlay on desktop, a Drawer below
 // breakpoints.wide (1280px, hooks/use-is-mobile.ts). Renders nothing while
-// closed. ThemerRoot mounts it in a portal on document.body.
+// closed. ThemerRoot mounts it in a portal on document.body, inside the
+// Themer's `[data-themer]` scope (themer-scope.tsx).
 //
 // Contract:
-// - Never drop `data-themer-overlay` from the desktop container:
-//   host/themer.css keys on `body:has([data-themer-overlay])` to lift every
-//   Base UI popup above it.
 // - The layer is `config.zIndex`, else Z_INDEX.sidebar (config/constants.ts).
+//   Popups portal into ThemerScope's container one layer above.
+// - The desktop container must not clip overflow (no `overflow-hidden`,
+//   `transform` or `contain`): popups position against the viewport.
 //
 // See: packages/themer/ARCHITECTURE.md ("Core Entry Points").
 
 import * as React from "react";
-import { SidebarProvider, SidebarInset } from "@villa/ui/components/sidebar";
+import { SidebarProvider, SidebarInset } from "@workspace/ui/components/sidebar";
 import { useOverlayStore } from "../stores/overlay-store";
 import { usePreferencesStore } from "../stores/preferences-store";
 import { useThemerContext } from "./themer-provider";

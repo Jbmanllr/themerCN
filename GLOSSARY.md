@@ -23,3 +23,19 @@ _Avoid_: consumer, client app
 **Adapter**:
 The framework-specific glue that lets a Host app built on a given framework mount the React-only Themer.
 _Avoid_: integration, plugin
+
+**Preset**:
+A named Theme offered as a starting point, either built into the Themer or supplied by a Host app.
+_Avoid_: template, default theme, shadcn preset (that is a **shadcn style**)
+
+**shadcn style**:
+The look the repo's components are installed with (Nova, Luma, …), fixed in the component source; the Themer cannot change it.
+_Avoid_: shadcn preset, Preset
+
+**Themer UI**:
+The Themer's own interface: its sidebar, header, controls and the popups they open. It always shows the Theme being edited.
+_Avoid_: chrome, editor UI, panel
+
+**Preview**:
+Any surface that exists to display the Theme: a built-in preview page or the Live view of the Host app's page.
+_Avoid_: demo, sample page

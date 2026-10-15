@@ -11,8 +11,8 @@
 
 import * as React from "react";
 import { AlertCircle, CheckCircle2, XCircle } from "lucide-react";
-import { Badge } from "@villa/ui/components/badge";
-import { Button } from "@villa/ui/components/button";
+import { Badge } from "@workspace/ui/components/badge";
+import { Button } from "@workspace/ui/components/button";
 import {
   Item,
   ItemActions,
@@ -21,11 +21,11 @@ import {
   ItemGroup,
   ItemMedia,
   ItemTitle,
-} from "@villa/ui/components/item";
+} from "@workspace/ui/components/item";
 import {
   ToggleGroup,
   ToggleGroupItem,
-} from "@villa/ui/components/toggle-group";
+} from "@workspace/ui/components/toggle-group";
 import { useEditorStore } from "../../stores/editor-store";
 import {
   checkThemeContrast,
@@ -159,6 +159,7 @@ function ContrastResultItem({ result, canFocus }: ContrastResultItemProps) {
 
   return (
     <Item
+      role="listitem"
       variant="outline"
       size="sm"
       className={

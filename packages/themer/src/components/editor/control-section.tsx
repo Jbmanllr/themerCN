@@ -17,8 +17,8 @@ import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
-} from "@villa/ui/components/collapsible";
-import { cn } from "@villa/ui/lib/utils";
+} from "@workspace/ui/components/collapsible";
+import { cn } from "@workspace/ui/lib/utils";
 import { usePreferencesStore } from "../../stores/preferences-store";
 import { SectionContext } from "./section-context";
 

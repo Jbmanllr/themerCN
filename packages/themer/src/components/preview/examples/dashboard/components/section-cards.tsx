@@ -1,13 +1,13 @@
 import { TrendingDownIcon, TrendingUpIcon } from "lucide-react";
 
-import { Badge } from "@villa/ui/components/badge";
+import { Badge } from "@workspace/ui/components/badge";
 import {
   Card,
   CardDescription,
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@villa/ui/components/card";
+} from "@workspace/ui/components/card";
 
 export function SectionCards() {
   return (

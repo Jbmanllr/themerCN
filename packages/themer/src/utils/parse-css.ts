@@ -1,4 +1,4 @@
-// Adapted from tweakcn (Apache-2.0, github.com/jnsahaj/tweakcn @ a3b47b37); modified by Banter.
+// Adapted from tweakcn (Apache-2.0, github.com/jnsahaj/tweakcn @ a3b47b37); modified for themercn.
 //
 // Reads a pasted stylesheet (a shadcn/tweakcn `index.css`, a Tailwind v3 or v4
 // theme, a host's generated token CSS) into the editor's per-mode style props. Pure: no
@@ -20,8 +20,7 @@
 // lengths to px). Non-colour keys set only for light are mirrored into dark;
 // colours never are.
 //
-// See: packages/themer/docs/API.md ("CSS Import, Sidebar Sync, Shadows, Colour
-// Groups").
+// See: packages/themer/ARCHITECTURE.md ("Export and import").
 import * as culori from "culori";
 import type {
   PartialThemeStyleProps,

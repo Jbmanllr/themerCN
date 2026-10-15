@@ -9,8 +9,8 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@villa/ui/components/card";
-import { ChartConfig, ChartContainer } from "@villa/ui/components/chart";
+} from "@workspace/ui/components/card";
+import { ChartConfig, ChartContainer } from "@workspace/ui/components/chart";
 
 const data = [
   {

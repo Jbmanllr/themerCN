@@ -1,7 +1,7 @@
 // Export must reflect each mode's own values: every mode block declares its own
 // --tracking-normal, so a dark-only letter spacing survives, and it is never
 // defined in terms of itself. Also pins the Tailwind 3 oklch-to-hsl mapping, the
-// multiplicative radius scale, the heading font, host extra colours and the
+// multiplicative radius scale, the heading font, Host extra colours and the
 // layout's next/font imports (one per family, none for OS families).
 import { describe, expect, it } from "vitest";
 

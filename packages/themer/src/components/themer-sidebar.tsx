@@ -1,19 +1,19 @@
 "use client";
 
 import { X } from "lucide-react";
-import { Button } from "@villa/ui/components/button";
+import { Button } from "@workspace/ui/components/button";
 import {
   Sidebar,
   SidebarHeader,
   SidebarContent,
   SidebarRail,
   useSidebar,
-} from "@villa/ui/components/sidebar";
+} from "@workspace/ui/components/sidebar";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from "@villa/ui/components/tooltip";
+} from "@workspace/ui/components/tooltip";
 import { CollapsedNavigation, ExpandedContent } from "./sidebar";
 
 interface ThemerSidebarProps {
@@ -21,7 +21,7 @@ interface ThemerSidebarProps {
 }
 
 /**
- * The editor's control sidebar, a stock @banter/ui Sidebar in `icon`
+ * The Themer UI's control sidebar, a stock @workspace/ui Sidebar in `icon`
  * collapsible mode.
  * - Expanded: preset picker and the horizontal panel tabs (ExpandedContent)
  * - Collapsed: a vertical icon menu (CollapsedNavigation)

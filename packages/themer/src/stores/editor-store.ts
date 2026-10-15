@@ -1,6 +1,6 @@
 "use client";
 
-// Adapted from tweakcn (Apache-2.0, github.com/jnsahaj/tweakcn @ a3b47b37); modified by Banter.
+// Adapted from tweakcn (Apache-2.0, github.com/jnsahaj/tweakcn @ a3b47b37); modified for themercn.
 //
 // The editor's theme state and its undo history. Rules the rest of the
 // package relies on:
@@ -13,10 +13,11 @@
 // - Preset colours always come from resolvePresetStyles (config/presets.ts).
 // - Only themeState, themeCheckpoint and presetBaseline persist; history and
 //   future do not.
-//   The persisted shape is versioned: migrateEditorState upgrades older
-//   states. utils/theme-script.ts reads `state.themeState` (currentMode,
+//   The persisted shape is versioned by EDITOR_STATE_VERSION with no
+//   migrations (pre-release): a stored state of another version is dropped.
+//   utils/theme-script.ts reads `state.themeState` (currentMode,
 //   styles) straight from this localStorage entry before hydration: keep
-//   that path and STORAGE_KEYS.editor when the shape or key changes.
+//   that path and getStorageKeys().editor when the shape or key changes.
 // - themeCheckpoint is the theme before the first HSL adjustment (the base
 //   the HSL controls recompute from). Applying, resetting, adopting or
 //   refreshing a preset, importing CSS, undo and redo move it;
@@ -28,7 +29,7 @@
 //   import, an AI theme, an undo or an edit leaves the theme different from it.
 // - A restored theme that is still exactly its baseline (neutral HSL) follows
 //   the preset's current source: refreshUntouchedPreset, run by ThemerProvider
-//   once host presets are registered, so a token change in the host reaches
+//   once Host Presets are registered, so a token change in the Host app reaches
 //   the page instead of the stored copy. A restored theme with no baseline
 //   gets one only when it already equals its preset.
 //
@@ -51,18 +52,17 @@ import { defaultThemeState, defaultHSLAdjustments } from "../config/defaults";
 import {
   getDefaultPresetId,
   hasPreset,
-  migratePresetId,
   resolvePresetStyles,
 } from "../config/presets";
 import {
   MAX_HISTORY_COUNT,
   HISTORY_DEBOUNCE_MS,
-  STORAGE_KEYS,
+  getStorageKeys,
 } from "../config/constants";
 import { isDeepEqual } from "../utils/deep-equal";
 
 /** Version of the persisted editor state (zustand persist `version`). */
-export const EDITOR_STATE_VERSION = 3;
+export const EDITOR_STATE_VERSION = 0;
 
 type PersistedEditorState = Pick<
   EditorStoreState,
@@ -109,107 +109,9 @@ function baselineOf(presetId: string, styles: ThemeStyles): PresetBaseline {
   return { preset: presetId, styles: copyStyles(styles) };
 }
 
-function migrateModeStyles(styles: unknown): unknown {
-  if (!styles || typeof styles !== "object") return styles;
-  const mode = styles as Partial<ThemeStyleProps>;
-  // v0 had no heading font: headings used the serif.
-  if (mode["font-heading"] === undefined && mode["font-serif"] !== undefined) {
-    return { ...mode, "font-heading": mode["font-serif"] };
-  }
-  return mode;
-}
-
-function migrateThemeState(state: unknown): unknown {
-  if (!state || typeof state !== "object") return state;
-  const themeState = state as Partial<ThemeEditorState>;
-  return {
-    ...themeState,
-    preset: migratePresetId(themeState.preset),
-    ...(themeState.styles && {
-      styles: {
-        ...themeState.styles,
-        light: migrateModeStyles(themeState.styles.light),
-        dark: migrateModeStyles(themeState.styles.dark),
-      },
-    }),
-  };
-}
-
-/** True when a state is the library's `default` preset with no edits. */
-function isUntouchedLibraryDefault(state: unknown): boolean {
-  if (!state || typeof state !== "object") return false;
-  const themeState = state as Partial<ThemeEditorState>;
-  return (
-    themeState.preset === defaultThemeState.preset &&
-    isDeepEqual(
-      themeState.styles,
-      resolvePresetStyles(defaultThemeState.preset ?? "default"),
-    ) &&
-    isDeepEqual(
-      themeState.hslAdjustments ?? defaultHSLAdjustments,
-      defaultHSLAdjustments,
-    )
-  );
-}
-
-/**
- * Upgrade a persisted editor state to EDITOR_STATE_VERSION.
- * v2 -> v3: use the light typography in both modes, preserving edited colours.
- * v0 -> v1: renamed preset ids (the seven local presets that shadowed
- * tweakcn ids -> `themer-<id>`, config/presets.ts LEGACY_PRESET_IDS), and a
- * `font-heading` filled from each mode's serif.
- * v1 -> v2: a stored, unedited library `default` was saved before hosts had
- * a default preset (and before fonts reached the page), so it is dropped:
- * the store then counts as fresh and adoptDefaultPreset applies the host's
- * preset instead of swapping the page's fonts to shadcn's system stack.
- */
-export function migrateEditorState(
-  persistedState: unknown,
-  version: number,
-): PersistedEditorState {
-  const state = (persistedState ?? {}) as Partial<PersistedEditorState>;
-  if (version >= EDITOR_STATE_VERSION) {
-    return state as PersistedEditorState;
-  }
-  const migrated =
-    version < 1
-      ? {
-          ...state,
-          themeState: migrateThemeState(state.themeState) as ThemeEditorState,
-          themeCheckpoint: (state.themeCheckpoint
-            ? migrateThemeState(state.themeCheckpoint)
-            : null) as ThemeEditorState | null,
-        }
-      : state;
-  if (version < 2 && isUntouchedLibraryDefault(migrated.themeState)) {
-    return {} as PersistedEditorState;
-  }
-  return {
-    ...migrated,
-    ...(migrated.themeState && {
-      themeState: {
-        ...migrated.themeState,
-        styles: copyStyles(migrated.themeState.styles),
-      },
-    }),
-    ...(migrated.themeCheckpoint && {
-      themeCheckpoint: {
-        ...migrated.themeCheckpoint,
-        styles: copyStyles(migrated.themeCheckpoint.styles),
-      },
-    }),
-    ...(migrated.presetBaseline && {
-      presetBaseline: {
-        ...migrated.presetBaseline,
-        styles: copyStyles(migrated.presetBaseline.styles),
-      },
-    }),
-  } as PersistedEditorState;
-}
-
 /**
  * Theme editor store: the edited theme with undo/redo, persisted to
- * localStorage under STORAGE_KEYS.editor ("villa-themer-editor-state").
+ * localStorage under `<storageNamespace>:editor` (getStorageKeys).
  */
 export const useEditorStore = create<EditorStore>()(
   persist(
@@ -323,8 +225,8 @@ export const useEditorStore = create<EditorStore>()(
 
       resetToCurrentPreset: () => {
         const currentThemeState = get().themeState;
-        // A preset id that is no longer registered (a removed host preset)
-        // resets to the host's default preset instead of shadcn defaults.
+        // A preset id that is no longer registered (a removed Host Preset)
+        // resets to the Host app's default preset instead of shadcn defaults.
         const presetId =
           currentThemeState.preset && hasPreset(currentThemeState.preset)
             ? currentThemeState.preset
@@ -389,7 +291,15 @@ export const useEditorStore = create<EditorStore>()(
         const { restoredFromStorage, history, themeState } = get();
         if (restoredFromStorage || history.length > 0) return;
         if (themeState.preset !== defaultThemeState.preset) return;
-        if (!hasPreset(presetId) || presetId === themeState.preset) return;
+        if (!hasPreset(presetId)) return;
+        // The same id is adopted again when a Host Preset replaced it (a Host
+        // "default"): the fresh state still holds the built-in styles.
+        if (
+          presetId === themeState.preset &&
+          isDeepEqual(themeState.styles, resolvePresetStyles(presetId))
+        ) {
+          return;
+        }
 
         const newThemeState = presetThemeState(themeState, presetId);
         set({
@@ -410,8 +320,8 @@ export const useEditorStore = create<EditorStore>()(
         if (!neutral) return;
         const fresh = resolvePresetStyles(presetId);
 
-        // A state stored before the baseline existed: it can only be trusted
-        // when the theme already is its preset.
+        // No preset was ever put on this theme (the fresh default, then
+        // edited): it can only be trusted when it already is its preset.
         if (!presetBaseline) {
           if (isDeepEqual(themeState.styles, fresh)) {
             set({ presetBaseline: baselineOf(presetId, fresh) });
@@ -486,12 +396,13 @@ export const useEditorStore = create<EditorStore>()(
       canRedo: () => get().future.length > 0,
     }),
     {
-      name: STORAGE_KEYS.editor,
+      name: getStorageKeys().editor,
+      // <Themer> names the namespace and hydrates (stores/hydrate.ts).
+      skipHydration: true,
       version: EDITOR_STATE_VERSION,
-      migrate: migrateEditorState,
-      // Called with `undefined` when nothing is stored, and with an empty
-      // object when migrateEditorState dropped the stored state; the flag
-      // lets adoptDefaultPreset tell a fresh store from a restored one.
+      // Called with `undefined` when nothing (or a state of another version)
+      // is stored; the flag lets adoptDefaultPreset tell a fresh store from a
+      // restored one.
       merge: (persistedState, currentState) =>
         (persistedState as Partial<PersistedEditorState> | undefined)
           ?.themeState

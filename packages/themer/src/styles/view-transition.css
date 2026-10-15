@@ -1,0 +1,32 @@
+/* Light/dark reveal (utils/theme-transition.ts; adapted from tweakcn,
+ * Apache-2.0, github.com/jnsahaj/tweakcn @ a3b47b37, modified for themercn).
+ * Matches only while the editor's toggle runs a transition, so the host's
+ * own view transitions keep their animation. Appended to the Themer's CSS
+ * outside its @scope: view transition pseudo-elements belong to <html>.
+ * --themer-vt-x/-y hold the click point as a viewport percentage (centre
+ * when absent). */
+html[data-themer-vt]::view-transition-old(root),
+html[data-themer-vt]::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+html[data-themer-vt]::view-transition-old(root) {
+  z-index: 0;
+}
+
+html[data-themer-vt]::view-transition-new(root) {
+  z-index: 1;
+  animation: themer-vt-reveal 0.4s ease-in-out forwards;
+}
+
+@keyframes themer-vt-reveal {
+  from {
+    clip-path: circle(0% at var(--themer-vt-x, 50%) var(--themer-vt-y, 50%));
+    opacity: 0.7;
+  }
+  to {
+    clip-path: circle(150% at var(--themer-vt-x, 50%) var(--themer-vt-y, 50%));
+    opacity: 1;
+  }
+}

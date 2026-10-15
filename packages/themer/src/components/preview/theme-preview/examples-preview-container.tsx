@@ -2,9 +2,9 @@
 // here, behind a skeleton and spinner) and the `@container` the demos' `@3xl:`
 // style container queries resolve against.
 import { Suspense } from "react";
-import { Skeleton } from "@villa/ui/components/skeleton";
-import { Spinner } from "@villa/ui/components/spinner";
-import { cn } from "@villa/ui/lib/utils";
+import { Skeleton } from "@workspace/ui/components/skeleton";
+import { Spinner } from "@workspace/ui/components/spinner";
+import { cn } from "@workspace/ui/lib/utils";
 
 const LoadingSkeleton = () => (
   <div className="absolute inset-0 flex flex-col">

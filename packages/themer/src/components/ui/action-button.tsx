@@ -12,13 +12,13 @@
 // overrides them: the trigger passes an outline one, toolbars `icon-sm`.
 
 import * as React from "react";
-import { Button } from "@villa/ui/components/button";
-import { Kbd } from "@villa/ui/components/kbd";
+import { Button } from "@workspace/ui/components/button";
+import { Kbd } from "@workspace/ui/components/kbd";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from "@villa/ui/components/tooltip";
+} from "@workspace/ui/components/tooltip";
 import { formatShortcut } from "../../hooks/use-keyboard-shortcut";
 
 export interface ActionButtonProps extends Omit<

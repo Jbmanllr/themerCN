@@ -41,8 +41,6 @@ export const GOOGLE_FONTS_API_URL =
   "https://www.googleapis.com/webfonts/v1/webfonts";
 export const GOOGLE_FONTS_CSS_URL = "https://fonts.googleapis.com/css2";
 
-export const DEFAULT_FONT_CATALOG_ENDPOINT = "/dev/themer/google-fonts";
-
 export const FONT_CATEGORIES: Record<
   FontCategory,
   { label: string; fallback: string }
@@ -103,6 +101,13 @@ const roleToCategory: Record<ThemeFontRole, FontCategory> = {
   mono: "monospace",
 };
 
+/**
+ * The bundled catalogue: ~130 popular Latin families from Google's public
+ * metadata (fonts.google.com/metadata/fonts, October 2026), grouped by
+ * Google's category. Each entry is what transformGoogleFontsMetadata would
+ * produce for it (upright weights; variable when it has axes), so the picker
+ * never requests a weight Google does not serve.
+ */
 export const POPULAR_FONTS: Record<FontCategory, FontInfo[]> = {
   "sans-serif": [
     {
@@ -114,8 +119,8 @@ export const POPULAR_FONTS: Record<FontCategory, FontInfo[]> = {
     {
       family: "Roboto",
       category: "sans-serif",
-      variants: ["100", "300", "400", "500", "700", "900"],
-      variable: false,
+      variants: ["100", "200", "300", "400", "500", "600", "700", "800", "900"],
+      variable: true,
     },
     {
       family: "Open Sans",
@@ -142,15 +147,25 @@ export const POPULAR_FONTS: Record<FontCategory, FontInfo[]> = {
       variable: false,
     },
     {
-      family: "Source Sans Pro",
+      family: "Source Sans 3",
       category: "sans-serif",
-      variants: ["200", "300", "400", "600", "700", "900"],
-      variable: false,
+      variants: ["200", "300", "400", "500", "600", "700", "800", "900"],
+      variable: true,
     },
     {
       family: "Nunito",
       category: "sans-serif",
-      variants: ["200", "300", "400", "500", "600", "700", "800", "900"],
+      variants: [
+        "200",
+        "300",
+        "400",
+        "500",
+        "600",
+        "700",
+        "800",
+        "900",
+        "1000",
+      ],
       variable: true,
     },
     {
@@ -171,6 +186,177 @@ export const POPULAR_FONTS: Record<FontCategory, FontInfo[]> = {
       variants: ["100", "200", "300", "400", "500", "600", "700", "800", "900"],
       variable: true,
     },
+    {
+      family: "Bebas Neue",
+      category: "sans-serif",
+      variants: ["400"],
+      variable: false,
+    },
+    {
+      family: "Fredoka",
+      category: "sans-serif",
+      variants: ["300", "400", "500", "600", "700"],
+      variable: true,
+    },
+    {
+      family: "Google Sans",
+      category: "sans-serif",
+      variants: ["400", "500", "600", "700"],
+      variable: true,
+    },
+    {
+      family: "Roboto Condensed",
+      category: "sans-serif",
+      variants: ["100", "200", "300", "400", "500", "600", "700", "800", "900"],
+      variable: true,
+    },
+    {
+      family: "DM Sans",
+      category: "sans-serif",
+      variants: [
+        "100",
+        "200",
+        "300",
+        "400",
+        "500",
+        "600",
+        "700",
+        "800",
+        "900",
+        "1000",
+      ],
+      variable: true,
+    },
+    {
+      family: "Arimo",
+      category: "sans-serif",
+      variants: ["400", "500", "600", "700"],
+      variable: true,
+    },
+    {
+      family: "Oswald",
+      category: "sans-serif",
+      variants: ["200", "300", "400", "500", "600", "700"],
+      variable: true,
+    },
+    {
+      family: "Ubuntu",
+      category: "sans-serif",
+      variants: ["300", "400", "500", "700"],
+      variable: false,
+    },
+    {
+      family: "Outfit",
+      category: "sans-serif",
+      variants: ["100", "200", "300", "400", "500", "600", "700", "800", "900"],
+      variable: true,
+    },
+    {
+      family: "Nunito Sans",
+      category: "sans-serif",
+      variants: [
+        "200",
+        "300",
+        "400",
+        "500",
+        "600",
+        "700",
+        "800",
+        "900",
+        "1000",
+      ],
+      variable: true,
+    },
+    {
+      family: "Work Sans",
+      category: "sans-serif",
+      variants: ["100", "200", "300", "400", "500", "600", "700", "800", "900"],
+      variable: true,
+    },
+    {
+      family: "Quicksand",
+      category: "sans-serif",
+      variants: ["300", "400", "500", "600", "700"],
+      variable: true,
+    },
+    {
+      family: "Rubik",
+      category: "sans-serif",
+      variants: ["300", "400", "500", "600", "700", "800", "900"],
+      variable: true,
+    },
+    {
+      family: "Archivo",
+      category: "sans-serif",
+      variants: ["100", "200", "300", "400", "500", "600", "700", "800", "900"],
+      variable: true,
+    },
+    {
+      family: "Manrope",
+      category: "sans-serif",
+      variants: ["200", "300", "400", "500", "600", "700", "800"],
+      variable: true,
+    },
+    {
+      family: "Barlow",
+      category: "sans-serif",
+      variants: ["100", "200", "300", "400", "500", "600", "700", "800", "900"],
+      variable: false,
+    },
+    {
+      family: "IBM Plex Sans",
+      category: "sans-serif",
+      variants: ["100", "200", "300", "400", "500", "600", "700"],
+      variable: true,
+    },
+    {
+      family: "Fira Sans",
+      category: "sans-serif",
+      variants: ["100", "200", "300", "400", "500", "600", "700", "800", "900"],
+      variable: false,
+    },
+    {
+      family: "Bricolage Grotesque",
+      category: "sans-serif",
+      variants: ["200", "300", "400", "500", "600", "700", "800"],
+      variable: true,
+    },
+    {
+      family: "Figtree",
+      category: "sans-serif",
+      variants: ["300", "400", "500", "600", "700", "800", "900"],
+      variable: true,
+    },
+    {
+      family: "Inter Tight",
+      category: "sans-serif",
+      variants: ["100", "200", "300", "400", "500", "600", "700", "800", "900"],
+      variable: true,
+    },
+    {
+      family: "Smooch Sans",
+      category: "sans-serif",
+      variants: ["100", "200", "300", "400", "500", "600", "700", "800", "900"],
+      variable: true,
+    },
+    {
+      family: "PT Sans",
+      category: "sans-serif",
+      variants: ["400", "700"],
+      variable: false,
+    },
+    {
+      family: "Archivo Black",
+      category: "sans-serif",
+      variants: ["400"],
+      variable: false,
+    },
+    {
+      family: "Barlow Condensed",
+      category: "sans-serif",
+      variants: ["100", "200", "300", "400", "500", "600", "700", "800", "900"],
+      variable: false,
+    },
   ],
   serif: [
     {
@@ -182,8 +368,8 @@ export const POPULAR_FONTS: Record<FontCategory, FontInfo[]> = {
     {
       family: "Merriweather",
       category: "serif",
-      variants: ["300", "400", "700", "900"],
-      variable: false,
+      variants: ["300", "400", "500", "600", "700", "800", "900"],
+      variable: true,
     },
     {
       family: "Lora",
@@ -212,8 +398,8 @@ export const POPULAR_FONTS: Record<FontCategory, FontInfo[]> = {
     {
       family: "Libre Baskerville",
       category: "serif",
-      variants: ["400", "700"],
-      variable: false,
+      variants: ["400", "500", "600", "700"],
+      variable: true,
     },
     {
       family: "EB Garamond",
@@ -232,6 +418,114 @@ export const POPULAR_FONTS: Record<FontCategory, FontInfo[]> = {
       category: "serif",
       variants: ["100", "200", "300", "400", "500", "600", "700", "800", "900"],
       variable: true,
+    },
+    {
+      family: "Roboto Slab",
+      category: "serif",
+      variants: ["100", "200", "300", "400", "500", "600", "700", "800", "900"],
+      variable: true,
+    },
+    {
+      family: "Cormorant Garamond",
+      category: "serif",
+      variants: ["300", "400", "500", "600", "700"],
+      variable: true,
+    },
+    {
+      family: "Instrument Serif",
+      category: "serif",
+      variants: ["400"],
+      variable: false,
+    },
+    {
+      family: "Fraunces",
+      category: "serif",
+      variants: ["100", "200", "300", "400", "500", "600", "700", "800", "900"],
+      variable: true,
+    },
+    {
+      family: "DM Serif Display",
+      category: "serif",
+      variants: ["400"],
+      variable: false,
+    },
+    {
+      family: "Newsreader",
+      category: "serif",
+      variants: ["200", "300", "400", "500", "600", "700", "800"],
+      variable: true,
+    },
+    {
+      family: "Arvo",
+      category: "serif",
+      variants: ["400", "700"],
+      variable: false,
+    },
+    {
+      family: "Bodoni Moda",
+      category: "serif",
+      variants: ["400", "500", "600", "700", "800", "900"],
+      variable: true,
+    },
+    {
+      family: "Domine",
+      category: "serif",
+      variants: ["400", "500", "600", "700"],
+      variable: true,
+    },
+    {
+      family: "IBM Plex Serif",
+      category: "serif",
+      variants: ["100", "200", "300", "400", "500", "600", "700"],
+      variable: false,
+    },
+    {
+      family: "Cormorant",
+      category: "serif",
+      variants: ["300", "400", "500", "600", "700"],
+      variable: true,
+    },
+    {
+      family: "Roboto Serif",
+      category: "serif",
+      variants: ["100", "200", "300", "400", "500", "600", "700", "800", "900"],
+      variable: true,
+    },
+    {
+      family: "Sanchez",
+      category: "serif",
+      variants: ["400"],
+      variable: false,
+    },
+    {
+      family: "Cinzel",
+      category: "serif",
+      variants: ["400", "500", "600", "700", "800", "900"],
+      variable: true,
+    },
+    {
+      family: "Slabo 13px",
+      category: "serif",
+      variants: ["400"],
+      variable: false,
+    },
+    {
+      family: "Slabo 27px",
+      category: "serif",
+      variants: ["400"],
+      variable: false,
+    },
+    {
+      family: "Cardo",
+      category: "serif",
+      variants: ["400", "700"],
+      variable: false,
+    },
+    {
+      family: "Bree Serif",
+      category: "serif",
+      variants: ["400"],
+      variable: false,
     },
   ],
   monospace: [
@@ -295,14 +589,56 @@ export const POPULAR_FONTS: Record<FontCategory, FontInfo[]> = {
       variants: ["400", "700"],
       variable: false,
     },
-  ],
-  display: [
     {
-      family: "Bebas Neue",
-      category: "display",
+      family: "Courier Prime",
+      category: "monospace",
+      variants: ["400", "700"],
+      variable: false,
+    },
+    {
+      family: "DM Mono",
+      category: "monospace",
+      variants: ["300", "400", "500"],
+      variable: false,
+    },
+    {
+      family: "Google Sans Code",
+      category: "monospace",
+      variants: ["300", "400", "500", "600", "700", "800"],
+      variable: true,
+    },
+    {
+      family: "PT Mono",
+      category: "monospace",
       variants: ["400"],
       variable: false,
     },
+    {
+      family: "Cutive Mono",
+      category: "monospace",
+      variants: ["400"],
+      variable: false,
+    },
+    {
+      family: "Fira Mono",
+      category: "monospace",
+      variants: ["400", "500", "700"],
+      variable: false,
+    },
+    {
+      family: "Share Tech Mono",
+      category: "monospace",
+      variants: ["400"],
+      variable: false,
+    },
+    {
+      family: "VT323",
+      category: "monospace",
+      variants: ["400"],
+      variable: false,
+    },
+  ],
+  display: [
     {
       family: "Abril Fatface",
       category: "display",
@@ -314,12 +650,6 @@ export const POPULAR_FONTS: Record<FontCategory, FontInfo[]> = {
       category: "display",
       variants: ["400"],
       variable: false,
-    },
-    {
-      family: "Fredoka",
-      category: "display",
-      variants: ["300", "400", "500", "600", "700"],
-      variable: true,
     },
     {
       family: "Lobster",
@@ -352,13 +682,127 @@ export const POPULAR_FONTS: Record<FontCategory, FontInfo[]> = {
       variable: false,
     },
     {
-      family: "Permanent Marker",
+      family: "Black Ops One",
       category: "display",
       variants: ["400"],
       variable: false,
     },
+    {
+      family: "Changa One",
+      category: "display",
+      variants: ["400"],
+      variable: false,
+    },
+    {
+      family: "Lobster Two",
+      category: "display",
+      variants: ["400", "700"],
+      variable: false,
+    },
+    {
+      family: "Gravitas One",
+      category: "display",
+      variants: ["400"],
+      variable: false,
+    },
+    {
+      family: "Oleo Script",
+      category: "display",
+      variants: ["400", "700"],
+      variable: false,
+    },
+    {
+      family: "Titan One",
+      category: "display",
+      variants: ["400"],
+      variable: false,
+    },
+    {
+      family: "Luckiest Guy",
+      category: "display",
+      variants: ["400"],
+      variable: false,
+    },
+    {
+      family: "Press Start 2P",
+      category: "display",
+      variants: ["400"],
+      variable: false,
+    },
+    {
+      family: "Bangers",
+      category: "display",
+      variants: ["400"],
+      variable: false,
+    },
+    {
+      family: "Patua One",
+      category: "display",
+      variants: ["400"],
+      variable: false,
+    },
+    {
+      family: "Special Elite",
+      category: "display",
+      variants: ["400"],
+      variable: false,
+    },
+    {
+      family: "Chelsea Market",
+      category: "display",
+      variants: ["400"],
+      variable: false,
+    },
+    {
+      family: "Audiowide",
+      category: "display",
+      variants: ["400"],
+      variable: false,
+    },
+    {
+      family: "Oxanium",
+      category: "display",
+      variants: ["200", "300", "400", "500", "600", "700", "800"],
+      variable: true,
+    },
+    {
+      family: "Passion One",
+      category: "display",
+      variants: ["400", "700", "900"],
+      variable: false,
+    },
+    {
+      family: "Tektur",
+      category: "display",
+      variants: ["400", "500", "600", "700", "800", "900"],
+      variable: true,
+    },
+    {
+      family: "Playball",
+      category: "display",
+      variants: ["400"],
+      variable: false,
+    },
+    {
+      family: "Forum",
+      category: "display",
+      variants: ["400"],
+      variable: false,
+    },
+    {
+      family: "Gabarito",
+      category: "display",
+      variants: ["400", "500", "600", "700", "800", "900"],
+      variable: true,
+    },
   ],
   handwriting: [
+    {
+      family: "Permanent Marker",
+      category: "handwriting",
+      variants: ["400"],
+      variable: false,
+    },
     {
       family: "Dancing Script",
       category: "handwriting",
@@ -419,10 +863,79 @@ export const POPULAR_FONTS: Record<FontCategory, FontInfo[]> = {
       variants: ["400"],
       variable: false,
     },
+    {
+      family: "Zeyada",
+      category: "handwriting",
+      variants: ["400"],
+      variable: false,
+    },
+    {
+      family: "Yellowtail",
+      category: "handwriting",
+      variants: ["400"],
+      variable: false,
+    },
+    {
+      family: "Allura",
+      category: "handwriting",
+      variants: ["400"],
+      variable: false,
+    },
+    {
+      family: "Kaushan Script",
+      category: "handwriting",
+      variants: ["400"],
+      variable: false,
+    },
+    {
+      family: "Courgette",
+      category: "handwriting",
+      variants: ["400"],
+      variable: false,
+    },
+    {
+      family: "Architects Daughter",
+      category: "handwriting",
+      variants: ["400"],
+      variable: false,
+    },
+    {
+      family: "Homemade Apple",
+      category: "handwriting",
+      variants: ["400"],
+      variable: false,
+    },
+    {
+      family: "Gloria Hallelujah",
+      category: "handwriting",
+      variants: ["400"],
+      variable: false,
+    },
+    {
+      family: "Tangerine",
+      category: "handwriting",
+      variants: ["400", "700"],
+      variable: false,
+    },
+    {
+      family: "Merienda",
+      category: "handwriting",
+      variants: ["300", "400", "500", "600", "700", "800", "900"],
+      variable: true,
+    },
+    {
+      family: "Pinyon Script",
+      category: "handwriting",
+      variants: ["400"],
+      variable: false,
+    },
   ],
 };
 
-export const FALLBACK_FONTS: FontInfo[] = Object.values(POPULAR_FONTS).flat();
+// Pure, so entries that need only the name lists (head-script) drop the catalogue.
+export const FALLBACK_FONTS: FontInfo[] = /* @__PURE__ */ Object.values(
+  POPULAR_FONTS,
+).flat();
 
 function normalizeWeights(weights: readonly FontWeight[]): string[] {
   return weights.map((weight) => String(weight));

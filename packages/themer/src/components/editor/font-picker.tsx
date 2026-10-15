@@ -3,8 +3,8 @@
 // The Google Fonts picker and the four theme font slots (sans, heading,
 // serif, mono). A popover with a debounced search, a category filter and the
 // host's paged catalogue (useFontSearch). The endpoint is the picker's
-// `fontCatalogEndpoint` prop, else ThemerConfig.fontCatalogEndpoint, else
-// DEFAULT_FONT_CATALOG_ENDPOINT.
+// `fontCatalogEndpoint` prop, else ThemerConfig.fontCatalogEndpoint, else the
+// bundled list searched in the browser (useFontSearch).
 //
 // Contract:
 // - A pick loads the family first (acquireGoogleFont + waitForFont, up to 3 s)
@@ -21,9 +21,9 @@
 
 import * as React from "react";
 import { AlertCircle, ChevronDown, FunnelX } from "lucide-react";
-import { Alert, AlertAction, AlertTitle } from "@villa/ui/components/alert";
-import { Badge } from "@villa/ui/components/badge";
-import { Button } from "@villa/ui/components/button";
+import { Alert, AlertAction, AlertTitle } from "@workspace/ui/components/alert";
+import { Badge } from "@workspace/ui/components/badge";
+import { Button } from "@workspace/ui/components/button";
 import {
   Command,
   CommandEmpty,
@@ -31,18 +31,18 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
-} from "@villa/ui/components/command";
+} from "@workspace/ui/components/command";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@villa/ui/components/popover";
-import { Label } from "@villa/ui/components/label";
+} from "@workspace/ui/components/popover";
+import { Label } from "@workspace/ui/components/label";
 import {
   Marker,
   MarkerContent,
   MarkerIcon,
-} from "@villa/ui/components/marker";
+} from "@workspace/ui/components/marker";
 import {
   Select,
   SelectContent,
@@ -50,15 +50,14 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@villa/ui/components/select";
-import { Separator } from "@villa/ui/components/separator";
-import { Spinner } from "@villa/ui/components/spinner";
+} from "@workspace/ui/components/select";
+import { Separator } from "@workspace/ui/components/separator";
+import { Spinner } from "@workspace/ui/components/spinner";
 import { useFontSearch } from "../../hooks/use-font-search";
 import { useEditorStore } from "../../stores/editor-store";
 import { useOptionalThemerContext } from "../themer-provider";
 import { useScrollBoundary } from "./scroll-boundary";
 import {
-  DEFAULT_FONT_CATALOG_ENDPOINT,
   acquireFontPreview,
   acquireGoogleFont,
   buildFontFamily,
@@ -203,7 +202,7 @@ function readRootVariable(name: string): string {
 function FontValueLabel({
   value,
   endpoint,
-}: Readonly<{ value: string; endpoint: string }>) {
+}: Readonly<{ value: string; endpoint: string | undefined }>) {
   const description = React.useMemo(
     () => describeFontValue(value, readRootVariable),
     [value],
@@ -400,9 +399,7 @@ export function FontPicker({
   const themerContext = useOptionalThemerContext();
   const defaultCategory = toFontCategory(category);
   const endpoint =
-    fontCatalogEndpoint ??
-    themerContext?.config.fontCatalogEndpoint ??
-    DEFAULT_FONT_CATALOG_ENDPOINT;
+    fontCatalogEndpoint ?? themerContext?.config.fontCatalogEndpoint;
 
   const [open, setOpen] = React.useState(false);
   const labelId = React.useId();

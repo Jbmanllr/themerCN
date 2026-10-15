@@ -1,6 +1,6 @@
 "use client";
 
-// Hooks that hold Google font families in the host document while a component
+// Hooks that hold Google font families in the Host app's document while a component
 // shows them, and report whether each arrived. A hold goes through
 // acquireGoogleFont (the reference-counted link registry in
 // utils/font-loader.ts); arrival is judged by the 400 weight within

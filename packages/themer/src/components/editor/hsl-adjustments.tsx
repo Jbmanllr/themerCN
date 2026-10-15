@@ -2,7 +2,7 @@
 
 // The HSL adjustment controls: a grid of presets (hslPresets) and three
 // sliders (hue shift, saturation and lightness multipliers) that transform
-// every colour of the theme at once (host extra colours the theme sets
+// every colour of the theme at once (Host extra colours the theme sets
 // included; an unset extra stays unset).
 //
 // Contract: adjustments are applied from the checkpoint (the theme before the
@@ -16,17 +16,17 @@
 
 import * as React from "react";
 import { ChevronDown } from "lucide-react";
-import { Button } from "@villa/ui/components/button";
+import { Button } from "@workspace/ui/components/button";
 import {
   ToggleGroup,
   ToggleGroupItem,
-} from "@villa/ui/components/toggle-group";
+} from "@workspace/ui/components/toggle-group";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from "@villa/ui/components/tooltip";
-import { cn } from "@villa/ui/lib/utils";
+} from "@workspace/ui/components/tooltip";
+import { cn } from "@workspace/ui/lib/utils";
 import { useShallow } from "zustand/react/shallow";
 import { SliderWithInput } from "./slider-with-input";
 import { useEditorStore } from "../../stores/editor-store";

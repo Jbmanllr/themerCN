@@ -5,21 +5,21 @@ import { Calendar as CalendarIcon } from "lucide-react";
 import * as React from "react";
 import { DateRange } from "react-day-picker";
 
-import { Button } from "@villa/ui/components/button";
-import { Calendar } from "@villa/ui/components/calendar";
+import { Button } from "@workspace/ui/components/button";
+import { Calendar } from "@workspace/ui/components/calendar";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@villa/ui/components/card";
+} from "@workspace/ui/components/card";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@villa/ui/components/popover";
-import { cn } from "@villa/ui/lib/utils";
+} from "@workspace/ui/components/popover";
+import { cn } from "@workspace/ui/lib/utils";
 
 export function DatePickerWithRange({
   className,

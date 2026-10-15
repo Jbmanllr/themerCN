@@ -1,6 +1,6 @@
 "use client";
 
-// Adapted from tweakcn (Apache-2.0, github.com/jnsahaj/tweakcn @ a3b47b37); modified by Banter.
+// Adapted from tweakcn (Apache-2.0, github.com/jnsahaj/tweakcn @ a3b47b37); modified for themercn.
 //
 // The colour list: search, one ControlSection per group, one memoised
 // ColorPicker per token, and the Sidebar Sync toggle (from tweakcn
@@ -32,13 +32,13 @@ import {
   InputGroupAddon,
   InputGroupButton,
   InputGroupInput,
-} from "@villa/ui/components/input-group";
-import { Toggle } from "@villa/ui/components/toggle";
+} from "@workspace/ui/components/input-group";
+import { Toggle } from "@workspace/ui/components/toggle";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from "@villa/ui/components/tooltip";
+} from "@workspace/ui/components/tooltip";
 import { ColorPicker } from "./color-picker";
 import { ControlSection } from "./control-section";
 import { useEditorStore } from "../../stores/editor-store";
@@ -253,8 +253,7 @@ export function ColorControls() {
 /**
  * Read-only swatch grid of the built-in colours of the current mode (no host
  * extra colours). No panel mounts it and the components/index.ts barrel
- * leaves it out; it is reachable by file path
- * (`@villa/themer/components/editor/color-controls`).
+ * leaves it out; no package entry exports it.
  */
 export function ColorGrid() {
   const currentStyles = useEditorStore(

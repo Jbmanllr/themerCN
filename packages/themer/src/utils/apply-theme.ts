@@ -1,4 +1,4 @@
-// Adapted from tweakcn (Apache-2.0, github.com/jnsahaj/tweakcn @ a3b47b37); modified by Banter.
+// Adapted from tweakcn (Apache-2.0, github.com/jnsahaj/tweakcn @ a3b47b37); modified for themercn.
 //
 // Writes the editor's theme onto a live document: the host page's <html> and
 // the Live preview iframe's (same-origin) document go through the same code.
@@ -21,7 +21,7 @@
 //   Written only when the shadow inputs differ from the library defaults (a
 //   preset that declares shadows, or an edit): a preset without shadows, such
 //   as a host brand preset, keeps the host's own Tailwind shadow scale.
-// - Host extra colours (ThemerConfig.extraColors) are ordinary style keys:
+// - Host extra colours (ThemerProps.extraColors) are ordinary style keys:
 //   written as `--key` when the theme sets them, absent (the host's CSS
 //   shows) when it does not.
 // - Every property written is recorded per element, so a re-apply drops keys
@@ -31,8 +31,8 @@
 // override sheet exists only while a `--shadow-*` variable is written, and
 // removing the theme removes the sheet with it.
 //
-// See: packages/themer/ARCHITECTURE.md ("Applying a theme") and
-// packages/themer/docs/API.md ("Theme Application").
+// See: packages/themer/ARCHITECTURE.md ("Applying a theme").
+import { RESTORE_STYLE_ID } from "../config/constants";
 import { defaultLightStyles } from "../config/defaults";
 import { getExtraColorKeys } from "../config/extra-colors";
 import type { ThemeEditorState, ThemeMode } from "../types";
@@ -397,7 +397,8 @@ export function removeThemeFromElement(
 /**
  * Apply the theme to a whole document: variables on its <html>, the shadow
  * override sheet in its <head> and, with `loadFonts`, the theme's Google
- * fonts. Works for a same-origin iframe's `contentDocument`; call again on
+ * fonts. The head script's restore sheet (RESTORE_STYLE_ID) in that document
+ * is removed: the theme applied here replaces it. Works for a same-origin iframe's `contentDocument`; call again on
  * every theme change and once more after the frame navigates (a new
  * document).
  */
@@ -412,6 +413,7 @@ export function applyThemeToDocument(
     doc.documentElement,
     applyOptions,
   );
+  doc.getElementById(RESTORE_STYLE_ID)?.remove();
 
   if (loadFonts) {
     setThemeFonts(

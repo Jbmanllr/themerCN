@@ -8,8 +8,8 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@villa/ui/components/card";
-import { ScrollArea } from "@villa/ui/components/scroll-area";
+} from "@workspace/ui/components/card";
+import { ScrollArea } from "@workspace/ui/components/scroll-area";
 
 export function DemoFontShowcase() {
   return (

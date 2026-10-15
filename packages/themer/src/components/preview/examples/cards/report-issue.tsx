@@ -2,7 +2,7 @@
 
 import * as React from "react";
 
-import { Button } from "@villa/ui/components/button";
+import { Button } from "@workspace/ui/components/button";
 import {
   Card,
   CardContent,
@@ -10,17 +10,17 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@villa/ui/components/card";
-import { Input } from "@villa/ui/components/input";
-import { Label } from "@villa/ui/components/label";
+} from "@workspace/ui/components/card";
+import { Input } from "@workspace/ui/components/input";
+import { Label } from "@workspace/ui/components/label";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@villa/ui/components/select";
-import { Textarea } from "@villa/ui/components/textarea";
+} from "@workspace/ui/components/select";
+import { Textarea } from "@workspace/ui/components/textarea";
 
 export function CardsReportIssue() {
   const id = React.useId();

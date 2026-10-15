@@ -1,8 +1,8 @@
 "use client";
 
 // Keeps the editor's native scrolling working in a host that uses Lenis smooth
-// scroll. Mounted by ThemerRoot. Neither Banter app uses Lenis, so there the
-// fallback below only sets a `lenis-paused` class that nothing styles.
+// scroll. Mounted by ThemerRoot. In a Host app without Lenis the fallback below
+// only sets a `lenis-paused` class that nothing styles.
 
 import { useEffect } from "react";
 import { useOverlayStore } from "../stores/overlay-store";

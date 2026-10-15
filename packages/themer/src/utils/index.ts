@@ -1,7 +1,7 @@
-// The editor's utilities, re-exported by the package root (src/index.ts).
-// Not exported here: font-loader's link registry (acquireGoogleFont,
+// The editor's utilities, as one internal barrel (the package root exports
+// none of them). Not here: font-loader's link registry (acquireGoogleFont,
 // setThemeFonts, ...), describeFontValue and theme-script; import those from
-// `@villa/themer/utils/<file>`. See packages/themer/docs/API.md ("Utilities").
+// their own files.
 export { isDeepEqual } from "./deep-equal";
 export { debounce } from "./debounce";
 export {
@@ -96,7 +96,6 @@ export {
   extractColorVariables,
 } from "./parse-css";
 export {
-  DEFAULT_FONT_CATALOG_ENDPOINT,
   FALLBACK_FONTS,
   FONT_CATEGORIES,
   GOOGLE_FONTS_API_URL,

@@ -31,7 +31,7 @@ const BUILT_IN_STYLE_KEYS: ReadonlySet<string> = new Set<string>([
   "spacing",
 ]);
 
-/** Whether a key can be a host extra colour (valid and not built in). */
+/** Whether a key can be a Host extra colour (valid and not built in). */
 export function isValidExtraColorKey(key: string): boolean {
   return (
     EXTRA_KEY_PATTERN.test(key) &&

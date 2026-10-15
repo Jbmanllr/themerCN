@@ -1,5 +1,5 @@
 // Mail layout of the Mail preview tab: a resizable account nav, message list
-// and message view over the sample mails in ../data.tsx, not Banter data.
+// and message view over the sample mails in ../data.tsx, not Host data.
 //
 // Contract: the demo runs inside the host's own page, so it must not touch it:
 // no cookie writes (the ported example saved its panel layout in cookies) and
@@ -21,21 +21,21 @@ import {
   Users2,
 } from "lucide-react";
 
-import { cn } from "@villa/ui/lib/utils";
-import { Input } from "@villa/ui/components/input";
+import { cn } from "@workspace/ui/lib/utils";
+import { Input } from "@workspace/ui/components/input";
 import {
   ResizableHandle,
   ResizablePanel,
   ResizablePanelGroup,
-} from "@villa/ui/components/resizable";
-import { Separator } from "@villa/ui/components/separator";
+} from "@workspace/ui/components/resizable";
+import { Separator } from "@workspace/ui/components/separator";
 import {
   Tabs,
   TabsContent,
   TabsList,
   TabsTrigger,
-} from "@villa/ui/components/tabs";
-import { TooltipProvider } from "@villa/ui/components/tooltip";
+} from "@workspace/ui/components/tabs";
+import { TooltipProvider } from "@workspace/ui/components/tooltip";
 import { AccountSwitcher } from "./account-switcher";
 import { MailDisplay } from "./mail-display";
 import { MailList } from "./mail-list";

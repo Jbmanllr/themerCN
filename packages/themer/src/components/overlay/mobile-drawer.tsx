@@ -5,14 +5,14 @@
 // ThemerOverlay renders it instead of the desktop layout when useIsMobile() is
 // true; there is no preview pane here. `data-lenis-prevent` leaves the
 // drawer's scrolling native in a host that runs Lenis smooth scroll (see
-// LenisPause; neither Banter app does).
+// LenisPause).
 
 import {
   Drawer,
   DrawerContent,
   DrawerHeader,
   DrawerTitle,
-} from "@villa/ui/components/drawer";
+} from "@workspace/ui/components/drawer";
 import {
   useApplyThemePreset,
   usePreset,

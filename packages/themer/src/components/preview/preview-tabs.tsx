@@ -5,8 +5,7 @@
 // and the fullscreen controls.
 //
 // - The selected tab is persisted; an unknown id (removed host tab, old
-//   build) shows the first tab, derived in render (preferences' migrate
-//   handles the renamed "custom" tab).
+//   build) shows the first tab, derived in render.
 // - Only the active tab mounts. PreviewTabs subscribes to no theme state:
 //   each tab subscribes to what it needs (the palette to styles, Live to the
 //   whole theme it injects), so an edit does not re-render the demos.
@@ -22,22 +21,22 @@
 
 import * as React from "react";
 import { Inspect, Maximize, Minimize, MoreVertical } from "lucide-react";
-import { Button } from "@villa/ui/components/button";
+import { Button } from "@workspace/ui/components/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@villa/ui/components/dropdown-menu";
-import { ScrollArea, ScrollBar } from "@villa/ui/components/scroll-area";
-import { Tabs, TabsContent, TabsList } from "@villa/ui/components/tabs";
-import { Toggle } from "@villa/ui/components/toggle";
+} from "@workspace/ui/components/dropdown-menu";
+import { ScrollArea, ScrollBar } from "@workspace/ui/components/scroll-area";
+import { Tabs, TabsContent, TabsList } from "@workspace/ui/components/tabs";
+import { Toggle } from "@workspace/ui/components/toggle";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from "@villa/ui/components/tooltip";
-import { cn } from "@villa/ui/lib/utils";
+} from "@workspace/ui/components/tooltip";
+import { cn } from "@workspace/ui/lib/utils";
 import { useColorFocusTrigger } from "../../hooks/use-color-focus";
 import { useIsMobile } from "../../hooks/use-is-mobile";
 import {
@@ -201,11 +200,19 @@ const PreviewTabBody = React.memo(function PreviewTabBody({
   wrapper: ThemerConfig["previewWrapper"];
 }) {
   const Component = tab.component;
+  // A host tab is styled by the Host's CSS alone: `[data-themer-host]` is the
+  // lower boundary of the Themer's @scope (themer-scope.tsx).
   const content =
-    tab.source === "host" && Wrapper ? (
-      <Wrapper>
-        <Component />
-      </Wrapper>
+    tab.source === "host" ? (
+      <div data-themer-host="" style={{ display: "contents" }}>
+        {Wrapper ? (
+          <Wrapper>
+            <Component />
+          </Wrapper>
+        ) : (
+          <Component />
+        )}
+      </div>
     ) : (
       <Component />
     );

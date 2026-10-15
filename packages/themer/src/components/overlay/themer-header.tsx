@@ -3,13 +3,9 @@
 // The desktop overlay's top strip over the preview pane: sidebar trigger, a
 // "Preview" label and the close button. ThemerOverlay unmounts it in
 // fullscreen preview.
-//
-// Not the legacy all-in-one header of the same name in
-// components/themer-header.tsx (no props, imported by nothing); this one is
-// what components/index.ts exports as `ThemerHeader`.
 
 import { X } from "lucide-react";
-import { SidebarTrigger } from "@villa/ui/components/sidebar";
+import { SidebarTrigger } from "@workspace/ui/components/sidebar";
 import { ActionButton } from "../ui/action-button";
 
 interface ThemerHeaderProps {

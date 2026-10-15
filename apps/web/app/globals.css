@@ -1,0 +1,18 @@
+@import "@workspace/ui/globals.css";
+/* Nightjar's tokens, generated from lib/brand/nightjar.ts. Imported after the
+   shared shadcn baseline so its :root and .dark values win. */
+@import "./nightjar.css";
+
+/* The shared baseline maps only --font-sans; the Themer also edits the
+   heading, serif and mono stacks, so the Playground's utilities read them. */
+@theme inline {
+  --font-heading: var(--font-heading);
+  --font-serif: var(--font-serif);
+  --font-mono: var(--font-mono);
+}
+
+/* The design-system specimens pin a mode on part of the page with
+   `data-mode="light|dark"` (components/design-system/mode-scope.ts), so
+   `dark:` follows the nearest pin, else the page's `.dark`. Same specificity
+   as the shared `&:is(.dark *)`; without a `data-mode` it matches the same. */
+@custom-variant dark (&:is(.dark *, [data-mode="dark"] *):not(:where([data-mode="light"] *)));

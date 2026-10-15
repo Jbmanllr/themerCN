@@ -2,7 +2,7 @@
 
 // The public consumer hook: theme state, actions and preferences in one
 // object. It subscribes to the fields it returns only (useShallow per store),
-// so history, prefs or overlay fields it does not expose never re-render its
+// so history, prefs or Themer UI fields it does not expose never re-render its
 // callers. It still returns `themeState`, so a caller re-renders on every
 // theme edit: components that need one value should select it from the store
 // directly (see selectors/editor-selectors.ts) instead of calling this.
@@ -16,7 +16,7 @@ import { useColorMode } from "../components/color-mode";
 import { useShallow } from "zustand/react/shallow";
 import { getExtraColorKeys } from "../config/extra-colors";
 import { useEditorStore } from "../stores/editor-store";
-import { useOverlayStore } from "../stores/overlay-store";
+import { useThemerUIStore } from "../stores/themer-ui-store";
 import { usePreferencesStore } from "../stores/preferences-store";
 import {
   selectCanUndo,
@@ -123,7 +123,7 @@ export function useThemer() {
     toggleInspector,
     fullscreenPreview,
     toggleFullscreen,
-  } = useOverlayStore(
+  } = useThemerUIStore(
     useShallow((state) => ({
       isOpen: state.isOpen,
       open: state.open,
@@ -294,7 +294,7 @@ export function useThemer() {
     canRedo,
     hasUnsavedChanges,
 
-    // Overlay actions
+    // Themer UI actions
     open,
     close,
     toggle,

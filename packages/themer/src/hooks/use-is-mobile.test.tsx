@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 
-// The editor chooses its desktop overlay or mobile drawer from this hook. It
+// The editor chooses its desktop layout or mobile drawer from this hook. It
 // must be right on the first render: components that mount while the editor is
 // open used to draw one frame in the desktop layout on a narrow screen and
 // flip after paint.

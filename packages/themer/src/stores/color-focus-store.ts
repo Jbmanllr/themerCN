@@ -7,14 +7,14 @@
 // a picker never re-renders every subscriber.
 //
 // The search survives panel switches (the store outlives the panels). Both
-// fields are cleared when the editor closes, by the overlay store
+// fields are cleared when the editor closes, by the Themer UI store
 // subscription at the bottom of this file.
 //
 // See: packages/themer/ARCHITECTURE.md (ColorFocusStore)
 
 import { create } from "zustand";
 import type { ColorFocusStore } from "../types";
-import { useOverlayStore } from "./overlay-store";
+import { useThemerUIStore } from "./themer-ui-store";
 
 export const useColorFocusStore = create<ColorFocusStore>()((set) => ({
   highlightTarget: null,
@@ -24,7 +24,7 @@ export const useColorFocusStore = create<ColorFocusStore>()((set) => ({
   setColorSearch: (query) => set({ colorSearch: query }),
 }));
 
-useOverlayStore.subscribe((state, previous) => {
+useThemerUIStore.subscribe((state, previous) => {
   if (previous.isOpen && !state.isOpen) {
     useColorFocusStore.setState({ colorSearch: "", highlightTarget: null });
   }

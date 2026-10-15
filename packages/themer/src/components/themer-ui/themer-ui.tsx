@@ -1,6 +1,6 @@
 "use client";
 
-// The editor's UI: a full-viewport overlay on desktop, a Drawer below
+// The editor's UI: full-viewport on desktop, a Drawer below
 // breakpoints.wide (1280px, hooks/use-is-mobile.ts). Renders nothing while
 // closed. ThemerRoot mounts it in a portal on document.body, inside the
 // Themer's `[data-themer]` scope (themer-scope.tsx).
@@ -15,35 +15,35 @@
 
 import * as React from "react";
 import { SidebarProvider, SidebarInset } from "@workspace/ui/components/sidebar";
-import { useOverlayStore } from "../stores/overlay-store";
-import { usePreferencesStore } from "../stores/preferences-store";
-import { useThemerContext } from "./themer-provider";
-import { useIsMobile } from "../hooks/use-is-mobile";
-import { Z_INDEX, SIDEBAR_WIDTHS } from "../config/constants";
-import { ThemerSidebar } from "./themer-sidebar";
-import { MobileDrawer } from "./overlay/mobile-drawer";
-import { ThemerHeader } from "./overlay/themer-header";
-import { PreviewPanel } from "./overlay/preview-panel";
-import { useFullscreenSync } from "../hooks/use-fullscreen";
+import { useThemerUIStore } from "../../stores/themer-ui-store";
+import { usePreferencesStore } from "../../stores/preferences-store";
+import { useThemerContext } from "../themer-provider";
+import { useIsMobile } from "../../hooks/use-is-mobile";
+import { Z_INDEX, SIDEBAR_WIDTHS } from "../../config/constants";
+import { ThemerSidebar } from "../themer-sidebar";
+import { MobileDrawer } from "./mobile-drawer";
+import { ThemerHeader } from "./themer-header";
+import { PreviewPanel } from "./preview-panel";
+import { useFullscreenSync } from "../../hooks/use-fullscreen";
 
-const getFullscreen = () => useOverlayStore.getState().fullscreenPreview;
+const getFullscreen = () => useThemerUIStore.getState().fullscreenPreview;
 const setFullscreen = (fullscreenPreview: boolean) =>
-  useOverlayStore.setState({ fullscreenPreview });
+  useThemerUIStore.setState({ fullscreenPreview });
 
 /**
- * Main overlay component with collapsible sidebar (shadcn Sidebar pattern)
+ * The Themer UI, with a collapsible sidebar (shadcn Sidebar pattern)
  * Left panel: Collapsible sidebar with panel controls
  * Right panel: Action bar + preview area
  *
- * Fullscreen preview: the preview tabs cover the overlay (PreviewTabs goes
+ * Fullscreen preview: the preview tabs cover the rest of the Themer UI (PreviewTabs goes
  * `fixed`), and the sidebar and header unmount so focus cannot reach hidden
  * chrome. The preview subtree keeps its position in the tree, so the Live
  * frame is not reloaded.
  */
-export function ThemerOverlay() {
-  const isOpen = useOverlayStore((state) => state.isOpen);
-  const close = useOverlayStore((state) => state.close);
-  const isFullscreen = useOverlayStore((state) => state.fullscreenPreview);
+export function ThemerUI() {
+  const isOpen = useThemerUIStore((state) => state.isOpen);
+  const close = useThemerUIStore((state) => state.close);
+  const isFullscreen = useThemerUIStore((state) => state.fullscreenPreview);
   const { config } = useThemerContext();
   const isMobile = useIsMobile();
   const sidebarCollapsed = usePreferencesStore(
@@ -70,8 +70,8 @@ export function ThemerOverlay() {
 
   return (
     <div
-      data-themer-overlay
-      data-testid="themer-overlay"
+      data-themer-ui
+      data-testid="themer-ui"
       className="bg-background fixed inset-0"
       style={{ zIndex: config.zIndex ?? Z_INDEX.sidebar }}
     >

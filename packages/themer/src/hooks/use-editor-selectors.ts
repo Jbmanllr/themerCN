@@ -1,7 +1,7 @@
 // One-line hooks over selectors/editor-selectors.ts: each subscribes to a
 // single slice of the editor store, so a component re-renders only when that
 // slice changes. Exported through the package root; inside the package only
-// usePreset and useApplyThemePreset are called (overlay/mobile-drawer.tsx).
+// usePreset and useApplyThemePreset are called (themer-ui/mobile-drawer.tsx).
 // A new hook's selector follows the contract in selectors/editor-selectors.ts.
 
 import { useEditorStore } from "../stores/editor-store";

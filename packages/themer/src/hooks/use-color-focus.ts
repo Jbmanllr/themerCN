@@ -14,7 +14,7 @@
 
 import { useCallback, useEffect, useRef } from "react";
 import { useColorFocusStore } from "../stores/color-focus-store";
-import { useOverlayStore } from "../stores/overlay-store";
+import { useThemerUIStore } from "../stores/themer-ui-store";
 import { usePreferencesStore } from "../stores/preferences-store";
 import { HIGHLIGHT_ANIMATION_MS } from "../config/constants";
 import {
@@ -73,7 +73,7 @@ export function focusColor(
 
   // The picker lives in the sidebar, which fullscreen preview covers: leave it
   // (useFullscreenSync then leaves native fullscreen too).
-  useOverlayStore.setState({ activePanel: "colors", fullscreenPreview: false });
+  useThemerUIStore.setState({ activePanel: "colors", fullscreenPreview: false });
   const preferences = usePreferencesStore.getState();
   if (preferences.sidebarCollapsed) preferences.setSidebarCollapsed(false);
 

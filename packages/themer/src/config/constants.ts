@@ -33,8 +33,8 @@ export const HIGHLIGHT_ANIMATION_MS = 1500;
 
 /**
  * Layers of the editor chrome. Read today: `trigger` and `sidebar` (the
- * floating trigger and the overlay, each unless the host sets
- * ThemerConfig.zIndex). Popups take the layer above the overlay's
+ * floating trigger and the Themer UI, each unless the host sets
+ * ThemerConfig.zIndex). Popups take the layer above the Themer UI's
  * (themer-scope.tsx). `overlay`, `header`, `popover`, `modal` and
  * `inspector` have no reader.
  */

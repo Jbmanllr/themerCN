@@ -5,7 +5,7 @@
 // only sets a `lenis-paused` class that nothing styles.
 
 import { useEffect } from "react";
-import { useOverlayStore } from "../stores/overlay-store";
+import { useThemerUIStore } from "../stores/themer-ui-store";
 
 interface LenisLike {
   stop: () => void;
@@ -26,8 +26,8 @@ function findLenis(): LenisLike | null {
 }
 
 /**
- * Pauses Lenis smooth scroll while the themer overlay is open, so native
- * scroll works inside the overlay.
+ * Pauses Lenis smooth scroll while the Themer UI is open, so native
+ * scroll works inside it.
  *
  * Looks for the Lenis instance on window.lenis or window.__lenis; without
  * one it sets the `lenis-paused` class on the root element instead. Exactly
@@ -35,7 +35,7 @@ function findLenis(): LenisLike | null {
  * that was stopped.
  */
 export function LenisPause() {
-  const isOpen = useOverlayStore((state) => state.isOpen);
+  const isOpen = useThemerUIStore((state) => state.isOpen);
 
   useEffect(() => {
     if (!isOpen) return undefined;

@@ -1,13 +1,13 @@
 "use client";
 
-// Viewport hooks for the editor's layout switch (overlay vs mobile drawer).
+// Viewport hooks for the editor's layout switch (desktop vs mobile drawer).
 
 import { useState, useEffect, useCallback, useSyncExternalStore } from "react";
 
 // The editor switches to its mobile drawer below 1280 (1280px).
-// Its desktop overlay renders the stock @workspace/ui Sidebar, which becomes a
+// Its desktop layout renders the stock @workspace/ui Sidebar, which becomes a
 // Sheet below shadcn's own 768px, so this value must never drop under 768:
-// the overlay would then draw around a Sidebar in Sheet mode.
+// the desktop layout would then draw around a Sidebar in Sheet mode.
 const MOBILE_BREAKPOINT = 1280;
 
 function getServerSnapshot() {

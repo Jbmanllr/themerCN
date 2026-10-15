@@ -13,7 +13,7 @@
 //
 // Differences: Base UI composition (`render`), and the popover sized from its
 // trigger with `--anchor-width` (no ResizeObserver). It portals into the
-// Themer's popup container, above the overlay (themer-scope.tsx).
+// Themer's popup container, above the Themer UI (themer-scope.tsx).
 
 import * as React from "react";
 import { ChevronDown, ArrowLeft, ArrowRight, Shuffle } from "lucide-react";

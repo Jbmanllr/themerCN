@@ -4,10 +4,6 @@
 
 `pre-release`
 
-## Git
-
-Delivery mode: `autonomous`. Coding agents may merge their own non-draft PRs once review and the required checks cover the current head.
-
 ## Agent skills
 
 ### Issue tracker

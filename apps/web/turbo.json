@@ -2,6 +2,9 @@
   "$schema": "https://turbo.build/schema.json",
   "extends": ["//"],
   "tasks": {
+    "dev": {
+      "passThroughEnv": ["GOOGLE_FONTS_API_KEY"]
+    },
     "typecheck": {
       "dependsOn": ["^typecheck", "^build"]
     },
@@ -11,7 +14,11 @@
         "$TURBO_ROOT$/.github/workflows/ci.yml",
         "$TURBO_ROOT$/package.json",
         "$TURBO_ROOT$/turbo.json",
-        "$TURBO_ROOT$/apps/vite/package.json"
+        "$TURBO_ROOT$/apps/*/package.json",
+        "$TURBO_ROOT$/apps/*/eslint.config.js",
+        "$TURBO_ROOT$/packages/*/package.json",
+        "$TURBO_ROOT$/packages/*/eslint.config.js",
+        "$TURBO_ROOT$/packages/eslint-config/*.js"
       ]
     }
   }

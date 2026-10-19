@@ -105,6 +105,18 @@ export function getStorageKeys(namespace: string = DEFAULT_STORAGE_NAMESPACE) {
 }
 
 /**
+ * Versions of the persisted stores' entries (zustand persist `version`):
+ * editor-store.ts and preferences-store.ts persist at them, and the
+ * pre-hydration script (utils/theme-script.ts) ignores an entry saved at
+ * another version. Bump one when its persisted shape changes; there are no
+ * migrations (pre-release), so an entry of another version is dropped.
+ * They live here, not in the stores, because the head-script entry must
+ * reach no store code (scripts/check-entries.mjs).
+ */
+export const EDITOR_STATE_VERSION = 0
+export const PREFERENCES_VERSION = 1
+
+/**
  * Id of the <style> the pre-hydration script writes the saved Theme into.
  * ThemerProvider removes it once it applies the Theme itself.
  */

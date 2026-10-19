@@ -244,6 +244,14 @@ the switch inside a View Transition with a circular reveal where supported.
   `<ns>:preferences`: an uncontrolled Themer must restore `.dark` before
   first paint, and the head script can only read it from storage. The
   `storageNamespace` TSDoc and the README list all three keys.
+- Each persisted entry carries its store's version, `EDITOR_STATE_VERSION`
+  or `PREFERENCES_VERSION`, both in
+  [config/constants.ts](src/config/constants.ts) so the head script can
+  embed them without reaching store code. There are no migrations
+  (pre-release): each store's `migrate` is `dropOtherVersion`
+  ([stores/persist-options.ts](src/stores/persist-options.ts)), so an entry
+  of another version is not applied, nothing is logged, and zustand rewrites
+  the key at the current version.
 - [utils/theme-script.ts](src/utils/theme-script.ts) generates the head
   script string. It sets `.dark` from `<ns>:color-mode` when an uncontrolled
   Themer saved one (otherwise the Host owns the class, and its script may
@@ -252,7 +260,8 @@ the switch inside a View Transition with a circular reveal where supported.
   `html:root:not(.dark)` and `html:root.dark` rules, which outrank the Host's
   `:root` and `.dark`, so the first paint has the right tokens whichever mode
   the page ends up in; it also adds the font links. It writes nothing when
-  nothing is saved or `themeOverrideEnabled` is false, and drops a saved
+  nothing is saved or `themeOverrideEnabled` is false, ignores an entry
+  saved at another version (as the store drops it), and drops a saved
   value that could end its declaration. `ThemerProvider` (and
   `applyThemeToDocument`, for the Live frame) removes the sheet once it
   applies the Theme itself. It embeds what it needs with `JSON.stringify` and
@@ -277,7 +286,7 @@ Zustand stores. Two persist; two are transient.
 `themeCheckpoint` and `presetBaseline` persist; `history`, `future` and
 `restoredFromStorage` do not. The package is pre-release: there are no
 migrations, and a stored state of another version is dropped (the store
-starts fresh).
+starts fresh, see Persistence and the head script).
 
 ```typescript
 {

@@ -9,6 +9,7 @@
 // utils/theme-script.test.ts.
 import { beforeEach, expect, it } from "vitest"
 
+import { EDITOR_STATE_VERSION } from "./config/constants"
 import { getThemerHeadScript } from "./head-script"
 
 function save(namespace: string, primary: string) {
@@ -18,7 +19,7 @@ function save(namespace: string, primary: string) {
       state: {
         themeState: { currentMode: "light", styles: { light: { primary } } },
       },
-      version: 0,
+      version: EDITOR_STATE_VERSION,
     })
   )
 }

@@ -13,8 +13,10 @@
 // - Preset colours always come from resolvePresetStyles (config/presets.ts).
 // - Only themeState, themeCheckpoint and presetBaseline persist; history and
 //   future do not.
-//   The persisted shape is versioned by EDITOR_STATE_VERSION with no
-//   migrations (pre-release): a stored state of another version is dropped.
+//   The persisted shape is versioned by EDITOR_STATE_VERSION
+//   (config/constants.ts) with no migrations (pre-release): a stored state of
+//   another version is dropped without an error and the key rewritten
+//   (dropOtherVersion), and the head script ignores it.
 //   utils/theme-script.ts reads `state.themeState` (currentMode,
 //   styles) straight from this localStorage entry before hydration: keep
 //   that path and getStorageKeys().editor when the shape or key changes.
@@ -57,12 +59,11 @@ import {
 import {
   MAX_HISTORY_COUNT,
   HISTORY_DEBOUNCE_MS,
+  EDITOR_STATE_VERSION,
   getStorageKeys,
 } from "../config/constants"
 import { isDeepEqual } from "../utils/deep-equal"
-
-/** Version of the persisted editor state (zustand persist `version`). */
-export const EDITOR_STATE_VERSION = 0
+import { dropOtherVersion } from "./persist-options"
 
 type PersistedEditorState = Pick<
   EditorStoreState,
@@ -400,6 +401,7 @@ export const useEditorStore = create<EditorStore>()(
       // <Themer> names the namespace and hydrates (stores/hydrate.ts).
       skipHydration: true,
       version: EDITOR_STATE_VERSION,
+      migrate: dropOtherVersion,
       // Called with `undefined` when nothing (or a state of another version)
       // is stored; the flag lets adoptDefaultPreset tell a fresh store from a
       // restored one.

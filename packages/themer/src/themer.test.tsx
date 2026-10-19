@@ -6,14 +6,13 @@ import { act } from "react"
 import { createRoot, type Root } from "react-dom/client"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
+import { EDITOR_STATE_VERSION, PREFERENCES_VERSION } from "./config/constants"
 import { defaultThemeState } from "./config/defaults"
 import { useEditorStore } from "./stores/editor-store"
 import { useThemerUIStore } from "./stores/themer-ui-store"
-import {
-  PREFERENCES_VERSION,
-  usePreferencesStore,
-} from "./stores/preferences-store"
+import { usePreferencesStore } from "./stores/preferences-store"
 import { THEMER_CSS } from "./generated/themer-css"
+import { getThemerHeadScript } from "./head-script"
 import { Themer, type ThemerProps } from "./index"
 
 // happy-dom applies injected sheets to getComputedStyle but resolves custom
@@ -75,6 +74,7 @@ beforeEach(() => {
   usePreferencesStore.setState(usePreferencesStore.getInitialState(), true)
   useThemerUIStore.setState(useThemerUIStore.getInitialState(), true)
   localStorage.clear()
+  document.getElementById("themercn-restore")?.remove()
   document.documentElement.className = ""
   document.documentElement.removeAttribute("style")
 })
@@ -124,7 +124,7 @@ describe("Themer", () => {
             themeCheckpoint: themeState,
             presetBaseline: null,
           },
-          version: 0,
+          version: EDITOR_STATE_VERSION,
         })
       )
     }
@@ -194,6 +194,70 @@ describe("Themer", () => {
       await mount()
 
       expect(document.getElementById("themercn-restore")).toBeNull()
+    })
+
+    describe("an entry saved at another version", () => {
+      const STALE_EDITOR_VERSION = EDITOR_STATE_VERSION - 1
+      const STALE_PREFERENCES_VERSION = PREFERENCES_VERSION - 1
+      // Its own namespace: <Themer> hydrates once per namespace.
+      const namespace = "stale"
+
+      function seedStaleEditor() {
+        seedEditor(`${namespace}:editor`, "rgb(4, 4, 4)")
+        const editor = JSON.parse(localStorage.getItem(`${namespace}:editor`)!)
+        localStorage.setItem(
+          `${namespace}:editor`,
+          JSON.stringify({ ...editor, version: STALE_EDITOR_VERSION })
+        )
+      }
+
+      function seedStalePreferences() {
+        localStorage.setItem(
+          `${namespace}:preferences`,
+          JSON.stringify({
+            state: { themeOverrideEnabled: false },
+            version: STALE_PREFERENCES_VERSION,
+          })
+        )
+      }
+
+      function storedVersion(key: string) {
+        return JSON.parse(localStorage.getItem(key)!).version
+      }
+
+      it("is ignored by the head script, which writes no theme style", () => {
+        seedStaleEditor()
+
+        new Function(getThemerHeadScript({ storageNamespace: namespace }))()
+
+        expect(document.getElementById("themercn-restore")).toBeNull()
+      })
+
+      it("lets the head script restore a current Theme despite stale preferences", () => {
+        seedEditor(`${namespace}:editor`, "rgb(5, 5, 5)")
+        seedStalePreferences()
+
+        new Function(getThemerHeadScript({ storageNamespace: namespace }))()
+
+        expect(
+          document.getElementById("themercn-restore")?.textContent
+        ).toContain("--primary: rgb(5, 5, 5);")
+      })
+
+      it("is dropped on mount without an error, and rewritten at the current version", async () => {
+        seedStaleEditor()
+        seedStalePreferences()
+        const error = vi.spyOn(console, "error")
+
+        await mount({ storageNamespace: namespace })
+
+        expect(error).not.toHaveBeenCalled()
+        expect(rootVar("--primary")).toBe(LIGHT_PRIMARY)
+        expect(storedVersion(`${namespace}:editor`)).toBe(EDITOR_STATE_VERSION)
+        expect(storedVersion(`${namespace}:preferences`)).toBe(
+          PREFERENCES_VERSION
+        )
+      })
     })
   })
 

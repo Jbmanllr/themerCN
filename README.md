@@ -28,8 +28,11 @@ Requires Node 22.13 or later (pnpm 11) and the pnpm version pinned in
 ```sh
 pnpm install
 pnpm dev                          # every app: web on :3000, vite on :5173 (Themer on)
-pnpm --filter web dev             # the Playground only
+pnpm turbo dev --filter=web       # the Playground only
 ```
+
+Both build `themercn` first, then rebuild it on every save (`tsdown --watch`
+plus a CSS-build watcher), so Themer edits reach the apps without a restart.
 
 The Playground's font picker uses Google's public catalog; set
 `GOOGLE_FONTS_API_KEY` (server-only) to use the Fonts Developer API instead.

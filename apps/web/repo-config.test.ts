@@ -1,3 +1,4 @@
+import { execFileSync } from "node:child_process"
 import { existsSync, readdirSync, readFileSync } from "node:fs"
 import { join } from "node:path"
 import { fileURLToPath } from "node:url"
@@ -109,5 +110,90 @@ describe("linting", () => {
       .flat()
       .flatMap((block) => Object.keys(block.plugins ?? {}))
     expect(plugins.filter((name) => /only-?warn/i.test(name))).toEqual([])
+  })
+})
+
+// The task graph `turbo run <args>` would run, without running it.
+type DryTask = { taskId: string; command: string; dependencies: string[] }
+const dryRun = (...args: string[]): DryTask[] =>
+  JSON.parse(
+    execFileSync("pnpm", ["exec", "turbo", "run", ...args, "--dry=json"], {
+      cwd: fileURLToPath(new URL("../../", import.meta.url)),
+      encoding: "utf8",
+      maxBuffer: 64 * 1024 * 1024,
+    })
+  ).tasks
+const APPS = ["web", "vite-app"]
+
+describe("task graph", () => {
+  const graph = dryRun("typecheck", "dev")
+  const task = (id: string) => {
+    const found = graph.find((t) => t.taskId === id)
+    if (!found) throw new Error(`${id} is not in the task graph`)
+    return found
+  }
+
+  it.each(APPS)(
+    "%s typecheck waits for the package it type-checks against",
+    (app) => {
+      expect(task(`${app}#typecheck`).dependencies).toContain("themercn#build")
+    }
+  )
+
+  it.each(APPS)("%s dev starts from a built package", (app) => {
+    expect(task(`${app}#dev`).dependencies).toContain("themercn#build")
+  })
+
+  // `turbo dev --filter=<app>` too: the package watch comes along.
+  it.each(APPS)(
+    "%s dev runs alongside the package's watch tasks",
+    (app) => {
+      const watched = dryRun("dev", `--filter=${app}`)
+        .filter((t) => t.taskId.startsWith("themercn#"))
+        .map((t) => [t.taskId, t.command])
+      expect(watched).toEqual(
+        expect.arrayContaining([
+          ["themercn#dev", expect.stringMatching(/watch/)],
+          ["themercn#dev:css", expect.stringMatching(/watch/)],
+        ])
+      )
+    },
+    60_000
+  )
+})
+
+describe("shared dependency versions", () => {
+  const dependencies = (workspace: string): Record<string, string> =>
+    JSON.parse(read(`../../${workspace}/package.json`)).dependencies
+
+  it("runtime dependencies shared by packages/ui and themercn use the catalog", () => {
+    const ui = dependencies("packages/ui")
+    const themer = dependencies("packages/themer")
+    const shared = Object.keys(ui).filter((name) => name in themer)
+    expect(shared).toEqual(expect.arrayContaining(["lucide-react", "recharts"]))
+    for (const name of shared) {
+      expect({ name, ui: ui[name], themer: themer[name] }).toEqual({
+        name,
+        ui: "catalog:",
+        themer: "catalog:",
+      })
+    }
+  })
+})
+
+describe("toolchain", () => {
+  it("root engines.node matches the README's Node requirement", () => {
+    const required = read("../../README.md").match(
+      /Requires Node (\d+)\.(\d+) or later/
+    )
+    expect(required).not.toBeNull()
+    const { engines } = JSON.parse(read("../../package.json"))
+    expect(engines.node).toBe(`>=${required?.[1]}.${required?.[2]}.0`)
+  })
+
+  it("CI cancels superseded runs only for pull requests", () => {
+    expect(read("../../.github/workflows/ci.yml")).toMatch(
+      /^ {2}cancel-in-progress: \$\{\{ github\.event_name == 'pull_request' \}\}$/m
+    )
   })
 })

@@ -47,12 +47,9 @@ import {
 import { SHORTCUTS } from "../../config/constants"
 import { useToggleMode } from "../../hooks/use-themer"
 import { useIsOnPreset } from "../../hooks/use-editor-selectors"
-import {
-  selectCanRedo,
-  selectCanUndo,
-  selectCurrentMode,
-} from "../../selectors"
+import { selectCanRedo, selectCanUndo } from "../../selectors"
 import { useEditorStore } from "../../stores/editor-store"
+import { useColorMode } from "../color-mode"
 import { usePreferencesStore } from "../../stores/preferences-store"
 import { useThemerUIStore } from "../../stores/themer-ui-store"
 import { ActionButton } from "../ui/action-button"
@@ -236,7 +233,7 @@ export function ThemerActionMenuItem({ action }: { action: ThemerAction }) {
 
 /** ModeToggle's menu form, named by the mode it switches to. */
 export function ThemerModeMenuItem() {
-  const isDark = useEditorStore(selectCurrentMode) === "dark"
+  const isDark = useColorMode().mode === "dark"
   const toggleMode = useToggleMode()
   const Icon = isDark ? Sun : Moon
 

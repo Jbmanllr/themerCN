@@ -27,6 +27,7 @@ import {
   ToggleGroupItem,
 } from "@workspace/ui/components/toggle-group"
 import { useEditorStore } from "../../stores/editor-store"
+import { useColorMode } from "../color-mode"
 import {
   checkThemeContrast,
   formatContrastRatio,
@@ -74,7 +75,7 @@ function pickSingle<T extends string>(
  * filter and one row per rated pair.
  */
 export function ContrastChecker() {
-  const pageMode = useEditorStore((state) => state.themeState.currentMode)
+  const pageMode = useColorMode().mode
   const [viewMode, setViewMode] = React.useState<ThemeMode>(pageMode)
   const styles = useEditorStore((state) => state.themeState.styles[viewMode])
   const [filterMode, setFilterMode] = React.useState<FilterMode>("all")

@@ -464,6 +464,40 @@ describe("Themer", () => {
 
       expect(rootVar("--primary")).toBe(DARK_PRIMARY)
     })
+
+    it("shows the new mode on its control before the page is themed for it", async () => {
+      await mount()
+      await openThemer()
+      // Records arrive in the order the DOM changed: the control's label
+      // must change no later than the commit that themes the Host page, not
+      // one commit behind it.
+      const records: MutationRecord[] = []
+      const observer = new MutationObserver((batch) => records.push(...batch))
+      observer.observe(document.documentElement, {
+        attributes: true,
+        attributeFilter: ["style", "aria-label"],
+        subtree: true,
+      })
+
+      await act(async () => document.documentElement.classList.add("dark"))
+
+      records.push(...observer.takeRecords())
+      const changes = records
+        .filter(
+          (record) =>
+            record.target === document.documentElement ||
+            record.attributeName === "aria-label"
+        )
+        .map((record) =>
+          record.attributeName === "aria-label"
+            ? (record.target as Element).getAttribute("aria-label")
+            : "page themed"
+        )
+      observer.disconnect()
+      expect(rootVar("--primary")).toBe(DARK_PRIMARY)
+      expect(changes[0]).toBe("Switch to light mode")
+      expect(changes).toContain("page themed")
+    })
   })
 
   describe("colour mode, controlled", () => {

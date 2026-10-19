@@ -1,16 +1,25 @@
 name: Release
 
-# Changesets release flow (README "Releasing"). On every push to main:
-# - pending changesets: open or update the "Version Packages" PR;
+# Changesets release flow (README "Releasing"). Runs after every CI run on
+# main, and only for a push whose CI succeeded on the commit that is still
+# main's tip: that is the commit checked out here, and the `github.sha`
+# changesets/action bases the Version Packages branch and the tags on.
+# - pending changesets: open or update the "Version Packages" PR, with a
+#   GitHub App token so the PR's own CI runs;
 # - no changesets and an unpublished themercn version (that PR was merged):
 #   build and pack it, then publish it to npm `latest` with trusted publishing
 #   (OIDC, automatic provenance, no NPM_TOKEN), push the tag and create the
 #   GitHub Release.
 # Only the publish job can mint an OIDC token. npm matches this file's name
 # (release.yml) against the package's trusted publisher: don't rename it.
+# Every action is pinned to a commit SHA (the comment names its release), so
+# a retagged action can't run with these tokens; update SHA and comment
+# together. packages/themer/scripts/release-workflow.test.ts asserts all this.
 
 on:
-  push:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
     branches: [main]
 
 concurrency:
@@ -22,6 +31,13 @@ permissions: {}
 jobs:
   select-mode:
     name: Select mode
+    # A pull request from a branch named `main` also matches `branches`, so
+    # the event is checked too. A run for a commit main has moved past is
+    # skipped: the newer commit's CI run releases it.
+    if: >-
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'push' &&
+      github.event.workflow_run.head_sha == github.sha
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -29,48 +45,64 @@ jobs:
       mode: ${{ steps.select-mode.outputs.mode }}
       publish-plan-artifact-id: ${{ steps.select-mode.outputs.publish-plan-artifact-id }}
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          ref: ${{ github.event.workflow_run.head_sha }}
           persist-credentials: false
 
       # pnpm version comes from "packageManager" in package.json.
-      - uses: pnpm/action-setup@v6
+      - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
 
       # No dependency cache in this workflow: it guards against cache
       # poisoning reaching the publish job.
-      - uses: actions/setup-node@v7
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 24
 
       - run: pnpm install --frozen-lockfile
 
       - id: select-mode
-        uses: changesets/action/select-mode@v2
+        uses: changesets/action/select-mode@ae32849d5ba541f9ae29e40e22a623bc13562f51 # v2.1.2
 
   version:
     name: Version Packages PR
     needs: select-mode
     if: needs.select-mode.outputs.mode == 'version'
     runs-on: ubuntu-latest
+    # The App token does the writing; GITHUB_TOKEN only reads.
     permissions:
-      contents: write
-      pull-requests: write
+      contents: read
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          ref: ${{ github.event.workflow_run.head_sha }}
           persist-credentials: false
 
-      - uses: pnpm/action-setup@v6
+      - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
 
-      - uses: actions/setup-node@v7
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 24
 
       - run: pnpm install --frozen-lockfile
 
+      # Events from GITHUB_TOKEN don't trigger workflows, so a PR it opened
+      # would never get CI's required checks. An installation token of the
+      # release App (README "Owner-only bootstrap") does; it is minted per run
+      # and revoked when the job ends.
+      - id: app-token
+        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
+        with:
+          client-id: ${{ vars.RELEASE_APP_CLIENT_ID }}
+          private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+          permission-contents: write
+          permission-pull-requests: write
+
       # Runs `changeset version` (CHANGELOG via @changesets/changelog-github)
       # and opens or updates the "Version Packages" PR.
-      - uses: changesets/action/version@v2
+      - uses: changesets/action/version@ae32849d5ba541f9ae29e40e22a623bc13562f51 # v2.1.2
+        with:
+          github-token: ${{ steps.app-token.outputs.token }}
 
   pack:
     name: Build and pack
@@ -82,13 +114,14 @@ jobs:
     outputs:
       pack-dir-artifact-id: ${{ steps.pack.outputs.pack-dir-artifact-id }}
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          ref: ${{ github.event.workflow_run.head_sha }}
           persist-credentials: false
 
-      - uses: pnpm/action-setup@v6
+      - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
 
-      - uses: actions/setup-node@v7
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 24
 
@@ -99,7 +132,7 @@ jobs:
 
       # `pnpm pack`, which rewrites `workspace:*` ranges in the manifest.
       - id: pack
-        uses: changesets/action/pack@v2
+        uses: changesets/action/pack@ae32849d5ba541f9ae29e40e22a623bc13562f51 # v2.1.2
         with:
           publish-plan-artifact-id: ${{ needs.select-mode.outputs.publish-plan-artifact-id }}
 
@@ -111,26 +144,27 @@ jobs:
       contents: write # push the tag, create the GitHub Release
       id-token: write # npm trusted publishing
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          ref: ${{ github.event.workflow_run.head_sha }}
           persist-credentials: false
 
-      - uses: pnpm/action-setup@v6
+      - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
 
       # Trusted publishing needs Node >= 22.14.0 and npm >= 11.5.1
       # (publish-packed.mjs checks both). No registry-url: npm exchanges the
       # OIDC token itself.
-      - uses: actions/setup-node@v7
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 24
 
-      - run: npm install -g npm@^11.5.1
+      - run: npm install -g npm@11.21.0
 
       # Only the changeset CLI is needed here; no lifecycle scripts run in the
       # job that holds the OIDC token.
       - run: pnpm install --frozen-lockfile --ignore-scripts
 
-      - uses: actions/download-artifact@v8
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           artifact-ids: ${{ needs.pack.outputs.pack-dir-artifact-id }}
           path: ${{ runner.temp }}/changeset-pack
@@ -138,7 +172,7 @@ jobs:
       # publish-packed.mjs runs `npm publish <tarball>` for each packed
       # release, then `changeset git-tag`; the action pushes those tags and
       # creates the GitHub Releases.
-      - uses: changesets/action/publish@v2
+      - uses: changesets/action/publish@ae32849d5ba541f9ae29e40e22a623bc13562f51 # v2.1.2
         with:
           script: node packages/themer/scripts/publish-packed.mjs
         env:

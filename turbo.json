@@ -26,6 +26,7 @@
     },
     "e2e": {
       "dependsOn": ["build"],
+      "env": ["CI"],
       "passThroughEnv": [
         "WEB_E2E_PORT",
         "VITE_E2E_PORT",

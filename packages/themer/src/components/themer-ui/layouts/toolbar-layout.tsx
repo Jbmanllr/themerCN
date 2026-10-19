@@ -48,7 +48,7 @@ import {
 } from "../../actions/themer-actions"
 import { LayoutRadioGroup } from "../layout-switcher"
 import { PageInspector, PageInspectorToggle } from "../page-inspector"
-import { THEMER_LAYOUTS } from "./registry"
+import { THEMER_LAYOUTS } from "../../../config/themer-layouts"
 import { PanelPopover, usePanelPopovers } from "../../sidebar/panel-popover"
 import { ActionButton } from "../../ui/action-button"
 import { ModeToggle } from "../../ui/mode-toggle"

@@ -1,7 +1,7 @@
 "use client"
 
 // The inspector on the Host app's real page, for the in-place Themer layouts
-// (registry `coversPage: false`: Overlay, Push, Toolbar). Workspace inspects
+// (config/themer-layouts.ts `coversPage: false`: Overlay, Push, Toolbar). Workspace inspects
 // its Preview tabs instead (PreviewTabs).
 //
 // A layout mounts two pieces:

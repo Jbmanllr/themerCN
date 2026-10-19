@@ -7,12 +7,12 @@
 // theme edit: components that need one value should select it from the store
 // directly (see selectors/editor-selectors.ts) instead of calling this.
 //
-// Light/dark: useColorMode (components/color-mode.tsx) owns the mode. The
+// Light/dark: useColorMode (hooks/use-color-mode.ts) owns the mode. The
 // toggle writes themeState.currentMode with the change, and ThemerProvider
 // writes it where it applies the Theme (for a change made by the Host).
 
 import { useCallback } from "react"
-import { useColorMode } from "../components/color-mode"
+import { useColorMode } from "./use-color-mode"
 import { useShallow } from "zustand/react/shallow"
 import { getExtraColorKeys } from "../config/extra-colors"
 import { useEditorStore } from "../stores/editor-store"

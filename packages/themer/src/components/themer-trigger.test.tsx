@@ -4,7 +4,7 @@
 import { renderToStaticMarkup } from "react-dom/server"
 import { expect, it, vi } from "vitest"
 
-vi.mock("./themer-provider", () => ({
+vi.mock("../hooks/use-themer-context", () => ({
   useThemerContext: () => ({
     config: { showTrigger: true },
   }),

@@ -1,9 +1,10 @@
 "use client"
 
 // The Themer layout switcher, in the header of every desktop layout: a menu
-// of the implemented layouts (THEMER_LAYOUTS), each with its icon; the
-// trigger shows the current one. Picking one saves it as the user's choice
-// (the `layout` preference), which wins over the Host's default.
+// of the implemented layouts (THEMER_LAYOUTS in config/themer-layouts.ts),
+// each with its icon; the trigger shows the current one. Picking one saves it
+// as the user's choice (the `layout` preference), which wins over the Host's
+// default.
 
 import { Button } from "@workspace/ui/components/button"
 import {
@@ -19,7 +20,7 @@ import {
   useSetThemerLayout,
   useThemerLayout,
 } from "../../hooks/use-themer-layout"
-import { isThemerLayout, THEMER_LAYOUTS } from "./layouts/registry"
+import { isThemerLayout, THEMER_LAYOUTS } from "../../config/themer-layouts"
 
 const LAYOUT_ENTRIES = Object.entries(THEMER_LAYOUTS) as [
   keyof typeof THEMER_LAYOUTS,

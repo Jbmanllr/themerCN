@@ -8,7 +8,7 @@ import { act } from "react"
 import { createRoot, type Root } from "react-dom/client"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
-vi.mock("../themer-provider", () => ({
+vi.mock("../../hooks/use-themer-context", () => ({
   useThemerContext: () => ({ config: { showTabAI: false } }),
   useOptionalThemerContext: () => ({ config: { showTabAI: false } }),
 }))

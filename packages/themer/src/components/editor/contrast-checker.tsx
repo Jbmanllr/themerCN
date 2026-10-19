@@ -27,7 +27,7 @@ import {
   ToggleGroupItem,
 } from "@workspace/ui/components/toggle-group"
 import { useEditorStore } from "../../stores/editor-store"
-import { useColorMode } from "../color-mode"
+import { useColorMode } from "../../hooks/use-color-mode"
 import {
   checkThemeContrast,
   formatContrastRatio,

@@ -8,10 +8,10 @@
 // - Registration (configurePresets, configureExtraColors) happens during
 //   render, before any child reads the registries; hosts pass `presets` and
 //   `extraColors` as module-level constants.
-// - The light/dark mode comes from useColorMode (components/color-mode.tsx:
-//   the Host's controlled `colorMode`, or the `.dark` class on <html>). This
-//   provider writes it to the editor store where it applies the Theme, and
-//   writes CSS variables (and the shadow override sheet), never the class.
+// - The light/dark mode comes from useColorMode (hooks/use-color-mode.ts,
+//   provided by components/color-mode.tsx: the Host's controlled
+//   `colorMode`, or the `.dark` class on <html>). This provider writes it
+//   to the editor store where it applies the Theme, and writes CSS variables (and the shadow override sheet), never the class.
 // - The CSS variables, the shadow override sheet and the theme's font links
 //   are removed when the theme override preference goes off or the provider
 //   unmounts.
@@ -40,29 +40,13 @@ import {
   applyThemeToElement,
   removeThemeFromElement,
 } from "../utils/apply-theme"
-import { useColorMode } from "./color-mode"
+import { useColorMode } from "../hooks/use-color-mode"
+import { ThemerContext } from "../hooks/use-themer-context"
 import { DynamicFontLoader } from "./dynamic-font-loader"
 import { RESTORE_STYLE_ID, SHORTCUTS } from "../config/constants"
 import { configurePresets, getDefaultPresetId } from "../config/presets"
 import { configureExtraColors } from "../config/extra-colors"
 import { isProduction } from "../utils/is-production"
-
-/**
- * Themer context
- */
-const ThemerContext = React.createContext<ThemerContextValue | null>(null)
-
-export function useThemerContext() {
-  const context = React.use(ThemerContext)
-  if (!context) {
-    throw new Error("useThemerContext must be used within a ThemerProvider")
-  }
-  return context
-}
-
-export function useOptionalThemerContext() {
-  return React.use(ThemerContext)
-}
 
 interface ThemerProviderProps {
   children: React.ReactNode

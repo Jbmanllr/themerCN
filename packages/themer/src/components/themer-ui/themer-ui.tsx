@@ -7,7 +7,7 @@
 //
 // Contract:
 // - LAYOUT_COMPONENTS is the one map from a layout to its component; the
-//   rest of what a layout is lives in layouts/registry.ts.
+//   rest of what a layout is lives in config/themer-layouts.ts.
 // - The layer is `config.zIndex`, else Z_INDEX.sidebar (config/constants.ts).
 //   Popups portal into ThemerScope's container one layer above.
 // - Layouts read every editing state from the stores, so switching layout
@@ -23,7 +23,7 @@
 
 import type { ComponentType } from "react"
 import { useThemerUIStore } from "../../stores/themer-ui-store"
-import { useThemerContext } from "../themer-provider"
+import { useThemerContext } from "../../hooks/use-themer-context"
 import { useIsMobile } from "../../hooks/use-is-mobile"
 import { useThemerLayout } from "../../hooks/use-themer-layout"
 import { Z_INDEX } from "../../config/constants"

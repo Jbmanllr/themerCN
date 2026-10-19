@@ -10,7 +10,7 @@ import {
   exitFullscreen,
   subscribeFullscreen,
   type FullscreenDocument,
-} from "./use-fullscreen"
+} from "./fullscreen"
 
 type Listener = (event: Event) => void
 

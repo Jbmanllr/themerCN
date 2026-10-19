@@ -8,7 +8,7 @@ import { act } from "react"
 import { createRoot, type Root } from "react-dom/client"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
-import { subscribeFullscreen } from "../../../hooks/use-fullscreen"
+import { subscribeFullscreen } from "../../../utils/fullscreen"
 import { useInspector, type InspectorState } from "./use-inspector"
 
 ;(

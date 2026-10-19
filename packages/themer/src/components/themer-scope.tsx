@@ -7,6 +7,8 @@
 // Contract:
 // - `[data-themer]` is a bare wrapper with no class or style: `@scope` rules
 //   match the root's descendants, so anything styled goes inside it.
+// - The root sets `dir="ltr"`: the Themer UI, popups included, is laid out
+//   left-to-right in every Host direction, matching its left-pinned sidebar.
 // - Base UI popups portal into the `[data-themer-portals]` container (through
 //   @workspace/ui's PortalContainerContext), never to <body>, where the
 //   scoped CSS would not reach them. The container is fixed at the viewport
@@ -43,7 +45,7 @@ export function ThemerScope({ children, popupLayer }: ThemerScopeProps) {
   const [container, setContainer] = React.useState<HTMLDivElement | null>(null)
 
   return (
-    <div data-themer="">
+    <div data-themer="" dir="ltr">
       <PortalContainerContext.Provider value={container}>
         {children}
       </PortalContainerContext.Provider>

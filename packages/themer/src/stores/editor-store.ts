@@ -404,18 +404,22 @@ export const useEditorStore = create<EditorStore>()(
       migrate: dropOtherVersion,
       // Called with `undefined` when nothing (or a state of another version)
       // is stored; the flag lets adoptDefaultPreset tell a fresh store from a
-      // restored one.
-      merge: (persistedState, currentState) =>
-        (persistedState as Partial<PersistedEditorState> | undefined)
+      // restored one. Built on the initial state, never the current one, so
+      // a namespace switch (stores/hydrate.ts) carries no Theme or undo
+      // history over from the previous namespace.
+      merge: (persistedState): EditorStore => {
+        const initialState = useEditorStore.getInitialState()
+        return (persistedState as Partial<PersistedEditorState> | undefined)
           ?.themeState
           ? {
-              ...currentState,
+              ...initialState,
               ...(persistedState as PersistedEditorState),
               presetBaseline:
                 (persistedState as PersistedEditorState).presetBaseline ?? null,
               restoredFromStorage: true,
             }
-          : currentState,
+          : initialState
+      },
       partialize: (state): PersistedEditorState => ({
         themeState: state.themeState,
         themeCheckpoint: state.themeCheckpoint,

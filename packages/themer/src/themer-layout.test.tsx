@@ -36,6 +36,17 @@ function setViewport(width: number) {
   ).happyDOM.setViewport({ width, height: 900 })
 }
 
+/** The sidebar state saved in this test's namespace, read when it mounts. */
+function saveSidebarCollapsed(collapsed: boolean) {
+  localStorage.setItem(
+    `${namespace}:preferences`,
+    JSON.stringify({
+      state: { sidebarCollapsed: collapsed },
+      version: PREFERENCES_VERSION,
+    })
+  )
+}
+
 async function mount(props: ThemerProps = {}) {
   const container = document.createElement("div")
   document.body.append(container)
@@ -217,7 +228,7 @@ describe("Themer layout", () => {
       ]
 
       it("offers the actions of the hidden footer in a menu", async () => {
-        usePreferencesStore.setState({ sidebarCollapsed: true })
+        saveSidebarCollapsed(true)
         await mount({ layout })
         await open()
 
@@ -309,7 +320,7 @@ describe("Themer layout", () => {
     ] as const)(
       "closes the contrast checker on a colour row, then focuses and highlights its control (%s, collapsed: %s)",
       async (layout, collapsed) => {
-        usePreferencesStore.setState({ sidebarCollapsed: collapsed })
+        saveSidebarCollapsed(collapsed)
         await mount({ layout })
         await open()
 
@@ -338,7 +349,7 @@ describe("Themer layout", () => {
     it.each(["overlay", "push"] as const)(
       "keeps a dialog opened from the collapsed rail, and its draft, when the %s sidebar expands",
       async (layout) => {
-        usePreferencesStore.setState({ sidebarCollapsed: true })
+        saveSidebarCollapsed(true)
         await mount({ layout })
         await open()
 
@@ -461,7 +472,7 @@ describe("Themer layout", () => {
     it.each(["workspace", "overlay", "push"] as const)(
       "opens a panel's controls in a popup from the rail in %s, still collapsed",
       async (layout) => {
-        usePreferencesStore.setState({ sidebarCollapsed: true })
+        saveSidebarCollapsed(true)
         await mount({ layout })
         await open()
 
@@ -474,7 +485,7 @@ describe("Themer layout", () => {
     )
 
     it("swaps the popup for another panel, and closes it on its button", async () => {
-      usePreferencesStore.setState({ sidebarCollapsed: true })
+      saveSidebarCollapsed(true)
       await mount({ layout: "overlay" })
       await open()
 
@@ -672,7 +683,7 @@ describe("Themer layout", () => {
     it.each(["overlay", "push"] as const)(
       "expands the collapsed sidebar on a pinned element's colour control in the %s layout",
       async (layout) => {
-        usePreferencesStore.setState({ sidebarCollapsed: true })
+        saveSidebarCollapsed(true)
         await mount({ layout })
         await open()
 
@@ -697,7 +708,7 @@ describe("Themer layout", () => {
       vi.spyOn(window, "cancelAnimationFrame").mockImplementation((id) =>
         window.clearTimeout(id)
       )
-      usePreferencesStore.setState({ sidebarCollapsed: true })
+      saveSidebarCollapsed(true)
       await mount({ layout: "toolbar" })
       await open()
       const pageHandler = vi.fn()

@@ -17,19 +17,28 @@
 //   mounted, scoped to its `[data-themer]` root (themer-scope.tsx). The Host
 //   app compiles and imports nothing of the Themer's.
 // - The persisted stores hydrate from `<storageNamespace>:editor` and
-//   `<storageNamespace>:preferences` when it first renders on the client; an
-//   uncontrolled light/dark mode is saved under `<storageNamespace>:color-mode`
-//   (color-mode.tsx).
+//   `<storageNamespace>:preferences` in a layout effect, before the tree that
+//   reads them renders; an uncontrolled light/dark mode is saved under
+//   `<storageNamespace>:color-mode` (color-mode.tsx).
+// - A new `storageNamespace` rehydrates the stores from its keys (no write to
+//   either namespace) and remounts the tree under the providers, keyed by
+//   namespace: ThemerProvider adopts the Host's default Preset again for an
+//   empty namespace, and the colour mode is read from the new key. The undo
+//   history does not carry over.
 // - `presets`, `extraColors`, `previewTabs` and `previewWrapper` must be
 //   stable module-level values: a new identity re-registers or rebuilds them.
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
-import { useState } from "react"
+import { useLayoutEffect, useState, useSyncExternalStore } from "react"
 
 import type { ThemerConfig, ThemerProps } from "../types"
 import { DEFAULT_STORAGE_NAMESPACE, getStorageKeys } from "../config/constants"
 import { useHydrated } from "../hooks/use-hydrated"
-import { hydrateThemerStores } from "../stores/hydrate"
+import {
+  getHydratedNamespace,
+  hydrateThemerStores,
+  subscribeHydratedNamespace,
+} from "../stores/hydrate"
 
 import { ColorModeProvider } from "./color-mode"
 import { ThemerProvider } from "./themer-provider"
@@ -66,9 +75,19 @@ function ThemerApp({
   storageNamespace = DEFAULT_STORAGE_NAMESPACE,
   ...editorProps
 }: ThemerProps) {
-  // Before any child reads the stores, so the first render already shows
-  // the persisted Theme of this namespace.
-  hydrateThemerStores(storageNamespace)
+  // The tree renders only while the stores hold this namespace, keyed by
+  // it, so no child reads, or adopts a Preset into, another namespace (the
+  // stores are module singletons, and may hold another instance's
+  // namespace). The layout effect hydrates outside render and the
+  // subscription re-renders synchronously, before the first paint.
+  const hydratedNamespace = useSyncExternalStore(
+    subscribeHydratedNamespace,
+    getHydratedNamespace,
+    getHydratedNamespace
+  )
+  useLayoutEffect(() => {
+    hydrateThemerStores(storageNamespace)
+  }, [storageNamespace])
   useThemerStyle()
 
   const [queryClient] = useState(
@@ -87,9 +106,12 @@ function ThemerApp({
 
   const config = useShallowStable<ThemerConfig>(editorProps)
 
+  if (hydratedNamespace !== storageNamespace) return null
+
   return (
     <QueryClientProvider client={queryClient}>
       <ColorModeProvider
+        key={storageNamespace}
         colorMode={colorMode}
         onColorModeChange={onColorModeChange}
         storageKey={getStorageKeys(storageNamespace).colorMode}

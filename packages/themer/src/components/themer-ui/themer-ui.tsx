@@ -17,7 +17,8 @@
 //   clears it, and a Host-driven switch leaves it inactive
 //   (hooks/use-themer-layout.ts), then clears it as the old layout leaves.
 // - The action dialogs render here, once, beside the layout (ThemerDialogs):
-//   a dialog survives the surface that opened it, and a layout switch.
+//   a dialog survives the surface that opened it, a layout switch and the
+//   drawer taking over below the breakpoint.
 //
 // See: packages/themer/ARCHITECTURE.md ("Themer layouts").
 
@@ -85,14 +86,14 @@ export function ThemerUI() {
     return null
   }
 
-  if (isMobile) {
-    return <MobileDrawer isOpen={isOpen} onClose={close} />
-  }
-
   const Layout = LAYOUT_COMPONENTS[layout]
   return (
     <>
-      <Layout onClose={close} zIndex={config.zIndex ?? Z_INDEX.sidebar} />
+      {isMobile ? (
+        <MobileDrawer isOpen={isOpen} onClose={close} />
+      ) : (
+        <Layout onClose={close} zIndex={config.zIndex ?? Z_INDEX.sidebar} />
+      )}
       <ThemerDialogs />
     </>
   )

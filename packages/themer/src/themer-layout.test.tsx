@@ -585,6 +585,21 @@ describe("Themer layout", () => {
     expect(sidebar()).toBeNull()
   })
 
+  it("keeps an open dialog showing when the window narrows into the drawer", async () => {
+    await mount({ layout: "overlay" })
+    await open()
+    await act(async () => useThemerUIStore.getState().openDialog("importCss"))
+    expect(query('[role="dialog"]')?.textContent).toContain("Import")
+
+    await act(async () => setViewport(1279))
+
+    expect(query('[data-slot="drawer-content"]')).not.toBeNull()
+    const dialogs = [...document.querySelectorAll('[role="dialog"]')]
+    expect(dialogs.map((dialog) => dialog.textContent)).toContainEqual(
+      expect.stringContaining("Import CSS")
+    )
+  })
+
   describe("the Host page", () => {
     function installLenis() {
       const lenis = { stop: vi.fn(), start: vi.fn() }

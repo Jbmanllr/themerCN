@@ -1,3 +1,7 @@
+// Local change to the vendored shadcn hook: the media query is read through
+// useSyncExternalStore instead of being mirrored into state from an effect.
+// Re-apply it after `shadcn add use-mobile -o`.
+
 import * as React from "react"
 
 const MOBILE_BREAKPOINT = 768

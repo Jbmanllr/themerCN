@@ -1,12 +1,16 @@
 "use client"
 
+import { zodResolver } from "@hookform/resolvers/zod"
 import Link from "next/link"
-import { useEffect, useRef, useState } from "react"
+import { useState, type ReactNode } from "react"
+import { Controller, useForm, useWatch, type Control } from "react-hook-form"
+import * as z from "zod"
 
 import { Illustration } from "@/components/illustrations/illustration"
 import { CartLineItem } from "@/components/shop/cart-line"
 import { EmptyCart } from "@/components/shop/empty-cart"
 import { OrderSummary } from "@/components/shop/order-summary"
+import { emailAddress, focusOnMount } from "@/lib/forms"
 import type { CartLine } from "@/lib/mock/types"
 import {
   type CartSummary,
@@ -20,6 +24,7 @@ import {
   Field,
   FieldContent,
   FieldDescription,
+  FieldError,
   FieldGroup,
   FieldLabel,
   FieldLegend,
@@ -39,6 +44,23 @@ import {
 /** The fake order number every checkout ends on (fixed, for screenshots). */
 const ORDER_ID = "NJ-1042"
 
+const COUNTRIES = ["United States", "Canada", "United Kingdom", "France"]
+
+const checkoutSchema = z.object({
+  email: emailAddress,
+  name: z.string().trim().min(1, "Enter your full name."),
+  address: z.string().trim().min(1, "Enter your street address."),
+  city: z.string().trim().min(1, "Enter your city."),
+  postcode: z.string().trim().min(1, "Enter your postcode."),
+  country: z.string(),
+  shipping: z.enum([
+    "standard",
+    "express",
+  ] as const satisfies readonly ShippingId[]),
+})
+
+type CheckoutValues = z.infer<typeof checkoutSchema>
+
 type PlacedOrder = {
   firstName: string
   email: string
@@ -48,14 +70,28 @@ type PlacedOrder = {
 }
 
 /**
- * /checkout: a fake form. Nothing is sent anywhere: placing the order empties
- * the cart and shows a confirmation built from what was in it.
+ * /checkout: a fake form, on shadcn's Field + React Hook Form + Zod pattern.
+ * Nothing is sent anywhere: a valid submit empties the cart and shows a
+ * confirmation built from what was in it. `method="post"` keeps a
+ * pre-hydration submit out of the URL.
  */
 export function CheckoutView() {
   const lines = useCart((state) => state.lines)
   const clear = useCart((state) => state.clear)
-  const [shipping, setShipping] = useState<ShippingId>("standard")
   const [placed, setPlaced] = useState<PlacedOrder | null>(null)
+  const form = useForm<CheckoutValues>({
+    resolver: zodResolver(checkoutSchema),
+    defaultValues: {
+      email: "",
+      name: "",
+      address: "",
+      city: "",
+      postcode: "",
+      country: COUNTRIES[0],
+      shipping: "standard",
+    },
+  })
+  const shipping = useWatch({ control: form.control, name: "shipping" })
 
   if (placed) return <Confirmation order={placed} />
   if (lines.length === 0) return <EmptyCart />
@@ -66,124 +102,122 @@ export function CheckoutView() {
 
   return (
     <form
+      method="post"
+      noValidate
       className="flex flex-col gap-10"
-      onSubmit={(event) => {
-        event.preventDefault()
-        const data = new FormData(event.currentTarget)
+      onSubmit={form.handleSubmit((values) => {
         setPlaced({
-          firstName: String(data.get("name")).trim().split(/\s+/)[0]!,
-          email: String(data.get("email")),
+          firstName: values.name.split(/\s+/)[0]!,
+          email: values.email,
           lines,
           summary,
-          shipping,
+          shipping: values.shipping,
         })
         clear()
         window.scrollTo({ top: 0 })
-      }}
+      })}
     >
       <h1 className="font-heading text-4xl sm:text-5xl">Checkout</h1>
       <div className="grid items-start gap-10 lg:grid-cols-[1fr_24rem]">
         <FieldGroup className="gap-10">
           <FieldSet>
             <FieldLegend>Contact</FieldLegend>
-            <Field>
-              <FieldLabel htmlFor="checkout-email">Email</FieldLabel>
-              <Input
-                id="checkout-email"
-                name="email"
-                type="email"
-                autoComplete="email"
-                required
-              />
-              <FieldDescription>
-                For the receipt and a note when it ships.
-              </FieldDescription>
-            </Field>
+            <TextField
+              control={form.control}
+              name="email"
+              label="Email"
+              type="email"
+              autoComplete="email"
+              description="For the receipt and a note when it ships."
+            />
           </FieldSet>
 
           <FieldSet>
             <FieldLegend>Shipping address</FieldLegend>
             <FieldGroup>
-              <Field>
-                <FieldLabel htmlFor="checkout-name">Full name</FieldLabel>
-                <Input
-                  id="checkout-name"
-                  name="name"
-                  autoComplete="name"
-                  required
-                />
-              </Field>
-              <Field>
-                <FieldLabel htmlFor="checkout-address">Address</FieldLabel>
-                <Input
-                  id="checkout-address"
-                  name="address"
-                  autoComplete="street-address"
-                  required
-                />
-              </Field>
+              <TextField
+                control={form.control}
+                name="name"
+                label="Full name"
+                autoComplete="name"
+              />
+              <TextField
+                control={form.control}
+                name="address"
+                label="Address"
+                autoComplete="street-address"
+              />
               <div className="grid gap-6 sm:grid-cols-[2fr_1fr]">
-                <Field>
-                  <FieldLabel htmlFor="checkout-city">City</FieldLabel>
-                  <Input
-                    id="checkout-city"
-                    name="city"
-                    autoComplete="address-level2"
-                    required
-                  />
-                </Field>
-                <Field>
-                  <FieldLabel htmlFor="checkout-postcode">Postcode</FieldLabel>
-                  <Input
-                    id="checkout-postcode"
-                    name="postcode"
-                    autoComplete="postal-code"
-                    required
-                  />
-                </Field>
+                <TextField
+                  control={form.control}
+                  name="city"
+                  label="City"
+                  autoComplete="address-level2"
+                />
+                <TextField
+                  control={form.control}
+                  name="postcode"
+                  label="Postcode"
+                  autoComplete="postal-code"
+                />
               </div>
-              <Field>
-                <FieldLabel htmlFor="checkout-country">Country</FieldLabel>
-                <NativeSelect
-                  id="checkout-country"
-                  name="country"
-                  autoComplete="country-name"
-                  defaultValue="United States"
-                  className="w-full"
-                >
-                  <NativeSelectOption>United States</NativeSelectOption>
-                  <NativeSelectOption>Canada</NativeSelectOption>
-                  <NativeSelectOption>United Kingdom</NativeSelectOption>
-                  <NativeSelectOption>France</NativeSelectOption>
-                </NativeSelect>
-              </Field>
+              <Controller
+                name="country"
+                control={form.control}
+                render={({ field }) => (
+                  <Field>
+                    <FieldLabel htmlFor="checkout-country">Country</FieldLabel>
+                    <NativeSelect
+                      {...field}
+                      id="checkout-country"
+                      autoComplete="country-name"
+                      className="w-full"
+                    >
+                      {COUNTRIES.map((country) => (
+                        <NativeSelectOption key={country}>
+                          {country}
+                        </NativeSelectOption>
+                      ))}
+                    </NativeSelect>
+                  </Field>
+                )}
+              />
             </FieldGroup>
           </FieldSet>
 
           <FieldSet>
             <FieldLegend>Delivery</FieldLegend>
-            <RadioGroup
-              value={shipping}
-              onValueChange={(value) => setShipping(value as ShippingId)}
-            >
-              {shippingOptions.map((option) => (
-                <FieldLabel
-                  key={option.id}
-                  htmlFor={`checkout-shipping-${option.id}`}
+            <Controller
+              name="shipping"
+              control={form.control}
+              render={({ field }) => (
+                <RadioGroup
+                  name={field.name}
+                  value={field.value}
+                  onValueChange={field.onChange}
                 >
-                  <Field orientation="horizontal">
-                    <FieldContent>
-                      <FieldTitle>{option.label}</FieldTitle>
-                      <FieldDescription>{option.description}</FieldDescription>
-                    </FieldContent>
-                    <RadioGroupItem
-                      value={option.id}
-                      id={`checkout-shipping-${option.id}`}
-                    />
-                  </Field>
-                </FieldLabel>
-              ))}
-            </RadioGroup>
+                  {shippingOptions.map((option) => (
+                    <FieldLabel
+                      key={option.id}
+                      htmlFor={`checkout-shipping-${option.id}`}
+                    >
+                      <Field orientation="horizontal">
+                        <FieldContent>
+                          <FieldTitle>{option.label}</FieldTitle>
+                          <FieldDescription>
+                            {option.description}
+                          </FieldDescription>
+                        </FieldContent>
+                        <RadioGroupItem
+                          value={option.id}
+                          id={`checkout-shipping-${option.id}`}
+                        />
+                      </Field>
+                    </FieldLabel>
+                  ))}
+                </RadioGroup>
+              )}
+            />
           </FieldSet>
 
           <FieldSet>
@@ -218,9 +252,52 @@ export function CheckoutView() {
   )
 }
 
+type TextFieldName = "email" | "name" | "address" | "city" | "postcode"
+
+/** One required text field: a Controller rendering Field, Input and its error. */
+function TextField({
+  control,
+  name,
+  label,
+  type = "text",
+  autoComplete,
+  description,
+}: {
+  control: Control<CheckoutValues>
+  name: TextFieldName
+  label: string
+  type?: "text" | "email"
+  autoComplete: string
+  description?: ReactNode
+}) {
+  const id = `checkout-${name}`
+  return (
+    <Controller
+      name={name}
+      control={control}
+      render={({ field, fieldState }) => (
+        <Field data-invalid={fieldState.invalid}>
+          <FieldLabel htmlFor={id}>{label}</FieldLabel>
+          <Input
+            {...field}
+            id={id}
+            type={type}
+            autoComplete={autoComplete}
+            aria-invalid={fieldState.invalid}
+            aria-describedby={fieldState.invalid ? `${id}-error` : undefined}
+          />
+          {fieldState.invalid ? (
+            <FieldError id={`${id}-error`} errors={[fieldState.error]} />
+          ) : (
+            description && <FieldDescription>{description}</FieldDescription>
+          )}
+        </Field>
+      )}
+    />
+  )
+}
+
 function Confirmation({ order }: { order: PlacedOrder }) {
-  const heading = useRef<HTMLHeadingElement>(null)
-  useEffect(() => heading.current?.focus(), [])
   const shippingLabel =
     shippingOptions.find((o) => o.id === order.shipping)!.label + " shipping"
 
@@ -232,7 +309,7 @@ function Confirmation({ order }: { order: PlacedOrder }) {
           Order {ORDER_ID}
         </p>
         <h1
-          ref={heading}
+          ref={focusOnMount}
           tabIndex={-1}
           className="font-heading text-4xl text-balance outline-none sm:text-5xl"
         >

@@ -33,11 +33,13 @@ jobs:
     name: Select mode
     # A pull request from a branch named `main` also matches `branches`, so
     # the event is checked too. A run for a commit main has moved past is
-    # skipped: the newer commit's CI run releases it.
+    # skipped: the newer commit's CI run releases it. The run's code must come
+    # from this repository, which the push check implies; it is stated too.
     if: >-
       github.event.workflow_run.conclusion == 'success' &&
       github.event.workflow_run.event == 'push' &&
-      github.event.workflow_run.head_sha == github.sha
+      github.event.workflow_run.head_sha == github.sha &&
+      github.event.workflow_run.head_repository.full_name == github.repository
     runs-on: ubuntu-latest
     permissions:
       contents: read

@@ -45,11 +45,14 @@ const needsOf = (job: Job) =>
 // The CI gate: the triggering CI run succeeded, for a push (not a pull
 // request whose head branch happens to be called `main`), and its commit is
 // still main's tip, which is the `github.sha` changesets/action versions,
-// tags and releases.
+// tags and releases, from this repository (not a fork's run).
 const isGated = (job: Job) =>
   /github\.event\.workflow_run\.conclusion == 'success'/.test(job.if ?? "") &&
   /github\.event\.workflow_run\.event == 'push'/.test(job.if ?? "") &&
-  /github\.event\.workflow_run\.head_sha == github\.sha/.test(job.if ?? "")
+  /github\.event\.workflow_run\.head_sha == github\.sha/.test(job.if ?? "") &&
+  /github\.event\.workflow_run\.head_repository\.full_name == github\.repository/.test(
+    job.if ?? ""
+  )
 
 const runsOnlyBehindGate = (name: string): boolean => {
   const job = release.jobs[name]!

@@ -6,6 +6,7 @@ import type { ReactNode } from "react"
 import { Controller, useForm } from "react-hook-form"
 import * as z from "zod"
 
+import { emailAddress } from "@/lib/forms"
 import { Button } from "@workspace/ui/components/button"
 import {
   Field,
@@ -29,14 +30,8 @@ import { Spinner } from "@workspace/ui/components/spinner"
 /** Where a successful (fake) login or signup lands. */
 const AFTER_AUTH = "/app"
 
-const email = z
-  .string()
-  .trim()
-  .min(1, "Enter your email address.")
-  .pipe(z.email("Enter a valid email address."))
-
 const loginSchema = z.object({
-  email,
+  email: emailAddress,
   password: z.string().min(1, "Enter your password."),
 })
 
@@ -118,7 +113,7 @@ export function LoginForm({ footer }: { footer?: ReactNode }) {
 
 const signupSchema = z.object({
   name: z.string().trim().min(1, "Enter your name."),
-  email,
+  email: emailAddress,
   password: z.string().min(1, "Choose a password."),
 })
 

@@ -57,21 +57,22 @@ import { useFontSearch } from "../../hooks/use-font-search"
 import { useEditorStore } from "../../stores/editor-store"
 import { useOptionalThemerContext } from "../themer-provider"
 import { useScrollBoundary } from "./scroll-boundary"
+import type { FilterFontCategory, FontInfo } from "../../types/fonts"
+import { getPopularFonts } from "../../utils/font-catalog-data"
 import {
   acquireFontPreview,
   acquireGoogleFont,
+  getDefaultWeights,
+  waitForFont,
+} from "../../utils/font-links"
+import {
   buildFontFamily,
   describeFontValue,
   extractGoogleFontFamily,
-  getDefaultWeights,
-  getPopularFonts,
   isLocalFontFamily,
   toFontCategory,
-  waitForFont,
-  type FilterFontCategory,
-  type FontInfo,
   type ThemeFontRole,
-} from "../../utils/font-loader"
+} from "../../utils/font-names"
 
 interface FontPickerProps {
   value: string

@@ -17,8 +17,8 @@ const loads = vi.hoisted(() => ({
   }[],
 }))
 
-vi.mock("../utils/font-loader", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("../utils/font-loader")>()),
+vi.mock("../utils/font-links", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../utils/font-links")>()),
   acquireGoogleFont: (family: string) => {
     const release = vi.fn()
     loads.held.push({ family, release })

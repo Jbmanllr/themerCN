@@ -67,6 +67,7 @@ export function CssImportDialog({ open, onOpenChange }: CssImportDialogProps) {
   const [css, setCss] = React.useState("")
   const [replace, setReplace] = React.useState(false)
   const [outcome, setOutcome] = React.useState<ImportOutcome | null>(null)
+  const replaceId = React.useId()
 
   const handleOpenChange = React.useCallback(
     (next: boolean) => {
@@ -139,12 +140,12 @@ export function CssImportDialog({ open, onOpenChange }: CssImportDialogProps) {
 
           <Field orientation="horizontal">
             <Switch
-              id="themer-css-import-replace"
+              id={replaceId}
               checked={replace}
               onCheckedChange={setReplace}
               data-testid="themer-css-import-replace"
             />
-            <FieldLabel htmlFor="themer-css-import-replace">
+            <FieldLabel htmlFor={replaceId}>
               Replace tokens not in this CSS
             </FieldLabel>
           </Field>

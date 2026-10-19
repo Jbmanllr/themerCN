@@ -1,7 +1,9 @@
 // The package's types: re-exports of the theme, font and editor types, plus
 // ThemerProps (the public `<Themer>` props) and the preview-tab and
-// extra-colour types it uses. Only ThemerProps, ThemePreset,
-// ThemerExtraColorGroup and ThemerPreviewTab leave the package (src/index.ts).
+// extra-colour types it uses. ThemerProps and the types its props reference
+// (ThemePreset, PartialThemeStyles, ThemerExtraColorGroup, ThemerExtraColor,
+// ThemerLayout, ThemerColorMode, ThemerPreviewTab) leave the package
+// (src/index.ts).
 
 // Theme types
 export type {
@@ -61,6 +63,7 @@ export type {
   ColorFocusState,
   ColorFocusActions,
   ColorFocusStore,
+  ThemerDialog,
   ThemerUIState,
   ThemerUIActions,
   ThemerUIStore,
@@ -193,7 +196,7 @@ export interface ThemerExtraColorGroup {
  * - `"overlay"`: the sidebar floats over the Host app's real page, which
  *   stays usable beside it.
  * - `"push"`: the sidebar sits beside the Host app's real page and shifts it
- *   aside (`margin-inline-start` on `<html>`, `--themer-inset-inline-start`).
+ *   aside (`margin-left` on `<html>`, `--themer-inset-left`).
  * - `"toolbar"`: no sidebar; every control sits in a bar at the top of the
  *   Host app's real page, each group of controls in its own popup.
  */
@@ -239,7 +242,9 @@ export interface ThemerProps {
   previewWrapper?: ComponentType<{ children: ReactNode }>
   /**
    * Keyboard shortcut that toggles the Themer (default `"ctrl+shift+e"`; on
-   * macOS Cmd stands in for ctrl).
+   * macOS Cmd stands in for ctrl). Modifiers: `ctrl`/`control`, `alt`/`option`,
+   * `shift`, `meta`/`cmd`/`command`. An unrecognisable shortcut warns in
+   * development and falls back to the default.
    */
   shortcut?: string
   /**
@@ -254,9 +259,16 @@ export interface ThemerProps {
   /** Z-index of the Themer UI and the trigger (default: the Themer's own layers). */
   zIndex?: number
   /**
-   * Prefix of the localStorage keys the Themer persists to:
-   * `<storageNamespace>:editor` and `<storageNamespace>:preferences`
-   * (default `"themercn"`). Read when the Themer mounts.
+   * Prefix of the localStorage keys the Themer persists to (default
+   * `"themercn"`):
+   * - `<storageNamespace>:editor`: the edited Theme;
+   * - `<storageNamespace>:preferences`: Themer UI choices (layout, colour
+   *   format, preview tab, sidebar state, override on/off);
+   * - `<storageNamespace>:color-mode`: the light/dark mode, saved only when
+   *   the Themer owns the mode (`colorMode` and `onColorModeChange` unset).
+   *
+   * Give `getThemerHeadScript` / `<ThemerHeadScript>` the same value. Read
+   * when the Themer mounts.
    */
   storageNamespace?: string
   /**

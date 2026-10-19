@@ -388,6 +388,53 @@ describe("Themer", () => {
     })
   })
 
+  describe("toggle shortcut", () => {
+    function themerUI() {
+      return document.querySelector('[data-testid="themer-ui"]')
+    }
+
+    async function press(init: KeyboardEventInit) {
+      await act(async () =>
+        window.dispatchEvent(new KeyboardEvent("keydown", init))
+      )
+    }
+
+    beforeEach(() => {
+      ;(
+        window as unknown as {
+          happyDOM: {
+            setViewport(size: { width: number; height: number }): void
+          }
+        }
+      ).happyDOM.setViewport({ width: 1440, height: 900 })
+    })
+
+    it("reads cmd as Meta, so a bare k leaves the Themer closed", async () => {
+      await mount({ shortcut: "cmd+k" })
+
+      await press({ key: "k" })
+      expect(themerUI()).toBeNull()
+
+      await press({ key: "k", metaKey: true })
+      expect(themerUI()).not.toBeNull()
+    })
+
+    it("warns once about an invalid shortcut and keeps the default toggle", async () => {
+      const warn = vi.spyOn(console, "warn").mockImplementation(() => {})
+      await mount({ shortcut: "hyper+k" })
+
+      await press({ key: "k" })
+      expect(themerUI()).toBeNull()
+
+      await press({ key: "e", ctrlKey: true, shiftKey: true })
+      expect(themerUI()).not.toBeNull()
+      const shortcutWarnings = warn.mock.calls.filter((args) =>
+        String(args[0]).includes("hyper+k")
+      )
+      expect(shortcutWarnings).toHaveLength(1)
+    })
+  })
+
   describe("CSS isolation", () => {
     function themerStyles() {
       return document.head.querySelectorAll("style[data-themer-style]")
@@ -446,6 +493,81 @@ describe("Themer", () => {
 
       const content = document.querySelector('[data-testid="host-tab-content"]')
       expect(content?.closest("[data-themer-host]")).not.toBeNull()
+    })
+
+    describe("in a right-to-left Host", () => {
+      beforeEach(() => {
+        document.documentElement.dir = "rtl"
+      })
+      afterEach(() => {
+        document.documentElement.removeAttribute("dir")
+      })
+
+      it("lays its UI out left-to-right and Host preview tabs in the Host's direction", async () => {
+        await mount({ previewTabs: HOST_TABS })
+        await openThemer()
+        const direction = (element: Element | null | undefined) =>
+          element?.closest("[dir]")?.getAttribute("dir")
+
+        expect(
+          direction(document.querySelector('[data-testid="themer-ui"]'))
+        ).toBe("ltr")
+
+        const hostTab = [
+          ...document.querySelectorAll<HTMLElement>('[role="tab"]'),
+        ].find((tab) => tab.textContent === "Host tab")
+        await act(async () => hostTab?.click())
+
+        expect(
+          direction(document.querySelector('[data-testid="host-tab-content"]'))
+        ).toBe("rtl")
+      })
+    })
+  })
+
+  describe("Host sidebar isolation", () => {
+    function themerSidebarState() {
+      return document
+        .querySelector('[data-testid="themer-ui"] [data-slot="sidebar"]')
+        ?.getAttribute("data-state")
+    }
+
+    it("collapses its sidebar without writing the Host's sidebar cookie", async () => {
+      await mount()
+      await openThemer()
+      const cookieBefore = document.cookie
+
+      await act(async () =>
+        document
+          .querySelector<HTMLElement>(
+            '[data-testid="themer-ui"] [data-sidebar="trigger"]'
+          )
+          ?.click()
+      )
+
+      expect(themerSidebarState()).toBe("collapsed")
+      expect(document.cookie).toBe(cookieBefore)
+    })
+
+    it("leaves Ctrl/Cmd+B in a Host textarea to the Host", async () => {
+      const textarea = document.createElement("textarea")
+      document.body.append(textarea)
+      await mount()
+      await openThemer()
+      expect(themerSidebarState()).toBe("expanded")
+
+      for (const modifier of ["metaKey", "ctrlKey"]) {
+        const event = new KeyboardEvent("keydown", {
+          key: "b",
+          [modifier]: true,
+          bubbles: true,
+          cancelable: true,
+        })
+        await act(async () => textarea.dispatchEvent(event))
+
+        expect(themerSidebarState()).toBe("expanded")
+        expect(event.defaultPrevented).toBe(false)
+      }
     })
   })
 })

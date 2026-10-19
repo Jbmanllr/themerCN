@@ -42,6 +42,9 @@ function fakeElement() {
   const calls: unknown[] = []
   const element = {
     scrollIntoView: (options: unknown) => calls.push(options),
+    // No label, so no control to focus (keyboard focus is covered through
+    // <Themer>, themer-layout.test.tsx).
+    querySelector: () => null,
   } as unknown as HTMLElement
   return { element, calls }
 }

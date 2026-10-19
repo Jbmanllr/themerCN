@@ -16,6 +16,7 @@ const repoRoot = join(packageDir, "../..")
 const MIRRORED = [
   "apps/web/app/layout.tsx",
   "apps/web/components/themer/playground-themer.tsx",
+  "apps/web/lib/themer.ts",
   "apps/web/app/api/themer/fonts/route.ts",
   "apps/vite/src/main.tsx",
   "apps/vite/vite.config.ts",

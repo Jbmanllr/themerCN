@@ -6,7 +6,8 @@
 // the token as `focusRequest` so the Themer layout shows that panel (the
 // sidebar layouts expand their sidebar, the Toolbar opens its Colors popup),
 // open the token's section, clear a search that hides it, then, once the
-// picker has rendered, scroll it into view and highlight it.
+// picker has rendered, scroll it into view, move keyboard focus to its input
+// and highlight it.
 //
 // The element registry is a module-level Map, not store state: registering a
 // picker per colour token must not re-render anyone, and DOM nodes do not
@@ -61,6 +62,12 @@ const browserScheduler: FocusColorScheduler = {
 
 let cancelPendingFocus: (() => void) | null = null
 
+/** The control a picker's label names (its text input), for keyboard focus. */
+function labelledControl(element: HTMLElement): HTMLElement | null {
+  const id = element.querySelector("label")?.htmlFor
+  return id ? element.ownerDocument.getElementById(id) : null
+}
+
 /**
  * Open the Colors panel on a token's control, then scroll to and highlight
  * it. Calling again cancels a jump still waiting for its picker. Returns a
@@ -109,6 +116,7 @@ export function focusColor(
     const element = colorRegistry.get(name)
     if (element && seenElement) {
       element.scrollIntoView({ behavior: "smooth", block: "center" })
+      labelledControl(element)?.focus({ preventScroll: true })
       useColorFocusStore.getState().setHighlightTarget(name)
       cancel()
       return

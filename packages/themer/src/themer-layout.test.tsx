@@ -76,7 +76,8 @@ async function click(element: Element | null | undefined) {
   await act(async () => element.click())
 }
 
-const query = (selector: string) => document.querySelector(selector)
+const query = <E extends Element = Element>(selector: string) =>
+  document.querySelector<E>(selector)
 const preview = () => query('[data-testid="themer-preview"]')
 const sidebar = () => query('[data-testid="themer-ui"] [data-slot="sidebar"]')
 const toolbar = () => query('[data-testid="themer-ui"][role="toolbar"]')
@@ -248,6 +249,116 @@ describe("Themer layout", () => {
       })
     }
   )
+
+  describe("dialogs", () => {
+    const dialog = () => query('[data-slot="dialog-content"]')
+    const menuItem = (label: string) =>
+      [...document.querySelectorAll('[role="menuitem"]')].find(
+        (item) => item.textContent?.trim() === label
+      )
+
+    /**
+     * An action from the "More actions" menu where the layout shows one (the
+     * Toolbar, the collapsed rail), else from the action bar.
+     */
+    async function runAction(label: string) {
+      const menu = query(
+        '[data-testid="themer-ui"] button[aria-label="More actions"]'
+      )
+      if (!menu) {
+        return click(
+          query(`[data-testid="themer-ui"] button[aria-label="${label}"]`)
+        )
+      }
+      await click(menu)
+      await click(menuItem(label))
+    }
+
+    async function settle(ms = 300) {
+      await act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, ms))
+      })
+    }
+
+    beforeEach(() => {
+      // A browser's frame pace, so focusColor's wait for the picker spans the
+      // dialog closing and the panel rendering (see the inspector tests).
+      vi.spyOn(window, "requestAnimationFrame").mockImplementation((callback) =>
+        window.setTimeout(() => callback(performance.now()), 16)
+      )
+      vi.spyOn(window, "cancelAnimationFrame").mockImplementation((id) =>
+        window.clearTimeout(id)
+      )
+    })
+
+    it.each([
+      ["workspace", false],
+      ["overlay", false],
+      ["overlay", true],
+      ["push", true],
+      ["toolbar", false],
+    ] as const)(
+      "closes the contrast checker on a colour row, then focuses and highlights its control (%s, collapsed: %s)",
+      async (layout, collapsed) => {
+        usePreferencesStore.setState({ sidebarCollapsed: collapsed })
+        await mount({ layout })
+        await open()
+
+        await runAction("Contrast checker")
+        expect(dialog()?.textContent).toContain("WCAG Contrast Checker")
+
+        const row = [...(dialog()?.querySelectorAll("button") ?? [])].find(
+          (button) => button.textContent?.trim() === "primary"
+        )
+        await click(row)
+
+        // The jump waits for the picker over a few frames.
+        const control = () => query('[data-color-picker="primary"]')
+        await vi.waitFor(
+          async () => {
+            await settle(16)
+            expect(control()?.contains(document.activeElement)).toBe(true)
+          },
+          { timeout: 5000 }
+        )
+        expect(useColorFocusStore.getState().highlightTarget).toBe("primary")
+        expect(dialog()).toBeNull()
+      }
+    )
+
+    it.each(["overlay", "push"] as const)(
+      "keeps a dialog opened from the collapsed rail, and its draft, when the %s sidebar expands",
+      async (layout) => {
+        usePreferencesStore.setState({ sidebarCollapsed: true })
+        await mount({ layout })
+        await open()
+
+        await runAction("Import CSS")
+        const input = () =>
+          query<HTMLTextAreaElement>('[data-testid="themer-css-import-input"]')
+        await act(async () => {
+          Object.getOwnPropertyDescriptor(
+            HTMLTextAreaElement.prototype,
+            "value"
+          )?.set?.call(input(), ":root { --primary: red; }")
+          input()?.dispatchEvent(new Event("input", { bubbles: true }))
+        })
+
+        await act(async () =>
+          usePreferencesStore.getState().setSidebarCollapsed(false)
+        )
+        await settle(50)
+
+        expect(
+          query(
+            '[data-testid="themer-ui"] [data-slot="sidebar"]'
+          )?.getAttribute("data-state")
+        ).toBe("expanded")
+        expect(dialog()?.textContent).toContain("Import")
+        expect(input()?.value).toBe(":root { --primary: red; }")
+      }
+    )
+  })
 
   describe("the Toolbar's panel groups", () => {
     const group = (label: string) =>
@@ -649,9 +760,8 @@ describe("Themer layout", () => {
 
   describe("Push", () => {
     const html = () => document.documentElement
-    const inset = () =>
-      html().style.getPropertyValue("--themer-inset-inline-start")
-    const margin = () => html().style.getPropertyValue("margin-inline-start")
+    const inset = () => html().style.getPropertyValue("--themer-inset-left")
+    const margin = () => html().style.getPropertyValue("margin-left")
 
     it("shifts the Host page aside by the expanded sidebar's width", async () => {
       await mount({ layout: "push" })
@@ -713,7 +823,7 @@ describe("Themer layout", () => {
 
     it("puts back the Host's own inline styles on <html> when it gives the place back", async () => {
       html().style.setProperty("transition", "opacity 300ms ease")
-      html().style.setProperty("margin-inline-start", "4px", "important")
+      html().style.setProperty("margin-left", "4px", "important")
       await mount({ layout: "push" })
       await open()
       const toggle = () => query('[data-slot="sidebar-trigger"]')
@@ -727,9 +837,7 @@ describe("Themer layout", () => {
         "opacity 300ms ease"
       )
       expect(margin()).toBe("4px")
-      expect(html().style.getPropertyPriority("margin-inline-start")).toBe(
-        "important"
-      )
+      expect(html().style.getPropertyPriority("margin-left")).toBe("important")
       expect(inset()).toBe("")
     })
 

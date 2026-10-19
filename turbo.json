@@ -19,7 +19,7 @@
       "cache": false
     },
     "typecheck": {
-      "dependsOn": ["^typecheck", "build:css"]
+      "dependsOn": ["^typecheck", "^build", "build:css"]
     },
     "test": {
       "dependsOn": ["^build", "build:css"]
@@ -34,6 +34,7 @@
       ]
     },
     "dev": {
+      "dependsOn": ["^build"],
       "cache": false,
       "persistent": true
     }

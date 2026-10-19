@@ -13,7 +13,9 @@
 //   switcher, Close. The actions Workspace shows above its preview
 //   (undo/redo, mode, Code, …) sit at the foot of the expanded sidebar. The
 //   collapsed rail hides that footer, so its header adds a "More actions"
-//   menu with the same actions (ThemerActionsMenu).
+//   menu with the same actions (ThemerActionsMenu). A dialog opened from it
+//   belongs to ThemerUI, so it stays open when the sidebar expands and the
+//   menu unmounts.
 // - The inspector works on the real page (PageInspector).
 // - Like Workspace, it must not clip overflow: popups position against the
 //   viewport.
@@ -24,7 +26,12 @@ import {
   useSidebar,
 } from "@workspace/ui/components/sidebar"
 import { ActionBar } from "../../action-bar"
-import { ThemerActionsMenu } from "../../actions/themer-actions"
+import { DropdownMenuSeparator } from "@workspace/ui/components/dropdown-menu"
+import {
+  ThemerActionsMenu,
+  ThemerHistoryMenuGroup,
+  ThemerMenuActions,
+} from "../../actions/themer-actions"
 import { ThemerSidebar } from "../../themer-sidebar"
 import { LayoutSwitcher } from "../layout-switcher"
 import { PageInspector, PageInspectorToggle } from "../page-inspector"
@@ -74,5 +81,11 @@ export function InPlaceSidebarLayout({
 function CollapsedRailActions() {
   const { state } = useSidebar()
   if (state !== "collapsed") return null
-  return <ThemerActionsMenu withHistory side="right" align="start" />
+  return (
+    <ThemerActionsMenu side="right" align="start">
+      <ThemerHistoryMenuGroup />
+      <DropdownMenuSeparator />
+      <ThemerMenuActions />
+    </ThemerActionsMenu>
+  )
 }

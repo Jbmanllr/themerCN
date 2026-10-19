@@ -26,7 +26,7 @@ export { RadiusControl } from "./editor/radius-control"
 export { SpacingControl, SpacingControls } from "./editor/spacing-controls"
 export { HSLAdjustments as HSLAdjustmentControls } from "./editor/hsl-adjustments"
 export { ContrastChecker, ContrastBadge } from "./editor/contrast-checker"
-export { ContrastCheckerDialog } from "./editor/contrast-checker-popover"
+export { ContrastCheckerDialog } from "./editor/contrast-checker-dialog"
 export { LetterSpacingControl } from "./editor/letter-spacing-control"
 export { PresetSliderControl } from "./editor/preset-slider-control"
 

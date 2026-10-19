@@ -43,6 +43,17 @@ import { RESTORE_STYLE_ID, SHORTCUTS } from "../config/constants"
 import { configurePresets, getDefaultPresetId } from "../config/presets"
 import { configureExtraColors } from "../config/extra-colors"
 
+// Bundlers replace `process.env.NODE_ENV` with a literal; where nothing
+// replaced it and `process` does not exist, the build counts as development.
+function isProduction(): boolean {
+  try {
+    // eslint-disable-next-line turbo/no-undeclared-env-vars -- read by the Host's bundler when it builds the Host app, not by this package's turbo tasks
+    return process.env.NODE_ENV === "production"
+  } catch {
+    return false
+  }
+}
+
 /**
  * Themer context
  */
@@ -78,14 +89,31 @@ export function ThemerProvider({
   // Themer UI and the trigger fall back to their own Z_INDEX layers
   // (config/constants.ts); a Host value applies to both. No font endpoint
   // default: without one the picker searches the bundled list.
+  // An unrecognisable shortcut falls back to the default toggle (warned
+  // below), so config.shortcut always parses.
+  const requestedShortcut = userConfig?.shortcut
+  const shortcutInvalid =
+    requestedShortcut !== undefined && parseShortcut(requestedShortcut) === null
   const config = React.useMemo<ThemerConfig>(
     () => ({
       ...userConfig,
       showTrigger: userConfig?.showTrigger ?? true,
-      shortcut: userConfig?.shortcut ?? SHORTCUTS.toggle,
+      shortcut:
+        requestedShortcut === undefined || shortcutInvalid
+          ? SHORTCUTS.toggle
+          : requestedShortcut,
     }),
-    [userConfig]
+    [userConfig, requestedShortcut, shortcutInvalid]
   )
+
+  React.useEffect(() => {
+    if (!shortcutInvalid || isProduction()) return
+    console.warn(
+      `themercn: shortcut "${requestedShortcut}" is not a valid shortcut ` +
+        `(modifiers: ctrl/control, alt/option, shift, meta/cmd/command). ` +
+        `Using the default "${SHORTCUTS.toggle}".`
+    )
+  }, [requestedShortcut, shortcutInvalid])
 
   // Host presets must be in the registry before any child (preset picker,
   // store actions) reads it, so register during render. Idempotent for the
@@ -170,7 +198,8 @@ export function ThemerProvider({
   // re-add listeners on every theme edit.
   const toggle = useThemerUIStore((state) => state.toggle)
   const isOpen = useThemerUIStore((state) => state.isOpen)
-  const { key, modifiers } = parseShortcut(config.shortcut ?? SHORTCUTS.toggle)
+  const { key, modifiers } =
+    parseShortcut(config.shortcut ?? SHORTCUTS.toggle) ?? themerShortcuts.toggle
 
   useKeyboardShortcut({
     key,

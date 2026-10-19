@@ -1,26 +1,18 @@
-// Proves font-loader on a FakeDocument: names are quoted only where CSS needs
-// it, host `var(...)` and system stacks never reach Google, one link per
-// family is shared per document and removed with its last holder, previews are
-// text subsets, a rejected weight retries once at the default weight, theme
-// fonts follow the theme, and waitForFont waits for the stylesheet (and its
-// retry) before the face, and the bundled list is real Google data.
+// Proves the link registry on a FakeDocument: one link per family is shared
+// per document and removed with its last holder, host `var(...)` and system
+// stacks never reach Google, previews are text subsets, a rejected weight
+// retries once at the default weight, theme fonts follow the theme, and
+// waitForFont waits for the stylesheet (and its retry) before the face.
 import { afterEach, describe, expect, it, vi } from "vitest"
 import { FakeDocument } from "./fake-document.test-helper"
 import {
-  describeFontValue,
-  FALLBACK_FONTS,
   FONT_LINK_ATTRIBUTE,
   acquireFontPreview,
   acquireGoogleFont,
-  buildFontFamily,
   clearThemeFonts,
-  extractFontFamily,
-  formatFontFamily,
-  getThemeFontFamilies,
-  quoteFontFamily,
   setThemeFonts,
   waitForFont,
-} from "./font-loader"
+} from "./font-links"
 
 function links(doc: FakeDocument) {
   return doc.headChildren("link")
@@ -31,41 +23,6 @@ function familiesIn(doc: FakeDocument) {
     .map((link) => link.getAttribute(FONT_LINK_ATTRIBUTE))
     .sort()
 }
-
-describe("family names", () => {
-  it("quotes names CSS cannot take bare and leaves keywords alone", () => {
-    expect(quoteFontFamily("Source Serif 4")).toBe('"Source Serif 4"')
-    expect(quoteFontFamily("Open Sans")).toBe('"Open Sans"')
-    expect(quoteFontFamily("Inter")).toBe("Inter")
-    expect(quoteFontFamily("serif")).toBe("serif")
-    expect(quoteFontFamily("ui-sans-serif")).toBe("ui-sans-serif")
-    expect(quoteFontFamily('"Lora"')).toBe('"Lora"')
-    expect(quoteFontFamily("var(--font-dm-sans)")).toBe("var(--font-dm-sans)")
-    expect(buildFontFamily("Source Serif 4", "serif")).toBe(
-      '"Source Serif 4", ui-serif, serif'
-    )
-    expect(formatFontFamily(["Fira Code", "monospace"])).toBe(
-      '"Fira Code", monospace'
-    )
-  })
-
-  it("finds no Google family in host stacks or system stacks", () => {
-    expect(extractFontFamily("var(--font-dm-sans), sans-serif")).toBeNull()
-    expect(extractFontFamily("ui-monospace, monospace")).toBeNull()
-    expect(extractFontFamily('"Source Serif 4", ui-serif')).toBe(
-      "Source Serif 4"
-    )
-    expect(
-      getThemeFontFamilies(
-        {
-          "font-sans": "Inter, sans-serif",
-          "font-heading": "var(--font-fraunces), serif",
-        },
-        { "font-sans": "Inter, sans-serif", "font-mono": "Fira Code" }
-      )
-    ).toEqual(["Inter", "Fira Code"])
-  })
-})
 
 describe("link registry", () => {
   it("shares one link per family and removes it with the last holder", () => {
@@ -242,93 +199,5 @@ describe("waitForFont", () => {
     const result = waitForFont("Lora", "400", 50, doc.asDocument)
     await vi.advanceTimersByTimeAsync(50)
     await expect(result).resolves.toBe(false)
-  })
-})
-
-describe("describeFontValue", () => {
-  it("names the first family of a stack", () => {
-    expect(describeFontValue('"Source Serif 4", serif')).toEqual({
-      kind: "family",
-      family: "Source Serif 4",
-    })
-  })
-
-  it("follows host variables to the family they set", () => {
-    const vars: Record<string, string> = {
-      "--font-sans": "var(--font-dm-sans), sans-serif",
-      "--font-dm-sans": '"DM Sans", "DM Sans Fallback"',
-    }
-    expect(
-      describeFontValue("var(--font-sans)", (name) => vars[name] ?? "")
-    ).toEqual({ kind: "variable", variable: "--font-sans", family: "DM Sans" })
-    expect(describeFontValue("var(--font-missing)", () => "")).toEqual({
-      kind: "variable",
-      variable: "--font-missing",
-      family: null,
-    })
-  })
-
-  it("calls a stack of generic names a system font", () => {
-    expect(describeFontValue("ui-sans-serif, system-ui, sans-serif")).toEqual({
-      kind: "system",
-      generic: "ui-sans-serif",
-    })
-    expect(describeFontValue("")).toEqual({ kind: "empty" })
-  })
-})
-
-describe("getThemeFontFamilies", () => {
-  it("does not request fonts every OS ships from Google", () => {
-    expect(
-      getThemeFontFamilies({
-        "font-sans": "Montserrat, sans-serif",
-        "font-serif": "Georgia, serif",
-        "font-mono": "Menlo, monospace",
-      })
-    ).toEqual(["Montserrat"])
-  })
-})
-
-describe("bundled font list", () => {
-  const categories = [
-    "sans-serif",
-    "serif",
-    "display",
-    "handwriting",
-    "monospace",
-  ] as const
-
-  it("offers about 130 distinct families, at least ten per category", () => {
-    const families = new Set(FALLBACK_FONTS.map((font) => font.family))
-    expect(families.size).toBe(FALLBACK_FONTS.length)
-    expect(families.size).toBeGreaterThanOrEqual(125)
-    for (const category of categories) {
-      expect(
-        FALLBACK_FONTS.filter((font) => font.category === category).length
-      ).toBeGreaterThanOrEqual(10)
-    }
-  })
-
-  it("gives every family a known category and ascending upright weights", () => {
-    for (const font of FALLBACK_FONTS) {
-      expect(categories).toContain(font.category)
-      expect(font.variants.length).toBeGreaterThan(0)
-      const weights = font.variants.map(Number)
-      expect(weights.every((weight) => weight >= 1 && weight <= 1000)).toBe(
-        true
-      )
-      expect(weights).toEqual([...weights].sort((a, b) => a - b))
-    }
-  })
-
-  it("carries the weights Google serves, not guessed ones", () => {
-    // From fonts.google.com/metadata/fonts: Roboto became a variable family
-    // (wght 100-900, wdth 75-100).
-    expect(FALLBACK_FONTS.find((font) => font.family === "Roboto")).toEqual({
-      family: "Roboto",
-      category: "sans-serif",
-      variants: ["100", "200", "300", "400", "500", "600", "700", "800", "900"],
-      variable: true,
-    })
   })
 })

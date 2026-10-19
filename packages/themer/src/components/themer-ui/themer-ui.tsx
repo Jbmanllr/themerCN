@@ -14,6 +14,8 @@
 //   keeps the Theme, undo history and active panel. The inspector is the
 //   exception: each layout inspects its own surface (Preview tabs or the
 //   Host page), so a switch turns it off, as closing does.
+// - The action dialogs render here, once, beside the layout (ThemerDialogs):
+//   a dialog survives the surface that opened it, and a layout switch.
 //
 // See: packages/themer/ARCHITECTURE.md ("Themer layouts").
 
@@ -25,6 +27,7 @@ import { useThemerLayout } from "../../hooks/use-themer-layout"
 import { Z_INDEX } from "../../config/constants"
 import type { ThemerLayout } from "../../types"
 import { MobileDrawer } from "./mobile-drawer"
+import { ThemerDialogs } from "../actions/themer-dialogs"
 import { useFullscreenSync } from "../../hooks/use-fullscreen"
 import { OverlayLayout } from "./layouts/overlay-layout"
 import { PushLayout } from "./layouts/push-layout"
@@ -77,5 +80,10 @@ export function ThemerUI() {
   }
 
   const Layout = LAYOUT_COMPONENTS[layout]
-  return <Layout onClose={close} zIndex={config.zIndex ?? Z_INDEX.sidebar} />
+  return (
+    <>
+      <Layout onClose={close} zIndex={config.zIndex ?? Z_INDEX.sidebar} />
+      <ThemerDialogs />
+    </>
+  )
 }

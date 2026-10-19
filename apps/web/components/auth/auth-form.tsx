@@ -1,8 +1,12 @@
 "use client"
 
+import { zodResolver } from "@hookform/resolvers/zod"
 import { useRouter } from "next/navigation"
-import { useState, type FormEvent, type ReactNode } from "react"
+import type { ReactNode } from "react"
+import { Controller, useForm } from "react-hook-form"
+import * as z from "zod"
 
+import { emailAddress } from "@/lib/forms"
 import { Button } from "@workspace/ui/components/button"
 import {
   Field,
@@ -14,90 +18,220 @@ import {
 import { Input } from "@workspace/ui/components/input"
 import { Spinner } from "@workspace/ui/components/spinner"
 
-export type AuthField = {
-  name: string
-  label: string
-  type: "text" | "email" | "password"
-  autoComplete: string
-  placeholder?: string
-  description?: string
-  /** Shown when the field is left empty. */
-  missing: string
-}
+// The fake auth forms, on shadcn's Field + React Hook Form + Zod pattern
+// (https://ui.shadcn.com/docs/forms/react-hook-form): a schema per form, a
+// Controller per field. React Hook Form validates on submit, re-validates on
+// change and focuses the first invalid field. A valid submit goes to the
+// dashboard: nothing is sent anywhere and any password works.
+//
+// `method="post"`: before hydration the browser submits the form itself, and
+// a GET would put the email and password in the URL.
 
 /** Where a successful (fake) login or signup lands. */
 const AFTER_AUTH = "/app"
 
-/**
- * A fake auth form: it checks that every field is filled in, then goes to
- * the dashboard. Nothing is sent anywhere and any password works.
- */
-export function AuthForm({
-  fields,
-  submitLabel,
-  footer,
-}: {
-  fields: AuthField[]
-  submitLabel: string
-  footer?: ReactNode
-}) {
-  const router = useRouter()
-  const [errors, setErrors] = useState<Record<string, string>>({})
-  const [pending, setPending] = useState(false)
+const loginSchema = z.object({
+  email: emailAddress,
+  password: z.string().min(1, "Enter your password."),
+})
 
-  function onSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-    const data = new FormData(event.currentTarget)
-    const next: Record<string, string> = {}
-    for (const field of fields) {
-      if (!String(data.get(field.name) ?? "").trim()) {
-        next[field.name] = field.missing
-      }
-    }
-    setErrors(next)
-    if (Object.keys(next).length > 0) {
-      const first = fields.find((field) => next[field.name])
-      if (first) document.getElementById(`auth-${first.name}`)?.focus()
-      return
-    }
-    setPending(true)
-    router.push(AFTER_AUTH)
-  }
+export function LoginForm({ footer }: { footer?: ReactNode }) {
+  const router = useRouter()
+  const form = useForm<z.infer<typeof loginSchema>>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: { email: "", password: "" },
+  })
 
   return (
-    <form noValidate onSubmit={onSubmit}>
+    <form
+      method="post"
+      noValidate
+      onSubmit={form.handleSubmit(() => router.push(AFTER_AUTH))}
+    >
       <FieldGroup>
-        {fields.map((field) => {
-          const id = `auth-${field.name}`
-          const error = errors[field.name]
-          return (
-            <Field key={field.name} data-invalid={error ? true : undefined}>
-              <FieldLabel htmlFor={id}>{field.label}</FieldLabel>
+        <Controller
+          name="email"
+          control={form.control}
+          render={({ field, fieldState }) => (
+            <Field data-invalid={fieldState.invalid}>
+              <FieldLabel htmlFor="login-email">Email</FieldLabel>
               <Input
-                id={id}
-                name={field.name}
-                type={field.type}
-                autoComplete={field.autoComplete}
-                placeholder={field.placeholder}
-                required
-                aria-invalid={error ? true : undefined}
-                aria-describedby={error ? `${id}-error` : undefined}
+                {...field}
+                id="login-email"
+                type="email"
+                autoComplete="email"
+                placeholder="you@example.com"
+                aria-invalid={fieldState.invalid}
+                aria-describedby={
+                  fieldState.invalid ? "login-email-error" : undefined
+                }
               />
-              {field.description && !error && (
-                <FieldDescription>{field.description}</FieldDescription>
+              {fieldState.invalid && (
+                <FieldError
+                  id="login-email-error"
+                  errors={[fieldState.error]}
+                />
               )}
-              {error && <FieldError id={`${id}-error`}>{error}</FieldError>}
             </Field>
-          )
-        })}
+          )}
+        />
+        <Controller
+          name="password"
+          control={form.control}
+          render={({ field, fieldState }) => (
+            <Field data-invalid={fieldState.invalid}>
+              <FieldLabel htmlFor="login-password">Password</FieldLabel>
+              <Input
+                {...field}
+                id="login-password"
+                type="password"
+                autoComplete="current-password"
+                aria-invalid={fieldState.invalid}
+                aria-describedby={
+                  fieldState.invalid ? "login-password-error" : undefined
+                }
+              />
+              {fieldState.invalid && (
+                <FieldError
+                  id="login-password-error"
+                  errors={[fieldState.error]}
+                />
+              )}
+            </Field>
+          )}
+        />
         <Field>
-          <Button type="submit" size="lg" disabled={pending}>
-            {pending && <Spinner data-icon="inline-start" />}
-            {submitLabel}
-          </Button>
+          <SubmitButton pending={form.formState.isSubmitSuccessful}>
+            Log in
+          </SubmitButton>
           {footer}
         </Field>
       </FieldGroup>
     </form>
+  )
+}
+
+const signupSchema = z.object({
+  name: z.string().trim().min(1, "Enter your name."),
+  email: emailAddress,
+  password: z.string().min(1, "Choose a password."),
+})
+
+export function SignupForm({ footer }: { footer?: ReactNode }) {
+  const router = useRouter()
+  const form = useForm<z.infer<typeof signupSchema>>({
+    resolver: zodResolver(signupSchema),
+    defaultValues: { name: "", email: "", password: "" },
+  })
+
+  return (
+    <form
+      method="post"
+      noValidate
+      onSubmit={form.handleSubmit(() => router.push(AFTER_AUTH))}
+    >
+      <FieldGroup>
+        <Controller
+          name="name"
+          control={form.control}
+          render={({ field, fieldState }) => (
+            <Field data-invalid={fieldState.invalid}>
+              <FieldLabel htmlFor="signup-name">Name</FieldLabel>
+              <Input
+                {...field}
+                id="signup-name"
+                type="text"
+                autoComplete="name"
+                aria-invalid={fieldState.invalid}
+                aria-describedby={
+                  fieldState.invalid ? "signup-name-error" : undefined
+                }
+              />
+              {fieldState.invalid && (
+                <FieldError
+                  id="signup-name-error"
+                  errors={[fieldState.error]}
+                />
+              )}
+            </Field>
+          )}
+        />
+        <Controller
+          name="email"
+          control={form.control}
+          render={({ field, fieldState }) => (
+            <Field data-invalid={fieldState.invalid}>
+              <FieldLabel htmlFor="signup-email">Email</FieldLabel>
+              <Input
+                {...field}
+                id="signup-email"
+                type="email"
+                autoComplete="email"
+                placeholder="you@example.com"
+                aria-invalid={fieldState.invalid}
+                aria-describedby={
+                  fieldState.invalid ? "signup-email-error" : undefined
+                }
+              />
+              {fieldState.invalid && (
+                <FieldError
+                  id="signup-email-error"
+                  errors={[fieldState.error]}
+                />
+              )}
+            </Field>
+          )}
+        />
+        <Controller
+          name="password"
+          control={form.control}
+          render={({ field, fieldState }) => (
+            <Field data-invalid={fieldState.invalid}>
+              <FieldLabel htmlFor="signup-password">Password</FieldLabel>
+              <Input
+                {...field}
+                id="signup-password"
+                type="password"
+                autoComplete="new-password"
+                aria-invalid={fieldState.invalid}
+                aria-describedby={
+                  fieldState.invalid ? "signup-password-error" : undefined
+                }
+              />
+              {fieldState.invalid ? (
+                <FieldError
+                  id="signup-password-error"
+                  errors={[fieldState.error]}
+                />
+              ) : (
+                <FieldDescription>Any password works here.</FieldDescription>
+              )}
+            </Field>
+          )}
+        />
+        <Field>
+          <SubmitButton pending={form.formState.isSubmitSuccessful}>
+            Create account
+          </SubmitButton>
+          {footer}
+        </Field>
+      </FieldGroup>
+    </form>
+  )
+}
+
+/** Disabled with a spinner once a valid submit is on its way. */
+function SubmitButton({
+  pending,
+  children,
+}: {
+  pending: boolean
+  children: ReactNode
+}) {
+  return (
+    <Button type="submit" size="lg" disabled={pending}>
+      {pending && <Spinner data-icon="inline-start" />}
+      {children}
+    </Button>
   )
 }

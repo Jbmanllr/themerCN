@@ -2,10 +2,16 @@
 
 // The cart: an in-memory client store (no backend, no persistence; a reload
 // empties it). The site header reads the count; the shop screens own the
-// rest of the cart's behaviour and may extend this store.
+// rest of the cart's behaviour.
+//
+// Client-only: this is one module-level store, so on the server every request
+// would share it. Call its actions only from client event handlers, never
+// during render or on the server; server renders must only read the empty
+// initial state.
 import { create } from "zustand"
 
 import type { CartLine } from "@/lib/mock/types"
+import { lineKey } from "../shop"
 
 type CartState = {
   lines: CartLine[]
@@ -16,19 +22,12 @@ type CartState = {
   clear: () => void
 }
 
-const sameOptions = (a: Record<string, string>, b: Record<string, string>) =>
-  Object.keys(a).length === Object.keys(b).length &&
-  Object.entries(a).every(([key, value]) => b[key] === value)
-
 export const useCart = create<CartState>()((set) => ({
   lines: [],
   add: (line) =>
     set(({ lines }) => {
-      const index = lines.findIndex(
-        (l) =>
-          l.productSlug === line.productSlug &&
-          sameOptions(l.option, line.option)
-      )
+      const key = lineKey(line)
+      const index = lines.findIndex((l) => lineKey(l) === key)
       if (index === -1) return { lines: [...lines, line] }
       return {
         lines: lines.map((l, i) =>

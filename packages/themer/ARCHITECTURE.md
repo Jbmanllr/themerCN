@@ -38,9 +38,9 @@ and the entries a Host imports where the Themer is off:
   [scripts/check-entries.mjs](scripts/check-entries.mjs) (`loader`,
   `head-script` and `next` are single files with allowed imports and under a
   byte budget).
-- `FALLBACK_FONTS` (the bundled 130-family list in `utils/font-loader.ts`) is
-  `/* @__PURE__ */`, so the head script, which imports font constants from
-  that file, does not carry the list.
+- The head script imports only the pure family-name helpers
+  (`utils/font-names.ts`), so it carries neither the bundled 130-family list
+  (`FALLBACK_FONTS`, `utils/font-catalog-data.ts`) nor the link registry.
 
 ## Mounting
 
@@ -63,15 +63,15 @@ Host tree                         <ThemerLoader {...props} />   (themercn/loader
 
 ### Core Entry Points
 
-| Module                                                            | Responsibility                                                                                                                                                                                                                                                                                                              |
-| ----------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [loader.tsx](src/loader.tsx)                                      | `createThemerLoader(load \| null)`: a component that loads the Themer once in an effect after hydration and renders it beside the Host tree. Never `lazy()` + Suspense (server rendering streamed the page twice); never around the Host tree (the page would remount when the Themer arrives).                             |
-| [themer.tsx](src/components/themer.tsx)                           | `<Themer>`: flat props, no children. Skips the server, hydration and frames (`window.self !== window.top`: the Live preview frames the Host page, whose own Themer must not stack). Hydrates the stores, injects the CSS, owns a QueryClient separate from the Host's.                                                      |
-| [color-mode.tsx](src/components/color-mode.tsx)                   | Who owns light/dark (see [Colour mode](#colour-mode)).                                                                                                                                                                                                                                                                      |
-| [themer-provider.tsx](src/components/themer-provider.tsx)         | Registers Host Presets and extra colours during render, applies the Theme to `<html>`, binds the shortcuts, removes everything when the override goes off or it unmounts.                                                                                                                                                   |
-| [themer-root.tsx](src/components/themer-root.tsx)                 | Portals the trigger and the Themer UI into `ThemerScope` on `<body>`; the mobile scroll lock, and the Lenis pause while the open Themer UI hides the page (the drawer, a layout with `coversPage`).                                                                                                                         |
-| [themer-ui/themer-ui.tsx](src/components/themer-ui/themer-ui.tsx) | The Themer UI: on desktop the component of the [Themer layout](#themer-layouts) in force (`LAYOUT_COMPONENTS`); below 1280 px a bottom drawer without preview, whatever the layout ([use-is-mobile.ts](src/hooks/use-is-mobile.ts); the shadcn Sidebar becomes a Sheet below 768 px, so the breakpoint must stay above it). |
-| [themer-trigger.tsx](src/components/themer-trigger.tsx)           | The floating button (`showTrigger`).                                                                                                                                                                                                                                                                                        |
+| Module                                                            | Responsibility                                                                                                                                                                                                                                                                                                                                                                              |
+| ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [loader.tsx](src/loader.tsx)                                      | `createThemerLoader(load \| null)`: a component that loads the Themer once in an effect after hydration and renders it beside the Host tree. Never `lazy()` + Suspense (server rendering streamed the page twice); never around the Host tree (the page would remount when the Themer arrives). A rejected load logs one `[themercn]` console error and renders nothing; there is no retry. |
+| [themer.tsx](src/components/themer.tsx)                           | `<Themer>`: flat props, no children. Skips the server, hydration and frames (`window.self !== window.top`: the Live preview frames the Host page, whose own Themer must not stack). Hydrates the stores, injects the CSS, owns a QueryClient separate from the Host's.                                                                                                                      |
+| [color-mode.tsx](src/components/color-mode.tsx)                   | Who owns light/dark (see [Colour mode](#colour-mode)).                                                                                                                                                                                                                                                                                                                                      |
+| [themer-provider.tsx](src/components/themer-provider.tsx)         | Registers Host Presets and extra colours during render, applies the Theme to `<html>`, binds the shortcuts, removes everything when the override goes off or it unmounts.                                                                                                                                                                                                                   |
+| [themer-root.tsx](src/components/themer-root.tsx)                 | Portals the trigger and the Themer UI into `ThemerScope` on `<body>`; the mobile scroll lock, and the Lenis pause while the open Themer UI hides the page (the drawer, a layout with `coversPage`).                                                                                                                                                                                         |
+| [themer-ui/themer-ui.tsx](src/components/themer-ui/themer-ui.tsx) | The Themer UI: on desktop the component of the [Themer layout](#themer-layouts) in force (`LAYOUT_COMPONENTS`); below 1280 px a bottom drawer without preview, whatever the layout ([use-is-mobile.ts](src/hooks/use-is-mobile.ts); the shadcn Sidebar becomes a Sheet below 768 px, so the breakpoint must stay above it).                                                                 |
+| [themer-trigger.tsx](src/components/themer-trigger.tsx)           | The floating button (`showTrigger`).                                                                                                                                                                                                                                                                                                                                                        |
 
 ## Themer layouts
 
@@ -79,16 +79,16 @@ How the Themer UI sits on screen while open. In-place layouts follow
 [ADR 0001](../../docs/adr/0001-in-place-themer-layouts.md): they render in
 the Themer's portal beside the Host tree and never wrap it.
 
-| Piece           | Where                                                                                                                                                  | Role                                                                                                                                                                                                                                                                                               |
-| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `ThemerLayout`  | [types/index.ts](src/types/index.ts)                                                                                                                   | The union of implemented layouts; `ThemerProps.layout` takes it.                                                                                                                                                                                                                                   |
-| Registry        | [themer-ui/layouts/registry.ts](src/components/themer-ui/layouts/registry.ts)                                                                          | `THEMER_LAYOUTS`: label, icon, `coversPage` per layout; `resolveThemerLayout`: user choice, else Host default, else Workspace, skipping unknown values.                                                                                                                                            |
-| Components      | `LAYOUT_COMPONENTS` in [themer-ui.tsx](src/components/themer-ui/themer-ui.tsx)                                                                         | The one map from layout to component (`ThemerLayoutProps`: `onClose`, `zIndex`).                                                                                                                                                                                                                   |
-| Layout in force | [hooks/use-themer-layout.ts](src/hooks/use-themer-layout.ts)                                                                                           | `useThemerLayout()`: the `layout` preference over `config.layout`.                                                                                                                                                                                                                                 |
-| Switcher        | [themer-ui/layout-switcher.tsx](src/components/themer-ui/layout-switcher.tsx)                                                                          | `DropdownMenu` of `THEMER_LAYOUTS` in every layout's header; writes the `layout` preference. Its `LayoutRadioGroup` also fills the submenu of Toolbar's "More actions" menu.                                                                                                                       |
-| Shared sidebar  | [themer-ui/themer-sidebar-provider.tsx](src/components/themer-ui/themer-sidebar-provider.tsx), [themer-sidebar.tsx](src/components/themer-sidebar.tsx) | The SidebarProvider bound to `sidebarCollapsed` (collapse is shared and instant: the stock width transition is off), and the sidebar with `headerActions`/`footer` slots for a layout without its own header or action bar.                                                                        |
-| Panel popups    | [sidebar/panel-popover.tsx](src/components/sidebar/panel-popover.tsx)                                                                                  | A panel in a popup, shared by the Toolbar's panel groups and the collapsed rail's icons: one open at a time, it sets the active panel, and stays open while the page is clicked or scrolled.                                                                                                       |
-| Actions         | [actions/themer-actions.tsx](src/components/actions/themer-actions.tsx)                                                                                | `useThemerActions`: every action's name, icon, shortcut, state and handler, the Theme override, and the dialogs they open, defined once. `ActionBar` lays them out as buttons; `ThemerActionsMenu` is their "More actions" menu (the Toolbar's, and the collapsed rail's with undo/redo and mode). |
+| Piece           | Where                                                                                                                                                  | Role                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ThemerLayout`  | [types/index.ts](src/types/index.ts)                                                                                                                   | The union of implemented layouts; `ThemerProps.layout` takes it.                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| Registry        | [themer-ui/layouts/registry.ts](src/components/themer-ui/layouts/registry.ts)                                                                          | `THEMER_LAYOUTS`: label, icon, `coversPage` per layout; `resolveThemerLayout`: user choice, else Host default, else Workspace, skipping unknown values.                                                                                                                                                                                                                                                                                                                                                                               |
+| Components      | `LAYOUT_COMPONENTS` in [themer-ui.tsx](src/components/themer-ui/themer-ui.tsx)                                                                         | The one map from layout to component (`ThemerLayoutProps`: `onClose`, `zIndex`).                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| Layout in force | [hooks/use-themer-layout.ts](src/hooks/use-themer-layout.ts)                                                                                           | `useThemerLayout()`: the `layout` preference over `config.layout`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| Switcher        | [themer-ui/layout-switcher.tsx](src/components/themer-ui/layout-switcher.tsx)                                                                          | `DropdownMenu` of `THEMER_LAYOUTS` in every layout's header; writes the `layout` preference. Its `LayoutRadioGroup` also fills the submenu of Toolbar's "More actions" menu.                                                                                                                                                                                                                                                                                                                                                          |
+| Shared sidebar  | [themer-ui/themer-sidebar-provider.tsx](src/components/themer-ui/themer-sidebar-provider.tsx), [themer-sidebar.tsx](src/components/themer-sidebar.tsx) | The SidebarProvider bound to `sidebarCollapsed` (collapse is shared and instant: the stock width transition is off), and the sidebar with `headerActions`/`footer` slots for a layout without its own header or action bar.                                                                                                                                                                                                                                                                                                           |
+| Panel popups    | [sidebar/panel-popover.tsx](src/components/sidebar/panel-popover.tsx)                                                                                  | A panel in a popup, shared by the Toolbar's panel groups and the collapsed rail's icons: one open at a time, it sets the active panel, and stays open while the page is clicked or scrolled.                                                                                                                                                                                                                                                                                                                                          |
+| Actions         | [actions/themer-actions.tsx](src/components/actions/themer-actions.tsx)                                                                                | `useThemerActions`: every action's name, icon, shortcut, state and handler, and the Theme override, defined once. `ActionBar` lays them out as buttons; `ThemerActionsMenu` is the "More actions" menu, composed from the exported item pieces (the Toolbar's adds its layout submenu, the collapsed rail's leads with undo/redo and mode). A dialog action only sets the ThemerUIStore's `dialog`; `ThemerDialogs` ([themer-dialogs.tsx](src/components/actions/themer-dialogs.tsx)), rendered once by `ThemerUI`, owns the dialogs. |
 
 - **Workspace** ([workspace-layout.tsx](src/components/themer-ui/layouts/workspace-layout.tsx)):
   `fixed inset-0`, the sidebar beside `SidebarInset` with `ThemerHeader`
@@ -102,19 +102,21 @@ the Themer's portal beside the Host tree and never wrap it.
   sidebar's gap, so the page beside it takes clicks and wheel events. The
   sidebar header holds the collapse toggle, the inspector toggle and the
   switcher; `ActionBar variant="stacked"` sits in its footer. The collapsed
-  rail hides the footer, so its header adds `ThemerActionsMenu withHistory`
-  (undo/redo, mode, then the footer's other actions and the override). No
-  page pause, no scroll lock.
+  rail hides the footer, so its header adds a `ThemerActionsMenu`
+  (undo/redo, mode, then the footer's other actions and the override). A
+  dialog opened from it stays open when the sidebar expands and the menu
+  unmounts. No page pause, no scroll lock.
 - **Push** ([push-layout.tsx](src/components/themer-ui/layouts/push-layout.tsx)):
   the in-place sidebar layout, plus a layout effect that sets
-  `margin-inline-start`, `--themer-inset-inline-start` (the sidebar's width
+  `margin-left`, `--themer-inset-left` (the sidebar's width
   from `useThemerSidebarWidth`, the mapping `ThemerSidebarProvider` lays the
   sidebar out with) as inline styles on `<html>`, with no transition (the
   sidebar does not animate either), and on unmount (close, switch, drawer,
   Themer unmounted) puts back the Host's own inline values of those
   properties, or removes them.
-  Fixed Host elements opt in through the variable; the viewport does not
-  shrink (ADR 0001).
+  The properties are physical, like the left-pinned sidebar, so a
+  right-to-left page shifts on the same side. Fixed Host elements opt in
+  through the variable; the viewport does not shrink (ADR 0001).
 - **Toolbar** ([toolbar-layout.tsx](src/components/themer-ui/layouts/toolbar-layout.tsx)):
   no sidebar; a `fixed` bar centred at the top of the page with auto
   margins, not a transform (a transform would make the bar the containing
@@ -163,9 +165,11 @@ The Themer UI is styled by its own Tailwind v4 build, not by the Host's:
    be a cycle on the page), unwraps every `@layer`, and moves Preflight, base
    rules and utilities into one unlayered
    `@scope ([data-themer]) to ([data-themer-host])`, with `html`/`:root`/`:host`
-   rewritten to `:scope`. `@property`, `@keyframes` and `@font-face` stay at
-   the top level; `view-transition.css` is appended outside the scope (it
-   targets `<html>`). The result is written to the gitignored
+   rewritten to `:scope`. Every `@keyframes` is renamed `themer-<name>`, and
+   the `animation`/`animation-name` declarations follow, so the Host's own
+   `spin` or `enter` keeps its keyframes. `@property`, `@keyframes` and
+   `@font-face` stay at the top level; `view-transition.css` is appended
+   outside the scope (it targets `<html>`). The result is written to the gitignored
    `src/generated/themer-css.ts` (`THEMER_CSS`).
 3. `useThemerStyle()` ([themer-scope.tsx](src/components/themer-scope.tsx))
    injects it as `<style data-themer-style>` in `<head>` with
@@ -175,9 +179,10 @@ Why: unlayered rules beat the Host's layered Tailwind inside the Themer root
 and reach nothing outside it; the Host compiles nothing of the Themer's. A
 Tailwind `prefix()` and a shadow root were the rejected alternatives (CSS
 isolation prototype, Jbmanllr/themerCN#11). `[data-themer]` is a bare wrapper because `@scope` matches the
-root's descendants. Host preview tabs render inside
-`<div data-themer-host style="display:contents">`, the lower boundary, so they
-keep the Host's styles. Accepted leak: Host unlayered element rules on
+root's descendants; its only attribute is `dir="ltr"`, which keeps the Themer
+UI and its popups left-to-right in a right-to-left Host. Host preview tabs
+render inside `<div data-themer-host style="display:contents">`, the lower
+boundary, so they keep the Host's styles, and take `<html>`'s `dir` back. Accepted leak: Host unlayered element rules on
 properties Preflight does not reset. Required browsers: `@scope` with a lower
 boundary (Chrome 118, Safari 17.4, Firefox 146).
 
@@ -228,6 +233,11 @@ the switch inside a View Transition with a circular reveal where supported.
   `DEFAULT_STORAGE_NAMESPACE` is `"themercn"`) and hydrates them during
   `<Themer>`'s first client render, so nothing is read from a key the Host
   did not choose.
+- The `<ns>:color-mode` key amends Jbmanllr/themerCN#15 and
+  Jbmanllr/themerCN#18, which named only `<ns>:editor` and
+  `<ns>:preferences`: an uncontrolled Themer must restore `.dark` before
+  first paint, and the head script can only read it from storage. The
+  `storageNamespace` TSDoc and the README list all three keys.
 - Each persisted entry carries its store's version, `EDITOR_STATE_VERSION`
   or `PREFERENCES_VERSION`, both in
   [config/constants.ts](src/config/constants.ts) so the head script can
@@ -335,7 +345,8 @@ follows the Host's),
 
 [stores/themer-ui-store.ts](src/stores/themer-ui-store.ts), transient: `isOpen`,
 `activePanel` (`colors` | `typography` | `other`), `inspectorMode`,
-`fullscreenPreview`.
+`fullscreenPreview`, and `dialog` (the open action dialog: `code` |
+`importCss` | `contrast`, or none; closing the Themer UI closes it).
 
 ### ColorFocusStore
 
@@ -371,7 +382,7 @@ document (the Host's `<html>` and the Live frame's, through the same code).
   was set, so a re-apply drops keys the new Theme lost and removal takes away
   exactly those.
 - **Fonts.** `setThemeFonts` loads the Theme's Google families (see
-  [Font link registry](#font-link-registry-utilsfont-loaderts));
+  [Font link registry](#font-link-registry-utilsfont-linksts));
   `DynamicFontLoader` does it for the Host page.
 
 ### Export and import
@@ -395,9 +406,9 @@ FontPicker opens ─► useFontSearch (TanStack infinite query, own QueryClient)
    │     └─ Host route, e.g. createFontCatalogRoute (src/next/server.ts)
    │          ├─ enabled: false → 404, no catalog code loaded
    │          └─ fontCatalogResponse (src/api/font-catalog.ts)
-   │               ├─ googleFontsApiKey: Fonts Developer API (fetch cache, 1 day)
+   │               ├─ googleFontsApiKey: Fonts Developer API (memory, 1 day)
    │               ├─ no key: fonts.google.com/metadata/fonts (memory, 1 day)
-   │               └─ Google fails: FALLBACK_FONTS
+   │               └─ Google fails or takes > 5 s: FALLBACK_FONTS (60 s back-off)
    └─ no endpoint: filterAndPaginateFonts(FALLBACK_FONTS) in the browser
 User picks a family ─► acquireGoogleFont + waitForFont ─► font-* written as a full stack
 ```
@@ -407,7 +418,7 @@ by `filterAndPaginateFonts` (limit 1–100, default 50). The package reads no
 environment. The picker also asks the catalog whether a Theme's family is a
 Google font (its "Custom font" badge).
 
-#### Font link registry (`utils/font-loader.ts`)
+#### Font link registry (`utils/font-links.ts`)
 
 Fonts are per document (Host page, Live frame) and several holders ask for
 the same family. Each document has a reference-counted entry per family and
@@ -474,16 +485,25 @@ Preset, undo/redo, import or HSL change, without an undo entry.
 foreground/background pairs, sidebar pairs included, for one mode at a time:
 AAA ≥ 7, AA ≥ 4.5, AA Large ≥ 3 (large text only). `suggestContrastFix`
 binary-searches a foreground that meets a target.
+[contrast-checker-dialog.tsx](src/components/editor/contrast-checker-dialog.tsx)
+shows the ratings in a dialog owned by `ThemerDialogs`. A row's colour
+button closes the dialog first, then `focusColor` shows the token's control,
+moves keyboard focus to its input and highlights it; the dialog returns
+focus to its opener only when the user dismisses it.
 
 ## Keyboard Shortcuts
 
 Bound by `useKeyboardShortcut`
 ([use-keyboard-shortcut.ts](src/hooks/use-keyboard-shortcut.ts)); `ctrl`
 matches Cmd on macOS, an extra modifier rejects, editable targets are
-ignored. Toggle (`shortcut`, default `SHORTCUTS.toggle` = `ctrl+shift+e`),
-undo and redo in `ThemerProvider`; `Ctrl+I` in `PreviewTabs`; `Esc` in
-`subscribeFullscreen`. `save` and `export` are defined but have no handler.
-`SHORTCUTS` repeats undo/redo for tooltips; keep both in step.
+ignored. Every shortcut is defined once in `SHORTCUTS`; bindings read it
+parsed (`themerShortcuts`) and tooltips format it. Toggle (`shortcut`,
+default `SHORTCUTS.toggle` = `ctrl+shift+e`), undo and redo in
+`ThemerProvider`; `Ctrl+I` in `PreviewTabs`; `Esc` in `subscribeFullscreen`.
+`save` and `export` are defined but have no handler. A shortcut string
+accepts `cmd`/`command` (meta), `control` (ctrl) and `option` (alt); any
+other unknown part makes it invalid, and an invalid `shortcut` warns in
+development and falls back to the default toggle.
 
 ## Testing
 
@@ -521,6 +541,7 @@ packages/themer/
 │   ├── stores/                    # editor, preferences, themer-ui, color-focus; hydrate.ts
 │   ├── selectors/ hooks/ utils/ config/ types/
 │   ├── api/font-catalog.ts        # catalog response (no gating)
+│   ├── api/google-fonts.ts        # Google catalog fetch and transform (server)
 │   ├── styles/                    # themer.css, view-transition.css (CSS build input)
 │   └── generated/                 # themer-css.ts (gitignored build output)
 ├── scripts/                       # build-css, check-pack, check-entries, publish-packed, doc tests

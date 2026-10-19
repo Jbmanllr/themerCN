@@ -1,3 +1,7 @@
+// RETIRED: nothing imports this file. It was split into utils/font-names.ts,
+// utils/font-links.ts, utils/font-catalog-data.ts and api/google-fonts.ts;
+// change those. It stays only until the owner removes it from the repo.
+//
 // Google Fonts for the theme editor: family-name helpers, a per-document
 // reference-counted <link> registry, and the catalogue fetch and paging that
 // packages/themer/src/api/font-catalog.ts serves to the picker, with the

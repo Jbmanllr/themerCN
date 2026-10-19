@@ -1,5 +1,13 @@
 // Site-wide navigation and links, shared by the header, footer, AppShell and
 // DocsShell. Add a route here when a screen ticket adds a page to a nav.
+// No client directive: Server Components (the AppShell) read it too.
+
+import {
+  LayoutDashboardIcon,
+  MessageCircleIcon,
+  SettingsIcon,
+  type LucideIcon,
+} from "lucide-react"
 
 export const BRAND = {
   name: "Nightjar Coffee Co.",
@@ -63,12 +71,34 @@ export const footerNav: { heading: string; links: NavLink[] }[] = [
   },
 ]
 
-/** The AppShell sidebar. */
-export const appNav: NavLink[] = [
-  { href: "/app", label: "Dashboard" },
-  { href: "/app/chat", label: "Brew Assistant" },
-  { href: "/app/settings", label: "Settings" },
+/** True when `pathname` is `href` or a page under it (`/` matches only itself). */
+export function isActivePath(pathname: string, href: string): boolean {
+  if (href === "/") return pathname === "/"
+  return pathname === href || pathname.startsWith(`${href}/`)
+}
+
+export type AppNavEntry = NavLink & { icon: LucideIcon }
+
+/**
+ * The AppShell sidebar. The matched entry is the active one and names the
+ * top bar, so a new app screen is added here only.
+ */
+export const appNav: AppNavEntry[] = [
+  { href: "/app", label: "Dashboard", icon: LayoutDashboardIcon },
+  { href: "/app/chat", label: "Brew Assistant", icon: MessageCircleIcon },
+  { href: "/app/settings", label: "Settings", icon: SettingsIcon },
 ]
+
+/** The `appNav` entry for `pathname`: the most specific one it is under. */
+export function appNavEntryFor(pathname: string): AppNavEntry | undefined {
+  return appNav
+    .filter((entry) => isActivePath(pathname, entry.href))
+    .reduce<AppNavEntry | undefined>(
+      (best, entry) =>
+        !best || entry.href.length > best.href.length ? entry : best,
+      undefined
+    )
+}
 
 export function isExternal(href: string): boolean {
   return /^https?:\/\//.test(href)

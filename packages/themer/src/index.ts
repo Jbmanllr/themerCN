@@ -6,7 +6,10 @@
 
 export { Themer } from "./components/themer"
 export type {
+  PartialThemeStyles,
   ThemePreset,
+  ThemerColorMode,
+  ThemerExtraColor,
   ThemerExtraColorGroup,
   ThemerLayout,
   ThemerPreviewTab,

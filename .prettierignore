@@ -5,3 +5,5 @@ node_modules/
 coverage/
 pnpm-lock.yaml
 .pnpm-store/
+# Verbatim test input: the parser test asserts its colours exactly as written.
+packages/themer/src/utils/fixtures/host-tokens.css

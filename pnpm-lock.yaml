@@ -130,6 +130,9 @@ importers:
       '@tailwindcss/postcss':
         specifier: ^4
         version: 4.3.3
+      '@types/culori':
+        specifier: 4.0.1
+        version: 4.0.1
       '@types/node':
         specifier: ^20
         version: 20.19.43
@@ -145,6 +148,9 @@ importers:
       '@workspace/typescript-config':
         specifier: workspace:*
         version: link:../../packages/typescript-config
+      culori:
+        specifier: 4.0.2
+        version: 4.0.2
       eslint:
         specifier: ^10
         version: 10.12.0(jiti@2.7.0)(supports-color@7.2.0)

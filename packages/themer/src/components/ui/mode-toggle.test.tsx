@@ -12,8 +12,6 @@ vi.mock("../../hooks/use-themer", () => ({
   useToggleMode: () => toggleMode,
 }))
 
-import { defaultThemeState } from "../../config/defaults"
-import { useEditorStore } from "../../stores/editor-store"
 import { ModeToggle } from "./mode-toggle"
 
 ;(
@@ -24,9 +22,8 @@ let root: Root | null = null
 let container: HTMLDivElement
 
 async function mount(mode: "light" | "dark") {
-  useEditorStore.setState({
-    themeState: { ...defaultThemeState, currentMode: mode },
-  })
+  // Outside a ColorModeProvider the mode is the Host's `.dark` class.
+  document.documentElement.classList.toggle("dark", mode === "dark")
   container = document.createElement("div")
   document.body.append(container)
   root = createRoot(container)
@@ -42,6 +39,7 @@ afterEach(async () => {
   await act(async () => root?.unmount())
   root = null
   container.remove()
+  document.documentElement.className = ""
 })
 
 describe("ModeToggle", () => {

@@ -71,6 +71,7 @@ import {
   extractGoogleFontFamily,
   isLocalFontFamily,
   toFontCategory,
+  type FontValueDescription,
   type ThemeFontRole,
 } from "../../utils/font-names"
 
@@ -190,8 +191,45 @@ function useDebouncedValue(value: string, delay: number) {
 }
 
 function readRootVariable(name: string): string {
-  if (typeof document === "undefined") return ""
   return getComputedStyle(document.documentElement).getPropertyValue(name)
+}
+
+// The root font variables are the Host's (and the Themer's own CSS
+// variables): they change through <html>'s class (a Host theme or mode
+// class) and inline style, so the label follows them as an external store.
+function subscribeToRootStyle(onChange: () => void) {
+  const observer = new MutationObserver(onChange)
+  observer.observe(document.documentElement, {
+    attributes: true,
+    attributeFilter: ["class", "style"],
+  })
+  return () => observer.disconnect()
+}
+
+/**
+ * describeFontValue with any `var()` resolved against <html>'s current
+ * variables. The snapshot is serialised so a root style change that leaves
+ * the description as it was (every theme edit writes one) does not re-render
+ * the label.
+ */
+function useFontValueDescription(value: string): FontValueDescription {
+  const getSnapshot = React.useCallback(
+    () => JSON.stringify(describeFontValue(value, readRootVariable)),
+    [value]
+  )
+  const getServerSnapshot = React.useCallback(
+    () => JSON.stringify(describeFontValue(value)),
+    [value]
+  )
+  const snapshot = React.useSyncExternalStore(
+    subscribeToRootStyle,
+    getSnapshot,
+    getServerSnapshot
+  )
+  return React.useMemo(
+    () => JSON.parse(snapshot) as FontValueDescription,
+    [snapshot]
+  )
 }
 
 /**
@@ -204,10 +242,7 @@ function FontValueLabel({
   value,
   endpoint,
 }: Readonly<{ value: string; endpoint: string | undefined }>) {
-  const description = React.useMemo(
-    () => describeFontValue(value, readRootVariable),
-    [value]
-  )
+  const description = useFontValueDescription(value)
   const family =
     description.kind === "family" || description.kind === "variable"
       ? description.family

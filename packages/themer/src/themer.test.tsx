@@ -2,7 +2,7 @@
 // @vitest-environment-options { "settings": { "handleDisabledFileLoadingAsSuccess": true } }
 // The public <Themer> as a Host app mounts it: one component beside the
 // Host's tree, configured by flat props.
-import { act } from "react"
+import { act, Profiler } from "react"
 import { createRoot, type Root } from "react-dom/client"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
@@ -434,6 +434,60 @@ describe("Themer", () => {
     })
   })
 
+  it("themes the page on an edit without re-rendering while closed", async () => {
+    const commits: string[] = []
+    container = document.createElement("div")
+    document.body.append(container)
+    root = createRoot(container)
+    await act(async () =>
+      root?.render(
+        <Profiler id="themer" onRender={(_id, phase) => commits.push(phase)}>
+          <Themer />
+        </Profiler>
+      )
+    )
+    commits.length = 0
+
+    await act(async () =>
+      useEditorStore.getState().setThemeState((prev) => ({
+        ...prev,
+        styles: {
+          ...prev.styles,
+          light: { ...prev.styles.light, primary: "rgb(1, 2, 3)" },
+        },
+      }))
+    )
+
+    expect(rootVar("--primary")).toBe("rgb(1, 2, 3)")
+    expect(commits).toEqual([])
+  })
+
+  it("names the Host's current font in a picker set through a Host variable", async () => {
+    document.documentElement.style.setProperty("--font-host", "Inter")
+    await mount()
+    await act(async () =>
+      useEditorStore
+        .getState()
+        .updateCommonStyle("font-sans", "var(--font-host), sans-serif")
+    )
+    await openThemer()
+    const typography = document.querySelector<HTMLElement>(
+      '[role="tab"][aria-label="Typography"]'
+    )
+    await act(async () => typography?.click())
+    const sansPicker = () =>
+      [...document.querySelectorAll('[role="combobox"]')].find((trigger) =>
+        trigger.textContent?.includes("Custom font")
+      )?.textContent
+    expect(sansPicker()).toContain("Inter")
+
+    await act(async () =>
+      document.documentElement.style.setProperty("--font-host", "Lora")
+    )
+
+    expect(sansPicker()).toContain("Lora")
+  })
+
   describe("colour mode, uncontrolled", () => {
     it("toggles .dark on <html> when the user switches mode", async () => {
       await mount()
@@ -463,6 +517,40 @@ describe("Themer", () => {
       await act(async () => document.documentElement.classList.add("dark"))
 
       expect(rootVar("--primary")).toBe(DARK_PRIMARY)
+    })
+
+    it("shows the new mode on its control before the page is themed for it", async () => {
+      await mount()
+      await openThemer()
+      // Records arrive in the order the DOM changed: the control's label
+      // must change no later than the commit that themes the Host page, not
+      // one commit behind it.
+      const records: MutationRecord[] = []
+      const observer = new MutationObserver((batch) => records.push(...batch))
+      observer.observe(document.documentElement, {
+        attributes: true,
+        attributeFilter: ["style", "aria-label"],
+        subtree: true,
+      })
+
+      await act(async () => document.documentElement.classList.add("dark"))
+
+      records.push(...observer.takeRecords())
+      const changes = records
+        .filter(
+          (record) =>
+            record.target === document.documentElement ||
+            record.attributeName === "aria-label"
+        )
+        .map((record) =>
+          record.attributeName === "aria-label"
+            ? (record.target as Element).getAttribute("aria-label")
+            : "page themed"
+        )
+      observer.disconnect()
+      expect(rootVar("--primary")).toBe(DARK_PRIMARY)
+      expect(changes[0]).toBe("Switch to light mode")
+      expect(changes).toContain("page themed")
     })
   })
 

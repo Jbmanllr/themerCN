@@ -7,7 +7,7 @@
 // frame. The bar must also reach the page the frame started on after the frame
 // has moved away from it, the bar must follow links clicked inside the frame,
 // and the size buttons must snap the panel back.
-import { act, useImperativeHandle, type ReactNode } from "react"
+import { act, Profiler, useImperativeHandle, type ReactNode } from "react"
 import { createRoot, type Root } from "react-dom/client"
 import {
   afterEach,
@@ -40,6 +40,7 @@ vi.mock("@workspace/ui/components/resizable", () => ({
   },
 }))
 
+import { useEditorStore } from "../../stores/editor-store"
 import { LivePreview } from "./live-preview"
 
 ;(
@@ -256,5 +257,46 @@ describe("LivePreview address bar follows the frame", () => {
     const removedTypes = removed.mock.calls.map(([type]) => type)
     expect(removedTypes).toContain("popstate")
     expect(removedTypes).toContain("hashchange")
+  })
+})
+
+describe("LivePreview Theme", () => {
+  // An edit restyles the framed page through a store subscription: the
+  // preview (address bar, size buttons, panels) does not re-render for it.
+  it("restyles the framed page on an edit without re-rendering the preview", async () => {
+    const commits: string[] = []
+    await act(async () =>
+      root?.render(
+        <Profiler id="live" onRender={(_id, phase) => commits.push(phase)}>
+          <LivePreview />
+        </Profiler>
+      )
+    )
+    const iframe = frame()
+    await vi.waitFor(() =>
+      expect(iframe.contentDocument?.documentElement).toBeTruthy()
+    )
+    await act(async () => iframe.dispatchEvent(new Event("load")))
+    commits.length = 0
+
+    await act(async () =>
+      useEditorStore.getState().setThemeState((prev) => ({
+        ...prev,
+        styles: {
+          ...prev.styles,
+          [prev.currentMode]: {
+            ...prev.styles[prev.currentMode],
+            primary: "rgb(1, 2, 3)",
+          },
+        },
+      }))
+    )
+
+    expect(
+      iframe.contentDocument?.documentElement.style.getPropertyValue(
+        "--primary"
+      )
+    ).toBe("rgb(1, 2, 3)")
+    expect(commits).toEqual([])
   })
 })

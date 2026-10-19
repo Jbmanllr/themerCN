@@ -10,8 +10,8 @@
 //   `extraColors` as module-level constants.
 // - The light/dark mode comes from useColorMode (components/color-mode.tsx:
 //   the Host's controlled `colorMode`, or the `.dark` class on <html>). This
-//   provider mirrors it into the editor store and writes CSS variables (and
-//   the shadow override sheet), never the class.
+//   provider writes it to the editor store where it applies the Theme, and
+//   writes CSS variables (and the shadow override sheet), never the class.
 // - The CSS variables, the shadow override sheet and the theme's font links
 //   are removed when the theme override preference goes off or the provider
 //   unmounts.
@@ -23,7 +23,11 @@
 
 import * as React from "react"
 import { useShallow } from "zustand/react/shallow"
-import type { ThemerConfig, ThemerContextValue } from "../types"
+import type {
+  ThemeEditorState,
+  ThemerConfig,
+  ThemerContextValue,
+} from "../types"
 import {
   useKeyboardShortcut,
   parseShortcut,
@@ -136,42 +140,47 @@ export function ThemerProvider({
 
   const { mode } = useColorMode()
 
-  // Apply live editor variables; the root light/dark class is not ours.
-  const themeState = useEditorStore((state) => state.themeState)
-  const { undo, redo, canUndo, canRedo, setCurrentMode } = useEditorStore(
+  const { undo, redo, canUndo, canRedo } = useEditorStore(
     useShallow((state) => ({
       undo: state.undo,
       redo: state.redo,
       canUndo: state.canUndo,
       canRedo: state.canRedo,
-      setCurrentMode: state.setCurrentMode,
     }))
   )
   const themeOverrideEnabled = usePreferencesStore(
     (state) => state.themeOverrideEnabled
   )
-  const appliedThemeState = React.useMemo(
-    () => ({ ...themeState, currentMode: mode }),
-    [mode, themeState]
-  )
 
+  // The Theme-apply path: the store's mode follows the colour mode here (the
+  // controls read the colour mode itself), then the Theme is applied now and
+  // on every later change through a store subscription, so an edit never
+  // re-renders this provider. Re-applying on every change is enough to drop
+  // properties the new theme no longer sets (applyThemeToElement diffs
+  // against its previous call), so the page never flashes between edits.
+  // Everything it wrote, the shadow override sheet included, is removed only
+  // when the override goes off or the editor unmounts.
   React.useEffect(() => {
+    const { themeState, setCurrentMode } = useEditorStore.getState()
     if (themeState.currentMode !== mode) setCurrentMode(mode)
-  }, [mode, setCurrentMode, themeState.currentMode])
-
-  // Re-applying on every change is enough to drop properties the new theme no
-  // longer sets (applyThemeToElement diffs against its previous call), so the
-  // page never flashes between edits. Everything it wrote, the shadow override
-  // sheet included, is removed only when the override goes off or the editor
-  // unmounts.
-  React.useEffect(() => {
-    if (themeOverrideEnabled) {
-      applyThemeToElement(appliedThemeState, document.documentElement, {
-        updateClass: false,
-      })
+    const restoreSheet = document.getElementById(RESTORE_STYLE_ID)
+    if (!themeOverrideEnabled) {
+      restoreSheet?.remove()
+      return undefined
     }
-    document.getElementById(RESTORE_STYLE_ID)?.remove()
-  }, [appliedThemeState, themeOverrideEnabled])
+
+    const apply = (state: ThemeEditorState) =>
+      applyThemeToElement(
+        { ...state, currentMode: mode },
+        document.documentElement,
+        { updateClass: false }
+      )
+    apply(useEditorStore.getState().themeState)
+    restoreSheet?.remove()
+    return useEditorStore.subscribe((next, previous) => {
+      if (next.themeState !== previous.themeState) apply(next.themeState)
+    })
+  }, [mode, themeOverrideEnabled])
 
   React.useEffect(() => {
     if (!themeOverrideEnabled) return undefined

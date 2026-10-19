@@ -229,7 +229,9 @@ interface HslPresetButtonProps {
   className?: string
 }
 
-function HslPresetButton({
+// Memoised: its props are a constant preset and the two base colours, so a
+// slider tick (which changes neither) does not repeat its colour conversions.
+const HslPresetButton = React.memo(function HslPresetButton({
   preset,
   basePrimary,
   baseSecondary,
@@ -279,4 +281,4 @@ function HslPresetButton({
       </TooltipContent>
     </Tooltip>
   )
-}
+})

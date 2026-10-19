@@ -7,9 +7,9 @@
 // theme edit: components that need one value should select it from the store
 // directly (see selectors/editor-selectors.ts) instead of calling this.
 //
-// Light/dark: useColorMode (components/color-mode.tsx) owns the mode and
-// ThemerProvider keeps themeState.currentMode in sync with it; this hook only
-// issues the change.
+// Light/dark: useColorMode (components/color-mode.tsx) owns the mode. The
+// toggle writes themeState.currentMode with the change, and ThemerProvider
+// writes it where it applies the Theme (for a change made by the Host).
 
 import { useCallback } from "react"
 import { useColorMode } from "../components/color-mode"
@@ -62,21 +62,18 @@ function toOrigin(
  * handlers only (the transition commits the change with flushSync).
  */
 export function useToggleMode(): (origin?: ToggleModeOrigin) => void {
-  const { setMode } = useColorMode()
+  const { mode, setMode } = useColorMode()
   const setCurrentMode = useEditorStore((state) => state.setCurrentMode)
 
   return useCallback(
     (origin?: ToggleModeOrigin) => {
-      const newMode: ThemeMode =
-        useEditorStore.getState().themeState.currentMode === "light"
-          ? "dark"
-          : "light"
+      const newMode: ThemeMode = mode === "light" ? "dark" : "light"
       runThemeTransition(() => {
         setMode(newMode)
         setCurrentMode(newMode)
       }, toOrigin(origin))
     },
-    [setMode, setCurrentMode]
+    [mode, setMode, setCurrentMode]
   )
 }
 

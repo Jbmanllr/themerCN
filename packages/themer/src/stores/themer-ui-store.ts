@@ -1,11 +1,15 @@
 "use client"
 
-// Themer UI state: open/closed, the active sidebar panel, and the two preview
-// modes (inspector, fullscreen). Transient: nothing here persists.
+// Themer UI state: open/closed, the active sidebar panel, the two preview
+// modes (inspector, fullscreen) and the open action dialog. Transient:
+// nothing here persists.
 //
 // Contract:
-// - Closing the editor (close or toggle) turns both modes off. The colour
-//   focus store watches `isOpen` to reset its own state.
+// - Closing the editor (close or toggle) turns both modes off and closes the
+//   dialog. The colour focus store watches `isOpen` to reset its own state.
+// - `dialog` is the only open-dialog state. Menus and the action bar call
+//   openDialog; ThemerUI renders the dialogs once (actions/
+//   themer-dialogs.tsx), so a dialog outlives the surface that opened it.
 // - `fullscreenPreview` means the preview covers the editor (a CSS layout),
 //   not that the browser is in native fullscreen: enterFullscreen
 //   (hooks/use-fullscreen.ts) sets it before asking for native fullscreen,
@@ -30,17 +34,24 @@ export const useThemerUIStore = create<ThemerUIStore>()((set, get) => {
     activePanel: "colors",
     inspectorMode: false,
     fullscreenPreview: false,
+    dialog: null,
 
     // Actions
     open: () => set({ isOpen: true }),
     close: () =>
-      set({ isOpen: false, inspectorMode: false, fullscreenPreview: false }),
+      set({
+        isOpen: false,
+        inspectorMode: false,
+        fullscreenPreview: false,
+        dialog: null,
+      }),
     toggle: () =>
       set((state) => ({
         isOpen: !state.isOpen,
-        // Reset modes when closing
+        // Reset modes and the dialog when closing
         inspectorMode: state.isOpen ? false : state.inspectorMode,
         fullscreenPreview: state.isOpen ? false : state.fullscreenPreview,
+        dialog: state.isOpen ? null : state.dialog,
       })),
     setActivePanel: (panel) => set({ activePanel: panel }),
     toggleInspector: () =>
@@ -52,5 +63,7 @@ export const useThemerUIStore = create<ThemerUIStore>()((set, get) => {
       if (get().fullscreenPreview) void exitFullscreen(document, setFullscreen)
       else void enterFullscreen(document, setFullscreen)
     },
+    openDialog: (dialog) => set({ dialog }),
+    closeDialog: () => set({ dialog: null }),
   }
 })

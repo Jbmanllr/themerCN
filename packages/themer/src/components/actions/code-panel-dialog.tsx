@@ -4,8 +4,8 @@
 // tweakcn catalogue theme, the only themes tweakcn's registry serves) and the
 // generated index.css / tailwind.config.ts / layout.tsx.
 //
-// The action bar mounts this only while it is open, so the three exports are
-// generated for an open dialog only. Copy feedback is useCopyFeedback
+// ThemerDialogs (themer-dialogs.tsx) owns it and mounts it only while it is
+// open, so the three exports are generated for an open dialog only. Copy feedback is useCopyFeedback
 // (hooks/use-copy-feedback.ts), one per copy button. Code colours use theme
 // token roles (muted, chart-*) rather than a fixed palette, so the block
 // follows the host theme.

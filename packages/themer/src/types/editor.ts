@@ -271,6 +271,9 @@ export interface ColorFocusActions {
  */
 export type ColorFocusStore = ColorFocusState & ColorFocusActions
 
+/** The dialogs the Themer's actions open (one at a time). */
+export type ThemerDialog = "code" | "importCss" | "contrast"
+
 /**
  * Themer UI state
  */
@@ -283,6 +286,8 @@ export interface ThemerUIState {
   inspectorMode: boolean
   /** Fullscreen preview layout flag (see hooks/use-fullscreen.ts) */
   fullscreenPreview: boolean
+  /** The open action dialog, whichever surface opened it. */
+  dialog: ThemerDialog | null
 }
 
 /**
@@ -301,6 +306,10 @@ export interface ThemerUIActions {
   toggleInspector: () => void
   /** Toggle fullscreen preview */
   toggleFullscreen: () => void
+  /** Open an action's dialog, closing any other */
+  openDialog: (dialog: ThemerDialog) => void
+  /** Close the open dialog */
+  closeDialog: () => void
 }
 
 /**

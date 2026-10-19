@@ -3,8 +3,8 @@
 // WCAG contrast checker: rates the standard token pairs (utils/
 // contrast-checker.ts checkThemeContrast) for one mode. The Light/Dark
 // toggle here only changes which mode is rated; it never flips the page, so
-// the focus buttons (which jump to the editor's controls for the page's
-// mode) are disabled while another mode is viewed. Levels: AAA >= 7,
+// the focus buttons (which close the dialog and jump to the editor's controls
+// for the page's mode) are disabled while another mode is viewed. Levels: AAA >= 7,
 // AA >= 4.5, AA Large >= 3 (large text only; fails normal text), Fail.
 //
 // See: packages/themer/ARCHITECTURE.md (Contrast Checker).
@@ -34,7 +34,17 @@ import {
   type WCAGLevel,
 } from "../../utils/contrast-checker"
 import { focusColor } from "../../hooks/use-color-focus"
+import { useThemerUIStore } from "../../stores/themer-ui-store"
 import type { ThemeMode } from "../../types"
+
+/**
+ * A row's colour jump: close the dialog first, so the highlight is not hidden
+ * behind its backdrop, then show the token's control.
+ */
+function jumpToColor(token: string) {
+  useThemerUIStore.getState().closeDialog()
+  focusColor(token)
+}
 
 type FilterMode = "all" | "passing" | "failing"
 
@@ -196,7 +206,7 @@ function ContrastResultItem({ result, canFocus }: ContrastResultItemProps) {
             size="xs"
             className="px-0 text-muted-foreground"
             disabled={!canFocus}
-            onClick={() => focusColor(result.fg)}
+            onClick={() => jumpToColor(result.fg)}
           >
             {result.fg}
           </Button>
@@ -206,7 +216,7 @@ function ContrastResultItem({ result, canFocus }: ContrastResultItemProps) {
             size="xs"
             className="px-0 text-muted-foreground"
             disabled={!canFocus}
-            onClick={() => focusColor(result.bg)}
+            onClick={() => jumpToColor(result.bg)}
           >
             {result.bg}
           </Button>

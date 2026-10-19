@@ -3,8 +3,7 @@
 //
 // Contract: a constant is only as live as its readers. The notes below say
 // which ones code reads today; a constant marked "no reader" changes no
-// behavior when edited. A value mirrored in another file (SHORTCUTS.undo and
-// .redo in themerShortcuts) must be edited in both places.
+// behavior when edited.
 
 /**
  * Most undo entries editor-store keeps; the oldest is dropped first. History
@@ -70,15 +69,13 @@ export const SIDEBAR_WIDTH = 380
 export const HEADER_HEIGHT = 48
 
 /**
- * Shortcut strings. `toggle` is the default of ThemerConfig.shortcut, read by
- * the provider (the binding), the floating trigger (its tooltip) and
- * `themerShortcuts.toggle`. It must stay out of the browsers' reserved set
- * (Cmd/Ctrl+Shift+T reopens a closed tab, +N and +W open and close windows,
- * +Q quits, +Tab switches tabs) and use no Option/Alt; `ctrl` also matches Cmd
- * on macOS. `undo` and `redo` are read for the action bar's tooltips only: their
- * bindings are `themerShortcuts` in hooks/use-keyboard-shortcut.ts, so a
- * changed undo or redo key must change there and here or the tooltip shows
- * the wrong key. `save` and `export` have no handler anywhere.
+ * The editor's shortcuts, defined once. Bindings read them parsed, as
+ * `themerShortcuts` (hooks/use-keyboard-shortcut.ts); tooltips format these
+ * strings. `toggle` is the default of ThemerConfig.shortcut. It must stay out
+ * of the browsers' reserved set (Cmd/Ctrl+Shift+T reopens a closed tab, +N
+ * and +W open and close windows, +Q quits, +Tab switches tabs) and use no
+ * Option/Alt; `ctrl` also matches Cmd on macOS. `save` and `export` have no
+ * handler anywhere.
  */
 export const SHORTCUTS = {
   toggle: "ctrl+shift+e",

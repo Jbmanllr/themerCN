@@ -7,6 +7,8 @@
 // - A shortcut never fires while focus is in an input, a textarea or a
 //   contenteditable element, so typing (and the field's own Ctrl+Z) is left
 //   alone.
+// - Shortcut strings are parsed by parseShortcut: modifier aliases are
+//   mapped, and anything unknown makes the whole shortcut invalid (null).
 // - "ctrl" also matches Cmd on macOS; a modifier that is pressed but not part
 //   of the shortcut rejects the match (Ctrl+Shift+Z is not Ctrl+Z).
 // - The window listener is added once per (shortcut, enabled) pair. Callers
@@ -53,13 +55,37 @@ export interface ShortcutKeyEvent {
   target: EventTarget | null
 }
 
+/** Modifier names a shortcut string may use, and the modifier each means. */
+const MODIFIER_NAMES: Readonly<Record<string, KeyModifier>> = {
+  ctrl: "ctrl",
+  control: "ctrl",
+  alt: "alt",
+  option: "alt",
+  shift: "shift",
+  meta: "meta",
+  cmd: "meta",
+  command: "meta",
+}
+
 /**
- * Parse a shortcut string like "ctrl+shift+t" into key and modifiers
+ * Parse a shortcut string like "ctrl+shift+t" (case-insensitive) into key and
+ * modifiers. `cmd`/`command` mean meta, `control` ctrl and `option` alt.
+ * Returns null when the key is missing or any modifier is unknown, so a typo
+ * can never leave a bare key behind.
  */
-export function parseShortcut(shortcut: string): ParsedShortcut {
+export function parseShortcut(shortcut: string): ParsedShortcut | null {
   const parts = shortcut.toLowerCase().split("+")
   const key = parts[parts.length - 1] ?? ""
-  const modifiers = parts.slice(0, -1) as KeyModifier[]
+  if (!key) return null
+
+  const modifiers: KeyModifier[] = []
+  for (const name of parts.slice(0, -1)) {
+    const modifier = Object.hasOwn(MODIFIER_NAMES, name)
+      ? MODIFIER_NAMES[name]
+      : undefined
+    if (!modifier) return null
+    modifiers.push(modifier)
+  }
 
   return { key, modifiers }
 }
@@ -147,7 +173,9 @@ export function formatShortcut(shortcut: string): string {
     meta: isMac ? "⌘" : "Win",
   }
 
-  const { key, modifiers } = parseShortcut(shortcut)
+  const parsed = parseShortcut(shortcut)
+  if (!parsed) return shortcut
+  const { key, modifiers } = parsed
   const modifierStr = modifiers
     .map((m) => symbols[m] || m)
     .join(isMac ? "" : "+")
@@ -175,9 +203,10 @@ export function useKeyboardShortcut({
   })
 
   useEffect(() => {
-    if (!enabled) return undefined
-
+    // The signature only holds known modifier names, so it parses back.
     const shortcut = parseShortcut(signature)
+    if (!enabled || !shortcut) return undefined
+
     const isMac = detectMac()
     const handleKeyDown = (event: KeyboardEvent) => {
       if (matchesShortcut(event, shortcut, isMac)) onShortcut(event)
@@ -223,19 +252,21 @@ export function useKeyboardShortcuts(
 }
 
 /**
- * Key and modifiers of the editor's shortcuts. The provider registers `undo`
- * and `redo` from here and the preview registers `inspector`. The toggle
- * comes from ThemerConfig.shortcut (default SHORTCUTS.toggle, config/
- * constants.ts), so `themerShortcuts.toggle` is only that default, parsed.
- * `save` and `export` have no handler.
- * SHORTCUTS (config/constants.ts) repeats undo and redo as strings for the
- * action bar's tooltips; keep them equal.
+ * Key and modifiers of every shortcut in SHORTCUTS (config/constants.ts),
+ * the single definition. The provider registers `undo` and `redo` from here
+ * and the preview registers `inspector`; the toggle the provider binds is
+ * ThemerConfig.shortcut, whose default is `toggle`.
  */
-export const themerShortcuts = {
-  toggle: parseShortcut(SHORTCUTS.toggle),
-  undo: { key: "z", modifiers: ["ctrl"] as KeyModifier[] },
-  redo: { key: "z", modifiers: ["ctrl", "shift"] as KeyModifier[] },
-  save: { key: "s", modifiers: ["ctrl"] as KeyModifier[] },
-  export: { key: "e", modifiers: ["ctrl"] as KeyModifier[] },
-  inspector: { key: "i", modifiers: ["ctrl"] as KeyModifier[] },
-} as const
+export const themerShortcuts = parseDefinitions(SHORTCUTS)
+
+function parseDefinitions<T extends Record<string, string>>(
+  definitions: T
+): { readonly [Name in keyof T]: ParsedShortcut } {
+  const parsed = {} as { [Name in keyof T]: ParsedShortcut }
+  for (const [name, definition] of Object.entries(definitions)) {
+    const shortcut = parseShortcut(definition)
+    if (!shortcut) throw new Error(`Invalid shortcut definition: ${name}`)
+    parsed[name as keyof T] = shortcut
+  }
+  return parsed
+}

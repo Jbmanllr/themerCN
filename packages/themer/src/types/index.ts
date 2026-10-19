@@ -239,7 +239,9 @@ export interface ThemerProps {
   previewWrapper?: ComponentType<{ children: ReactNode }>
   /**
    * Keyboard shortcut that toggles the Themer (default `"ctrl+shift+e"`; on
-   * macOS Cmd stands in for ctrl).
+   * macOS Cmd stands in for ctrl). Modifiers: `ctrl`/`control`, `alt`/`option`,
+   * `shift`, `meta`/`cmd`/`command`. An unrecognisable shortcut warns in
+   * development and falls back to the default.
    */
   shortcut?: string
   /**

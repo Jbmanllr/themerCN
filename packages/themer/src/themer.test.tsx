@@ -324,6 +324,53 @@ describe("Themer", () => {
     })
   })
 
+  describe("toggle shortcut", () => {
+    function themerUI() {
+      return document.querySelector('[data-testid="themer-ui"]')
+    }
+
+    async function press(init: KeyboardEventInit) {
+      await act(async () =>
+        window.dispatchEvent(new KeyboardEvent("keydown", init))
+      )
+    }
+
+    beforeEach(() => {
+      ;(
+        window as unknown as {
+          happyDOM: {
+            setViewport(size: { width: number; height: number }): void
+          }
+        }
+      ).happyDOM.setViewport({ width: 1440, height: 900 })
+    })
+
+    it("reads cmd as Meta, so a bare k leaves the Themer closed", async () => {
+      await mount({ shortcut: "cmd+k" })
+
+      await press({ key: "k" })
+      expect(themerUI()).toBeNull()
+
+      await press({ key: "k", metaKey: true })
+      expect(themerUI()).not.toBeNull()
+    })
+
+    it("warns once about an invalid shortcut and keeps the default toggle", async () => {
+      const warn = vi.spyOn(console, "warn").mockImplementation(() => {})
+      await mount({ shortcut: "hyper+k" })
+
+      await press({ key: "k" })
+      expect(themerUI()).toBeNull()
+
+      await press({ key: "e", ctrlKey: true, shiftKey: true })
+      expect(themerUI()).not.toBeNull()
+      const shortcutWarnings = warn.mock.calls.filter((args) =>
+        String(args[0]).includes("hyper+k")
+      )
+      expect(shortcutWarnings).toHaveLength(1)
+    })
+  })
+
   describe("CSS isolation", () => {
     function themerStyles() {
       return document.head.querySelectorAll("style[data-themer-style]")

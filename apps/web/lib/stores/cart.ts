@@ -11,7 +11,7 @@
 import { create } from "zustand"
 
 import type { CartLine } from "@/lib/mock/types"
-import { lineKey } from "@/lib/shop"
+import { lineKey } from "../shop"
 
 type CartState = {
   lines: CartLine[]

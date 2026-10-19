@@ -303,8 +303,9 @@ The mode controls (the toggle, its menu item, the contrast panel's starting
 mode) read `useColorMode()` directly, so a Host `.dark` flip updates them in
 the commit that themes the page. The store's `themeState.currentMode` (which
 the style controls read) is written by the toggle's handler and by
-`ThemerProvider`'s Theme-apply effect, which applies the Theme from a store
-subscription (an edit never re-renders the provider) and writes variables,
+`ThemerProvider`'s Theme-apply effect, which also puts it back on the colour
+mode whenever the two differ (a controlling Host may decline the toggle's
+switch), and applies the Theme from a store subscription (an edit never re-renders the provider) and writes variables,
 never the class (`applyThemeToElement(..., { updateClass: false })`).
 `useToggleMode` ([hooks/use-themer.ts](src/hooks/use-themer.ts)) runs
 the switch inside a View Transition

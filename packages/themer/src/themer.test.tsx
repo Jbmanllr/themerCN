@@ -581,6 +581,31 @@ describe("Themer", () => {
       expect(document.documentElement.classList.contains("dark")).toBe(false)
     })
 
+    it("keeps editing the shown mode when the Host declines a switch", async () => {
+      await mount({ colorMode: "light", onColorModeChange: () => {} })
+      await openThemer()
+
+      await clickModeToggle()
+      // An edit as the Colors panel makes it: to the store's current mode.
+      await act(async () =>
+        useEditorStore.getState().setThemeState((prev) => ({
+          ...prev,
+          styles: {
+            ...prev.styles,
+            [prev.currentMode]: {
+              ...prev.styles[prev.currentMode],
+              primary: "rgb(1, 2, 3)",
+            },
+          },
+        }))
+      )
+
+      expect(
+        document.querySelector('[aria-label="Switch to dark mode"]')
+      ).not.toBeNull()
+      expect(rootVar("--primary")).toBe("rgb(1, 2, 3)")
+    })
+
     it("follows the Host's new mode", async () => {
       const onColorModeChange = vi.fn()
       await mount({ colorMode: "light", onColorModeChange })

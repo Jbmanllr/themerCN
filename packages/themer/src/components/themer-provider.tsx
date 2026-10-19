@@ -47,6 +47,7 @@ import { RESTORE_STYLE_ID, SHORTCUTS } from "../config/constants"
 import { configurePresets, getDefaultPresetId } from "../config/presets"
 import { configureExtraColors } from "../config/extra-colors"
 import { isProduction } from "../utils/is-production"
+import { selectCurrentMode } from "../selectors"
 
 interface ThemerProviderProps {
   children: React.ReactNode
@@ -136,6 +137,11 @@ export function ThemerProvider({
     (state) => state.themeOverrideEnabled
   )
 
+  // The store's mode, read only so the effect below can put it back when it
+  // leaves the colour mode: the toggle writes it with its switch, and a
+  // controlling Host may decline that switch. Changes only with the mode.
+  const storeMode = useEditorStore(selectCurrentMode)
+
   // The Theme-apply path: the store's mode follows the colour mode here (the
   // controls read the colour mode itself), then the Theme is applied now and
   // on every later change through a store subscription, so an edit never
@@ -145,8 +151,8 @@ export function ThemerProvider({
   // Everything it wrote, the shadow override sheet included, is removed only
   // when the override goes off or the editor unmounts.
   React.useEffect(() => {
-    const { themeState, setCurrentMode } = useEditorStore.getState()
-    if (themeState.currentMode !== mode) setCurrentMode(mode)
+    const { setCurrentMode } = useEditorStore.getState()
+    if (storeMode !== mode) setCurrentMode(mode)
     const restoreSheet = document.getElementById(RESTORE_STYLE_ID)
     if (!themeOverrideEnabled) {
       restoreSheet?.remove()
@@ -164,7 +170,7 @@ export function ThemerProvider({
     return useEditorStore.subscribe((next, previous) => {
       if (next.themeState !== previous.themeState) apply(next.themeState)
     })
-  }, [mode, themeOverrideEnabled])
+  }, [mode, storeMode, themeOverrideEnabled])
 
   React.useEffect(() => {
     if (!themeOverrideEnabled) return undefined

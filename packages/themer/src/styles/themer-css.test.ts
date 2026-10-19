@@ -103,6 +103,36 @@ describe("the Themer's CSS", () => {
     expect(utility(".font-mono")["font-family"]).toMatch(/^var\(--font-mono\b/)
   })
 
+  // `@keyframes` are document-wide: an unprefixed `spin` or `enter` would
+  // replace the Host's own animation of that name while the Themer is
+  // mounted.
+  it("names every @keyframes it declares with the themer- prefix", () => {
+    const keyframes: string[] = []
+    root.walkAtRules("keyframes", (rule) => {
+      keyframes.push(rule.params)
+    })
+
+    expect(keyframes).toContain("themer-spin")
+    expect(keyframes.filter((name) => !name.startsWith("themer-"))).toEqual([])
+  })
+
+  it("animates only with its own, prefixed @keyframes", () => {
+    const declared = new Set<string>()
+    root.walkAtRules("keyframes", (rule) => {
+      declared.add(rule.params)
+    })
+    const unprefixed = [...declared].map((name) => name.replace(/^themer-/, ""))
+    const leaking: string[] = []
+    root.walkDecls(/^animation(-name)?$/, (decl) => {
+      for (const name of unprefixed)
+        if (new RegExp(`(?<![\\w-])${name}(?![\\w-])`).test(decl.value))
+          leaking.push(`${decl.prop}: ${decl.value}`)
+    })
+
+    expect(utility(".animate-spin")["animation"]).toMatch(/\bthemer-spin\b/)
+    expect(leaking).toEqual([])
+  })
+
   it("carries shadcn's base border rule", () => {
     expect(utility("*")).toMatchObject({ "border-color": "var(--border)" })
   })

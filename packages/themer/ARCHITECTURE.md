@@ -165,9 +165,11 @@ The Themer UI is styled by its own Tailwind v4 build, not by the Host's:
    be a cycle on the page), unwraps every `@layer`, and moves Preflight, base
    rules and utilities into one unlayered
    `@scope ([data-themer]) to ([data-themer-host])`, with `html`/`:root`/`:host`
-   rewritten to `:scope`. `@property`, `@keyframes` and `@font-face` stay at
-   the top level; `view-transition.css` is appended outside the scope (it
-   targets `<html>`). The result is written to the gitignored
+   rewritten to `:scope`. Every `@keyframes` is renamed `themer-<name>`, and
+   the `animation`/`animation-name` declarations follow, so the Host's own
+   `spin` or `enter` keeps its keyframes. `@property`, `@keyframes` and
+   `@font-face` stay at the top level; `view-transition.css` is appended
+   outside the scope (it targets `<html>`). The result is written to the gitignored
    `src/generated/themer-css.ts` (`THEMER_CSS`).
 3. `useThemerStyle()` ([themer-scope.tsx](src/components/themer-scope.tsx))
    injects it as `<style data-themer-style>` in `<head>` with

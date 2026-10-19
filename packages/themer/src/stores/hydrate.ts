@@ -28,8 +28,10 @@ export function hydrateThemerStores(namespace: string): void {
   const keys = getStorageKeys(namespace)
   useEditorStore.persist.setOptions({ name: keys.editor })
   usePreferencesStore.persist.setOptions({ name: keys.preferences })
-  void useEditorStore.persist.rehydrate()
+  // Preferences first: the editor's merge reads the restored Sidebar Sync
+  // preference to put the restored Theme in sync.
   void usePreferencesStore.persist.rehydrate()
+  void useEditorStore.persist.rehydrate()
   listeners.forEach((listener) => listener())
 }
 

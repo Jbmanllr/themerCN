@@ -8,15 +8,14 @@
 //
 // Store access is narrow: the current mode's styles object (stable until a
 // style changes) and individual preferences. Every write is a functional
-// setThemeState, reading the sync preference at write time, so the change
-// handler is stable and pickers' debounces survive re-renders.
+// setThemeState, so the change handler is stable and pickers' debounces
+// survive re-renders.
 //
-// Sidebar Sync rules (utils/sidebar-sync.ts):
-// - turning it on aligns both modes in one undo entry;
-// - editing a base colour writes its sidebar twin in the same update;
-// - the editor store syncs every other way the theme is set (preset,
-//   undo/redo, CSS import, HSL) in the same commit, while the preference is
-//   on.
+// Sidebar Sync (utils/sidebar-sync.ts) is held by the editor store: the
+// toggle calls its setSidebarColorSync, which aligns both modes in one undo
+// entry when it turns on, and every action that sets the Theme (a base
+// colour edit included) writes the sidebar twins in the same commit while
+// the preference is on. Here the sidebar inputs are only disabled.
 //
 // Host extra colours (ThemerConfig.extraColors) follow the built-in groups.
 // An extra the theme does not set shows the host's computed value (read from
@@ -50,11 +49,7 @@ import {
   getColorSectionId,
 } from "../../utils/color-groups"
 import { getExtraColorKeys } from "../../config/extra-colors"
-import {
-  BASE_TO_SIDEBAR_MAP,
-  applySidebarSync,
-  isSyncedSidebarKey,
-} from "../../utils/sidebar-sync"
+import { isSyncedSidebarKey } from "../../utils/sidebar-sync"
 import type { ThemeColorKey, ThemeModeStyles } from "../../types"
 
 const NO_HOST_VALUES: Readonly<Record<string, string>> = {}
@@ -99,23 +94,8 @@ function useHostExtraColorValues(
 
 function SidebarSyncToggle() {
   const enabled = usePreferencesStore((state) => state.sidebarColorSync)
-  const setEnabled = usePreferencesStore((state) => state.setSidebarColorSync)
-  const setThemeState = useEditorStore((state) => state.setThemeState)
-
-  const handlePressedChange = React.useCallback(
-    (pressed: boolean) => {
-      if (pressed) {
-        // One undo entry for the alignment. The store only syncs while the
-        // preference is on, so this aligns explicitly before it flips.
-        setThemeState((prev) => ({
-          ...prev,
-          styles: applySidebarSync(prev.styles),
-        }))
-      }
-      setEnabled(pressed)
-    },
-    [setEnabled, setThemeState]
-  )
+  // Turning it on aligns the Theme in one undo entry (editor store).
+  const setEnabled = useEditorStore((state) => state.setSidebarColorSync)
 
   return (
     <Tooltip>
@@ -125,7 +105,7 @@ function SidebarSyncToggle() {
             size="sm"
             variant="outline"
             pressed={enabled}
-            onPressedChange={handlePressedChange}
+            onPressedChange={setEnabled}
             aria-label="Sync sidebar colors"
             className="gap-1 text-[11px] tracking-wider uppercase"
           />
@@ -159,9 +139,7 @@ export function ColorControls() {
   const handleColorChange = React.useCallback(
     (value: string, name: string) => {
       const key = name as ThemeColorKey
-      const twin = usePreferencesStore.getState().sidebarColorSync
-        ? BASE_TO_SIDEBAR_MAP[key]
-        : undefined
+      // The store writes the sidebar twin while Sidebar Sync is on.
       setThemeState((prev) => ({
         ...prev,
         styles: {
@@ -169,7 +147,6 @@ export function ColorControls() {
           [prev.currentMode]: {
             ...prev.styles[prev.currentMode],
             [key]: value,
-            ...(twin && { [twin]: value }),
           },
         },
       }))

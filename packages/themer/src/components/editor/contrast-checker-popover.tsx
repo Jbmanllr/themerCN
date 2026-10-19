@@ -1,3 +1,7 @@
+// RETIRED (#60): nothing imports this file. Replaced by
+// contrast-checker-dialog.tsx, which ThemerDialogs renders; the action bar no
+// longer opens this one. Kept until the owner removes it; the header below
+// describes wiring that no longer exists.
 "use client"
 
 // The contrast checker as a dialog (the file is still named "popover"). The

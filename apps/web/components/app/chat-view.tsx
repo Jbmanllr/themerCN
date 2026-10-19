@@ -5,7 +5,7 @@ import {
   useEffect,
   useRef,
   useState,
-  type FormEvent,
+  type SubmitEvent,
   type KeyboardEvent,
 } from "react"
 
@@ -85,7 +85,7 @@ export function ChatView({ thread }: { thread?: ChatThread }) {
     if (!controller.signal.aborted) setStreaming(false)
   }
 
-  function onSubmit(event: FormEvent<HTMLFormElement>) {
+  function onSubmit(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault()
     void send(draft)
   }

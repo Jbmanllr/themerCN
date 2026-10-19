@@ -47,6 +47,7 @@ import { RESTORE_STYLE_ID, SHORTCUTS } from "../config/constants"
 import { configurePresets, getDefaultPresetId } from "../config/presets"
 import { configureExtraColors } from "../config/extra-colors"
 import { isProduction } from "../utils/is-production"
+import { selectCurrentMode } from "../selectors"
 
 interface ThemerProviderProps {
   children: React.ReactNode
@@ -57,6 +58,12 @@ interface ThemerProviderProps {
  * Provider for the themer package
  * Sets up keyboard shortcuts and theme application
  */
+/**
+ * Invalid shortcuts already warned about, so StrictMode's second mount (or a
+ * remount) does not repeat the warning.
+ */
+const warnedShortcuts = new Set<string>()
+
 export function ThemerProvider({
   children,
   config: userConfig,
@@ -69,8 +76,10 @@ export function ThemerProvider({
   // An unrecognisable shortcut falls back to the default toggle (warned
   // below), so config.shortcut always parses.
   const requestedShortcut = userConfig?.shortcut
+  const requestedToggle =
+    requestedShortcut === undefined ? null : parseShortcut(requestedShortcut)
   const shortcutInvalid =
-    requestedShortcut !== undefined && parseShortcut(requestedShortcut) === null
+    requestedShortcut !== undefined && requestedToggle === null
   const config = React.useMemo<ThemerConfig>(
     () => ({
       ...userConfig,
@@ -85,6 +94,8 @@ export function ThemerProvider({
 
   React.useEffect(() => {
     if (!shortcutInvalid || isProduction()) return
+    if (warnedShortcuts.has(requestedShortcut)) return
+    warnedShortcuts.add(requestedShortcut)
     console.warn(
       `themercn: shortcut "${requestedShortcut}" is not a valid shortcut ` +
         `(modifiers: ctrl/control, alt/option, shift, meta/cmd/command). ` +
@@ -136,6 +147,11 @@ export function ThemerProvider({
     (state) => state.themeOverrideEnabled
   )
 
+  // The store's mode, read only so the effect below can put it back when it
+  // leaves the colour mode: the toggle writes it with its switch, and a
+  // controlling Host may decline that switch. Changes only with the mode.
+  const storeMode = useEditorStore(selectCurrentMode)
+
   // The Theme-apply path: the store's mode follows the colour mode here (the
   // controls read the colour mode itself), then the Theme is applied now and
   // on every later change through a store subscription, so an edit never
@@ -145,8 +161,8 @@ export function ThemerProvider({
   // Everything it wrote, the shadow override sheet included, is removed only
   // when the override goes off or the editor unmounts.
   React.useEffect(() => {
-    const { themeState, setCurrentMode } = useEditorStore.getState()
-    if (themeState.currentMode !== mode) setCurrentMode(mode)
+    const { setCurrentMode } = useEditorStore.getState()
+    if (storeMode !== mode) setCurrentMode(mode)
     const restoreSheet = document.getElementById(RESTORE_STYLE_ID)
     if (!themeOverrideEnabled) {
       restoreSheet?.remove()
@@ -164,7 +180,7 @@ export function ThemerProvider({
     return useEditorStore.subscribe((next, previous) => {
       if (next.themeState !== previous.themeState) apply(next.themeState)
     })
-  }, [mode, themeOverrideEnabled])
+  }, [mode, storeMode, themeOverrideEnabled])
 
   React.useEffect(() => {
     if (!themeOverrideEnabled) return undefined
@@ -176,8 +192,7 @@ export function ThemerProvider({
   // re-add listeners on every theme edit.
   const toggle = useThemerUIStore((state) => state.toggle)
   const isOpen = useThemerUIStore((state) => state.isOpen)
-  const { key, modifiers } =
-    parseShortcut(config.shortcut ?? SHORTCUTS.toggle) ?? themerShortcuts.toggle
+  const { key, modifiers } = requestedToggle ?? themerShortcuts.toggle
 
   useKeyboardShortcut({
     key,

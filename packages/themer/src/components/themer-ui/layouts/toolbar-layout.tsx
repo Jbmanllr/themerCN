@@ -86,7 +86,7 @@ export function ToolbarLayout({ onClose, zIndex }: ThemerLayoutProps) {
 
         <Separator orientation="vertical" className="h-6.5" />
 
-        <ButtonGroup aria-label="Editor actions">
+        <ButtonGroup aria-label="Themer actions">
           <ThemerActionButton action={actions.undo} />
           <ThemerActionButton action={actions.redo} />
           <PageInspectorToggle size="default" />

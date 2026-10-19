@@ -1,5 +1,9 @@
 "use client"
 
+// Local change to the vendored shadcn carousel: canScrollPrev/canScrollNext
+// are read from Embla through useSyncExternalStore instead of being mirrored
+// into state from an effect. Re-apply it after `shadcn add carousel -o`.
+
 import * as React from "react"
 import { cn } from "cn"
 import useEmblaCarousel, {

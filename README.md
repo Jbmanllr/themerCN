@@ -39,6 +39,8 @@ The Playground's font picker uses Google's public catalog; set
 
 | Command              | Runs                                                                                                                      |
 | -------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| `pnpm format`        | Prettier writes the whole repo (one root config and ignore file).                                                         |
+| `pnpm format:check`  | Prettier checks the whole repo, as CI does first.                                                                         |
 | `pnpm lint`          | ESLint in every workspace.                                                                                                |
 | `pnpm typecheck`     | `tsc` (and `next typegen` for the Playground).                                                                            |
 | `pnpm test`          | Vitest: the package's unit and DOM tests (TSDoc and README-recipe checks included), the apps' tests.                      |
@@ -46,7 +48,7 @@ The Playground's font picker uses Google's public catalog; set
 | `pnpm check:package` | After the build: publint, attw, the tarball and entry checks, and the Vite app's off-build check.                         |
 | `pnpm e2e`           | Playwright (Chromium) for both apps, after a build. First run: `pnpm --filter vite-app exec playwright install chromium`. |
 
-CI ([`ci.yml`](.github/workflows/ci.yml)) runs
+CI ([`ci.yml`](.github/workflows/ci.yml)) runs `pnpm format:check`,
 `pnpm turbo lint typecheck test build`, then `pnpm turbo check:package`, and
 the e2e job. Run the same before opening a PR.
 

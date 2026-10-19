@@ -27,15 +27,6 @@ interface ContrastCheckerDialogProps {
   onOpenChange: (open: boolean) => void
 }
 
-/**
- * Inline on purpose: the primitive's `sm:max-w-sm` sits in the host's
- * utilities layer, which outranks the editor's own layer, so a width utility
- * that only the editor uses (here `sm:max-w-lg`) would lose and clip the list.
- */
-const CONTRAST_DIALOG_STYLE: React.CSSProperties = {
-  maxWidth: "min(32rem, calc(100% - 2rem))",
-}
-
 export function ContrastCheckerDialog({
   open,
   onOpenChange,
@@ -62,8 +53,9 @@ export function ContrastCheckerDialog({
           dismissedRef.current = false
           return returnFocus
         }}
-        className="max-h-[85vh]"
-        style={CONTRAST_DIALOG_STYLE}
+        // Wider than the primitive's sm:max-w-md, which cn replaces, so the
+        // pair list does not clip.
+        className="max-h-[85vh] sm:max-w-lg"
       >
         <DialogHeader>
           <DialogTitle>WCAG Contrast Checker</DialogTitle>

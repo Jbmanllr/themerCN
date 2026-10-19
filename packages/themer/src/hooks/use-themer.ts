@@ -5,7 +5,8 @@
 //
 // Light/dark: useColorMode (hooks/use-color-mode.ts) owns the mode. The
 // toggle writes themeState.currentMode with the change, and ThemerProvider
-// writes it where it applies the Theme (for a change made by the Host).
+// writes it where it applies the Theme (for a change made by the Host, or
+// to undo the toggle's write when a controlling Host declines the switch).
 
 import { useCallback } from "react"
 import { useColorMode } from "./use-color-mode"

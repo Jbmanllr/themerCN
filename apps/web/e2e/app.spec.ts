@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test"
 
-import { hydrated } from "./themer-ui"
+import { hydrated } from "./page"
 
 // The auth screens and the subscriber app (#26). Everything is mock data, so
 // the assertions name the fixed values from lib/mock.
@@ -262,6 +262,19 @@ test("the login form rejects an email address without an @", async ({
     "Enter a valid email address."
   )
   await expect(page.getByLabel("Email")).toBeFocused()
+})
+
+test("a field's hint is its description until it shows an error", async ({
+  page,
+}) => {
+  await page.goto("/signup")
+  await hydrated(page)
+  const password = page.getByLabel("Password", { exact: true })
+  await expect(password).toHaveAccessibleDescription("Any password works here.")
+
+  await page.getByRole("button", { name: "Create account" }).click()
+
+  await expect(password).toHaveAccessibleDescription("Choose a password.")
 })
 
 test.describe("before hydration", () => {

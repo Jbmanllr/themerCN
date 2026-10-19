@@ -24,6 +24,13 @@ describe("formatting", () => {
     expect(scripts["format:check"]).toBe("prettier --check .")
   })
 
+  it("the root format writes exactly what the check checks", () => {
+    const scripts = JSON.parse(read("../../package.json")).scripts
+    expect(scripts.format).toBe(
+      scripts["format:check"].replace("--check", "--write")
+    )
+  })
+
   it("format is an uncached write with no upstream chain", () => {
     const { format } = JSON.parse(read("../../turbo.json")).tasks
     expect(format.cache).toBe(false)
@@ -164,7 +171,7 @@ describe("task graph", () => {
 
 describe("shared dependency versions", () => {
   const dependencies = (workspace: string): Record<string, string> =>
-    JSON.parse(read(`../../${workspace}/package.json`)).dependencies
+    JSON.parse(read(`../../${workspace}/package.json`)).dependencies ?? {}
 
   it("runtime dependencies shared by packages/ui and themercn use the catalog", () => {
     const ui = dependencies("packages/ui")
@@ -179,6 +186,32 @@ describe("shared dependency versions", () => {
       })
     }
   })
+
+  // An app that renders packages/ui components and imports the same library
+  // itself (recharts' chart parts, lucide icons) must resolve the copy ui
+  // resolves: recharts couples a chart and its tooltip/legend through React
+  // context, so a second copy silently drops the tooltip and legend.
+  it("workspaces using packages/ui declare shared dependencies as ui does", () => {
+    const ui = dependencies("packages/ui")
+    const consumers = ["apps", "packages"]
+      .flatMap((group) =>
+        readdirSync(new URL(`../../${group}/`, import.meta.url)).map(
+          (name) => `${group}/${name}`
+        )
+      )
+      .filter((workspace) => "@workspace/ui" in dependencies(workspace))
+    expect(consumers).toEqual(expect.arrayContaining(["apps/web", "apps/vite"]))
+    for (const workspace of consumers) {
+      const own = dependencies(workspace)
+      for (const name of Object.keys(ui).filter((name) => name in own)) {
+        expect({ workspace, name, version: own[name] }).toEqual({
+          workspace,
+          name,
+          version: ui[name],
+        })
+      }
+    }
+  })
 })
 
 describe("toolchain", () => {
@@ -190,10 +223,6 @@ describe("toolchain", () => {
     const { engines } = JSON.parse(read("../../package.json"))
     expect(engines.node).toBe(`>=${required?.[1]}.${required?.[2]}.0`)
   })
-
-  it("CI cancels superseded runs only for pull requests", () => {
-    expect(read("../../.github/workflows/ci.yml")).toMatch(
-      /^ {2}cancel-in-progress: \$\{\{ github\.event_name == 'pull_request' \}\}$/m
-    )
-  })
+  // CI's concurrency (S57) is evaluated per event in themercn's
+  // scripts/release-workflow.test.ts, beside the release gate it protects.
 })

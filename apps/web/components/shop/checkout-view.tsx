@@ -2,17 +2,19 @@
 
 import { zodResolver } from "@hookform/resolvers/zod"
 import Link from "next/link"
-import { useState, type ReactNode } from "react"
-import { Controller, useForm, useWatch, type Control } from "react-hook-form"
+import { useState } from "react"
+import { Controller, useForm, useWatch } from "react-hook-form"
 import * as z from "zod"
 
 import { Illustration } from "@/components/illustrations/illustration"
 import { CartLineItem } from "@/components/shop/cart-line"
 import { EmptyCart } from "@/components/shop/empty-cart"
 import { OrderSummary } from "@/components/shop/order-summary"
+import { TextField } from "@/components/forms/text-field"
 import { emailAddress, focusOnMount } from "@/lib/forms"
 import type { CartLine } from "@/lib/mock/types"
 import {
+  SHIPPING_IDS,
   type CartSummary,
   type ShippingId,
   cartSummary,
@@ -26,14 +28,12 @@ import {
   Field,
   FieldContent,
   FieldDescription,
-  FieldError,
   FieldGroup,
   FieldLabel,
   FieldLegend,
   FieldSet,
   FieldTitle,
 } from "@workspace/ui/components/field"
-import { Input } from "@workspace/ui/components/input"
 import {
   NativeSelect,
   NativeSelectOption,
@@ -49,16 +49,13 @@ const ORDER_ID = "NJ-1042"
 const COUNTRIES = ["United States", "Canada", "United Kingdom", "France"]
 
 const checkoutSchema = z.object({
-  email: emailAddress,
+  email: emailAddress(),
   name: z.string().trim().min(1, "Enter your full name."),
   address: z.string().trim().min(1, "Enter your street address."),
   city: z.string().trim().min(1, "Enter your city."),
   postcode: z.string().trim().min(1, "Enter your postcode."),
   country: z.string(),
-  shipping: z.enum([
-    "standard",
-    "express",
-  ] as const satisfies readonly ShippingId[]),
+  shipping: z.enum(SHIPPING_IDS),
 })
 
 type CheckoutValues = z.infer<typeof checkoutSchema>
@@ -125,6 +122,7 @@ export function CheckoutView() {
             <TextField
               control={form.control}
               name="email"
+              id="checkout-email"
               label="Email"
               type="email"
               autoComplete="email"
@@ -138,12 +136,14 @@ export function CheckoutView() {
               <TextField
                 control={form.control}
                 name="name"
+                id="checkout-name"
                 label="Full name"
                 autoComplete="name"
               />
               <TextField
                 control={form.control}
                 name="address"
+                id="checkout-address"
                 label="Address"
                 autoComplete="street-address"
               />
@@ -151,12 +151,14 @@ export function CheckoutView() {
                 <TextField
                   control={form.control}
                   name="city"
+                  id="checkout-city"
                   label="City"
                   autoComplete="address-level2"
                 />
                 <TextField
                   control={form.control}
                   name="postcode"
+                  id="checkout-postcode"
                   label="Postcode"
                   autoComplete="postal-code"
                 />
@@ -248,51 +250,6 @@ export function CheckoutView() {
         </div>
       </div>
     </form>
-  )
-}
-
-type TextFieldName = "email" | "name" | "address" | "city" | "postcode"
-
-/** One required text field: a Controller rendering Field, Input and its error. */
-function TextField({
-  control,
-  name,
-  label,
-  type = "text",
-  autoComplete,
-  description,
-}: {
-  control: Control<CheckoutValues>
-  name: TextFieldName
-  label: string
-  type?: "text" | "email"
-  autoComplete: string
-  description?: ReactNode
-}) {
-  const id = `checkout-${name}`
-  return (
-    <Controller
-      name={name}
-      control={control}
-      render={({ field, fieldState }) => (
-        <Field data-invalid={fieldState.invalid}>
-          <FieldLabel htmlFor={id}>{label}</FieldLabel>
-          <Input
-            {...field}
-            id={id}
-            type={type}
-            autoComplete={autoComplete}
-            aria-invalid={fieldState.invalid}
-            aria-describedby={fieldState.invalid ? `${id}-error` : undefined}
-          />
-          {fieldState.invalid ? (
-            <FieldError id={`${id}-error`} errors={[fieldState.error]} />
-          ) : (
-            description && <FieldDescription>{description}</FieldDescription>
-          )}
-        </Field>
-      )}
-    />
   )
 }
 

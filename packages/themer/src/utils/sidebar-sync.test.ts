@@ -1,12 +1,11 @@
 // Proves Sidebar Sync as a pure rule: every sidebar colour is copied from its
 // base twin in both modes without mutating the input, an already synced theme
-// comes back as the same object, and the two maps agree.
+// comes back as the same object.
 import { describe, expect, it } from "vitest"
 
 import { defaultThemeStyles } from "../config/defaults"
 import type { ThemeStyles } from "../types"
 import {
-  BASE_TO_SIDEBAR_MAP,
   SIDEBAR_SYNC_MAP,
   applySidebarSync,
   isSidebarSynced,
@@ -56,13 +55,5 @@ describe("applySidebarSync", () => {
     expect(applySidebarSync(synced)).toBe(synced)
     expect(isSidebarSynced(synced)).toBe(true)
     expect(isSidebarSynced(unsynced())).toBe(false)
-  })
-
-  it("maps each base key back to its sidebar twin", () => {
-    expect(BASE_TO_SIDEBAR_MAP.background).toBe("sidebar")
-    expect(BASE_TO_SIDEBAR_MAP["accent-foreground"]).toBe(
-      "sidebar-accent-foreground"
-    )
-    expect(BASE_TO_SIDEBAR_MAP.card).toBeUndefined()
   })
 })

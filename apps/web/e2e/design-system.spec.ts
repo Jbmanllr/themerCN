@@ -2,7 +2,7 @@ import { expect, test, type Page } from "@playwright/test"
 
 import { nightjarPreset } from "../lib/brand/nightjar"
 import { uiComponents } from "../lib/design-system"
-import { hydrated, resolveColor } from "./themer-ui"
+import { hydrated, resolveColor } from "./page"
 
 const panel = (page: Page, mode: "Light" | "Dark") =>
   page.getByRole("region", { name: mode, exact: true })

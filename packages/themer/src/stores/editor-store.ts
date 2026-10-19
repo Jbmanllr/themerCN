@@ -13,7 +13,10 @@
 // - Preset colours always come from resolvePresetStyles (config/presets.ts).
 // - Sidebar Sync: while the preference (preferences store) is on, every
 //   action that sets the Theme passes it through withSidebarSync in the same
-//   commit, so the Theme is applied and saved once per action.
+//   commit, so the Theme is applied and saved once per action. The Theme
+//   also enters the store in sync: merge syncs a restored or fresh Theme
+//   with the restored preference, and setSidebarColorSync (the only setter
+//   of the preference) aligns the Theme when it turns it on.
 // - Only themeState, themeCheckpoint and presetBaseline persist; history and
 //   future do not. The checkpoint and baseline are stored only when they
 //   differ from themeState (PersistedEditorState). Writes go through
@@ -447,6 +450,14 @@ export const useEditorStore = create<EditorStore>()(
         })
       },
 
+      setSidebarColorSync: (enabled) => {
+        usePreferencesStore.setState({ sidebarColorSync: enabled })
+        if (!enabled) return
+        const { themeState, setThemeState } = get()
+        const synced = withSidebarSync(themeState)
+        if (synced !== themeState) setThemeState(synced)
+      },
+
       canUndo: () => get().history.length > 0,
       canRedo: () => get().future.length > 0,
     }),
@@ -461,16 +472,25 @@ export const useEditorStore = create<EditorStore>()(
       // restored one. Built on the initial state, never the current one, so
       // a namespace switch (stores/hydrate.ts) carries no Theme or undo
       // history over from the previous namespace.
+      // The Theme it restores (or starts from) is put in sync with the
+      // preference, already restored (stores/hydrate.ts), so a Theme saved
+      // with Sync off (another tab) holds the rule too. Nothing is written
+      // until the next action.
       merge: (persistedState): EditorStore => {
         const initialState = useEditorStore.getInitialState()
         const persisted = persistedState as PersistedEditorState | undefined
-        return persisted?.themeState
-          ? {
-              ...initialState,
-              ...fromPersisted(persisted),
-              restoredFromStorage: true,
-            }
-          : initialState
+        if (!persisted?.themeState) {
+          const themeState = withSidebarSync(initialState.themeState)
+          return { ...initialState, themeState }
+        }
+        return {
+          ...initialState,
+          ...fromPersisted({
+            ...persisted,
+            themeState: withSidebarSync(persisted.themeState),
+          }),
+          restoredFromStorage: true,
+        }
       },
       // history and future stay out of localStorage (quota): undo and redo
       // start empty after a reload. A change to them alone writes nothing

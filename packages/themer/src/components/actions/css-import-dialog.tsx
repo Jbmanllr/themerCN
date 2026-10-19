@@ -84,7 +84,7 @@ export function CssImportDialog({ open, onOpenChange }: CssImportDialogProps) {
   )
 
   const handleSubmit = React.useCallback(
-    (event: React.FormEvent) => {
+    (event: React.SubmitEvent<HTMLFormElement>) => {
       event.preventDefault()
       const parsed = parseThemeCss(css, {
         extraColorKeys: getExtraColorKeys(),

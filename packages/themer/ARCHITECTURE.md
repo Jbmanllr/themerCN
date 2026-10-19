@@ -27,6 +27,11 @@ stay single files with no Themer code get configs of their own:
 | `headScript` | `head-script`    | none                                                       | none                             |
 | `nextServer` | `next/server`    | none                                                       | none                             |
 
+`core` cleans `dist` before a build. The `dev` script passes `--no-clean`:
+in watch mode tsdown would delete the previous build's files at the start of
+every rebuild, and the apps' dev servers would briefly fail to resolve
+`themercn`.
+
 This differs from the two-config plan of Jbmanllr/themerCN#15 and
 Jbmanllr/themerCN#20 (a client config giving every entry `'use client'`
 through `outputOptions.intro`, and a server config with no directive):
@@ -61,11 +66,9 @@ What each entry ships:
   nothing from `node_modules` is (`deps.onlyBundle: []`), and each config has
   an import allow-list (`onlyImport`). The core's list leaves out `next`, so
   the Themer runs in any React app. `next` is an optional peer.
-- `"sideEffects": false`: no entry module runs anything Host-visible on
-  import. The core's one top-level side effect, the ColorFocusStore's
-  subscription to the ThemerUIStore (it clears the colour focus on close),
-  lands in `dist/index.js`, the module that exports `Themer`, so it ships
-  whenever the Themer does. The other entries hold only constants. The CSS
+- `"sideEffects": false`: no module runs anything on import beyond
+  creating its stores and constants (the ThemerUIStore's close actions clear
+  the colour focus, so no store subscribes to another at import). The CSS
   is injected on mount (`useThemerStyle`); the package ships no CSS file.
 - `check:package` runs after `build`: `publint --strict`, `attw` (ESM only),
   [scripts/check-pack.mjs](scripts/check-pack.mjs) (the tarball's file
@@ -181,7 +184,8 @@ the Themer's portal beside the Host tree and never wrap it.
   `useInspectorMode` (hooks/use-themer-layout.ts) derives "active" from it
   during render. The user's switch (`useSetThemerLayout`) turns it off in
   the same action, and a Host-driven switch leaves it inactive, so no
-  listener binds in between.
+  listener binds in between; `ThemerUI` then clears it as the old layout
+  unmounts, so switching back does not turn it on again.
 
 ### Decision: a usable collapsed rail, and instant collapse
 
@@ -250,7 +254,8 @@ isolation prototype, Jbmanllr/themerCN#11). `[data-themer]` is a bare wrapper be
 root's descendants; its only attribute is `dir="ltr"`, which keeps the Themer
 UI and its popups left-to-right in a right-to-left Host. Host preview tabs
 render inside `<div data-themer-host style="display:contents">`, the lower
-boundary, so they keep the Host's styles, and take `<html>`'s `dir` back. Accepted leak: Host unlayered element rules on
+boundary, so they keep the Host's styles, and take `<html>`'s `dir` back,
+following it as it changes ([use-host-direction.ts](src/hooks/use-host-direction.ts)). Accepted leak: Host unlayered element rules on
 properties Preflight does not reset. Required browsers: `@scope` with a lower
 boundary (Chrome 118, Safari 17.4, Firefox 146).
 
@@ -303,8 +308,9 @@ The mode controls (the toggle, its menu item, the contrast panel's starting
 mode) read `useColorMode()` directly, so a Host `.dark` flip updates them in
 the commit that themes the page. The store's `themeState.currentMode` (which
 the style controls read) is written by the toggle's handler and by
-`ThemerProvider`'s Theme-apply effect, which applies the Theme from a store
-subscription (an edit never re-renders the provider) and writes variables,
+`ThemerProvider`'s Theme-apply effect, which also puts it back on the colour
+mode whenever the two differ (a controlling Host may decline the toggle's
+switch), and applies the Theme from a store subscription (an edit never re-renders the provider) and writes variables,
 never the class (`applyThemeToElement(..., { updateClass: false })`).
 `useToggleMode` ([hooks/use-themer.ts](src/hooks/use-themer.ts)) runs
 the switch inside a View Transition
@@ -319,7 +325,9 @@ the switch inside a View Transition
   `DEFAULT_STORAGE_NAMESPACE` is `"themercn"`) and hydrates them in a
   layout effect of `<Themer>`, which renders its tree only once the stores
   hold that namespace, so nothing is read from a key the Host did not
-  choose.
+  choose. The stores are module singletons, so a page mounts one
+  `<Themer>`: a second one on another namespace takes the stores and the
+  first renders nothing (a development warning says so).
 - Switching `storageNamespace` at runtime only repoints the keys and
   rehydrates. Both stores' `merge` starts from the store's initial state,
   never the current one, so an empty namespace starts fresh and nothing (no
@@ -586,12 +594,15 @@ recomputed from `themeCheckpoint`
 
 While `sidebarColorSync` is on, each sidebar colour equals its base twin in
 both modes: `applySidebarSync` ([sidebar-sync.ts](src/utils/sidebar-sync.ts))
-is pure; turning it on is one undo entry; editing a base colour writes its
-twin. The editor store holds the rule itself: every action that sets the
-Theme (set, apply/reset/adopt Preset, import, undo, redo,
-refresh-untouched-Preset) syncs it in the same commit, reading the preference
-from the preferences store, so each action applies and saves the Theme once,
-whatever is mounted. Undo and redo set the checkpoint to the synced Theme.
+is pure. The editor store holds the rule itself, whatever is mounted: every
+action that sets the Theme (set, apply/reset/adopt Preset, import, undo,
+redo, refresh-untouched-Preset) syncs it in the same commit, reading the
+preference from the preferences store, so each action applies and saves the
+Theme once; editing a base colour therefore writes its twin. The preference
+is set only through the editor store's `setSidebarColorSync`, which aligns
+the Theme in one undo entry when it turns on, and hydration restores the
+preferences first so the editor's `merge` syncs a restored (or fresh) Theme.
+Undo and redo set the checkpoint to the synced Theme.
 
 ### Contrast Checker
 

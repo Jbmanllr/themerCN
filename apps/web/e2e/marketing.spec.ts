@@ -3,7 +3,7 @@ import { fileURLToPath } from "node:url"
 
 import { expect, test } from "@playwright/test"
 
-import { hydrated } from "./themer-ui"
+import { hydrated } from "./page"
 
 import { postCategories, posts } from "../lib/mock/blog"
 

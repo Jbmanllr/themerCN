@@ -3,7 +3,10 @@
 import { getProduct } from "./mock"
 import type { CartLine, Cents } from "./mock/types"
 
-export type ShippingId = "standard" | "express"
+/** Every shipping option's id; the checkout schema validates against it. */
+export const SHIPPING_IDS = ["standard", "express"] as const
+
+export type ShippingId = (typeof SHIPPING_IDS)[number]
 
 export type ShippingOption = {
   id: ShippingId

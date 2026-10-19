@@ -58,6 +58,7 @@ import {
 } from "./preview-tab-registry"
 import ExamplesPreviewContainer from "./theme-preview/examples-preview-container"
 import TabsTriggerPill from "./theme-preview/tabs-trigger-pill"
+import { useHostDirection } from "../../hooks/use-host-direction"
 
 export function PreviewTabs() {
   const { config } = useThemerContext()
@@ -197,6 +198,7 @@ const PreviewTabBody = React.memo(function PreviewTabBody({
   wrapper: ThemerConfig["previewWrapper"]
 }) {
   const Component = tab.component
+  const hostDirection = useHostDirection()
   // A host tab is styled by the Host's CSS alone: `[data-themer-host]` is the
   // lower boundary of the Themer's @scope (themer-scope.tsx). It takes the
   // Host page's direction back from the Themer root's `dir="ltr"`.
@@ -204,7 +206,7 @@ const PreviewTabBody = React.memo(function PreviewTabBody({
     tab.source === "host" ? (
       <div
         data-themer-host=""
-        dir={document.documentElement.dir || undefined}
+        dir={hostDirection}
         style={{ display: "contents" }}
       >
         {Wrapper ? (

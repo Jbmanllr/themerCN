@@ -73,7 +73,6 @@ export const usePreferencesStore = create<PreferencesStore>()(
       setLayout: (layout) => set({ layout }),
       setThemeOverrideEnabled: (enabled) =>
         set({ themeOverrideEnabled: enabled }),
-      setSidebarColorSync: (enabled) => set({ sidebarColorSync: enabled }),
       setColorSelectorTab: (tab) => set({ colorSelectorTab: tab }),
       setSectionOpen: (id, open) =>
         set((state) =>

@@ -2,12 +2,13 @@
 // @vitest-environment-options { "settings": { "handleDisabledFileLoadingAsSuccess": true } }
 // The public <Themer> as a Host app mounts it: one component beside the
 // Host's tree, configured by flat props.
-import { act, Profiler } from "react"
+import { act, Profiler, StrictMode } from "react"
 import { createRoot, type Root } from "react-dom/client"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import { EDITOR_STATE_VERSION, PREFERENCES_VERSION } from "./config/constants"
 import { defaultThemeState } from "./config/defaults"
+import { resolvePresetStyles } from "./config/presets"
 import type { ThemeStyles } from "./types"
 import { useEditorStore } from "./stores/editor-store"
 import { useThemerUIStore } from "./stores/themer-ui-store"
@@ -233,6 +234,33 @@ describe("Themer", () => {
         expect(useEditorStore.getState().canUndo()).toBe(true)
         return violetPrimary
       }
+
+      it("warns nothing when the namespace switches", async () => {
+        const warn = vi.spyOn(console, "warn").mockImplementation(() => {})
+        await mount({ storageNamespace: "switch-quiet-a" })
+
+        await rerender({ storageNamespace: "switch-quiet-b" })
+
+        expect(warn).not.toHaveBeenCalled()
+      })
+
+      it("warns when a second <Themer> on another namespace takes the stores", async () => {
+        const warn = vi.spyOn(console, "warn").mockImplementation(() => {})
+        await mount({ storageNamespace: "two-a" })
+        const second = document.createElement("div")
+        document.body.append(second)
+        const secondRoot = createRoot(second)
+
+        await act(async () =>
+          secondRoot.render(<Themer storageNamespace="two-b" />)
+        )
+        await act(async () => secondRoot.unmount())
+
+        const warnings = warn.mock.calls.filter((args) =>
+          String(args[0]).includes("one <Themer> per page")
+        )
+        expect(warnings).toHaveLength(1)
+      })
 
       it("shows a populated namespace's Theme and leaves its entry as stored", async () => {
         seedEditor("switch-populated-b:editor", "rgb(6, 6, 6)")
@@ -552,6 +580,54 @@ describe("Themer", () => {
       expect(changes[0]).toBe("Switch to light mode")
       expect(changes).toContain("page themed")
     })
+
+    it("shows the new mode's colours on the Preset picker before the page is themed for it", async () => {
+      // Hex colours: happy-dom drops an oklch() inline style.
+      await mount({
+        presets: [
+          {
+            id: "brand",
+            label: "Brand",
+            styles: {
+              light: { primary: "#111111" },
+              dark: { primary: "#eeeeee" },
+            },
+          },
+        ],
+        defaultPreset: "brand",
+      })
+      await openThemer()
+      const swatches = () =>
+        document.querySelector(
+          '[data-testid="themer-preset-trigger"] [data-testid="theme-colors"]'
+        )?.innerHTML
+      const before = swatches()
+      // Records arrive in the order the DOM changed: the swatches must change
+      // no later than the commit that themes the Host page.
+      const records: MutationRecord[] = []
+      const observer = new MutationObserver((batch) => records.push(...batch))
+      observer.observe(document.documentElement, {
+        attributes: true,
+        attributeFilter: ["style"],
+        childList: true,
+        subtree: true,
+      })
+
+      await act(async () => document.documentElement.classList.add("dark"))
+
+      records.push(...observer.takeRecords())
+      observer.disconnect()
+      const changes = records.flatMap((record) => {
+        if (record.target === document.documentElement) return ["page"]
+        const target = record.target as Element
+        return target.closest?.('[data-testid="theme-colors"]') &&
+          target.closest('[data-testid="themer-preset-trigger"]')
+          ? ["swatch"]
+          : []
+      })
+      expect(swatches()).not.toBe(before)
+      expect(changes[0]).toBe("swatch")
+    })
   })
 
   describe("colour mode, controlled", () => {
@@ -579,6 +655,31 @@ describe("Themer", () => {
 
       expect(onColorModeChange).toHaveBeenCalledExactlyOnceWith("dark")
       expect(document.documentElement.classList.contains("dark")).toBe(false)
+    })
+
+    it("keeps editing the shown mode when the Host declines a switch", async () => {
+      await mount({ colorMode: "light", onColorModeChange: () => {} })
+      await openThemer()
+
+      await clickModeToggle()
+      // An edit as the Colors panel makes it: to the store's current mode.
+      await act(async () =>
+        useEditorStore.getState().setThemeState((prev) => ({
+          ...prev,
+          styles: {
+            ...prev.styles,
+            [prev.currentMode]: {
+              ...prev.styles[prev.currentMode],
+              primary: "rgb(1, 2, 3)",
+            },
+          },
+        }))
+      )
+
+      expect(
+        document.querySelector('[aria-label="Switch to dark mode"]')
+      ).not.toBeNull()
+      expect(rootVar("--primary")).toBe("rgb(1, 2, 3)")
     })
 
     it("follows the Host's new mode", async () => {
@@ -694,6 +795,26 @@ describe("Themer", () => {
       )
       expect(shortcutWarnings).toHaveLength(1)
     })
+
+    it("warns once about an invalid shortcut under StrictMode", async () => {
+      const warn = vi.spyOn(console, "warn").mockImplementation(() => {})
+      container = document.createElement("div")
+      document.body.append(container)
+      root = createRoot(container)
+
+      await act(async () =>
+        root?.render(
+          <StrictMode>
+            <Themer shortcut="hyper+j" />
+          </StrictMode>
+        )
+      )
+
+      const shortcutWarnings = warn.mock.calls.filter((args) =>
+        String(args[0]).includes("hyper+j")
+      )
+      expect(shortcutWarnings).toHaveLength(1)
+    })
   })
 
   describe("CSS isolation", () => {
@@ -782,6 +903,26 @@ describe("Themer", () => {
         expect(
           direction(document.querySelector('[data-testid="host-tab-content"]'))
         ).toBe("rtl")
+      })
+
+      it("follows the Host's direction when it changes", async () => {
+        await mount({ previewTabs: HOST_TABS })
+        await openThemer()
+        const hostTab = [
+          ...document.querySelectorAll<HTMLElement>('[role="tab"]'),
+        ].find((tab) => tab.textContent === "Host tab")
+        await act(async () => hostTab?.click())
+
+        await act(async () => {
+          document.documentElement.dir = "ltr"
+        })
+
+        expect(
+          document
+            .querySelector('[data-testid="host-tab-content"]')
+            ?.closest("[data-themer-host]")
+            ?.getAttribute("dir")
+        ).toBe("ltr")
       })
     })
   })
@@ -883,6 +1024,51 @@ describe("Themer", () => {
       )
       expect(presetTriggerLabel()).toBe("Violet Bloom")
       expect(resetButton().disabled).toBe(true)
+    })
+
+    it("starts a fresh Theme in sync when the preference was saved on", async () => {
+      saveSidebarSync("sync-fresh")
+      await mount({ storageNamespace: "sync-fresh" })
+      await openThemer()
+
+      expect(sidebarsOnBase(useEditorStore.getState().themeState.styles)).toBe(
+        true
+      )
+      expect(rootVar("--sidebar")).toBe(rootVar("--background"))
+      expect(resetButton().disabled).toBe(true)
+    })
+
+    it("restores an edited Theme saved out of sync in sync", async () => {
+      saveSidebarSync("sync-restore")
+      // Saved by another tab with Sync off: the Preset, then an edit.
+      const presetStyles = resolvePresetStyles(UNSYNCED_PRESET)
+      const themeState = {
+        ...defaultThemeState,
+        preset: UNSYNCED_PRESET,
+        styles: {
+          light: { ...presetStyles.light, radius: "1.5rem" },
+          dark: { ...presetStyles.dark, radius: "1.5rem" },
+        },
+      }
+      localStorage.setItem(
+        "sync-restore:editor",
+        JSON.stringify({
+          state: {
+            themeState,
+            presetBaseline: { preset: UNSYNCED_PRESET, styles: presetStyles },
+          },
+          version: EDITOR_STATE_VERSION,
+        })
+      )
+      await mount({ storageNamespace: "sync-restore" })
+
+      expect(sidebarsOnBase(useEditorStore.getState().themeState.styles)).toBe(
+        true
+      )
+      expect(rootVar("--sidebar")).toBe(rootVar("--background"))
+      expect(useEditorStore.getState().themeState.styles.light.radius).toBe(
+        "1.5rem"
+      )
     })
 
     it("saves a Preset put on in sync with one storage write", async () => {

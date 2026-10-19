@@ -1,3 +1,7 @@
+// RETIRED (#56): nothing imports this file. The editor store holds Sidebar
+// Sync itself (withSidebarSync, its merge and setSidebarColorSync), and
+// ThemerProvider no longer mounts this hook. Kept until the owner removes it;
+// the header below describes wiring that no longer exists.
 "use client"
 
 // Keeps the theme's sidebar colours on their base twins while Sidebar Sync is

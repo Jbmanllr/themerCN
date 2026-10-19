@@ -6,32 +6,27 @@ import { useState } from "react"
 import { Controller, useForm } from "react-hook-form"
 import * as z from "zod"
 
-import { focusOnMount } from "@/lib/forms"
+import { TextField } from "@/components/forms/text-field"
+import { emailAddress, focusOnMount } from "@/lib/forms"
 import { Button } from "@workspace/ui/components/button"
-import {
-  Field,
-  FieldDescription,
-  FieldError,
-  FieldGroup,
-  FieldLabel,
-} from "@workspace/ui/components/field"
-import { Input } from "@workspace/ui/components/input"
+import { Field, FieldGroup, FieldLabel } from "@workspace/ui/components/field"
 import {
   NativeSelect,
   NativeSelectOption,
 } from "@workspace/ui/components/native-select"
-import { Textarea } from "@workspace/ui/components/textarea"
 
 const topics = ["An order", "My subscription", "Wholesale", "Something else"]
 
+const REPLY_ADDRESS =
+  "Add an email address we can reply to, like you@example.com."
+
 const contactSchema = z.object({
   name: z.string().trim().min(1, "Add your name so we know who to reply to."),
-  email: z
-    .string()
-    .trim()
-    .pipe(
-      z.email("Add an email address we can reply to, like you@example.com.")
-    ),
+  // One message for empty and malformed: either way we can't reply.
+  email: emailAddress({
+    missing: REPLY_ADDRESS,
+    invalid: REPLY_ADDRESS,
+  }),
   topic: z.string(),
   message: z.string().trim().min(1, "Write a message before sending."),
 })
@@ -96,54 +91,20 @@ export function ContactForm() {
     >
       <FieldGroup>
         <div className="grid gap-6 sm:grid-cols-2">
-          <Controller
+          <TextField
+            control={form.control}
             name="name"
-            control={form.control}
-            render={({ field, fieldState }) => (
-              <Field data-invalid={fieldState.invalid}>
-                <FieldLabel htmlFor="contact-name">Name</FieldLabel>
-                <Input
-                  {...field}
-                  id="contact-name"
-                  autoComplete="name"
-                  aria-invalid={fieldState.invalid}
-                  aria-describedby={
-                    fieldState.invalid ? "contact-name-error" : undefined
-                  }
-                />
-                {fieldState.invalid && (
-                  <FieldError
-                    id="contact-name-error"
-                    errors={[fieldState.error]}
-                  />
-                )}
-              </Field>
-            )}
+            id="contact-name"
+            label="Name"
+            autoComplete="name"
           />
-          <Controller
-            name="email"
+          <TextField
             control={form.control}
-            render={({ field, fieldState }) => (
-              <Field data-invalid={fieldState.invalid}>
-                <FieldLabel htmlFor="contact-email">Email</FieldLabel>
-                <Input
-                  {...field}
-                  id="contact-email"
-                  type="email"
-                  autoComplete="email"
-                  aria-invalid={fieldState.invalid}
-                  aria-describedby={
-                    fieldState.invalid ? "contact-email-error" : undefined
-                  }
-                />
-                {fieldState.invalid && (
-                  <FieldError
-                    id="contact-email-error"
-                    errors={[fieldState.error]}
-                  />
-                )}
-              </Field>
-            )}
+            name="email"
+            id="contact-email"
+            label="Email"
+            type="email"
+            autoComplete="email"
           />
         </div>
         <Controller
@@ -166,35 +127,14 @@ export function ContactForm() {
             </Field>
           )}
         />
-        <Controller
-          name="message"
+        <TextField
           control={form.control}
-          render={({ field, fieldState }) => (
-            <Field data-invalid={fieldState.invalid}>
-              <FieldLabel htmlFor="contact-message">Message</FieldLabel>
-              <Textarea
-                {...field}
-                id="contact-message"
-                rows={6}
-                aria-invalid={fieldState.invalid}
-                aria-describedby={
-                  fieldState.invalid
-                    ? "contact-message-error"
-                    : "contact-message-hint"
-                }
-              />
-              {fieldState.invalid ? (
-                <FieldError
-                  id="contact-message-error"
-                  errors={[fieldState.error]}
-                />
-              ) : (
-                <FieldDescription id="contact-message-hint">
-                  For an order, include its number (it starts with NJ-).
-                </FieldDescription>
-              )}
-            </Field>
-          )}
+          name="message"
+          id="contact-message"
+          label="Message"
+          multiline
+          rows={6}
+          description="For an order, include its number (it starts with NJ-)."
         />
         <div>
           <Button type="submit" size="lg">

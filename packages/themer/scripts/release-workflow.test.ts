@@ -45,11 +45,14 @@ const needsOf = (job: Job) =>
 // The CI gate: the triggering CI run succeeded, for a push (not a pull
 // request whose head branch happens to be called `main`), and its commit is
 // still main's tip, which is the `github.sha` changesets/action versions,
-// tags and releases.
+// tags and releases, from this repository (not a fork's run).
 const isGated = (job: Job) =>
   /github\.event\.workflow_run\.conclusion == 'success'/.test(job.if ?? "") &&
   /github\.event\.workflow_run\.event == 'push'/.test(job.if ?? "") &&
-  /github\.event\.workflow_run\.head_sha == github\.sha/.test(job.if ?? "")
+  /github\.event\.workflow_run\.head_sha == github\.sha/.test(job.if ?? "") &&
+  /github\.event\.workflow_run\.head_repository\.full_name == github\.repository/.test(
+    job.if ?? ""
+  )
 
 const runsOnlyBehindGate = (name: string): boolean => {
   const job = release.jobs[name]!
@@ -79,14 +82,18 @@ describe("release.yml", () => {
     for (const checkout of checkouts) expect(checkout.with?.ref).toBe(HEAD_SHA)
   })
 
-  it("pins every action to a full commit SHA with a version comment", () => {
-    const uses = [
-      ...readText("release.yml").matchAll(/^\s*(?:-\s+)?uses:\s*(.+)$/gm),
-    ].map((match) => match[1]!.trim())
-    expect(uses.length).toBeGreaterThan(0)
-    for (const use of uses)
-      expect(use).toMatch(/^[\w.-]+\/[\w./-]+@[0-9a-f]{40} # v\d+\.\d+\.\d+$/)
-  })
+  // CI is pinned too: it gates the release and writes the pnpm cache.
+  it.each(["release.yml", "ci.yml"])(
+    "pins every action in %s to a full commit SHA with a version comment",
+    (file) => {
+      const uses = [
+        ...readText(file).matchAll(/^\s*(?:-\s+)?uses:\s*(.+)$/gm),
+      ].map((match) => match[1]!.trim())
+      expect(uses.length).toBeGreaterThan(0)
+      for (const use of uses)
+        expect(use).toMatch(/^[\w.-]+\/[\w./-]+@[0-9a-f]{40} # v\d+\.\d+\.\d+$/)
+    }
+  )
 
   it("installs an exact npm version for publishing", () => {
     const npmInstalls = steps
@@ -116,5 +123,90 @@ describe("release.yml", () => {
     expect(version?.with?.["github-token"]).toBe(
       `\${{ steps.${appToken?.id}.outputs.token }}`
     )
+  })
+})
+
+// Evaluates the subset of GitHub Actions expressions the workflows use:
+// `${{ }}` interpolation, string literals, `github.*` context paths, `==`,
+// `!=`, `&&` and `||` (which, as on GitHub, return an operand, not a
+// boolean), and parentheses.
+function evaluate(template: string, github: Record<string, string>): unknown {
+  const evalExpression = (source: string): unknown => {
+    const tokens = source.match(/'[^']*'|==|!=|&&|\|\||[()]|[\w.]+/g) ?? []
+    let at = 0
+    const primary = (): unknown => {
+      const token = tokens[at++]
+      if (token === "(") {
+        const value = or()
+        at++
+        return value
+      }
+      if (token?.startsWith("'")) return token.slice(1, -1)
+      if (token?.startsWith("github.")) return github[token.slice(7)] ?? ""
+      throw new Error(`unsupported expression token: ${token}`)
+    }
+    const comparison = (): unknown => {
+      const left = primary()
+      const op = tokens[at]
+      if (op !== "==" && op !== "!=") return left
+      at++
+      const equal = left === primary()
+      return op === "==" ? equal : !equal
+    }
+    const and = (): unknown => {
+      let value = comparison()
+      while (tokens[at] === "&&") {
+        at++
+        const right = comparison()
+        value = value ? right : value
+      }
+      return value
+    }
+    const or = (): unknown => {
+      let value = and()
+      while (tokens[at] === "||") {
+        at++
+        const right = and()
+        value = value ? value : right
+      }
+      return value
+    }
+    return or()
+  }
+  const whole = template.match(/^\$\{\{(.*)\}\}$/s)
+  if (whole) return evalExpression(whole[1]!)
+  return template.replace(/\$\{\{(.*?)\}\}/gs, (_, source: string) =>
+    String(evalExpression(source))
+  )
+}
+
+describe("ci.yml", () => {
+  const { concurrency } = ci as unknown as {
+    concurrency: { group: string; "cancel-in-progress": string }
+  }
+  const runFor = (github: Record<string, string>) => ({
+    group: evaluate(concurrency.group, github),
+    cancels: evaluate(concurrency["cancel-in-progress"], github),
+  })
+
+  it("cancels a pull request's superseded run", () => {
+    const pr = { event_name: "pull_request", ref: "refs/pull/7/merge" }
+    const first = runFor({ ...pr, sha: "a1" })
+    const second = runFor({ ...pr, sha: "b2" })
+
+    expect(second.group).toBe(first.group)
+    expect(second.cancels).toBe(true)
+  })
+
+  // A run waiting behind a running one in the same group is cancelled by the
+  // next one queued, whatever cancel-in-progress says, so every commit on
+  // main needs a group of its own to get a verdict.
+  it("gives every push to main a run of its own", () => {
+    const pushes = ["a1", "b2", "c3"].map((sha) =>
+      runFor({ event_name: "push", ref: "refs/heads/main", sha })
+    )
+
+    expect(new Set(pushes.map((run) => run.group)).size).toBe(3)
+    for (const run of pushes) expect(run.cancels).toBe(false)
   })
 })

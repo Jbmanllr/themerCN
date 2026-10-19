@@ -119,7 +119,7 @@ export function useThemer() {
     toggle,
     activePanel,
     setActivePanel,
-    inspectorMode,
+    inspectorLayout,
     toggleInspector,
     fullscreenPreview,
     toggleFullscreen,
@@ -131,7 +131,7 @@ export function useThemer() {
       toggle: state.toggle,
       activePanel: state.activePanel,
       setActivePanel: state.setActivePanel,
-      inspectorMode: state.inspectorMode,
+      inspectorLayout: state.inspectorLayout,
       toggleInspector: state.toggleInspector,
       fullscreenPreview: state.fullscreenPreview,
       toggleFullscreen: state.toggleFullscreen,
@@ -267,7 +267,7 @@ export function useThemer() {
     preset: themeState.preset,
     isOpen,
     activePanel,
-    inspectorMode,
+    inspectorLayout,
     fullscreenPreview,
 
     // Preferences

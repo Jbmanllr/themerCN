@@ -33,6 +33,7 @@ import { Tabs, TabsContent, TabsList } from "@workspace/ui/components/tabs"
 import { cn } from "@workspace/ui/lib/utils"
 import { useColorFocusTrigger } from "../../hooks/use-color-focus"
 import { useIsMobile } from "../../hooks/use-is-mobile"
+import { useInspectorMode } from "../../hooks/use-themer-layout"
 import {
   themerShortcuts,
   useKeyboardShortcut,
@@ -63,8 +64,7 @@ export function PreviewTabs() {
   const { previewTabs, previewWrapper } = config
   const previewTab = usePreferencesStore((state) => state.previewTab)
   const setPreviewTab = usePreferencesStore((state) => state.setPreviewTab)
-  const inspectorMode = useThemerUIStore((state) => state.inspectorMode)
-  const toggleInspector = useThemerUIStore((state) => state.toggleInspector)
+  const { active: inspectorMode, toggle: toggleInspector } = useInspectorMode()
   const isFullscreen = useThemerUIStore((state) => state.fullscreenPreview)
   const toggleFullscreen = useThemerUIStore((state) => state.toggleFullscreen)
   const isMobile = useIsMobile()

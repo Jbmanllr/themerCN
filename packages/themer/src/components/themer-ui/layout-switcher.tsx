@@ -15,8 +15,10 @@ import {
   DropdownMenuRadioItem,
   DropdownMenuTrigger,
 } from "@workspace/ui/components/dropdown-menu"
-import { useThemerLayout } from "../../hooks/use-themer-layout"
-import { usePreferencesStore } from "../../stores/preferences-store"
+import {
+  useSetThemerLayout,
+  useThemerLayout,
+} from "../../hooks/use-themer-layout"
 import { isThemerLayout, THEMER_LAYOUTS } from "./layouts/registry"
 
 const LAYOUT_ENTRIES = Object.entries(THEMER_LAYOUTS) as [
@@ -52,12 +54,13 @@ export function LayoutSwitcher() {
 }
 
 /**
- * The layouts as radio items, the current one checked; picking one saves it.
+ * The layouts as radio items, the current one checked; picking one saves it
+ * and turns the inspector off (useSetThemerLayout).
  * The switcher's menu draws it, and Toolbar's overflow menu in a submenu.
  */
 export function LayoutRadioGroup() {
   const layout = useThemerLayout()
-  const setLayout = usePreferencesStore((state) => state.setLayout)
+  const setLayout = useSetThemerLayout()
 
   return (
     <DropdownMenuRadioGroup

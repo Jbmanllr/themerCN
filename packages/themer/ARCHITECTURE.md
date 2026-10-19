@@ -119,8 +119,10 @@ the Themer's portal beside the Host tree and never wrap it.
   through the variable; the viewport does not shrink (ADR 0001).
 - **Toolbar** ([toolbar-layout.tsx](src/components/themer-ui/layouts/toolbar-layout.tsx)):
   no sidebar; a `fixed` bar centred at the top of the page with auto
-  margins, not a transform (a transform would make the bar the containing
-  block of the page inspector's fixed layer). Colors, Typography and Other
+  margins. The bar is a region labelled "Themer toolbar", not a
+  `role="toolbar"`: it has no arrow-key navigation to announce. The page
+  inspector mounts beside the bar in the layout's root, so its card is not
+  read as part of the bar. Colors, Typography and Other
   are `Popover` triggers drawn as a `ToggleGroup`; each popup holds
   `PanelContent` in a `ScrollArea` capped to Base UI's `--available-height`,
   and opening one sets the active panel; a colour focus jump (`focusRequest`,
@@ -133,13 +135,17 @@ the Themer's portal beside the Host tree and never wrap it.
   panel popup, so they paint above it. No page pause.
 - **Inspector on the Host page** ([page-inspector.tsx](src/components/themer-ui/page-inspector.tsx)):
   every in-place layout (`coversPage: false`: Overlay, Push, Toolbar) mounts
-  `<PageInspector />` in its root and `<PageInspectorToggle />` in its
+  `<PageInspector />` in its root (beside the Toolbar's bar) and `<PageInspectorToggle />` in its
   sidebar header (Overlay, Push) or its bar (Toolbar, `size="default"` to
   match the `ButtonGroup`).
   `useInspector` binds to the Host document with `ignore: "[data-themer]"`,
   so the Themer's own tree is never inspected and its clicks still act; the
-  card renders in a fixed, pointer-transparent layer. `ThemerUI` turns
-  `inspectorMode` off whenever the layout in force changes.
+  card renders in a fixed, pointer-transparent layer. The ThemerUIStore
+  keeps `inspectorLayout`, the layout the inspector was turned on in;
+  `useInspectorMode` (hooks/use-themer-layout.ts) derives "active" from it
+  during render. The user's switch (`useSetThemerLayout`) turns it off in
+  the same action, and a Host-driven switch leaves it inactive, so no
+  listener binds in between.
 
 Every editing state (Theme, history, active panel, collapse) lives in the
 stores, so a switch keeps it (the inspector is turned off: each layout
@@ -335,7 +341,7 @@ follows the Host's),
 ### ThemerUIStore
 
 [stores/themer-ui-store.ts](src/stores/themer-ui-store.ts), transient: `isOpen`,
-`activePanel` (`colors` | `typography` | `other`), `inspectorMode`,
+`activePanel` (`colors` | `typography` | `other`), `inspectorLayout`,
 `fullscreenPreview`, and `dialog` (the open action dialog: `code` |
 `importCss` | `contrast`, or none; closing the Themer UI closes it).
 

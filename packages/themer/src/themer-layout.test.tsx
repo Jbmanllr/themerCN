@@ -147,8 +147,7 @@ describe("Themer layout", () => {
   })
 
   describe("the Toolbar's controls", () => {
-    const inBar = (label: string) =>
-      query(`${TOOLBAR} [aria-label="${label}"]`)
+    const inBar = (label: string) => query(`${TOOLBAR} [aria-label="${label}"]`)
 
     it("is a labelled region, not a toolbar: it has no arrow-key navigation", async () => {
       await mount({ layout: "toolbar" })
@@ -765,6 +764,55 @@ describe("Themer layout", () => {
       expect(pressed(query('[data-testid="themer-preview-inspector"]'))).toBe(
         "false"
       )
+    })
+
+    /**
+     * The capture listeners bound from now on on <html>, the surface the page
+     * inspector intercepts the Host's clicks on. (Menus bind theirs on the
+     * document, so it is left out.)
+     */
+    function watchCaptureListeners() {
+      const bound: string[] = []
+      const html = document.documentElement
+      const add = html.addEventListener.bind(html)
+      vi.spyOn(html, "addEventListener").mockImplementation(
+        (type, listener, options) => {
+          const capture =
+            options === true ||
+            (typeof options === "object" && options.capture === true)
+          if (capture) bound.push(type)
+          add(type, listener, options)
+        }
+      )
+      return bound
+    }
+
+    it("binds no page listener when the user switches layout with it on", async () => {
+      await mount({ layout: "overlay" })
+      await open()
+      await click(inspectorToggle())
+      const bound = watchCaptureListeners()
+
+      await switchLayout("Push")
+
+      expect(pressed(inspectorToggle())).toBe("false")
+      expect(bound).toEqual([])
+    })
+
+    it("binds no page listener when the Host switches layout with it on", async () => {
+      await mount({ layout: "overlay" })
+      await open()
+      await click(inspectorToggle())
+      const bound = watchCaptureListeners()
+
+      await act(async () =>
+        root?.render(<Themer storageNamespace={namespace} layout="push" />)
+      )
+
+      expect(pressed(inspectorToggle())).toBe("false")
+      expect(bound).toEqual([])
+      await pointer("mousemove", pageButton)
+      expect(card()).toBeNull()
     })
 
     it("turns off when the Themer UI closes", async () => {

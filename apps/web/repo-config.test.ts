@@ -216,10 +216,6 @@ describe("toolchain", () => {
     const { engines } = JSON.parse(read("../../package.json"))
     expect(engines.node).toBe(`>=${required?.[1]}.${required?.[2]}.0`)
   })
-
-  it("CI cancels superseded runs only for pull requests", () => {
-    expect(read("../../.github/workflows/ci.yml")).toMatch(
-      /^ {2}cancel-in-progress: \$\{\{ github\.event_name == 'pull_request' \}\}$/m
-    )
-  })
+  // CI's concurrency (S57) is evaluated per event in themercn's
+  // scripts/release-workflow.test.ts, beside the release gate it protects.
 })

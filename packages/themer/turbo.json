@@ -21,6 +21,7 @@
     "test": {
       "inputs": [
         "$TURBO_DEFAULT$",
+        "$TURBO_ROOT$/.github/workflows/*.yml",
         "$TURBO_ROOT$/apps/web/app/layout.tsx",
         "$TURBO_ROOT$/apps/web/app/api/themer/fonts/route.ts",
         "$TURBO_ROOT$/apps/web/components/themer/playground-themer.tsx",

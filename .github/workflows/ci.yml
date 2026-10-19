@@ -5,8 +5,11 @@ on:
   push:
     branches: [main]
 
+# A pull request's new push cancels its superseded run. Each push to main
+# gets a group of its own: a run waiting in a shared group is cancelled by the
+# next one queued, so main's commits would lose their verdict.
 concurrency:
-  group: ci-${{ github.ref }}
+  group: ci-${{ github.event_name == 'pull_request' && github.ref || github.sha }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:

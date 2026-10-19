@@ -3,7 +3,7 @@
 // extra-colour types it uses. ThemerProps and the types its props reference
 // (ThemePreset, PartialThemeStyles, ThemerExtraColorGroup, ThemerExtraColor,
 // ThemerLayout, ThemerColorMode, ThemerPreviewTab) leave the package
-// (src/index.ts).
+// (src/index.ts); the rest is internal.
 
 // Theme types
 export type {
@@ -22,12 +22,9 @@ export type {
   PartialThemeStyleProps,
   PartialThemeStyles,
   ThemePreset,
-  SavedTheme,
   ColorFormat,
   TailwindVersion,
 } from "./theme"
-
-export { COMMON_STYLE_KEYS, isCommonStyleKey } from "./theme"
 
 export type {
   FilterFontCategory,
@@ -67,66 +64,6 @@ export type {
 // Import for use in interfaces below
 import type { ComponentType, ReactNode } from "react"
 import type { ThemePreset } from "./theme"
-
-// Component prop types, part of the public type surface. Nothing imports
-// them: each component declares its own props next to its code.
-export interface ColorPickerProps {
-  /** Current color value */
-  color: string
-  /** Change handler */
-  onChange: (color: string) => void
-  /** Display label */
-  label: string
-  /** Variable name for focus tracking */
-  name?: string
-  /** Disabled state */
-  disabled?: boolean
-}
-
-export interface SliderControlProps {
-  /** Current value */
-  value: number
-  /** Change handler */
-  onChange: (value: number) => void
-  /** Display label */
-  label: string
-  /** Minimum value */
-  min: number
-  /** Maximum value */
-  max: number
-  /** Step increment */
-  step: number
-  /** Unit display (e.g., 'px', 'rem', '%') */
-  unit?: string
-  /** Disabled state */
-  disabled?: boolean
-}
-
-export interface FontPickerProps {
-  /** Current font family */
-  value: string
-  /** Change handler */
-  onChange: (font: string) => void
-  /** Font category (sans, serif, mono) */
-  category: "sans" | "serif" | "mono"
-  /** Display label */
-  label: string
-  /** Disabled state */
-  disabled?: boolean
-  /** Override the host-owned font catalog endpoint */
-  fontCatalogEndpoint?: string
-}
-
-export interface PresetSelectProps {
-  /** Currently selected preset */
-  value: string
-  /** Change handler */
-  onChange: (preset: string) => void
-  /** Available presets */
-  presets?: Array<{ id: string; label: string }>
-  /** Disabled state */
-  disabled?: boolean
-}
 
 /**
  * A preview tab a Host adds next to the built-in ones (Live, Cards,

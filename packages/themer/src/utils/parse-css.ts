@@ -22,11 +22,7 @@
 //
 // See: packages/themer/ARCHITECTURE.md ("Export and import").
 import * as culori from "culori"
-import type {
-  PartialThemeStyleProps,
-  ThemeStyleProps,
-  ThemeStyles,
-} from "../types"
+import type { PartialThemeStyleProps } from "../types"
 import {
   COLOR_STYLE_KEYS,
   COMMON_STYLE_KEYS,
@@ -34,7 +30,6 @@ import {
   THEME_STYLE_KEYS,
   type ThemeShadowKey,
 } from "../types/theme"
-import { defaultLightStyles, defaultDarkStyles } from "../config/defaults"
 
 export interface ParseThemeCssOptions {
   /**
@@ -660,92 +655,4 @@ export function parseThemeCss(
     ignored: [...ignored],
     warnings: [...new Set(warnings)],
   }
-}
-
-/**
- * The light and dark styles of parseThemeCss without its `ignored` and
- * `warnings`. Kept for the package's exports; prefer `parseThemeCss`.
- */
-export function parseCSSVariables(css: string): Partial<ThemeStyles> {
-  const { light, dark } = parseThemeCss(css)
-  return {
-    light: light as ThemeStyleProps,
-    dark: dark as ThemeStyleProps,
-  }
-}
-
-/** Fill a parsed theme's missing keys from the default styles of each mode. */
-export function mergeWithDefaults(parsed: Partial<ThemeStyles>): ThemeStyles {
-  return {
-    light: {
-      ...defaultLightStyles,
-      ...(parsed.light || {}),
-    },
-    dark: {
-      ...defaultDarkStyles,
-      ...(parsed.dark || {}),
-    },
-  }
-}
-
-/** One `  --key: value;` line per style key; values are not converted. */
-export function stylesToCSS(styles: ThemeStyleProps): string {
-  return Object.entries(styles)
-    .map(([key, value]) => `  --${key}: ${value};`)
-    .join("\n")
-}
-
-/**
- * Parse for a validity check. `valid` is false for text without braces or
- * without any readable variable; a missing `:root` or `.dark` half is listed
- * in `errors` while `valid` stays true.
- */
-export function validateCSSInput(css: string): {
-  valid: boolean
-  styles?: Partial<ThemeStyles>
-  errors?: string[]
-} {
-  if (!css.includes("{") || !css.includes("}")) {
-    return {
-      valid: false,
-      errors: ["Invalid CSS syntax: missing block delimiters"],
-    }
-  }
-  const { light, dark } = parseThemeCss(css)
-  const lightCount = Object.keys(light).length
-  const darkCount = Object.keys(dark).length
-  if (lightCount === 0 && darkCount === 0) {
-    return {
-      valid: false,
-      errors: [
-        "No CSS variables found. Make sure to use --variable-name format.",
-      ],
-    }
-  }
-  const errors: string[] = []
-  if (lightCount === 0) errors.push("No :root (light mode) variables found.")
-  if (darkCount === 0) errors.push("No .dark mode variables found.")
-  return {
-    valid: true,
-    styles: parseCSSVariables(css),
-    errors: errors.length > 0 ? errors : undefined,
-  }
-}
-
-/**
- * The colour keys of one mode's styles (COLOR_STYLE_KEYS, which includes
- * `shadow-color`).
- */
-export function extractColorVariables(
-  styles: ThemeStyleProps
-): Partial<ThemeStyleProps> {
-  const result: Partial<ThemeStyleProps> = {}
-  for (const key of COLOR_STYLE_KEYS) {
-    const value = styles[key]
-    if (value !== undefined) {
-      ;(result as Record<string, string>)[key] = value
-    }
-  }
-
-  return result
 }

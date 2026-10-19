@@ -294,50 +294,6 @@ export function clearThemeFonts(doc?: Document): void {
 }
 
 /**
- * Load a family and keep it until unloadGoogleFont. Prefer acquireGoogleFont,
- * whose release lets the link go when nothing uses it.
- */
-export function loadGoogleFont(
-  family: string,
-  weights: readonly FontWeight[] = DEFAULT_THEME_WEIGHTS,
-  doc?: Document
-): void {
-  acquireGoogleFont(family, { weights, doc })
-}
-
-export function loadGoogleFonts(fonts: string[], doc?: Document): void {
-  fonts.forEach((font) => loadGoogleFont(font, DEFAULT_THEME_WEIGHTS, doc))
-}
-
-/** Remove every link of a family from a document, whoever holds it. */
-export function unloadGoogleFont(family: string, doc?: Document): void {
-  const target = resolveDocument(doc)
-  if (!target) return
-
-  const registry = fontRegistries.get(target)
-  if (!registry) return
-  for (const [key, entry] of registry) {
-    if (entry.link.getAttribute(FONT_LINK_ATTRIBUTE) !== family) continue
-    entry.link.remove()
-    registry.delete(key)
-  }
-}
-
-/** Whether the browser has the family loaded at `weight` (document.fonts). */
-export function isGoogleFontLoaded(
-  family: string,
-  weight: FontWeight = "400",
-  doc?: Document
-): boolean {
-  const target = resolveDocument(doc)
-  if (!target?.fonts) return false
-  return target.fonts.check(`${weight} 16px ${quoteFontFamily(family)}`)
-}
-
-/** Alias of isGoogleFontLoaded. */
-export const isFontLoaded = isGoogleFontLoaded
-
-/**
  * Waits for the family's face, then resolves whether the browser has it at
  * `weight`. Resolves `false` on a timeout, an error or when the document has no
  * `fonts`; it never rejects. It waits first for the family's own stylesheet
@@ -380,13 +336,4 @@ export async function waitForFont(
   } finally {
     clearTimeout(timer)
   }
-}
-
-export function getFontPreviewUrl(
-  family: string,
-  text = "The quick brown fox"
-): string {
-  return `https://fonts.google.com/specimen/${encodeURIComponent(
-    family
-  )}?preview.text=${encodeURIComponent(text)}`
 }

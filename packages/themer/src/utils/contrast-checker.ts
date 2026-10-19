@@ -1,7 +1,6 @@
 // WCAG 2 contrast maths for the editor's contrast dialog: the ratio between
-// two colours, the AAA / AA / AA Large level it earns, the theme token pairs
-// the dialog rates (standardColorPairs) and a lightness search for a fix
-// (suggestContrastFix, exported but not called by the editor UI).
+// two colours, the AAA / AA / AA Large level it earns, and the theme token
+// pairs the dialog rates (standardColorPairs).
 //
 // Contract: the thresholds come from WCAG_CONTRAST (config/constants.ts).
 // There is no "A" level: large text needs 3:1 for AA and 4.5:1 for AAA, and
@@ -107,13 +106,6 @@ export function checkWCAGCompliance(
   return { ratio, level, passes }
 }
 
-/** A foreground/background pair of colour values, with a display label. */
-export interface ColorPair {
-  foreground: string
-  background: string
-  label: string
-}
-
 /**
  * A foreground/background token pair the contrast checker rates. `group`
  * optionally tags pairs that belong to one area (the sidebar pairs), so a
@@ -190,65 +182,4 @@ export function checkThemeContrast(
     const { ratio, level, passes } = checkWCAGCompliance(foreground, background)
     return [{ ...pair, foreground, background, ratio, level, passes }]
   })
-}
-
-/**
- * A foreground whose lightness (OKLch) is moved just far enough to reach
- * `targetRatio` (default AA for normal text) against `background`, found by a
- * 20-step binary search: lightened on a dark background (OKLch lightness below
- * 0.5), darkened otherwise. Returns `foreground` unchanged when it already
- * passes or when no lightness reaches the target, a hex colour otherwise, and
- * null when a colour cannot be parsed.
- */
-export function suggestContrastFix(
-  foreground: string,
-  background: string,
-  targetRatio = WCAG_CONTRAST.AA_NORMAL
-): string | null {
-  try {
-    const fgOklch = culori.converter("oklch")(foreground)
-    const bgOklch = culori.converter("oklch")(background)
-
-    if (!fgOklch || !bgOklch) return null
-
-    const currentRatio = getContrastRatio(foreground, background)
-    if (currentRatio >= targetRatio) return foreground
-
-    // Determine if we should lighten or darken
-    const shouldLighten = (bgOklch.l ?? 0) < 0.5
-
-    // Binary search for the right lightness
-    let low = shouldLighten ? (fgOklch.l ?? 0) : 0
-    let high = shouldLighten ? 1 : (fgOklch.l ?? 0)
-    let result = foreground
-
-    for (let i = 0; i < 20; i++) {
-      const mid = (low + high) / 2
-      const adjusted = {
-        ...fgOklch,
-        l: mid,
-      }
-      const adjustedHex = culori.formatHex(adjusted) ?? foreground
-      const ratio = getContrastRatio(adjustedHex, background)
-
-      if (ratio >= targetRatio) {
-        result = adjustedHex
-        if (shouldLighten) {
-          high = mid
-        } else {
-          low = mid
-        }
-      } else {
-        if (shouldLighten) {
-          low = mid
-        } else {
-          high = mid
-        }
-      }
-    }
-
-    return result
-  } catch {
-    return null
-  }
 }

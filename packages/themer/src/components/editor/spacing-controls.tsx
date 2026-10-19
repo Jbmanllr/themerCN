@@ -21,6 +21,3 @@ export function SpacingControl() {
     />
   )
 }
-
-// Plural alias of SpacingControl; both barrels export both names.
-export { SpacingControl as SpacingControls }

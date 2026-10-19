@@ -60,13 +60,6 @@ export const SYSTEM_FONTS_FALLBACKS: Record<FontCategory, string> = {
   handwriting: FONT_CATEGORIES.handwriting.fallback,
 }
 
-export const fontFallbacks: Record<ThemeFontRole, readonly string[]> = {
-  sans: ["ui-sans-serif", "sans-serif", "system-ui"],
-  heading: ["ui-serif", "serif"],
-  serif: ["ui-serif", "serif"],
-  mono: ["ui-monospace", "monospace"],
-}
-
 const roleToCategory: Record<ThemeFontRole, FontCategory> = {
   sans: "sans-serif",
   heading: "serif",
@@ -140,9 +133,6 @@ export function extractFontFamily(
 
   return cleanFont
 }
-
-/** Alias of extractFontFamily. */
-export const extractGoogleFontFamily = extractFontFamily
 
 /**
  * Families every desktop OS ships, which Google Fonts does not serve. Theme
@@ -233,15 +223,4 @@ export function getThemeFontFamilies(
     }
   }
   return [...families]
-}
-
-export function formatFontFamily(fonts: string[]): string {
-  return fonts.map((font) => quoteFontFamily(font)).join(", ")
-}
-
-export function generateFontCSS(
-  family: string,
-  fallbacks: string[] = ["sans-serif"]
-): string {
-  return formatFontFamily([family, ...fallbacks])
 }

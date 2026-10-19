@@ -15,8 +15,8 @@ const loads = vi.hoisted(() => ({
   waits: [] as { family: string; settle: (loaded: boolean) => void }[],
 }))
 
-vi.mock("../../utils/font-loader", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("../../utils/font-loader")>()),
+vi.mock("../../utils/font-links", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../../utils/font-links")>()),
   acquireGoogleFont: (family: string) => {
     const release = vi.fn()
     loads.held.push({ family, release })
@@ -31,7 +31,8 @@ vi.mock("../../utils/font-loader", async (importOriginal) => ({
 
 // The catalogue query is the host's; the picker only reads its pages.
 vi.mock("../../hooks/use-font-search", async () => {
-  const { POPULAR_FONTS: popular } = await import("../../utils/font-loader")
+  const { POPULAR_FONTS: popular } =
+    await import("../../utils/font-catalog-data")
   const fonts = popular["sans-serif"].slice(0, 2)
   return {
     useFontSearch: () => ({
@@ -47,7 +48,8 @@ vi.mock("../../hooks/use-font-search", async () => {
   }
 })
 
-import { POPULAR_FONTS, buildFontFamily } from "../../utils/font-loader"
+import { POPULAR_FONTS } from "../../utils/font-catalog-data"
+import { buildFontFamily } from "../../utils/font-names"
 import { FontPicker } from "./font-picker"
 
 ;(

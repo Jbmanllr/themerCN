@@ -16,6 +16,9 @@
 //   server rendering Suspense streamed the page twice (a fallback copy plus
 //   the Themer's copy in a hidden segment).
 // - A load that resolves after the loader unmounted is dropped.
+// - A load that rejects (a chunk missing after a deploy, a network error) is
+//   logged once as a `[themercn]` console error; the Themer stays absent and
+//   nothing retries.
 
 import { useEffect, useState, type ComponentType } from "react"
 
@@ -30,7 +33,9 @@ export interface ThemerModule {
 /**
  * Returns a component that renders `<Themer>` once `load` has resolved after
  * hydration, or nothing at all when `load` is `null`. Create it once, at
- * module level, and render it beside (never around) your app tree.
+ * module level, and render it beside (never around) your app tree. A load
+ * that rejects is logged once as a `[themercn]` console error and the Themer
+ * stays absent.
  *
  * @example
  * ```tsx
@@ -59,9 +64,14 @@ export function createThemerLoader(
 
     useEffect(() => {
       let active = true
-      void load().then((module) => {
-        if (active) setThemer(() => module.Themer)
-      })
+      load().then(
+        (module) => {
+          if (active) setThemer(() => module.Themer)
+        },
+        (error: unknown) => {
+          console.error("[themercn] Failed to load the Themer:", error)
+        }
+      )
       return () => {
         active = false
       }

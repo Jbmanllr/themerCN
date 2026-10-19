@@ -1,5 +1,5 @@
 // The editor's utilities, as one internal barrel (the package root exports
-// none of them). Not here: font-loader's link registry (acquireGoogleFont,
+// none of them). Not here: font-links' link registry (acquireGoogleFont,
 // setThemeFonts, ...), describeFontValue and theme-script; import those from
 // their own files.
 export { isDeepEqual } from "./deep-equal"
@@ -97,36 +97,44 @@ export {
 } from "./parse-css"
 export {
   FALLBACK_FONTS,
-  FONT_CATEGORIES,
-  GOOGLE_FONTS_API_URL,
-  GOOGLE_FONTS_CSS_URL,
   POPULAR_FONTS,
-  SYSTEM_FONTS,
-  SYSTEM_FONTS_FALLBACKS,
-  buildFontCssUrl,
-  buildFontFamily,
-  fetchGoogleFontsCatalog,
   filterAndPaginateFonts,
+  getPopularFonts,
+} from "./font-catalog-data"
+export {
+  GOOGLE_FONTS_CSS_URL,
+  buildFontCssUrl,
+  getDefaultWeights,
+  getFontPreviewUrl,
+  isFontLoaded,
+  isGoogleFontLoaded,
   loadGoogleFont,
   loadGoogleFonts,
   unloadGoogleFont,
-  isFontLoaded,
-  isGoogleFontLoaded,
   waitForFont,
+} from "./font-links"
+export {
+  FONT_CATEGORIES,
+  SYSTEM_FONTS,
+  SYSTEM_FONTS_FALLBACKS,
+  buildFontFamily,
   extractFontFamily,
   extractGoogleFontFamily,
-  formatFontFamily,
-  getDefaultWeights,
-  getPopularFonts,
-  getFontPreviewUrl,
-  generateFontCSS,
   fontFallbacks,
+  formatFontFamily,
+  generateFontCSS,
   toFontCategory,
-  transformGoogleFontsResponse,
-  type FilterFontCategory,
-  type FontCategory,
-  type FontInfo,
-  type GoogleFont,
-  type PaginatedFontsResponse,
   type ThemeFontRole,
-} from "./font-loader"
+} from "./font-names"
+export {
+  GOOGLE_FONTS_API_URL,
+  fetchGoogleFontsCatalog,
+  transformGoogleFontsResponse,
+} from "../api/google-fonts"
+export type {
+  FilterFontCategory,
+  FontCategory,
+  FontInfo,
+  GoogleFont,
+  PaginatedFontsResponse,
+} from "../types/fonts"

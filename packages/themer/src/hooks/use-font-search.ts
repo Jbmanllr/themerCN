@@ -1,6 +1,9 @@
 import { useInfiniteQuery } from "@tanstack/react-query"
 import type { FilterFontCategory, PaginatedFontsResponse } from "../types/fonts"
-import { FALLBACK_FONTS, filterAndPaginateFonts } from "../utils/font-loader"
+import {
+  FALLBACK_FONTS,
+  filterAndPaginateFonts,
+} from "../utils/font-catalog-data"
 
 type UseFontSearchParams = {
   endpoint?: string

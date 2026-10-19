@@ -1,6 +1,6 @@
 import Link from "next/link"
 
-import { AuthForm } from "@/components/auth/auth-form"
+import { SignupForm } from "@/components/auth/auth-form"
 import {
   Card,
   CardContent,
@@ -25,33 +25,7 @@ export default function Page() {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <AuthForm
-          submitLabel="Create account"
-          fields={[
-            {
-              name: "name",
-              label: "Name",
-              type: "text",
-              autoComplete: "name",
-              missing: "Enter your name.",
-            },
-            {
-              name: "email",
-              label: "Email",
-              type: "email",
-              autoComplete: "email",
-              placeholder: "you@example.com",
-              missing: "Enter your email address.",
-            },
-            {
-              name: "password",
-              label: "Password",
-              type: "password",
-              autoComplete: "new-password",
-              description: "Any password works here.",
-              missing: "Choose a password.",
-            },
-          ]}
+        <SignupForm
           footer={
             <FieldDescription className="text-center">
               Already have an account? <Link href="/login">Log in</Link>

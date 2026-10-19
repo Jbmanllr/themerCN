@@ -1,4 +1,4 @@
-// A minimal DOM for the apply-theme and font-loader tests. Component and hook
+// A minimal DOM for the apply-theme and font-links tests. Component and hook
 // tests opt into happy-dom per file; these two modules only touch inline
 // style, classList, attributes, <head> children, link "load" and "error"
 // events, document.fonts and the rules of document.styleSheets, so this fake

@@ -45,7 +45,6 @@ import { SHORTCUTS } from "../config/constants"
 import {
   matchesShortcut,
   parseShortcut,
-  themerShortcuts,
   shortcutSignature,
   useKeyboardShortcut,
   type ShortcutKeyEvent,
@@ -150,9 +149,40 @@ describe("useKeyboardShortcut listener", () => {
   })
 })
 
+function parsed(shortcut: string) {
+  const result = parseShortcut(shortcut)
+  if (!result) throw new Error(`${shortcut} did not parse`)
+  return result
+}
+
+describe("shortcut parsing", () => {
+  it("reads the modifier aliases", () => {
+    expect(parseShortcut("cmd+k")).toEqual({ key: "k", modifiers: ["meta"] })
+    expect(parseShortcut("Command+K")).toEqual({
+      key: "k",
+      modifiers: ["meta"],
+    })
+    expect(parseShortcut("control+k")).toEqual({
+      key: "k",
+      modifiers: ["ctrl"],
+    })
+    expect(parseShortcut("option+shift+k")).toEqual({
+      key: "k",
+      modifiers: ["alt", "shift"],
+    })
+  })
+
+  it("rejects the whole shortcut for an unknown modifier or a missing key", () => {
+    expect(parseShortcut("hyper+k")).toBeNull()
+    expect(parseShortcut("ctrl+shfit+k")).toBeNull()
+    expect(parseShortcut("ctrl+")).toBeNull()
+    expect(parseShortcut("")).toBeNull()
+  })
+})
+
 describe("shortcut matching", () => {
-  const undo = parseShortcut("ctrl+z")
-  const redo = parseShortcut("ctrl+shift+z")
+  const undo = parsed("ctrl+z")
+  const redo = parsed("ctrl+shift+z")
   const base = {
     ctrlKey: false,
     altKey: false,
@@ -197,8 +227,8 @@ describe("shortcut matching", () => {
 
   it("matches a meta shortcut on every platform", () => {
     const event = { ...base, key: "k", metaKey: true }
-    expect(matchesShortcut(event, parseShortcut("meta+k"), true)).toBe(true)
-    expect(matchesShortcut(event, parseShortcut("meta+k"), false)).toBe(true)
+    expect(matchesShortcut(event, parsed("meta+k"), true)).toBe(true)
+    expect(matchesShortcut(event, parsed("meta+k"), false)).toBe(true)
   })
 
   it("rejects an extra Meta off macOS", () => {
@@ -225,15 +255,11 @@ describe("the default toggle shortcut", () => {
   ]
 
   it("is not browser-reserved and uses no Option or Alt", () => {
-    const toggle = parseShortcut(SHORTCUTS.toggle)
+    const toggle = parsed(SHORTCUTS.toggle)
     expect(RESERVED).not.toContain(
       shortcutSignature(toggle.key, toggle.modifiers)
     )
     expect(toggle.modifiers).not.toContain("alt")
     expect(toggle.modifiers.length).toBeGreaterThan(0)
-  })
-
-  it("is the one the provider registers", () => {
-    expect(themerShortcuts.toggle).toEqual(parseShortcut(SHORTCUTS.toggle))
   })
 })

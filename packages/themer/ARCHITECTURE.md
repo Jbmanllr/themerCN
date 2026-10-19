@@ -38,9 +38,9 @@ and the entries a Host imports where the Themer is off:
   [scripts/check-entries.mjs](scripts/check-entries.mjs) (`loader`,
   `head-script` and `next` are single files with allowed imports and under a
   byte budget).
-- `FALLBACK_FONTS` (the bundled 130-family list in `utils/font-loader.ts`) is
-  `/* @__PURE__ */`, so the head script, which imports font constants from
-  that file, does not carry the list.
+- The head script imports only the pure family-name helpers
+  (`utils/font-names.ts`), so it carries neither the bundled 130-family list
+  (`FALLBACK_FONTS`, `utils/font-catalog-data.ts`) nor the link registry.
 
 ## Mounting
 
@@ -63,15 +63,15 @@ Host tree                         <ThemerLoader {...props} />   (themercn/loader
 
 ### Core Entry Points
 
-| Module                                                            | Responsibility                                                                                                                                                                                                                                                                                                              |
-| ----------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [loader.tsx](src/loader.tsx)                                      | `createThemerLoader(load \| null)`: a component that loads the Themer once in an effect after hydration and renders it beside the Host tree. Never `lazy()` + Suspense (server rendering streamed the page twice); never around the Host tree (the page would remount when the Themer arrives).                             |
-| [themer.tsx](src/components/themer.tsx)                           | `<Themer>`: flat props, no children. Skips the server, hydration and frames (`window.self !== window.top`: the Live preview frames the Host page, whose own Themer must not stack). Hydrates the stores, injects the CSS, owns a QueryClient separate from the Host's.                                                      |
-| [color-mode.tsx](src/components/color-mode.tsx)                   | Who owns light/dark (see [Colour mode](#colour-mode)).                                                                                                                                                                                                                                                                      |
-| [themer-provider.tsx](src/components/themer-provider.tsx)         | Registers Host Presets and extra colours during render, applies the Theme to `<html>`, binds the shortcuts, removes everything when the override goes off or it unmounts.                                                                                                                                                   |
-| [themer-root.tsx](src/components/themer-root.tsx)                 | Portals the trigger and the Themer UI into `ThemerScope` on `<body>`; the mobile scroll lock, and the Lenis pause while the open Themer UI hides the page (the drawer, a layout with `coversPage`).                                                                                                                         |
-| [themer-ui/themer-ui.tsx](src/components/themer-ui/themer-ui.tsx) | The Themer UI: on desktop the component of the [Themer layout](#themer-layouts) in force (`LAYOUT_COMPONENTS`); below 1280 px a bottom drawer without preview, whatever the layout ([use-is-mobile.ts](src/hooks/use-is-mobile.ts); the shadcn Sidebar becomes a Sheet below 768 px, so the breakpoint must stay above it). |
-| [themer-trigger.tsx](src/components/themer-trigger.tsx)           | The floating button (`showTrigger`).                                                                                                                                                                                                                                                                                        |
+| Module                                                            | Responsibility                                                                                                                                                                                                                                                                                                                                                                              |
+| ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [loader.tsx](src/loader.tsx)                                      | `createThemerLoader(load \| null)`: a component that loads the Themer once in an effect after hydration and renders it beside the Host tree. Never `lazy()` + Suspense (server rendering streamed the page twice); never around the Host tree (the page would remount when the Themer arrives). A rejected load logs one `[themercn]` console error and renders nothing; there is no retry. |
+| [themer.tsx](src/components/themer.tsx)                           | `<Themer>`: flat props, no children. Skips the server, hydration and frames (`window.self !== window.top`: the Live preview frames the Host page, whose own Themer must not stack). Hydrates the stores, injects the CSS, owns a QueryClient separate from the Host's.                                                                                                                      |
+| [color-mode.tsx](src/components/color-mode.tsx)                   | Who owns light/dark (see [Colour mode](#colour-mode)).                                                                                                                                                                                                                                                                                                                                      |
+| [themer-provider.tsx](src/components/themer-provider.tsx)         | Registers Host Presets and extra colours during render, applies the Theme to `<html>`, binds the shortcuts, removes everything when the override goes off or it unmounts.                                                                                                                                                                                                                   |
+| [themer-root.tsx](src/components/themer-root.tsx)                 | Portals the trigger and the Themer UI into `ThemerScope` on `<body>`; the mobile scroll lock, and the Lenis pause while the open Themer UI hides the page (the drawer, a layout with `coversPage`).                                                                                                                                                                                         |
+| [themer-ui/themer-ui.tsx](src/components/themer-ui/themer-ui.tsx) | The Themer UI: on desktop the component of the [Themer layout](#themer-layouts) in force (`LAYOUT_COMPONENTS`); below 1280 px a bottom drawer without preview, whatever the layout ([use-is-mobile.ts](src/hooks/use-is-mobile.ts); the shadcn Sidebar becomes a Sheet below 768 px, so the breakpoint must stay above it).                                                                 |
+| [themer-trigger.tsx](src/components/themer-trigger.tsx)           | The floating button (`showTrigger`).                                                                                                                                                                                                                                                                                                                                                        |
 
 ## Themer layouts
 
@@ -230,6 +230,11 @@ the switch inside a View Transition with a circular reveal where supported.
   `DEFAULT_STORAGE_NAMESPACE` is `"themercn"`) and hydrates them during
   `<Themer>`'s first client render, so nothing is read from a key the Host
   did not choose.
+- The `<ns>:color-mode` key amends Jbmanllr/themerCN#15 and
+  Jbmanllr/themerCN#18, which named only `<ns>:editor` and
+  `<ns>:preferences`: an uncontrolled Themer must restore `.dark` before
+  first paint, and the head script can only read it from storage. The
+  `storageNamespace` TSDoc and the README list all three keys.
 - [utils/theme-script.ts](src/utils/theme-script.ts) generates the head
   script string. It sets `.dark` from `<ns>:color-mode` when an uncontrolled
   Themer saved one (otherwise the Host owns the class, and its script may
@@ -364,7 +369,7 @@ document (the Host's `<html>` and the Live frame's, through the same code).
   was set, so a re-apply drops keys the new Theme lost and removal takes away
   exactly those.
 - **Fonts.** `setThemeFonts` loads the Theme's Google families (see
-  [Font link registry](#font-link-registry-utilsfont-loaderts));
+  [Font link registry](#font-link-registry-utilsfont-linksts));
   `DynamicFontLoader` does it for the Host page.
 
 ### Export and import
@@ -388,9 +393,9 @@ FontPicker opens ─► useFontSearch (TanStack infinite query, own QueryClient)
    │     └─ Host route, e.g. createFontCatalogRoute (src/next/server.ts)
    │          ├─ enabled: false → 404, no catalog code loaded
    │          └─ fontCatalogResponse (src/api/font-catalog.ts)
-   │               ├─ googleFontsApiKey: Fonts Developer API (fetch cache, 1 day)
+   │               ├─ googleFontsApiKey: Fonts Developer API (memory, 1 day)
    │               ├─ no key: fonts.google.com/metadata/fonts (memory, 1 day)
-   │               └─ Google fails: FALLBACK_FONTS
+   │               └─ Google fails or takes > 5 s: FALLBACK_FONTS (60 s back-off)
    └─ no endpoint: filterAndPaginateFonts(FALLBACK_FONTS) in the browser
 User picks a family ─► acquireGoogleFont + waitForFont ─► font-* written as a full stack
 ```
@@ -400,7 +405,7 @@ by `filterAndPaginateFonts` (limit 1–100, default 50). The package reads no
 environment. The picker also asks the catalog whether a Theme's family is a
 Google font (its "Custom font" badge).
 
-#### Font link registry (`utils/font-loader.ts`)
+#### Font link registry (`utils/font-links.ts`)
 
 Fonts are per document (Host page, Live frame) and several holders ask for
 the same family. Each document has a reference-counted entry per family and
@@ -473,10 +478,14 @@ binary-searches a foreground that meets a target.
 Bound by `useKeyboardShortcut`
 ([use-keyboard-shortcut.ts](src/hooks/use-keyboard-shortcut.ts)); `ctrl`
 matches Cmd on macOS, an extra modifier rejects, editable targets are
-ignored. Toggle (`shortcut`, default `SHORTCUTS.toggle` = `ctrl+shift+e`),
-undo and redo in `ThemerProvider`; `Ctrl+I` in `PreviewTabs`; `Esc` in
-`subscribeFullscreen`. `save` and `export` are defined but have no handler.
-`SHORTCUTS` repeats undo/redo for tooltips; keep both in step.
+ignored. Every shortcut is defined once in `SHORTCUTS`; bindings read it
+parsed (`themerShortcuts`) and tooltips format it. Toggle (`shortcut`,
+default `SHORTCUTS.toggle` = `ctrl+shift+e`), undo and redo in
+`ThemerProvider`; `Ctrl+I` in `PreviewTabs`; `Esc` in `subscribeFullscreen`.
+`save` and `export` are defined but have no handler. A shortcut string
+accepts `cmd`/`command` (meta), `control` (ctrl) and `option` (alt); any
+other unknown part makes it invalid, and an invalid `shortcut` warns in
+development and falls back to the default toggle.
 
 ## Testing
 
@@ -514,6 +523,7 @@ packages/themer/
 │   ├── stores/                    # editor, preferences, themer-ui, color-focus; hydrate.ts
 │   ├── selectors/ hooks/ utils/ config/ types/
 │   ├── api/font-catalog.ts        # catalog response (no gating)
+│   ├── api/google-fonts.ts        # Google catalog fetch and transform (server)
 │   ├── styles/                    # themer.css, view-transition.css (CSS build input)
 │   └── generated/                 # themer-css.ts (gitignored build output)
 ├── scripts/                       # build-css, check-pack, check-entries, publish-packed, doc tests

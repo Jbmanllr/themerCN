@@ -3,8 +3,8 @@
 // Sidebar Sync: while the preference is on, every sidebar colour equals its
 // base twin (sidebar -> background, sidebar-primary -> primary, ...) in BOTH
 // modes. tweakcn syncs the current mode from a component effect; here the
-// rule is a pure function over the whole ThemeStyles so the toggle, a base
-// colour edit and the re-alignment after preset/undo/import all share it.
+// rule is a pure function over the whole ThemeStyles, which the editor store
+// applies on every path that sets the Theme (stores/editor-store.ts).
 //
 // See: packages/themer/ARCHITECTURE.md ("Sidebar Sync").
 
@@ -27,10 +27,6 @@ type SidebarKey = keyof typeof SIDEBAR_SYNC_MAP
 const SIDEBAR_ENTRIES = Object.entries(SIDEBAR_SYNC_MAP) as Array<
   [SidebarKey, (typeof SIDEBAR_SYNC_MAP)[SidebarKey]]
 >
-
-/** Base colour -> its sidebar twin. */
-export const BASE_TO_SIDEBAR_MAP: Partial<Record<ThemeColorKey, SidebarKey>> =
-  Object.fromEntries(SIDEBAR_ENTRIES.map(([sidebar, base]) => [base, sidebar]))
 
 /** Whether a key is a sidebar colour driven by the sync. */
 export function isSyncedSidebarKey(key: string): key is SidebarKey {

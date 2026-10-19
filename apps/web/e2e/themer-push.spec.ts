@@ -18,9 +18,7 @@ function hostLeft(page: Page, selector: string) {
 
 const inset = (page: Page) =>
   page.evaluate(() =>
-    document.documentElement.style.getPropertyValue(
-      "--themer-inset-inline-start"
-    )
+    document.documentElement.style.getPropertyValue("--themer-inset-left")
   )
 
 // The header's toggle (the sidebar's rail has the same name).
@@ -71,7 +69,7 @@ test("a fixed Host element that opts in follows the sidebar", async ({
   page,
 }) => {
   // The /app shell's sidebar is `position: fixed`; it reads
-  // --themer-inset-inline-start for its left edge.
+  // --themer-inset-left for its left edge.
   await page.goto("/app")
   await openLayout(page, "Push")
 
@@ -83,4 +81,23 @@ test("a fixed Host element that opts in follows the sidebar", async ({
   await expect
     .poll(() => hostLeft(page, '[data-slot="sidebar-container"]'))
     .toBe(48)
+})
+
+test("Push shifts a right-to-left page on the left, where the sidebar is", async ({
+  page,
+}) => {
+  await page.goto("/")
+  await page.evaluate(() => {
+    document.documentElement.dir = "rtl"
+  })
+  await openLayout(page, "Push")
+
+  await expect.poll(() => hostLeft(page, "main")).toBe(320)
+  expect(await inset(page)).toBe("20rem")
+
+  // The Themer UI stays left-to-right in a right-to-left Host.
+  const direction = await page
+    .getByTestId("themer-ui")
+    .evaluate((element) => getComputedStyle(element).direction)
+  expect(direction).toBe("ltr")
 })

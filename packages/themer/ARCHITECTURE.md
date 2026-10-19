@@ -513,7 +513,7 @@ While `sidebarColorSync` is on, each sidebar colour equals its base twin in
 both modes: `applySidebarSync` ([sidebar-sync.ts](src/utils/sidebar-sync.ts))
 is pure; turning it on is one undo entry; editing a base colour writes its
 twin. The editor store holds the rule itself: every action that sets the
-Theme (set, apply/reset/adopt Preset, import, undo, redo, restore checkpoint,
+Theme (set, apply/reset/adopt Preset, import, undo, redo,
 refresh-untouched-Preset) syncs it in the same commit, reading the preference
 from the preferences store, so each action applies and saves the Theme once,
 whatever is mounted. Undo and redo set the checkpoint to the synced Theme.
@@ -522,8 +522,7 @@ whatever is mounted. Undo and redo set the checkpoint to the synced Theme.
 
 [contrast-checker.ts](src/utils/contrast-checker.ts) rates the standard
 foreground/background pairs, sidebar pairs included, for one mode at a time:
-AAA ≥ 7, AA ≥ 4.5, AA Large ≥ 3 (large text only). `suggestContrastFix`
-binary-searches a foreground that meets a target.
+AAA ≥ 7, AA ≥ 4.5, AA Large ≥ 3 (large text only).
 [contrast-checker-dialog.tsx](src/components/editor/contrast-checker-dialog.tsx)
 shows the ratings in a dialog owned by `ThemerDialogs`. A row's colour
 button closes the dialog first, then `focusColor` shows the token's control,

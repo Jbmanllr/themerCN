@@ -68,7 +68,7 @@ import {
 import {
   buildFontFamily,
   describeFontValue,
-  extractGoogleFontFamily,
+  extractFontFamily,
   isLocalFontFamily,
   toFontCategory,
   type FontValueDescription,
@@ -453,7 +453,7 @@ export function FontPicker({
   const hasScrolledToSelectedFont = React.useRef(false)
 
   const currentFontFamily = React.useMemo(
-    () => extractGoogleFontFamily(value) ?? "",
+    () => extractFontFamily(value) ?? "",
     [value]
   )
 

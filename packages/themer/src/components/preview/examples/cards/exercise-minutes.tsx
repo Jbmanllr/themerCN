@@ -1,6 +1,6 @@
 "use client"
 
-// react-doctor-disable-next-line react-doctor/prefer-dynamic-import -- this demo is reached only through lazy(() => import("./examples/cards")) in builtin-tabs.tsx and preview-cards.tsx, so recharts already loads on demand
+// react-doctor-disable-next-line react-doctor/prefer-dynamic-import -- this demo is reached only through lazy(() => import("./examples/cards")) in builtin-tabs.tsx, so recharts already loads on demand
 import { CartesianGrid, Line, LineChart, XAxis } from "recharts"
 
 import {

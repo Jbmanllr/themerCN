@@ -1,4 +1,8 @@
-// The package's config surface, re-exported by the package root.
+// RETIRED (#64): nothing imports this file. It was an unused barrel; callers
+// import each file directly. It stays only until the owner removes it from the
+// repo.
+//
+// The package's config, as one internal barrel.
 // tweakcn-presets.ts (preset data) is internal: presets.ts registers it.
 
 export * from "./constants"

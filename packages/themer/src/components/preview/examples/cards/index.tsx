@@ -2,7 +2,7 @@
 // queries (`@2xl:` to `@7xl:`), so in the tab it follows the preview width,
 // not the window's (the `@container` is in
 // ../../theme-preview/examples-preview-container.tsx). Default export: loaded
-// through `lazy()` by ../../builtin-tabs.tsx and ../../preview-cards.tsx.
+// through `lazy()` by ../../builtin-tabs.tsx.
 
 import { CardsActivityGoal } from "./activity-goal"
 import { CardsCalendar } from "./calendar"

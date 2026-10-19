@@ -218,40 +218,6 @@ export function useKeyboardShortcut({
 }
 
 /**
- * Hook for registering multiple keyboard shortcuts. The listener is re-added
- * whenever `shortcuts` changes identity: pass a memoised array.
- */
-export function useKeyboardShortcuts(
-  shortcuts: ShortcutOptions[],
-  enabled = true
-): void {
-  useEffect(() => {
-    if (!enabled) return undefined
-
-    const isMac = detectMac()
-    const parsed = shortcuts.map((options) => ({
-      options,
-      shortcut: {
-        key: options.key,
-        modifiers: [...(options.modifiers ?? EMPTY_MODIFIERS)],
-      },
-    }))
-
-    const masterHandler = (event: KeyboardEvent) => {
-      for (const { options, shortcut } of parsed) {
-        if (options.enabled === false) continue
-        if (!matchesShortcut(event, shortcut, isMac)) continue
-        if (options.preventDefault !== false) event.preventDefault()
-        options.callback()
-      }
-    }
-
-    window.addEventListener("keydown", masterHandler)
-    return () => window.removeEventListener("keydown", masterHandler)
-  }, [shortcuts, enabled])
-}
-
-/**
  * Key and modifiers of every shortcut in SHORTCUTS (config/constants.ts),
  * the single definition. The provider registers `undo` and `redo` from here
  * and the preview registers `inspector`; the toggle the provider binds is

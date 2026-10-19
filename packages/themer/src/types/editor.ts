@@ -61,8 +61,8 @@ export interface EditorStoreState {
   themeState: ThemeEditorState
   /**
    * The theme before the first HSL adjustment: the base the HSL controls
-   * recompute from and the target of restoreThemeCheckpoint. "Unsaved
-   * changes" compares with the resolved preset, not with this. Persisted.
+   * recompute from. "Unsaved changes" compares with the resolved preset, not
+   * with this. Persisted.
    */
   themeCheckpoint: ThemeEditorState | null
   /**
@@ -118,8 +118,6 @@ export interface EditorStoreActions {
   applyThemePreset: (preset: string) => void
   /** Save current state as checkpoint */
   saveThemeCheckpoint: () => void
-  /** Return to the checkpoint as a new undo entry, keeping the current mode. */
-  restoreThemeCheckpoint: () => void
   /**
    * Reset to the current preset's resolved styles (the Host app's default preset
    * when that id is no longer registered). Clears undo and redo and moves the

@@ -238,23 +238,6 @@ export interface ThemePreset {
 }
 
 /**
- * A saved theme record. Nothing in the Themer UI saves or lists these.
- */
-export interface SavedTheme {
-  id: string
-  name: string
-  description?: string
-  styles: ThemeStyles
-  preset?: string
-  hslAdjustments?: HSLAdjustments
-  createdAt: string
-  updatedAt: string
-  createdBy?: string
-  isPublic?: boolean
-  previewImage?: string
-}
-
-/**
  * Color format for export
  */
 export type ColorFormat = "hex" | "rgb" | "hsl" | "oklch"

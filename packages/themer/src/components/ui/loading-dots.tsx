@@ -1,3 +1,6 @@
+// RETIRED (#64): nothing imports this file. It was unused; the editor uses
+// @workspace/ui's Spinner. It stays only until the owner removes it from the
+// repo.
 "use client"
 
 import { cn } from "@workspace/ui/lib/utils"

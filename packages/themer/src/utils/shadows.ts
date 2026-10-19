@@ -140,20 +140,3 @@ export function getShadowParams(
     offsetY: parseLength(styles["shadow-offset-y"], "px", 1),
   }
 }
-
-/**
- * A single-layer `shadow` value from explicit parameters (px lengths).
- */
-export function createCustomShadow(
-  color: string,
-  opacity: number,
-  blur: number,
-  spread: number,
-  offsetX: number,
-  offsetY: number
-): Record<string, string> {
-  const hsl = colorFormatter(color, "hsl", "3")
-  return {
-    shadow: `${offsetX}px ${offsetY}px ${blur}px ${spread}px hsl(${hsl} / ${opacity.toFixed(2)})`,
-  }
-}

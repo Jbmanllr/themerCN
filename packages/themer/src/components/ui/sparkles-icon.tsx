@@ -1,3 +1,5 @@
+// RETIRED (#64): nothing imports this file. It was an unused icon wrapper. It
+// stays only until the owner removes it from the repo.
 "use client"
 
 import { Sparkles } from "lucide-react"

@@ -117,47 +117,6 @@ export function colorFormatter(
   }
 }
 
-// Fixed-format shorthands for colorFormatter; HSL is the Tailwind 4 form.
-export function convertToHSL(color: string): string {
-  return colorFormatter(color, "hsl", "4")
-}
-
-export function convertToHex(color: string): string {
-  return colorFormatter(color, "hex")
-}
-
-export function convertToRGB(color: string): string {
-  return colorFormatter(color, "rgb")
-}
-
-export function convertToOklch(color: string): string {
-  return colorFormatter(color, "oklch")
-}
-
-/**
- * OKLch components of any colour culori can parse, or null. An achromatic
- * colour (undefined hue) reports `h` 0.
- */
-export function parseColor(
-  color: string
-): { l: number; c: number; h: number } | null {
-  try {
-    const parsed = culori.parse(color)
-    if (!parsed) return null
-
-    const oklch = culori.converter("oklch")(parsed)
-    if (!oklch) return null
-
-    return {
-      l: oklch.l ?? 0,
-      c: oklch.c ?? 0,
-      h: oklch.h ?? 0,
-    }
-  } catch {
-    return null
-  }
-}
-
 /** Whether culori can parse the string as a colour. */
 export function isValidColor(color: string): boolean {
   try {
@@ -181,11 +140,6 @@ export function normalizeColorForCompare(color: string): string {
   } catch {
     return trimmed
   }
-}
-
-/** Whether two colour strings describe the same (hex-rounded) colour. */
-export function colorsEqual(a: string, b: string): boolean {
-  return normalizeColorForCompare(a) === normalizeColorForCompare(b)
 }
 
 /**
@@ -239,66 +193,4 @@ export function adjustColorByHsl(
   } catch {
     return color
   }
-}
-
-/**
- * Mix two colours in OKLch at `t` (0 gives `color1`, 1 gives `color2`).
- * Returns hex, or `color1` when the mix fails.
- */
-export function interpolateColors(
-  color1: string,
-  color2: string,
-  t: number
-): string {
-  try {
-    const interpolate = culori.interpolate([color1, color2], "oklch")
-    const result = interpolate(t)
-    return culori.formatHex(result) ?? color1
-  } catch {
-    return color1
-  }
-}
-
-/**
- * A 50-950 shade scale (hex) from one base colour: lightness runs from 1 down
- * to 0.1, the base hue is kept, and the base chroma is reduced toward both
- * ends.
- * `steps` must stay 11, the number of shade keys. Returns `{}` for an
- * unparseable base.
- */
-export function generateColorScale(
-  baseColor: string,
-  steps = 11
-): Record<number, string> {
-  const scale: Record<number, string> = {}
-  const shades = [50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 950]
-
-  try {
-    const parsed = culori.parse(baseColor)
-    if (!parsed) return scale
-
-    const oklch = culori.converter("oklch")(parsed)
-    if (!oklch) return scale
-
-    for (let i = 0; i < steps; i++) {
-      // Map shade to lightness (50 = lightest, 950 = darkest)
-      const targetLightness = 1 - (i / (steps - 1)) * 0.9
-
-      // Adjust chroma based on lightness (less chroma at extremes)
-      const chromaMultiplier = 1 - Math.abs(targetLightness - 0.5) * 0.5
-
-      const adjusted = {
-        mode: "oklch" as const,
-        l: targetLightness,
-        c: (oklch.c ?? 0) * chromaMultiplier,
-        h: oklch.h,
-      }
-
-      scale[shades[i]!] = culori.formatHex(adjusted) ?? baseColor
-    }
-  } catch {
-    // Return empty scale on error
-  }
-
-  return scale
 }

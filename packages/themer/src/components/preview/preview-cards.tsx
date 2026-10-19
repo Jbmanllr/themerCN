@@ -1,3 +1,6 @@
+// RETIRED (#64): nothing imports this file. It was unused; the preview tabs
+// load the Cards Preview themselves (builtin-tabs.tsx). It stays only until the
+// owner removes it from the repo.
 "use client"
 
 // The Cards preview as a standalone export. Lazy like the preview tabs' copy:

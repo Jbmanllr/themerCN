@@ -230,13 +230,6 @@ export const hslPresets = [
   { label: "Neon", hueShift: 60, saturationScale: 1.5, lightnessScale: 1.1 },
 ] as const
 
-/**
- * Get preset theme styles by ID, fully resolved (see resolvePresetStyles).
- */
-export function getPresetThemeStyles(presetId: string): ThemeStyles {
-  return resolvePresetStyles(presetId)
-}
-
 /** Every registered preset id: "default" first, then by label. */
 export function getPresetIds(): string[] {
   return Object.keys(themePresets).sort((a, b) => {

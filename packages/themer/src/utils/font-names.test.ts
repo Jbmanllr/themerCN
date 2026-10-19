@@ -5,7 +5,6 @@ import {
   buildFontFamily,
   describeFontValue,
   extractFontFamily,
-  formatFontFamily,
   getThemeFontFamilies,
   quoteFontFamily,
 } from "./font-names"
@@ -21,9 +20,6 @@ describe("family names", () => {
     expect(quoteFontFamily("var(--font-dm-sans)")).toBe("var(--font-dm-sans)")
     expect(buildFontFamily("Source Serif 4", "serif")).toBe(
       '"Source Serif 4", ui-serif, serif'
-    )
-    expect(formatFontFamily(["Fira Code", "monospace"])).toBe(
-      '"Fira Code", monospace'
     )
   })
 

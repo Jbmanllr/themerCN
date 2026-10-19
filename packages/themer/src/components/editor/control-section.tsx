@@ -8,8 +8,6 @@
 //   stored, so clearing the search restores the user's layout.
 // The content stays mounted while closed (`keepMounted`) so colour pickers
 // stay registered for focus jumps; Base UI hides the closed panel.
-// Children can read and set the open state through SectionContext
-// (section-context.ts).
 
 import * as React from "react"
 import { ChevronDown } from "lucide-react"
@@ -20,7 +18,6 @@ import {
 } from "@workspace/ui/components/collapsible"
 import { cn } from "@workspace/ui/lib/utils"
 import { usePreferencesStore } from "../../stores/preferences-store"
-import { SectionContext } from "./section-context"
 
 interface ControlSectionProps {
   /** Persisted open-state key; without it the state is local. */
@@ -68,47 +65,40 @@ export function ControlSection({
     [id, setSectionOpen]
   )
 
-  const contextValue = React.useMemo(
-    () => ({ isExpanded: isOpen, setIsExpanded }),
-    [isOpen, setIsExpanded]
-  )
-
   return (
-    <SectionContext value={contextValue}>
-      <Collapsible
-        open={isOpen}
-        onOpenChange={setIsExpanded}
-        className={cn("mb-4 overflow-hidden rounded-lg border", className)}
+    <Collapsible
+      open={isOpen}
+      onOpenChange={setIsExpanded}
+      className={cn("mb-4 overflow-hidden rounded-lg border", className)}
+    >
+      <div className="flex items-center gap-2 bg-background pe-3 transition-colors hover:bg-muted">
+        <h3 className="flex min-w-0 flex-1">
+          <CollapsibleTrigger className="flex w-full min-w-0 cursor-pointer items-center justify-between gap-2 py-3 ps-3 text-start outline-none focus-visible:underline">
+            <span className="flex min-w-0 flex-col items-start gap-0.5">
+              <span className="text-sm font-medium">{title}</span>
+              {description && (
+                <span className="text-xs font-normal text-muted-foreground">
+                  {description}
+                </span>
+              )}
+            </span>
+            <ChevronDown
+              aria-hidden
+              className={cn(
+                "size-4 shrink-0 text-muted-foreground transition-transform duration-200",
+                isOpen && "rotate-180"
+              )}
+            />
+          </CollapsibleTrigger>
+        </h3>
+        {headerAction}
+      </div>
+      <CollapsibleContent
+        keepMounted
+        className="h-(--collapsible-panel-height) overflow-hidden transition-[height] duration-200 data-ending-style:h-0 data-starting-style:h-0"
       >
-        <div className="flex items-center gap-2 bg-background pe-3 transition-colors hover:bg-muted">
-          <h3 className="flex min-w-0 flex-1">
-            <CollapsibleTrigger className="flex w-full min-w-0 cursor-pointer items-center justify-between gap-2 py-3 ps-3 text-start outline-none focus-visible:underline">
-              <span className="flex min-w-0 flex-col items-start gap-0.5">
-                <span className="text-sm font-medium">{title}</span>
-                {description && (
-                  <span className="text-xs font-normal text-muted-foreground">
-                    {description}
-                  </span>
-                )}
-              </span>
-              <ChevronDown
-                aria-hidden
-                className={cn(
-                  "size-4 shrink-0 text-muted-foreground transition-transform duration-200",
-                  isOpen && "rotate-180"
-                )}
-              />
-            </CollapsibleTrigger>
-          </h3>
-          {headerAction}
-        </div>
-        <CollapsibleContent
-          keepMounted
-          className="h-(--collapsible-panel-height) overflow-hidden transition-[height] duration-200 data-ending-style:h-0 data-starting-style:h-0"
-        >
-          <div className="border-t bg-background p-3">{children}</div>
-        </CollapsibleContent>
-      </Collapsible>
-    </SectionContext>
+        <div className="border-t bg-background p-3">{children}</div>
+      </CollapsibleContent>
+    </Collapsible>
   )
 }

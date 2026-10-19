@@ -45,7 +45,6 @@ import { useEditorStore } from "../../stores/editor-store"
 import { usePreferencesStore } from "../../stores/preferences-store"
 import { useColorFocusStore } from "../../stores/color-focus-store"
 import {
-  COLOR_LIST_GROUPS,
   filterColorGroups,
   getColorListGroups,
   getColorSectionId,
@@ -242,32 +241,6 @@ export function ColorControls() {
             />
           ))}
         </ControlSection>
-      ))}
-    </div>
-  )
-}
-
-/**
- * Read-only swatch grid of the built-in colours of the current mode (no host
- * extra colours). No panel mounts it and the components/index.ts barrel
- * leaves it out; no package entry exports it.
- */
-export function ColorGrid() {
-  const currentStyles = useEditorStore(
-    (state) => state.themeState.styles[state.themeState.currentMode]
-  )
-  const allColors = COLOR_LIST_GROUPS.flatMap((group) => group.colors)
-
-  return (
-    <div className="grid grid-cols-8 gap-1">
-      {allColors.map(({ key, label }) => (
-        <div
-          key={key}
-          role="img"
-          aria-label={label}
-          className="size-6 rounded-sm border"
-          style={{ backgroundColor: currentStyles[key] }}
-        />
       ))}
     </div>
   )

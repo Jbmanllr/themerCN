@@ -1,3 +1,5 @@
+// RETIRED (#64): nothing imports this file. It was a card no Preview mounts. It
+// stays only until the owner removes it from the repo.
 "use client"
 
 import { Button } from "@workspace/ui/components/button"

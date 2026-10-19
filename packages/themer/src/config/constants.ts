@@ -1,9 +1,6 @@
 // The editor's tunable constants: timings, layers, sizes, shortcut and storage
-// names, and the ranges and presets of the style controls.
-//
-// Contract: a constant is only as live as its readers. The notes below say
-// which ones code reads today; a constant marked "no reader" changes no
-// behavior when edited.
+// names, and the ranges and presets of the style controls. Internal: no
+// package entry exports them.
 
 /**
  * Most undo entries editor-store keeps; the oldest is dropped first. History
@@ -31,19 +28,14 @@ export const COLOR_INPUT_DEBOUNCE_MS = 150
 export const HIGHLIGHT_ANIMATION_MS = 1500
 
 /**
- * Layers of the editor chrome. Read today: `trigger` (the floating trigger)
- * and `sidebar` (the Themer UI, whatever its layout), each unless the Host
+ * Layers of the editor chrome: `trigger` (the floating trigger) and
+ * `sidebar` (the Themer UI, whatever its layout), each unless the Host
  * sets ThemerConfig.zIndex. Popups take the layer one above the Themer UI's:
- * themer-root.tsx passes it to ThemerScope as `popupLayer`. `header`,
- * `popover`, `modal` and `inspector` have no reader.
+ * themer-root.tsx passes it to ThemerScope as `popupLayer`.
  */
 export const Z_INDEX = {
   trigger: 9990,
   sidebar: 10000,
-  header: 10001,
-  popover: 10002,
-  modal: 10003,
-  inspector: 10004,
 } as const
 
 /**
@@ -57,32 +49,17 @@ export const SIDEBAR_WIDTHS = {
 } as const
 
 /**
- * Sidebar width in pixels. No reader.
- * @deprecated Use SIDEBAR_WIDTHS instead
- */
-export const SIDEBAR_WIDTH = 380
-
-/**
- * Header height in pixels. No reader: the header, the sidebar header and the
- * action bar each set `h-12` (3rem, the same 48px) in their own classes.
- */
-export const HEADER_HEIGHT = 48
-
-/**
  * The editor's shortcuts, defined once. Bindings read them parsed, as
  * `themerShortcuts` (hooks/use-keyboard-shortcut.ts); tooltips format these
  * strings. `toggle` is the default of ThemerConfig.shortcut. It must stay out
  * of the browsers' reserved set (Cmd/Ctrl+Shift+T reopens a closed tab, +N
  * and +W open and close windows, +Q quits, +Tab switches tabs) and use no
- * Option/Alt; `ctrl` also matches Cmd on macOS. `save` and `export` have no
- * handler anywhere.
+ * Option/Alt; `ctrl` also matches Cmd on macOS.
  */
 export const SHORTCUTS = {
   toggle: "ctrl+shift+e",
   undo: "ctrl+z",
   redo: "ctrl+shift+z",
-  save: "ctrl+s",
-  export: "ctrl+e",
   inspector: "ctrl+i",
 } as const
 
@@ -138,93 +115,6 @@ export const WCAG_CONTRAST = {
 } as const
 
 /**
- * Google Fonts URL and starter family names. No reader: the font picker's
- * lists and URLs come from utils/font-links.ts (GOOGLE_FONTS_CSS_URL),
- * utils/font-catalog-data.ts (FALLBACK_FONTS) and the catalog route.
- */
-export const GOOGLE_FONTS = {
-  apiUrl: "https://fonts.googleapis.com/css2",
-  popularFonts: [
-    "Inter",
-    "Roboto",
-    "Open Sans",
-    "Lato",
-    "Montserrat",
-    "Poppins",
-    "Source Sans 3",
-    "Nunito",
-    "Raleway",
-    "Ubuntu",
-  ],
-  popularSerifFonts: [
-    "Merriweather",
-    "Playfair Display",
-    "Lora",
-    "PT Serif",
-    "Noto Serif",
-    "Source Serif Pro",
-    "Crimson Text",
-    "Libre Baskerville",
-    "EB Garamond",
-    "Bitter",
-  ],
-  popularMonoFonts: [
-    "JetBrains Mono",
-    "Fira Code",
-    "Source Code Pro",
-    "Roboto Mono",
-    "IBM Plex Mono",
-    "Ubuntu Mono",
-    "Inconsolata",
-    "Space Mono",
-    "Cousine",
-    "Anonymous Pro",
-  ],
-} as const
-
-/**
- * Shadow presets by size name. No reader: the shadow control edits the
- * individual `shadow-*` styles directly.
- */
-export const SHADOW_PRESETS = {
-  none: {
-    blur: "0",
-    spread: "0",
-    offsetX: "0",
-    offsetY: "0",
-    opacity: "0",
-  },
-  sm: {
-    blur: "2px",
-    spread: "0",
-    offsetX: "0",
-    offsetY: "1px",
-    opacity: "0.05",
-  },
-  md: {
-    blur: "6px",
-    spread: "-1px",
-    offsetX: "0",
-    offsetY: "4px",
-    opacity: "0.1",
-  },
-  lg: {
-    blur: "15px",
-    spread: "-3px",
-    offsetX: "0",
-    offsetY: "10px",
-    opacity: "0.1",
-  },
-  xl: {
-    blur: "25px",
-    spread: "-5px",
-    offsetX: "0",
-    offsetY: "20px",
-    opacity: "0.1",
-  },
-} as const
-
-/**
  * Slider bounds for the numeric style controls. Ranges follow tweakcn's
  * controls (radius up to 5rem, shadow offsets and spread ±50px, blur in
  * half pixels); letter spacing keeps the finer 0.005em step this editor had.
@@ -244,8 +134,6 @@ export const CONTROL_RANGES = {
   string,
   { min: number; max: number; step: number; unit: "" | "px" | "rem" | "em" }
 >
-
-export type ControlRangeKey = keyof typeof CONTROL_RANGES
 
 /**
  * Radius presets in rem. `full` stays a pill value (9999px); the radius

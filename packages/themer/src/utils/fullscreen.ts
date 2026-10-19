@@ -2,9 +2,9 @@
 // chrome (sidebar, header, action bar) and, where the browser allows it, the
 // page itself goes fullscreen through the Fullscreen API on <html>.
 //
-// The flag lives in the Themer UI store (`fullscreenPreview`) so the Themer UI,
-// the preview tab bar and `useThemer()` agree. This module never imports the
-// store, so the store can call it:
+// The flag lives in the Themer UI store (`fullscreenPreview`) so the Themer UI
+// and the preview tab bar agree. This module never imports the store, so the
+// store can call it:
 // - `enterFullscreen` sets the flag at once (the CSS layout is the fallback)
 //   and then asks for native fullscreen; a missing API or a refused request
 //   leaves the CSS fallback in place.

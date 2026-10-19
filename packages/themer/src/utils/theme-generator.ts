@@ -15,7 +15,7 @@
 //
 // Contract: pure; the output is text users paste into their own project.
 // Extra colour keys come only from the `extraColorKeys` argument (the Code
-// dialog passes them, useThemer's export helpers do not). RADIUS_SCALE must
+// dialog passes them). RADIUS_SCALE must
 // keep matching shadcn's scale (packages/ui/src/styles/globals.css), so an
 // export rounds like the preview.
 //

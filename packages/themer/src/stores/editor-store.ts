@@ -280,23 +280,6 @@ export const useEditorStore = create<EditorStore>()(
         set({ themeCheckpoint: get().themeState })
       },
 
-      restoreThemeCheckpoint: () => {
-        const checkpoint = get().themeCheckpoint
-        if (checkpoint) {
-          const oldThemeState = get().themeState
-          const updatedHistory = pushHistory(get().history, oldThemeState)
-
-          set({
-            themeState: withSidebarSync({
-              ...checkpoint,
-              currentMode: get().themeState.currentMode,
-            }),
-            history: updatedHistory,
-            future: [],
-          })
-        }
-      },
-
       resetToCurrentPreset: () => {
         const currentThemeState = get().themeState
         // A preset id that is no longer registered (a removed Host Preset)

@@ -63,7 +63,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           it starts after the Themer sidebar (themercn README, "Push"). */}
       <Sidebar
         collapsible="icon"
-        className="data-[side=left]:left-[var(--themer-inset-inline-start,0px)]"
+        className="data-[side=left]:left-[var(--themer-inset-left,0px)]"
       >
         <SidebarHeader>
           <SidebarMenu>

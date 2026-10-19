@@ -195,7 +195,7 @@ test.describe("the sidebar", () => {
           )
           return {
             sidebar: container?.getBoundingClientRect().width,
-            page: getComputedStyle(document.documentElement).marginInlineStart,
+            page: getComputedStyle(document.documentElement).marginLeft,
           }
         })
 

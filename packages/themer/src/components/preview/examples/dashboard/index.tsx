@@ -13,7 +13,11 @@ import data from "./data.json"
 
 export default function Dashboard() {
   return (
-    <SidebarProvider className="relative">
+    <SidebarProvider
+      className="relative"
+      persistCookie={false}
+      keyboardShortcut={false}
+    >
       <AppSidebar variant="inset" className="!absolute !h-full" />
       <SidebarInset>
         <SiteHeader />

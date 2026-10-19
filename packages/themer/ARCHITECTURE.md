@@ -107,14 +107,15 @@ the Themer's portal beside the Host tree and never wrap it.
   page pause, no scroll lock.
 - **Push** ([push-layout.tsx](src/components/themer-ui/layouts/push-layout.tsx)):
   the in-place sidebar layout, plus a layout effect that sets
-  `margin-inline-start`, `--themer-inset-inline-start` (the sidebar's width
+  `margin-left`, `--themer-inset-left` (the sidebar's width
   from `useThemerSidebarWidth`, the mapping `ThemerSidebarProvider` lays the
   sidebar out with) as inline styles on `<html>`, with no transition (the
   sidebar does not animate either), and on unmount (close, switch, drawer,
   Themer unmounted) puts back the Host's own inline values of those
   properties, or removes them.
-  Fixed Host elements opt in through the variable; the viewport does not
-  shrink (ADR 0001).
+  The properties are physical, like the left-pinned sidebar, so a
+  right-to-left page shifts on the same side. Fixed Host elements opt in
+  through the variable; the viewport does not shrink (ADR 0001).
 - **Toolbar** ([toolbar-layout.tsx](src/components/themer-ui/layouts/toolbar-layout.tsx)):
   no sidebar; a `fixed` bar centred at the top of the page with auto
   margins, not a transform (a transform would make the bar the containing
@@ -175,9 +176,10 @@ Why: unlayered rules beat the Host's layered Tailwind inside the Themer root
 and reach nothing outside it; the Host compiles nothing of the Themer's. A
 Tailwind `prefix()` and a shadow root were the rejected alternatives (CSS
 isolation prototype, Jbmanllr/themerCN#11). `[data-themer]` is a bare wrapper because `@scope` matches the
-root's descendants. Host preview tabs render inside
-`<div data-themer-host style="display:contents">`, the lower boundary, so they
-keep the Host's styles. Accepted leak: Host unlayered element rules on
+root's descendants; its only attribute is `dir="ltr"`, which keeps the Themer
+UI and its popups left-to-right in a right-to-left Host. Host preview tabs
+render inside `<div data-themer-host style="display:contents">`, the lower
+boundary, so they keep the Host's styles, and take `<html>`'s `dir` back. Accepted leak: Host unlayered element rules on
 properties Preflight does not reset. Required browsers: `@scope` with a lower
 boundary (Chrome 118, Safari 17.4, Firefox 146).
 

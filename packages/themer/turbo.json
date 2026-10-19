@@ -27,6 +27,14 @@
         "$TURBO_ROOT$/apps/vite/src/main.tsx",
         "$TURBO_ROOT$/apps/vite/vite.config.ts"
       ]
+    },
+    "dev": {
+      "dependsOn": ["^build", "build:css"],
+      "with": ["dev:css"]
+    },
+    "dev:css": {
+      "cache": false,
+      "persistent": true
     }
   }
 }

@@ -181,13 +181,13 @@ itself) beside your tree, and put `getThemerHeadScript()` in an inline
 
 ## Entry points
 
-| Import                 | Exports                                                                                                   | Notes                                                                        |
-| ---------------------- | --------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
-| `themercn`             | `Themer`; types `ThemerProps`, `ThemePreset`, `ThemerExtraColorGroup`, `ThemerLayout`, `ThemerPreviewTab` | The Themer itself (client only). Usually loaded through the loader.          |
-| `themercn/loader`      | `createThemerLoader`, type `ThemerModule`                                                                 | About 1 kB. Reaches no Themer code; with `null` nothing of the Themer ships. |
-| `themercn/head-script` | `getThemerHeadScript`, type `ThemerHeadScriptOptions`                                                     | A string generator with no imports: safe in a build config or on a server.   |
-| `themercn/next`        | `ThemerHeadScript`, type `ThemerHeadScriptProps`                                                          | Client component for the root layout's `<head>`.                             |
-| `themercn/next/server` | `createFontCatalogRoute`, type `FontCatalogRouteOptions`                                                  | Route handler for an App Router `route.ts`.                                  |
+| Import                 | Exports                                                                                                                                                                | Notes                                                                        |
+| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| `themercn`             | `Themer`; types `ThemerProps`, `ThemePreset`, `PartialThemeStyles`, `ThemerExtraColorGroup`, `ThemerExtraColor`, `ThemerLayout`, `ThemerColorMode`, `ThemerPreviewTab` | The Themer itself (client only). Usually loaded through the loader.          |
+| `themercn/loader`      | `createThemerLoader`, type `ThemerModule`                                                                                                                              | About 1 kB. Reaches no Themer code; with `null` nothing of the Themer ships. |
+| `themercn/head-script` | `getThemerHeadScript`, type `ThemerHeadScriptOptions`                                                                                                                  | A string generator with no imports: safe in a build config or on a server.   |
+| `themercn/next`        | `ThemerHeadScript`, type `ThemerHeadScriptProps`                                                                                                                       | Client component for the root layout's `<head>`.                             |
+| `themercn/next/server` | `createFontCatalogRoute`, type `FontCatalogRouteOptions`                                                                                                               | Route handler for an App Router `route.ts`.                                  |
 
 ESM only. Every export carries TSDoc, so your editor shows these docs on
 hover.

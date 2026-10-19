@@ -1,7 +1,9 @@
 // The package's types: re-exports of the theme, font and editor types, plus
 // ThemerProps (the public `<Themer>` props) and the preview-tab and
-// extra-colour types it uses. Only ThemerProps, ThemePreset,
-// ThemerExtraColorGroup and ThemerPreviewTab leave the package (src/index.ts).
+// extra-colour types it uses. ThemerProps and the types its props reference
+// (ThemePreset, PartialThemeStyles, ThemerExtraColorGroup, ThemerExtraColor,
+// ThemerLayout, ThemerColorMode, ThemerPreviewTab) leave the package
+// (src/index.ts).
 
 // Theme types
 export type {
@@ -254,9 +256,16 @@ export interface ThemerProps {
   /** Z-index of the Themer UI and the trigger (default: the Themer's own layers). */
   zIndex?: number
   /**
-   * Prefix of the localStorage keys the Themer persists to:
-   * `<storageNamespace>:editor` and `<storageNamespace>:preferences`
-   * (default `"themercn"`). Read when the Themer mounts.
+   * Prefix of the localStorage keys the Themer persists to (default
+   * `"themercn"`):
+   * - `<storageNamespace>:editor`: the edited Theme;
+   * - `<storageNamespace>:preferences`: Themer UI choices (layout, colour
+   *   format, preview tab, sidebar state, override on/off);
+   * - `<storageNamespace>:color-mode`: the light/dark mode, saved only when
+   *   the Themer owns the mode (`colorMode` and `onColorModeChange` unset).
+   *
+   * Give `getThemerHeadScript` / `<ThemerHeadScript>` the same value. Read
+   * when the Themer mounts.
    */
   storageNamespace?: string
   /**

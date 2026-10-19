@@ -877,6 +877,26 @@ describe("Themer", () => {
           direction(document.querySelector('[data-testid="host-tab-content"]'))
         ).toBe("rtl")
       })
+
+      it("follows the Host's direction when it changes", async () => {
+        await mount({ previewTabs: HOST_TABS })
+        await openThemer()
+        const hostTab = [
+          ...document.querySelectorAll<HTMLElement>('[role="tab"]'),
+        ].find((tab) => tab.textContent === "Host tab")
+        await act(async () => hostTab?.click())
+
+        await act(async () => {
+          document.documentElement.dir = "ltr"
+        })
+
+        expect(
+          document
+            .querySelector('[data-testid="host-tab-content"]')
+            ?.closest("[data-themer-host]")
+            ?.getAttribute("dir")
+        ).toBe("ltr")
+      })
     })
   })
 

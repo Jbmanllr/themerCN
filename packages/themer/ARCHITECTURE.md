@@ -251,7 +251,8 @@ isolation prototype, Jbmanllr/themerCN#11). `[data-themer]` is a bare wrapper be
 root's descendants; its only attribute is `dir="ltr"`, which keeps the Themer
 UI and its popups left-to-right in a right-to-left Host. Host preview tabs
 render inside `<div data-themer-host style="display:contents">`, the lower
-boundary, so they keep the Host's styles, and take `<html>`'s `dir` back. Accepted leak: Host unlayered element rules on
+boundary, so they keep the Host's styles, and take `<html>`'s `dir` back,
+following it as it changes ([use-host-direction.ts](src/hooks/use-host-direction.ts)). Accepted leak: Host unlayered element rules on
 properties Preflight does not reset. Required browsers: `@scope` with a lower
 boundary (Chrome 118, Safari 17.4, Firefox 146).
 

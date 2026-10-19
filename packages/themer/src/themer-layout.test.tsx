@@ -78,7 +78,8 @@ async function click(element: Element | null | undefined) {
   await act(async () => element.click())
 }
 
-const query = (selector: string) => document.querySelector(selector)
+const query = <E extends Element = Element>(selector: string) =>
+  document.querySelector<E>(selector)
 const preview = () => query('[data-testid="themer-preview"]')
 const sidebar = () => query('[data-testid="themer-ui"] [data-slot="sidebar"]')
 const drawer = () => query('[data-testid="themer-mobile-drawer"]')

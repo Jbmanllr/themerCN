@@ -49,7 +49,7 @@
     "dev:css": "node scripts/watch-css.mjs",
     "check:package": "publint --strict && attw --pack . --profile esm-only && node scripts/check-pack.mjs && node scripts/check-entries.mjs",
     "format": "prettier --write \"**/*.{ts,tsx}\"",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.test.json",
     "test": "vitest run"
   },
   "dependencies": {

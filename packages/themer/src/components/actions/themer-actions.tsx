@@ -4,10 +4,17 @@
 // the ActionBar (Workspace's bar, the in-place sidebar's footer), the
 // Toolbar's bar and its "More actions" menu, and the collapsed rail's menu.
 // useThemerActions gives each action's name, icon, shortcut, state and
-// handler, the Theme override, and the dialogs the actions open; a surface
-// lays out the actions it shows (ThemerActionButton draws one as an icon
-// button) and renders `dialogs` once. ThemerActionsMenu is the menu form,
-// shared by the Toolbar and the collapsed rail.
+// handler, and the Theme override; a surface lays out the actions it shows
+// (ThemerActionButton draws one as an icon button).
+//
+// An action with a dialog only asks the ThemerUIStore to open it: ThemerUI
+// renders the dialogs once (themer-dialogs.tsx), so a dialog behaves the same
+// whichever surface opened it, and survives that surface unmounting.
+//
+// The menu form is composed: ThemerActionsMenu is the trigger and the popup,
+// and its children are the pieces exported here (ThemerHistoryMenuGroup,
+// ThemerMenuActions, ThemerActionMenuItem, ThemerModeMenuItem) plus any item
+// of the surface's own (the Toolbar's layout submenu).
 //
 // Adding an action: define it in useThemerActions, and list it in MENU_ITEMS
 // and in the ActionBar's layout (action-bar.tsx).
@@ -47,9 +54,7 @@ import {
 } from "../../selectors"
 import { useEditorStore } from "../../stores/editor-store"
 import { usePreferencesStore } from "../../stores/preferences-store"
-import { CodePanelDialog } from "./code-panel-dialog"
-import { CssImportDialog } from "./css-import-dialog"
-import { ContrastCheckerDialog } from "../editor/contrast-checker-popover"
+import { useThemerUIStore } from "../../stores/themer-ui-store"
 import { ActionButton } from "../ui/action-button"
 
 export interface ThemerAction {
@@ -65,8 +70,6 @@ export interface ThemerAction {
 
 export type ThemerActionId =
   "undo" | "redo" | "reset" | "code" | "importCss" | "contrast"
-
-type ActionDialog = "code" | "importCss" | "contrast"
 
 export function useThemerActions() {
   const undo = useEditorStore((state) => state.undo)
@@ -84,11 +87,7 @@ export function useThemerActions() {
   const setThemeOverrideEnabled = usePreferencesStore(
     (state) => state.setThemeOverrideEnabled
   )
-
-  const [dialog, setDialog] = React.useState<ActionDialog | null>(null)
-  const onDialogOpenChange = (open: boolean) => {
-    if (!open) setDialog(null)
-  }
+  const openDialog = useThemerUIStore((state) => state.openDialog)
 
   const actions: Record<ThemerActionId, ThemerAction> = {
     undo: {
@@ -111,17 +110,17 @@ export function useThemerActions() {
       onSelect: reset,
       disabled: !canReset,
     },
-    code: { label: "Code", icon: Code2, onSelect: () => setDialog("code") },
+    code: { label: "Code", icon: Code2, onSelect: () => openDialog("code") },
     importCss: {
       label: "Import CSS",
       icon: Upload,
       testId: "themer-import-trigger",
-      onSelect: () => setDialog("importCss"),
+      onSelect: () => openDialog("importCss"),
     },
     contrast: {
       label: "Contrast checker",
       icon: Eye,
-      onSelect: () => setDialog("contrast"),
+      onSelect: () => openDialog("contrast"),
     },
   }
 
@@ -136,24 +135,7 @@ export function useThemerActions() {
       : "Apply the edited theme",
   }
 
-  const dialogs = (
-    <>
-      <ContrastCheckerDialog
-        open={dialog === "contrast"}
-        onOpenChange={onDialogOpenChange}
-      />
-      <CssImportDialog
-        open={dialog === "importCss"}
-        onOpenChange={onDialogOpenChange}
-      />
-      {/* Mounted only while open: it builds three exports of the theme. */}
-      {dialog === "code" ? (
-        <CodePanelDialog open onOpenChange={onDialogOpenChange} />
-      ) : null}
-    </>
-  )
-
-  return { actions, override, dialogs }
+  return { actions, override }
 }
 
 /** An action as an icon button (ActionButton: tooltip with its shortcut). */
@@ -175,73 +157,73 @@ export function ThemerActionButton({ action }: { action: ThemerAction }) {
 const MENU_ITEMS: ThemerActionId[] = ["code", "importCss", "contrast", "reset"]
 
 /**
- * The actions as a "More actions" menu. `withHistory` leads with undo, redo
- * and the colour mode, for a surface that has no buttons for them (the
- * collapsed rail); `children` are items appended after a separator (the
- * Toolbar's layout submenu). The dialogs are mounted beside the menu, which
- * closes when an item is picked.
+ * A "More actions" menu: its trigger and popup, holding `children` (the
+ * pieces below, and the surface's own items).
  */
 export function ThemerActionsMenu({
-  withHistory = false,
   side,
   align = "end",
   children,
 }: {
-  withHistory?: boolean
   side?: "right" | "bottom"
   align?: "start" | "end"
-  children?: React.ReactNode
+  children: React.ReactNode
 }) {
-  const { actions, override, dialogs } = useThemerActions()
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger
+        render={
+          <Button variant="ghost" size="icon" aria-label="More actions">
+            <Ellipsis />
+          </Button>
+        }
+      />
+      <DropdownMenuContent side={side} align={align} className="w-56">
+        {children}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  )
+}
 
+/**
+ * Undo, redo and the colour mode, for a menu on a surface that has no
+ * buttons for them (the collapsed rail).
+ */
+export function ThemerHistoryMenuGroup() {
+  const { actions } = useThemerActions()
+  return (
+    <DropdownMenuGroup>
+      <ThemerActionMenuItem action={actions.undo} />
+      <ThemerActionMenuItem action={actions.redo} />
+      <ThemerModeMenuItem />
+    </DropdownMenuGroup>
+  )
+}
+
+/** The actions every menu lists (MENU_ITEMS), then the Theme override. */
+export function ThemerMenuActions() {
+  const { actions, override } = useThemerActions()
   return (
     <>
-      <DropdownMenu>
-        <DropdownMenuTrigger
-          render={
-            <Button variant="ghost" size="icon" aria-label="More actions">
-              <Ellipsis />
-            </Button>
-          }
-        />
-        <DropdownMenuContent side={side} align={align} className="w-56">
-          {withHistory ? (
-            <>
-              <DropdownMenuGroup>
-                <ActionMenuItem action={actions.undo} />
-                <ActionMenuItem action={actions.redo} />
-                <ModeMenuItem />
-              </DropdownMenuGroup>
-              <DropdownMenuSeparator />
-            </>
-          ) : null}
-          <DropdownMenuGroup>
-            {MENU_ITEMS.map((id) => (
-              <ActionMenuItem key={id} action={actions[id]} />
-            ))}
-          </DropdownMenuGroup>
-          <DropdownMenuSeparator />
-          <DropdownMenuCheckboxItem
-            data-testid={override.testId}
-            checked={override.checked}
-            onCheckedChange={override.onCheckedChange}
-          >
-            {override.label}
-          </DropdownMenuCheckboxItem>
-          {children ? (
-            <>
-              <DropdownMenuSeparator />
-              {children}
-            </>
-          ) : null}
-        </DropdownMenuContent>
-      </DropdownMenu>
-      {dialogs}
+      <DropdownMenuGroup>
+        {MENU_ITEMS.map((id) => (
+          <ThemerActionMenuItem key={id} action={actions[id]} />
+        ))}
+      </DropdownMenuGroup>
+      <DropdownMenuSeparator />
+      <DropdownMenuCheckboxItem
+        data-testid={override.testId}
+        checked={override.checked}
+        onCheckedChange={override.onCheckedChange}
+      >
+        {override.label}
+      </DropdownMenuCheckboxItem>
     </>
   )
 }
 
-function ActionMenuItem({ action }: { action: ThemerAction }) {
+/** An action as a menu item. */
+export function ThemerActionMenuItem({ action }: { action: ThemerAction }) {
   return (
     <DropdownMenuItem
       data-testid={action.testId}
@@ -255,7 +237,7 @@ function ActionMenuItem({ action }: { action: ThemerAction }) {
 }
 
 /** ModeToggle's menu form, named by the mode it switches to. */
-function ModeMenuItem() {
+export function ThemerModeMenuItem() {
   const isDark = useEditorStore(selectCurrentMode) === "dark"
   const toggleMode = useToggleMode()
   const Icon = isDark ? Sun : Moon

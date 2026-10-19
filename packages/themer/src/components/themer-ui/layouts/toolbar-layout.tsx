@@ -22,6 +22,7 @@ import { Popover as PopoverPrimitive } from "@base-ui/react/popover"
 import { X } from "lucide-react"
 import { ButtonGroup } from "@workspace/ui/components/button-group"
 import {
+  DropdownMenuSeparator,
   DropdownMenuSub,
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
@@ -39,6 +40,7 @@ import { PresetSelect } from "../../actions/preset-select"
 import {
   ThemerActionButton,
   ThemerActionsMenu,
+  ThemerMenuActions,
   useThemerActions,
 } from "../../actions/themer-actions"
 import { LayoutRadioGroup } from "../layout-switcher"
@@ -88,6 +90,8 @@ export function ToolbarLayout({ onClose, zIndex }: ThemerLayoutProps) {
 
       {/* The rest of the actions, the Theme override and the layouts. */}
       <ThemerActionsMenu>
+        <ThemerMenuActions />
+        <DropdownMenuSeparator />
         <LayoutSubmenu />
       </ThemerActionsMenu>
     </div>

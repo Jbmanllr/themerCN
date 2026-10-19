@@ -5,9 +5,9 @@
 // code export and the theme override switch. Workspace shows it as the bar
 // above the preview; Overlay and Push at the foot of their expanded sidebar
 // (`stacked`), where it wraps onto two rows. The actions themselves (names,
-// icons, state, handlers, dialogs) are defined in
-// ./actions/themer-actions.tsx, shared with the Toolbar and the collapsed
-// rail's menus; this file only lays them out.
+// icons, state, handlers) are defined in ./actions/themer-actions.tsx, shared
+// with the Toolbar and the collapsed rail's menus; this file only lays them
+// out. Their dialogs belong to ThemerUI (./actions/themer-dialogs.tsx).
 //
 // Every value is selected narrowly from the stores so the bar does not
 // re-render on unrelated edits (it re-renders when undo/redo availability or
@@ -46,7 +46,7 @@ export function ActionBar({
 }: {
   variant?: "bar" | "stacked"
 }) {
-  const { actions, override, dialogs } = useThemerActions()
+  const { actions, override } = useThemerActions()
 
   return (
     <div
@@ -105,8 +105,6 @@ export function ActionBar({
           </Tooltip>
         </div>
       </div>
-
-      {dialogs}
     </div>
   )
 }

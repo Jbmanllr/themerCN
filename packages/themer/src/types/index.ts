@@ -63,6 +63,7 @@ export type {
   ColorFocusState,
   ColorFocusActions,
   ColorFocusStore,
+  ThemerDialog,
   ThemerUIState,
   ThemerUIActions,
   ThemerUIStore,

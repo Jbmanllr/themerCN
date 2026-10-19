@@ -4,13 +4,8 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import type { ComponentProps } from "react"
 
+import { isActivePath } from "@/lib/site"
 import { cn } from "@workspace/ui/lib/utils"
-
-/** True when `pathname` is `href` or a page under it (`/` matches only itself). */
-export function isActivePath(pathname: string, href: string): boolean {
-  if (href === "/") return pathname === "/"
-  return pathname === href || pathname.startsWith(`${href}/`)
-}
 
 /** A nav link that marks itself `aria-current="page"` on its section. */
 export function NavLink({

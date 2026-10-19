@@ -73,8 +73,39 @@ test("the cart edits quantities, removes lines and checks out", async ({
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(
     "Thanks, Ada. Your coffee is on its way."
   )
+  await expect(page.getByRole("heading", { level: 1 })).toBeFocused()
   await expect(page.getByText("Order NJ-1042")).toBeVisible()
   await expect(cartLink(page)).toHaveAccessibleName("Cart, 0 items")
+})
+
+test("checkout flags every missing field and focuses the first", async ({
+  page,
+}) => {
+  await page.goto("/shop/p/ethiopia-guji")
+  await hydrated(page)
+  await page.getByRole("button", { name: "Add to cart" }).click()
+  // The cart is in memory: reach checkout through links, not a page load.
+  await page.getByRole("link", { name: /^Cart, 1 item/ }).click()
+  await page.getByRole("link", { name: "Check out" }).click()
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Checkout")
+  await page.getByRole("button", { name: "Place order" }).click()
+
+  for (const { label, error } of [
+    { label: "Email", error: "Enter your email address." },
+    { label: "Full name", error: "Enter your full name." },
+    { label: "Address", error: "Enter your street address." },
+    { label: "City", error: "Enter your city." },
+    { label: "Postcode", error: "Enter your postcode." },
+  ]) {
+    const input = page.getByLabel(label, { exact: true })
+    await expect(input).toHaveAttribute("aria-invalid", "true")
+    await expect(input).toHaveAccessibleDescription(error)
+    await expect(
+      page.getByRole("alert").filter({ hasText: error })
+    ).toBeVisible()
+  }
+  await expect(page.getByLabel("Email")).toBeFocused()
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Checkout")
 })
 
 test("an empty cart points back to the shop", async ({ page }) => {

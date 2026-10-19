@@ -131,7 +131,9 @@ test("an unknown chat thread is a 404", async ({ page }) => {
   expect(response?.status()).toBe(404)
 })
 
-test("settings save (fake) and confirm what changed", async ({ page }) => {
+test("settings save (fake), confirm, and clear the confirmation on the next change", async ({
+  page,
+}) => {
   await page.goto("/app/settings")
   await hydrated(page)
   await expect(page.getByLabel("Name")).toHaveValue("Ada Brennan")
@@ -143,18 +145,39 @@ test("settings save (fake) and confirm what changed", async ({ page }) => {
   await page.getByRole("button", { name: "Save changes" }).click()
 
   await expect(page.getByRole("status")).toHaveText("Settings saved.")
+  await expect(page.getByText("Settings saved.")).toBeFocused()
   await expect(page.getByRole("radio", { name: /Sampler/ })).toBeChecked()
+  await expect(page.getByRole("switch", { name: "Brew tips" })).toBeChecked()
+
+  await page.getByRole("switch", { name: "New origins" }).click()
+  await expect(page.getByRole("status")).toHaveText("")
+  await page.getByRole("button", { name: "Save changes" }).click()
+  await expect(page.getByRole("status")).toHaveText("Settings saved.")
+  await page.getByLabel("Name").fill("Ada B.")
+  await expect(page.getByRole("status")).toHaveText("")
 })
 
-test("settings ask for a name instead of saving an empty one", async ({
+test("settings flag an empty name and a malformed email, and focus the first", async ({
   page,
 }) => {
   await page.goto("/app/settings")
   await hydrated(page)
   await page.getByLabel("Name").fill("")
+  await page.getByLabel("Email").fill("ada")
   await page.getByRole("button", { name: "Save changes" }).click()
 
-  await expect(page.getByText("Enter your name.")).toBeVisible()
+  for (const { label, error } of [
+    { label: "Name", error: "Enter your name." },
+    { label: "Email", error: "Enter a valid email address." },
+  ]) {
+    const input = page.getByLabel(label, { exact: true })
+    await expect(input).toHaveAttribute("aria-invalid", "true")
+    await expect(input).toHaveAccessibleDescription(error)
+    await expect(
+      page.getByRole("alert").filter({ hasText: error })
+    ).toBeVisible()
+  }
+  await expect(page.getByLabel("Name")).toBeFocused()
   await expect(page.getByRole("status")).toHaveText("")
 })
 

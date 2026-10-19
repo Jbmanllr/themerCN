@@ -53,12 +53,34 @@ test("pricing switches the plans between monthly and yearly billing", async ({
   await expect(nightShift).toContainText("billed yearly")
 })
 
-test("the contact form ends on a confirmation", async ({ page }) => {
+test("the contact form flags every missing field and focuses the first", async ({
+  page,
+}) => {
   await page.goto("/contact")
   await hydrated(page)
   await page.getByRole("button", { name: "Send message" }).click()
-  await expect(page.getByLabel("Name")).toHaveAttribute("aria-invalid", "true")
 
+  for (const { label, error } of [
+    { label: "Name", error: "Add your name so we know who to reply to." },
+    {
+      label: "Email",
+      error: "Add an email address we can reply to, like you@example.com.",
+    },
+    { label: "Message", error: "Write a message before sending." },
+  ]) {
+    const input = page.getByLabel(label, { exact: true })
+    await expect(input).toHaveAttribute("aria-invalid", "true")
+    await expect(input).toHaveAccessibleDescription(error)
+    await expect(
+      page.getByRole("alert").filter({ hasText: error })
+    ).toBeVisible()
+  }
+  await expect(page.getByLabel("Name")).toBeFocused()
+})
+
+test("the contact form ends on a focused confirmation", async ({ page }) => {
+  await page.goto("/contact")
+  await hydrated(page)
   await page.getByLabel("Name").fill("Ada Brennan")
   await page.getByLabel("Email").fill("ada@example.com")
   await page.getByLabel("Topic").selectOption("Wholesale")
@@ -68,6 +90,7 @@ test("the contact form ends on a confirmation", async ({ page }) => {
   const confirmation = page.getByRole("status")
   await expect(confirmation).toContainText("Message sent")
   await expect(confirmation).toContainText("ada@example.com")
+  await expect(confirmation).toBeFocused()
   await expect(page.getByRole("button", { name: "Send message" })).toHaveCount(
     0
   )

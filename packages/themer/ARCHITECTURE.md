@@ -15,9 +15,39 @@ links them together.
 
 ## Package shape
 
-Five public entries, each built by its own tsdown config
-([tsdown.config.ts](tsdown.config.ts)) so no chunk is shared between the core
-and the entries a Host imports where the Themer is off:
+Five public entries, built by four tsdown configs
+([tsdown.config.ts](tsdown.config.ts)). Rolldown splits a module that two
+entries of one config both import into a shared chunk, so entries that must
+stay single files with no Themer code get configs of their own:
+
+| Config       | Entries          | Directive                                                  | Import allow-list (`onlyImport`) |
+| ------------ | ---------------- | ---------------------------------------------------------- | -------------------------------- |
+| `core`       | `index`          | `'use client'` added by `outputOptions.intro` on the entry | the dependencies, React          |
+| `adapters`   | `loader`, `next` | kept from the source (`"use client"` on each entry module) | `react`                          |
+| `headScript` | `head-script`    | none                                                       | none                             |
+| `nextServer` | `next/server`    | none                                                       | none                             |
+
+This differs from the two-config plan of Jbmanllr/themerCN#15 and
+Jbmanllr/themerCN#20 (a client config giving every entry `'use client'`
+through `outputOptions.intro`, and a server config with no directive):
+
+- **Split by chunk sharing, not by directive.** In one client config, a module
+  the core and `loader` or `next` both reach would become a chunk those
+  entries import. `head-script` sits apart from `next`, which imports it, so
+  `next` inlines the script instead of importing `dist/head-script.js`.
+  `next/server`'s lazy catalog code shares `utils/font-names.ts` with the
+  head script and the font data with the core, so it sits apart from both.
+- **`loader` and `next` share one config** because they share no module:
+  `loader` imports only types from the package, `next` only the head script
+  and `useHydrated`. `check-entries` (below) fails if a later change makes
+  them share a chunk.
+- **The intro is only on the core.** Rolldown keeps a top-level directive on
+  an entry module, so `loader` and `next` keep their source `"use client"`;
+  the core's entry (`src/index.ts`) has none, so its config adds one.
+  Rolldown drops the per-file directives inside the core (kept in the source
+  for tests and editors); every config silences that warning.
+
+What each entry ships:
 
 | Subpath                | Source                                   | Output                                              | Reaches Themer code?                   |
 | ---------------------- | ---------------------------------------- | --------------------------------------------------- | -------------------------------------- |
@@ -31,6 +61,12 @@ and the entries a Host imports where the Themer is off:
   nothing from `node_modules` is (`deps.onlyBundle: []`), and each config has
   an import allow-list (`onlyImport`). The core's list leaves out `next`, so
   the Themer runs in any React app. `next` is an optional peer.
+- `"sideEffects": false`: no entry module runs anything Host-visible on
+  import. The core's one top-level side effect, the ColorFocusStore's
+  subscription to the ThemerUIStore (it clears the colour focus on close),
+  lands in `dist/index.js`, the module that exports `Themer`, so it ships
+  whenever the Themer does. The other entries hold only constants. The CSS
+  is injected on mount (`useThemerStyle`); the package ships no CSS file.
 - `check:package` runs after `build`: `publint --strict`, `attw` (ESM only),
   [scripts/check-pack.mjs](scripts/check-pack.mjs) (the tarball's file
   allow-list, required files, `'use client'` only on client entries, LICENSE
@@ -86,7 +122,7 @@ the Themer's portal beside the Host tree and never wrap it.
 | Components      | `LAYOUT_COMPONENTS` in [themer-ui.tsx](src/components/themer-ui/themer-ui.tsx)                                                                         | The one map from layout to component (`ThemerLayoutProps`: `onClose`, `zIndex`).                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
 | Layout in force | [hooks/use-themer-layout.ts](src/hooks/use-themer-layout.ts)                                                                                           | `useThemerLayout()`: the `layout` preference over `config.layout`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
 | Switcher        | [themer-ui/layout-switcher.tsx](src/components/themer-ui/layout-switcher.tsx)                                                                          | `DropdownMenu` of `THEMER_LAYOUTS` in every layout's header; writes the `layout` preference. Its `LayoutRadioGroup` also fills the submenu of Toolbar's "More actions" menu.                                                                                                                                                                                                                                                                                                                                                          |
-| Shared sidebar  | [themer-ui/themer-sidebar-provider.tsx](src/components/themer-ui/themer-sidebar-provider.tsx), [themer-sidebar.tsx](src/components/themer-sidebar.tsx) | The SidebarProvider bound to `sidebarCollapsed` (collapse is shared and instant: the stock width transition is off), and the sidebar with `headerActions`/`footer` slots for a layout without its own header or action bar.                                                                                                                                                                                                                                                                                                           |
+| Shared sidebar  | [themer-ui/themer-sidebar-provider.tsx](src/components/themer-ui/themer-sidebar-provider.tsx), [themer-sidebar.tsx](src/components/themer-sidebar.tsx) | The SidebarProvider bound to `sidebarCollapsed` (collapse is shared and instant: the stock width transition is off; the stock `sidebar_state` cookie and Ctrl/Cmd+B are off, as the Host owns them), and the sidebar with `headerActions`/`footer` slots for a layout without its own header or action bar.                                                                                                                                                                                                                           |
 | Panel popups    | [sidebar/panel-popover.tsx](src/components/sidebar/panel-popover.tsx)                                                                                  | A panel in a popup, shared by the Toolbar's panel groups and the collapsed rail's icons: one open at a time, it sets the active panel, and stays open while the page is clicked or scrolled.                                                                                                                                                                                                                                                                                                                                          |
 | Actions         | [actions/themer-actions.tsx](src/components/actions/themer-actions.tsx)                                                                                | `useThemerActions`: every action's name, icon, shortcut, state and handler, and the Theme override, defined once. `ActionBar` lays them out as buttons; `ThemerActionsMenu` is the "More actions" menu, composed from the exported item pieces (the Toolbar's adds its layout submenu, the collapsed rail's leads with undo/redo and mode). A dialog action only sets the ThemerUIStore's `dialog`; `ThemerDialogs` ([themer-dialogs.tsx](src/components/actions/themer-dialogs.tsx)), rendered once by `ThemerUI`, owns the dialogs. |
 
@@ -147,6 +183,32 @@ the Themer's portal beside the Host tree and never wrap it.
   the same action, and a Host-driven switch leaves it inactive, so no
   listener binds in between.
 
+### Decision: a usable collapsed rail, and instant collapse
+
+Recorded after the fact for PR #41 (549c54a), which changed every sidebar
+layout (Workspace, Overlay, Push) without a ticket; #15 had put a redesign of
+the Themer UI out of scope.
+
+- **The rail's icons open their panel in a popup.** They used to set only the
+  active panel, which a collapsed sidebar does not show. Each icon
+  ([collapsed-navigation.tsx](src/components/sidebar/collapsed-navigation.tsx))
+  is now the trigger of a [`PanelPopover`](src/components/sidebar/panel-popover.tsx)
+  beside the rail (`side="right"`, `align="start"`), the same popup and rules
+  as the Toolbar's panel groups: one open at a time, it sets the active panel,
+  and the sidebar stays collapsed. Each button keeps its `aria-label`.
+- **Expanding and collapsing is instant.** The stock Sidebar's 200 ms width
+  transition squeezed the panel content mid-way, and Push's `<html>` margin
+  followed it. `ThemerSidebarProvider` turns the transition off on the
+  sidebar's gap and container, and Push sets its margin with no transition.
+  Popups keep their own animations. The README's Push opt-in example dropped
+  its `transition: left 200ms`: a Host element still animating would now
+  trail the page.
+- Covered by [themer-layout.test.tsx](src/themer-layout.test.tsx) ("the
+  collapsed sidebar": a rail icon opens its panel's controls in a popup in
+  each sidebar layout, still collapsed) and `apps/web/e2e/themer-layout.spec.ts`
+  (the sidebar is at its new width one frame after the press; a rail popup
+  leaves the sidebar collapsed).
+
 Every editing state (Theme, history, active panel, collapse) lives in the
 stores, so a switch keeps it (the inspector is turned off: each layout
 inspects its own surface); the layout components hold none (Toolbar keeps
@@ -202,16 +264,28 @@ Base UI popups would portal to `<body>`, outside the scope. Instead they
 portal into `[data-themer-portals]`, a container inside `ThemerScope`, through
 `@workspace/ui`'s `PortalContainerContext`
 ([packages/ui/src/lib/portal-container.ts](../ui/src/lib/portal-container.ts)):
-Popover, Select, DropdownMenu, Tooltip, Dialog, Sheet and Drawer pass
-`container={usePortalContainer()}`, and without a provider they portal to
-`<body>` as stock shadcn does.
+every portalling component (Popover, Select, DropdownMenu, Tooltip, Dialog,
+Sheet, Drawer, Combobox, …) passes `container={usePortalContainer()}`, and
+without a provider they portal to `<body>` as stock shadcn does.
 [portal-container.test.tsx](src/components/portal-container.test.tsx) fails if
 a `shadcn add -o` reinstall drops it. The container is a sibling of the
 Themer UI (it also serves the mobile drawer and the closed state), fixed at the
 viewport origin with no size and no clipping, at `(zIndex ?? 10000) + 1`.
 Every popup shares that layer; one opened from inside another is portalled
-later, so it paints on top. The Themer UI uses stock `@workspace/ui`
-components and sets no positioner props of its own.
+later, so it paints on top.
+
+Positioner invariant: the Themer UI sets placement props only (`side`,
+`align`, offsets, `alignItemWithTrigger`; the collapsed rail's popups need
+`side="right"`), never a `collisionBoundary`, `positionMethod` or
+`container` of its own. The defaults are what keep a popup usable: the
+default `absolute` positioning inside a container fixed at the viewport
+origin gives viewport coordinates, and the default collision boundary (the
+clipping ancestors) is the viewport, since the container does not clip. So a
+popup flips and shifts to stay on screen, and `--available-height`, which the
+panel popups cap their scroll area to, is the room left in the viewport. A
+boundary such as the sidebar would push the rail's popups back over the rail
+or cut their height; a `container` would portal outside the scope, unstyled
+and below the Themer UI.
 
 ## Colour mode
 
@@ -232,8 +306,9 @@ the style controls read) is written by the toggle's handler and by
 `ThemerProvider`'s Theme-apply effect, which applies the Theme from a store
 subscription (an edit never re-renders the provider) and writes variables,
 never the class (`applyThemeToElement(..., { updateClass: false })`).
-`useToggleMode` ([theme-transition.ts](src/utils/theme-transition.ts)) runs
-the switch inside a View Transition with a circular reveal where supported.
+`useToggleMode` ([hooks/use-themer.ts](src/hooks/use-themer.ts)) runs
+the switch inside a View Transition
+([theme-transition.ts](src/utils/theme-transition.ts)) with a circular reveal where supported.
 
 ## Persistence and the head script
 
@@ -537,8 +612,12 @@ matches Cmd on macOS, an extra modifier rejects, editable targets are
 ignored. Every shortcut is defined once in `SHORTCUTS`; bindings read it
 parsed (`themerShortcuts`) and tooltips format it. Toggle (`shortcut`,
 default `SHORTCUTS.toggle` = `ctrl+shift+e`), undo and redo in
-`ThemerProvider`; `Ctrl+I` in `PreviewTabs`; `Esc` in `subscribeFullscreen`.
-`save` and `export` are defined but have no handler. A shortcut string
+`ThemerProvider` (undo and redo only while the Themer UI is open); `Ctrl+I`
+(`inspector`) in `PreviewTabs` (Workspace) and `PageInspector` (in-place
+layouts). Outside `SHORTCUTS`, `Esc` exits the fallback fullscreen preview
+(`subscribeFullscreen`) and hides the inspector card (`useInspector`; a
+pinned card takes the key first). The Themer binds no sidebar shortcut: the
+stock Ctrl/Cmd+B is off in `ThemerSidebarProvider`. A shortcut string
 accepts `cmd`/`command` (meta), `control` (ctrl) and `option` (alt); any
 other unknown part makes it invalid, and an invalid `shortcut` warns in
 development and falls back to the default toggle.

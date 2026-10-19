@@ -1,7 +1,8 @@
 // Checks the built entries a Host app imports where the Themer may be off
 // (run after `build`, as part of `check:package`): `loader`, `head-script`
-// and `next` must reach no Themer code. Each is built by its own tsdown
-// config (tsdown.config.ts), so each must be a single file: it fails if one
+// and `next` must reach no Themer code. None shares a tsdown config with the
+// core, and `loader` and `next` share one only because they share no module
+// (tsdown.config.ts), so each must be a single file: it fails if one
 // imports another file of `dist` (statically or dynamically), imports a
 // package outside its allow-list (a self-reference to `themercn` included),
 // or outgrows its size budget.

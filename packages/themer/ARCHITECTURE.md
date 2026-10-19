@@ -51,9 +51,9 @@ Host tree                         <ThemerLoader {...props} />   (themercn/loader
                                   <Themer>                       components/themer.tsx
                                      │ null on the server, during hydration, in an iframe
                                      ▼
-                                  ThemerApp: hydrateThemerStores(ns), useThemerStyle()
+                                  ThemerApp: hydrateThemerStores(ns) in a layout effect, useThemerStyle()
                                   QueryClientProvider (its own client)
-                                  └─ ColorModeProvider (colorMode / onColorModeChange)
+                                  └─ ColorModeProvider (colorMode / onColorModeChange), keyed by ns
                                      └─ ThemerProvider (config: presets, shortcut, …)
                                         └─ ThemerRoot ── portal to <body> ──► ThemerScope [data-themer]
                                                                                ├─ ThemerTrigger
@@ -236,9 +236,19 @@ the switch inside a View Transition with a circular reveal where supported.
   ([stores/hydrate.ts](src/stores/hydrate.ts)) points them at
   `getStorageKeys(ns)` (`<ns>:editor`, `<ns>:preferences`, plus
   `<ns>:color-mode` written by an uncontrolled `ColorModeProvider`;
-  `DEFAULT_STORAGE_NAMESPACE` is `"themercn"`) and hydrates them during
-  `<Themer>`'s first client render, so nothing is read from a key the Host
-  did not choose.
+  `DEFAULT_STORAGE_NAMESPACE` is `"themercn"`) and hydrates them in a
+  layout effect of `<Themer>`, which renders its tree only once the stores
+  hold that namespace, so nothing is read from a key the Host did not
+  choose.
+- Switching `storageNamespace` at runtime only repoints the keys and
+  rehydrates. Both stores' `merge` starts from the store's initial state,
+  never the current one, so an empty namespace starts fresh and nothing (no
+  Theme, preference or undo history) carries over; the switch writes to
+  neither namespace. Never reset the stores before rehydrating: a
+  `setState` persists at once (zustand 5), overwriting the new namespace's
+  entry or wiping the old one. The tree from `ColorModeProvider` down is
+  keyed by namespace, so ThemerProvider's mount-time default-Preset adoption
+  runs again and the colour mode is read from the new key.
 - The `<ns>:color-mode` key amends Jbmanllr/themerCN#15 and
   Jbmanllr/themerCN#18, which named only `<ns>:editor` and
   `<ns>:preferences`: an uncontrolled Themer must restore `.dark` before

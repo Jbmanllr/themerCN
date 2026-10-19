@@ -196,6 +196,55 @@ describe("Themer", () => {
       expect(document.getElementById("themercn-restore")).toBeNull()
     })
 
+    describe("switching storageNamespace", () => {
+      // Their own namespaces: <Themer> hydrates once per namespace.
+      async function rerender(props: ThemerProps) {
+        await act(async () => root?.render(<Themer {...props} />))
+      }
+
+      // Mounts on `from`'s Host default Preset, then edits the Theme so the
+      // undo history is not empty before the switch.
+      async function mountWithHistory(from: string) {
+        await mount({ defaultPreset: "violet-bloom", storageNamespace: from })
+        const violetPrimary = rootVar("--primary")
+        await act(async () =>
+          useEditorStore.getState().applyThemePreset("default")
+        )
+        expect(useEditorStore.getState().canUndo()).toBe(true)
+        return violetPrimary
+      }
+
+      it("shows a populated namespace's Theme and leaves its entry as stored", async () => {
+        seedEditor("switch-populated-b:editor", "rgb(6, 6, 6)")
+        const stored = localStorage.getItem("switch-populated-b:editor")
+        await mountWithHistory("switch-populated-a")
+
+        await rerender({
+          defaultPreset: "violet-bloom",
+          storageNamespace: "switch-populated-b",
+        })
+
+        expect(rootVar("--primary")).toBe("rgb(6, 6, 6)")
+        expect(localStorage.getItem("switch-populated-b:editor")).toBe(stored)
+        expect(useEditorStore.getState().canUndo()).toBe(false)
+      })
+
+      it("starts an empty namespace on the Host's default Preset with no history, and leaves the previous key alone", async () => {
+        const violetPrimary = await mountWithHistory("switch-empty-a")
+        const previous = localStorage.getItem("switch-empty-a:editor")
+
+        await rerender({
+          defaultPreset: "violet-bloom",
+          storageNamespace: "switch-empty-b",
+        })
+
+        expect(rootVar("--primary")).toBe(violetPrimary)
+        expect(persistedPreset("switch-empty-b:editor")).toBe("violet-bloom")
+        expect(useEditorStore.getState().canUndo()).toBe(false)
+        expect(localStorage.getItem("switch-empty-a:editor")).toBe(previous)
+      })
+    })
+
     describe("an entry saved at another version", () => {
       const STALE_EDITOR_VERSION = EDITOR_STATE_VERSION - 1
       const STALE_PREFERENCES_VERSION = PREFERENCES_VERSION - 1

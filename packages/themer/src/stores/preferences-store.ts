@@ -89,6 +89,12 @@ export const usePreferencesStore = create<PreferencesStore>()(
       skipHydration: true,
       version: PREFERENCES_VERSION,
       migrate: dropOtherVersion,
+      // On the initial state, never the current one, so a namespace switch
+      // (stores/hydrate.ts) keeps no preference of the previous namespace.
+      merge: (persistedState): PreferencesStore => ({
+        ...usePreferencesStore.getInitialState(),
+        ...(persistedState as Partial<PreferencesStore> | undefined),
+      }),
     }
   )
 )

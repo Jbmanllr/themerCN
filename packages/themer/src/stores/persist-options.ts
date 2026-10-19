@@ -4,7 +4,8 @@
 /**
  * The `migrate` of a persisted store. zustand calls it only for an entry
  * saved at another version; it returns nothing, so the entry isn't applied
- * (the store's `merge` gets `undefined` and keeps its state), nothing is
+ * (the store's `merge` gets `undefined` and falls back to its initial
+ * state), nothing is
  * logged (without a `migrate`, zustand logs an error on every load), and
  * zustand rewrites the key at the current version. There are no real
  * migrations (pre-release). The head script ignores such an entry too

@@ -267,8 +267,10 @@ export interface ThemerProps {
    * - `<storageNamespace>:color-mode`: the light/dark mode, saved only when
    *   the Themer owns the mode (`colorMode` and `onColorModeChange` unset).
    *
-   * Give `getThemerHeadScript` / `<ThemerHeadScript>` the same value. Read
-   * when the Themer mounts.
+   * Give `getThemerHeadScript` / `<ThemerHeadScript>` the same value. It may
+   * change at runtime (per tenant or user): the Themer then shows what the
+   * new namespace stored, or your default Preset when it stored nothing, and
+   * the undo history starts empty.
    */
   storageNamespace?: string
   /**

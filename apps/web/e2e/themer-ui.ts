@@ -71,7 +71,7 @@ export async function openLayout(page: Page, label: string) {
 
 /** The Toolbar layout's bar. */
 export const themerToolbar = (page: Page) =>
-  page.getByRole("toolbar", { name: "Theme Editor" })
+  page.getByRole("region", { name: "Themer toolbar" })
 
 /** The Toolbar's popup for the panel group `id` (colors, typography, other). */
 export const toolbarPanel = (page: Page, id: string) =>

@@ -12,8 +12,11 @@
 // - A panel popup stays open while the page is clicked or scrolled; Escape,
 //   its trigger or another group's trigger closes it. Opening one makes its
 //   panel the active panel (kept across a layout switch).
-// - The inspector works on the real page (PageInspector); its toggle sits in
-//   the bar's ButtonGroup, beside undo/redo.
+// - The bar is a region labelled "Themer toolbar", not a role="toolbar": it
+//   has no arrow-key navigation, so it must not announce any.
+// - The inspector works on the real page (PageInspector, mounted beside the
+//   bar so its card is not read as part of it); its toggle sits in the bar's
+//   ButtonGroup, beside undo/redo.
 // - No Preview, no page pause, no scroll lock. Nested popups portal after
 //   the panel popup, into the same layer, so they paint above it.
 
@@ -58,42 +61,48 @@ export function ToolbarLayout({ onClose, zIndex }: ThemerLayoutProps) {
   const { actions } = useThemerActions()
 
   return (
+    // The root holds the layer. The inspector's card sits beside the bar, so
+    // it is never read as part of it.
     <div
       data-themer-ui
       data-themer-layout="toolbar"
       data-testid="themer-ui"
-      role="toolbar"
-      aria-label="Theme Editor"
-      className="fixed inset-x-0 top-3 mx-auto flex w-fit items-center gap-2 rounded-4xl border bg-background p-1.5 shadow-lg"
+      className="relative"
       style={{ zIndex }}
     >
       <PageInspector />
-      <PanelGroups />
+      <div
+        role="region"
+        aria-label="Themer toolbar"
+        className="fixed inset-x-0 top-3 mx-auto flex w-fit items-center gap-2 rounded-4xl border bg-background p-1.5 shadow-lg"
+      >
+        <PanelGroups />
 
-      <Separator orientation="vertical" className="h-6.5" />
+        <Separator orientation="vertical" className="h-6.5" />
 
-      <div className="w-64">
-        <PresetSelect value={preset ?? "default"} onChange={applyPreset} />
+        <div className="w-64">
+          <PresetSelect value={preset ?? "default"} onChange={applyPreset} />
+        </div>
+
+        <Separator orientation="vertical" className="h-6.5" />
+
+        <ButtonGroup aria-label="Editor actions">
+          <ThemerActionButton action={actions.undo} />
+          <ThemerActionButton action={actions.redo} />
+          <PageInspectorToggle size="default" />
+          <ModeToggle data-testid="themer-mode-toggle" />
+          <ActionButton label="Close theme editor" onClick={onClose}>
+            <X />
+          </ActionButton>
+        </ButtonGroup>
+
+        {/* The rest of the actions, the Theme override and the layouts. */}
+        <ThemerActionsMenu>
+          <ThemerMenuActions />
+          <DropdownMenuSeparator />
+          <LayoutSubmenu />
+        </ThemerActionsMenu>
       </div>
-
-      <Separator orientation="vertical" className="h-6.5" />
-
-      <ButtonGroup aria-label="Editor actions">
-        <ThemerActionButton action={actions.undo} />
-        <ThemerActionButton action={actions.redo} />
-        <PageInspectorToggle size="default" />
-        <ModeToggle data-testid="themer-mode-toggle" />
-        <ActionButton label="Close theme editor" onClick={onClose}>
-          <X />
-        </ActionButton>
-      </ButtonGroup>
-
-      {/* The rest of the actions, the Theme override and the layouts. */}
-      <ThemerActionsMenu>
-        <ThemerMenuActions />
-        <DropdownMenuSeparator />
-        <LayoutSubmenu />
-      </ThemerActionsMenu>
     </div>
   )
 }

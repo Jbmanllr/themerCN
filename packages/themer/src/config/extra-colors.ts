@@ -20,15 +20,13 @@
 // their first occurrence, and groups left empty are dropped.
 
 import type { ThemerExtraColorGroup } from "../types"
-import { COLOR_STYLE_KEYS, defaultLightStyles } from "./defaults"
+import { THEME_STYLE_KEYS } from "../types/theme"
 
 const EXTRA_KEY_PATTERN = /^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/
 
 /** Every built-in style key; an extra colour may not reuse one. */
 const BUILT_IN_STYLE_KEYS: ReadonlySet<string> = new Set<string>([
-  ...COLOR_STYLE_KEYS,
-  ...Object.keys(defaultLightStyles),
-  "spacing",
+  ...THEME_STYLE_KEYS,
 ])
 
 /** Whether a key can be a Host extra colour (valid and not built in). */

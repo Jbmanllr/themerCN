@@ -11,14 +11,9 @@
 //
 // See: packages/themer/ARCHITECTURE.md ("HSL Adjustments").
 
-import { COLOR_STYLE_KEYS, COMMON_STYLES } from "../config/defaults"
+import { COLOR_STYLE_KEYS } from "../types/theme"
 import type { HSLAdjustments, ThemeModeStyles, ThemeStyles } from "../types"
 import { adjustColorByHsl } from "./color-converter"
-
-/** Keys the adjustment touches: colours that are per mode. */
-export const HSL_ADJUSTABLE_KEYS = COLOR_STYLE_KEYS.filter(
-  (key) => !COMMON_STYLES.includes(key)
-)
 
 /** True for the neutral adjustment (no hue shift, both scales 1). */
 export function isIdentityHslAdjustment(adjustments: HSLAdjustments): boolean {
@@ -52,7 +47,8 @@ function adjustMode(
   extraColorKeys: readonly string[]
 ): ThemeModeStyles {
   const next: ThemeModeStyles = { ...styles }
-  for (const key of HSL_ADJUSTABLE_KEYS) {
+  // The adjustment touches the per-mode colours (shadow-color included).
+  for (const key of COLOR_STYLE_KEYS) {
     const value = styles[key]
     if (value) next[key] = adjustColor(value, adjustments)
   }

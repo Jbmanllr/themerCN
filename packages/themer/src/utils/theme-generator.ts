@@ -30,13 +30,12 @@ import type {
 } from "../types"
 import { colorFormatter } from "./color-converter"
 import { SHADOW_SCALE_KEYS, getShadowMap } from "./shadows"
-import { COLOR_STYLE_KEYS, defaultThemeState } from "../config/defaults"
+import { defaultThemeState } from "../config/defaults"
+import { THEME_COLOR_KEYS } from "../types/theme"
 import { extractFontFamily, isLocalFontFamily } from "./font-names"
 
 /** The theme colours a mode block and `@theme inline` export, in order. */
-const EXPORT_COLOR_KEYS = COLOR_STYLE_KEYS.filter(
-  (key) => key !== "shadow-color"
-)
+const EXPORT_COLOR_KEYS = THEME_COLOR_KEYS
 
 /**
  * shadcn v4's multiplicative radius scale, as the previewed host declares it

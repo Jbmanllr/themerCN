@@ -9,6 +9,7 @@
 // GENERIC_FONT_FAMILIES and LOCAL_FONT_FAMILY_NAMES, so the inline script and
 // the link registry (font-links.ts) skip the same names.
 import type { FontCategory } from "../types/fonts"
+import { THEME_FONT_KEYS, type ThemeFontKey } from "../types/theme"
 
 /** The editor's font slots; heading takes serif faces by default. */
 export type ThemeFontRole = "sans" | "heading" | "serif" | "mono"
@@ -215,23 +216,13 @@ export function describeFontValue(
   return { kind: "system", generic: first.replace(/['"]/g, "") }
 }
 
-/** Style keys that carry a font-family value. */
-export const THEME_FONT_KEYS = [
-  "font-sans",
-  "font-heading",
-  "font-serif",
-  "font-mono",
-] as const
-
 /**
  * The Google families named by the theme's font keys, across the given style
  * sets (e.g. light and dark), without duplicates. Host stacks (`var(...)`)
  * and system families are skipped.
  */
 export function getThemeFontFamilies(
-  ...styleSets: ReadonlyArray<
-    Partial<Record<(typeof THEME_FONT_KEYS)[number], string>> | undefined
-  >
+  ...styleSets: ReadonlyArray<Partial<Record<ThemeFontKey, string>> | undefined>
 ): string[] {
   const families = new Set<string>()
   for (const styles of styleSets) {

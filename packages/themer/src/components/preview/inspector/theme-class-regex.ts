@@ -13,7 +13,7 @@
 // The host's extra colours (ThemerConfig.extraColors) are inspectable too:
 // the default regex is rebuilt when their registration changes.
 
-import { COLOR_STYLE_KEYS } from "../../../config/defaults"
+import { THEME_COLOR_KEYS } from "../../../types/theme"
 import { getExtraColorKeys } from "../../../config/extra-colors"
 
 /**
@@ -38,8 +38,7 @@ export const COLOR_UTILITY_PREFIXES = [
 ] as const
 
 /** The editor's colour tokens that appear in utilities (not shadow-color). */
-export const INSPECTABLE_COLOR_KEYS: readonly string[] =
-  COLOR_STYLE_KEYS.filter((key) => !key.startsWith("shadow-"))
+export const INSPECTABLE_COLOR_KEYS: readonly string[] = THEME_COLOR_KEYS
 
 const escapeRegex = (value: string) =>
   value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")

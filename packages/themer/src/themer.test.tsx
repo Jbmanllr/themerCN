@@ -384,6 +384,52 @@ describe("Themer", () => {
       expect(content?.closest("[data-themer-host]")).not.toBeNull()
     })
   })
+
+  describe("Host sidebar isolation", () => {
+    function themerSidebarState() {
+      return document
+        .querySelector('[data-testid="themer-ui"] [data-slot="sidebar"]')
+        ?.getAttribute("data-state")
+    }
+
+    it("collapses its sidebar without writing the Host's sidebar cookie", async () => {
+      await mount()
+      await openThemer()
+      const cookieBefore = document.cookie
+
+      await act(async () =>
+        document
+          .querySelector<HTMLElement>(
+            '[data-testid="themer-ui"] [data-sidebar="trigger"]'
+          )
+          ?.click()
+      )
+
+      expect(themerSidebarState()).toBe("collapsed")
+      expect(document.cookie).toBe(cookieBefore)
+    })
+
+    it("leaves Ctrl/Cmd+B in a Host textarea to the Host", async () => {
+      const textarea = document.createElement("textarea")
+      document.body.append(textarea)
+      await mount()
+      await openThemer()
+      expect(themerSidebarState()).toBe("expanded")
+
+      for (const modifier of ["metaKey", "ctrlKey"]) {
+        const event = new KeyboardEvent("keydown", {
+          key: "b",
+          [modifier]: true,
+          bubbles: true,
+          cancelable: true,
+        })
+        await act(async () => textarea.dispatchEvent(event))
+
+        expect(themerSidebarState()).toBe("expanded")
+        expect(event.defaultPrevented).toBe(false)
+      }
+    })
+  })
 })
 
 const HOST_TABS = [

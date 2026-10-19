@@ -69,7 +69,10 @@ export function createThemerLoader(
           if (active) setThemer(() => module.Themer)
         },
         (error: unknown) => {
-          console.error("[themercn] Failed to load the Themer:", error)
+          // Only the live effect reports: StrictMode's discarded first
+          // mount loads too.
+          if (active)
+            console.error("[themercn] Failed to load the Themer:", error)
         }
       )
       return () => {

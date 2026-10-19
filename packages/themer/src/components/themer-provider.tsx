@@ -58,6 +58,12 @@ interface ThemerProviderProps {
  * Provider for the themer package
  * Sets up keyboard shortcuts and theme application
  */
+/**
+ * Invalid shortcuts already warned about, so StrictMode's second mount (or a
+ * remount) does not repeat the warning.
+ */
+const warnedShortcuts = new Set<string>()
+
 export function ThemerProvider({
   children,
   config: userConfig,
@@ -70,8 +76,10 @@ export function ThemerProvider({
   // An unrecognisable shortcut falls back to the default toggle (warned
   // below), so config.shortcut always parses.
   const requestedShortcut = userConfig?.shortcut
+  const requestedToggle =
+    requestedShortcut === undefined ? null : parseShortcut(requestedShortcut)
   const shortcutInvalid =
-    requestedShortcut !== undefined && parseShortcut(requestedShortcut) === null
+    requestedShortcut !== undefined && requestedToggle === null
   const config = React.useMemo<ThemerConfig>(
     () => ({
       ...userConfig,
@@ -86,6 +94,8 @@ export function ThemerProvider({
 
   React.useEffect(() => {
     if (!shortcutInvalid || isProduction()) return
+    if (warnedShortcuts.has(requestedShortcut)) return
+    warnedShortcuts.add(requestedShortcut)
     console.warn(
       `themercn: shortcut "${requestedShortcut}" is not a valid shortcut ` +
         `(modifiers: ctrl/control, alt/option, shift, meta/cmd/command). ` +
@@ -182,8 +192,7 @@ export function ThemerProvider({
   // re-add listeners on every theme edit.
   const toggle = useThemerUIStore((state) => state.toggle)
   const isOpen = useThemerUIStore((state) => state.isOpen)
-  const { key, modifiers } =
-    parseShortcut(config.shortcut ?? SHORTCUTS.toggle) ?? themerShortcuts.toggle
+  const { key, modifiers } = requestedToggle ?? themerShortcuts.toggle
 
   useKeyboardShortcut({
     key,

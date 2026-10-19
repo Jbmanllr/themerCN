@@ -7,7 +7,7 @@
 // Themer lands around the page instead of beside it, if it renders before the
 // load resolves, if `null` loads or renders anything, or if a late load lands
 // after the page has gone.
-import { act, useState } from "react"
+import { act, StrictMode, useState } from "react"
 import { createRoot, type Root } from "react-dom/client"
 import { renderToString } from "react-dom/server"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
@@ -156,6 +156,24 @@ describe("the Themer loader", () => {
       failure
     )
     expect(container.innerHTML).toBe(container.querySelector("main")?.outerHTML)
+  })
+
+  it("reports a failed load once under StrictMode", async () => {
+    const error = vi.spyOn(console, "error").mockImplementation(() => {})
+    const ThemerLoader = createThemerLoader(() =>
+      Promise.reject(new Error("offline"))
+    )
+
+    // StrictMode mounts, unmounts and mounts again in development.
+    await act(async () =>
+      root?.render(
+        <StrictMode>
+          <ThemerLoader />
+        </StrictMode>
+      )
+    )
+
+    expect(error).toHaveBeenCalledTimes(1)
   })
 
   it("drops a Themer that arrives after the page has gone", async () => {

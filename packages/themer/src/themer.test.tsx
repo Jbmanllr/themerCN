@@ -2,7 +2,7 @@
 // @vitest-environment-options { "settings": { "handleDisabledFileLoadingAsSuccess": true } }
 // The public <Themer> as a Host app mounts it: one component beside the
 // Host's tree, configured by flat props.
-import { act, Profiler } from "react"
+import { act, Profiler, StrictMode } from "react"
 import { createRoot, type Root } from "react-dom/client"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
@@ -765,6 +765,26 @@ describe("Themer", () => {
       expect(themerUI()).not.toBeNull()
       const shortcutWarnings = warn.mock.calls.filter((args) =>
         String(args[0]).includes("hyper+k")
+      )
+      expect(shortcutWarnings).toHaveLength(1)
+    })
+
+    it("warns once about an invalid shortcut under StrictMode", async () => {
+      const warn = vi.spyOn(console, "warn").mockImplementation(() => {})
+      container = document.createElement("div")
+      document.body.append(container)
+      root = createRoot(container)
+
+      await act(async () =>
+        root?.render(
+          <StrictMode>
+            <Themer shortcut="hyper+j" />
+          </StrictMode>
+        )
+      )
+
+      const shortcutWarnings = warn.mock.calls.filter((args) =>
+        String(args[0]).includes("hyper+j")
       )
       expect(shortcutWarnings).toHaveLength(1)
     })

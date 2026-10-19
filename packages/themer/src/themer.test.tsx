@@ -235,6 +235,33 @@ describe("Themer", () => {
         return violetPrimary
       }
 
+      it("warns nothing when the namespace switches", async () => {
+        const warn = vi.spyOn(console, "warn").mockImplementation(() => {})
+        await mount({ storageNamespace: "switch-quiet-a" })
+
+        await rerender({ storageNamespace: "switch-quiet-b" })
+
+        expect(warn).not.toHaveBeenCalled()
+      })
+
+      it("warns when a second <Themer> on another namespace takes the stores", async () => {
+        const warn = vi.spyOn(console, "warn").mockImplementation(() => {})
+        await mount({ storageNamespace: "two-a" })
+        const second = document.createElement("div")
+        document.body.append(second)
+        const secondRoot = createRoot(second)
+
+        await act(async () =>
+          secondRoot.render(<Themer storageNamespace="two-b" />)
+        )
+        await act(async () => secondRoot.unmount())
+
+        const warnings = warn.mock.calls.filter((args) =>
+          String(args[0]).includes("one <Themer> per page")
+        )
+        expect(warnings).toHaveLength(1)
+      })
+
       it("shows a populated namespace's Theme and leaves its entry as stored", async () => {
         seedEditor("switch-populated-b:editor", "rgb(6, 6, 6)")
         const stored = localStorage.getItem("switch-populated-b:editor")

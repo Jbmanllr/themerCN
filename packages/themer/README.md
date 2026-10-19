@@ -241,6 +241,9 @@ its mode under `<storageNamespace>:color-mode`); nothing is sent anywhere. The T
 writes your source files: copy the Code dialog's CSS into your project to keep
 a Theme.
 
+Mount one `<Themer>` per page: two on different namespaces share one set of
+stores, so the first renders nothing (a development warning says so).
+
 Without the head script, a reload paints your own Theme first and switches to
 the saved edit once the Themer loads after hydration. The head script applies
 the saved Theme while the HTML is parsed (and requests its Google Fonts), in

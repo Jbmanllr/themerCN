@@ -322,7 +322,9 @@ the switch inside a View Transition
   `DEFAULT_STORAGE_NAMESPACE` is `"themercn"`) and hydrates them in a
   layout effect of `<Themer>`, which renders its tree only once the stores
   hold that namespace, so nothing is read from a key the Host did not
-  choose.
+  choose. The stores are module singletons, so a page mounts one
+  `<Themer>`: a second one on another namespace takes the stores and the
+  first renders nothing (a development warning says so).
 - Switching `storageNamespace` at runtime only repoints the keys and
   rehydrates. Both stores' `merge` starts from the store's initial state,
   never the current one, so an empty namespace starts fresh and nothing (no

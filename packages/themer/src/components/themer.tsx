@@ -29,11 +29,17 @@
 //   stable module-level values: a new identity re-registers or rebuilds them.
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
-import { useLayoutEffect, useState, useSyncExternalStore } from "react"
+import {
+  useEffect,
+  useLayoutEffect,
+  useState,
+  useSyncExternalStore,
+} from "react"
 
 import type { ThemerConfig, ThemerProps } from "../types"
 import { DEFAULT_STORAGE_NAMESPACE, getStorageKeys } from "../config/constants"
 import { useHydrated } from "../hooks/use-hydrated"
+import { isProduction } from "../utils/is-production"
 import {
   getHydratedNamespace,
   hydrateThemerStores,
@@ -78,8 +84,8 @@ function ThemerApp({
   // The tree renders only while the stores hold this namespace, keyed by
   // it, so no child reads, or adopts a Preset into, another namespace (the
   // stores are module singletons, and may hold another instance's
-  // namespace). The layout effect hydrates outside render and the
-  // subscription re-renders synchronously, before the first paint.
+  // namespace). The layout effect hydrates outside render; the subscription
+  // then re-renders in the same task, in practice before the first paint.
   const hydratedNamespace = useSyncExternalStore(
     subscribeHydratedNamespace,
     getHydratedNamespace,
@@ -88,6 +94,19 @@ function ThemerApp({
   useLayoutEffect(() => {
     hydrateThemerStores(storageNamespace)
   }, [storageNamespace])
+  // Another mounted <Themer> on another namespace took the stores: this one
+  // now renders nothing. The live value, not the render's: during this
+  // instance's own switch the render still holds the previous namespace.
+  useEffect(() => {
+    const current = getHydratedNamespace()
+    if (current === null || current === storageNamespace) return
+    if (isProduction()) return
+    console.warn(
+      `themercn: another <Themer> (storageNamespace "${current}") holds the ` +
+        `Themer's stores, so the one on "${storageNamespace}" renders ` +
+        `nothing. Mount one <Themer> per page.`
+    )
+  }, [hydratedNamespace, storageNamespace])
   useThemerStyle()
 
   const [queryClient] = useState(

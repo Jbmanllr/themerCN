@@ -428,13 +428,11 @@ ${indentBlock(darkTheme)}
 
 /**
  * The Tailwind 3 `tailwind.config.js` colours, radius and font families.
- * `_tailwindVersion` is ignored: the output is always the v3 shape. Throws when
- * either mode's styles are missing.
+ * Always the v3 shape. Throws when either mode's styles are missing.
  */
 export function generateTailwindConfigCode(
   themeState: ThemeEditorState,
   colorFormat: ColorFormat = "hsl",
-  _tailwindVersion: TailwindVersion = "3",
   extraColorKeys: readonly string[] = []
 ): string {
   if (!themeState?.styles?.light || !themeState?.styles?.dark) {

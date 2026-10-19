@@ -32,4 +32,12 @@ export default [
       "turbo/no-undeclared-env-vars": ["error", { allowList: ["^PACK_DIR$"] }],
     },
   },
+  {
+    // The Host's bundler replaces NODE_ENV when it builds the Host app; no
+    // turbo task of this package reads it.
+    files: ["src/utils/is-production.ts"],
+    rules: {
+      "turbo/no-undeclared-env-vars": ["error", { allowList: ["^NODE_ENV$"] }],
+    },
+  },
 ]

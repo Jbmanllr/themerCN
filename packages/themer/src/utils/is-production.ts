@@ -7,7 +7,6 @@
  */
 export function isProduction(): boolean {
   try {
-    // eslint-disable-next-line turbo/no-undeclared-env-vars -- read by the Host's bundler when it builds the Host app, not by this package's turbo tasks
     return process.env.NODE_ENV === "production"
   } catch {
     return false

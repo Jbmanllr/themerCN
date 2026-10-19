@@ -47,6 +47,7 @@
     "build": "tsdown",
     "check:package": "publint --strict && attw --pack . --profile esm-only && node scripts/check-pack.mjs && node scripts/check-entries.mjs",
     "format": "prettier --write \"**/*.{ts,tsx}\"",
+    "lint": "eslint --max-warnings 0",
     "typecheck": "tsc --noEmit",
     "test": "vitest run"
   },
@@ -89,7 +90,10 @@
     "@types/node": "^24.0.0",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
+    "@workspace/eslint-config": "workspace:*",
     "@workspace/ui": "workspace:*",
+    "eslint": "^10",
+    "globals": "^17.13.0",
     "happy-dom": "21.0.1",
     "next": "16.4.0",
     "postcss": "8.5.30",

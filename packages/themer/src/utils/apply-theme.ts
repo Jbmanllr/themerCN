@@ -443,7 +443,7 @@ export function applyThemeToIframe(
   themeState: ThemeEditorState,
   iframe: HTMLIFrameElement
 ): void {
-  let iframeDoc: Document | null = null
+  let iframeDoc: Document | null
   try {
     iframeDoc = iframe.contentDocument
   } catch {

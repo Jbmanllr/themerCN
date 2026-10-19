@@ -44,7 +44,7 @@ export function segmentClassName(className: string): ClassNameSegments {
   const known = COLOR_UTILITY_PREFIXES.find((prefix) =>
     baseClass.startsWith(`${prefix}-`)
   )
-  let prefix = ""
+  let prefix: string
   let value = ""
   if (known) {
     prefix = known

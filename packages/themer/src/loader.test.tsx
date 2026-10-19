@@ -144,6 +144,20 @@ describe("the Themer loader", () => {
     expect(container.innerHTML).toBe(container.querySelector("main")?.outerHTML)
   })
 
+  it("reports a failed load once and renders nothing", async () => {
+    const error = vi.spyOn(console, "error").mockImplementation(() => {})
+    const failure = new Error("Failed to fetch dynamically imported module")
+
+    await mount(() => Promise.reject(failure))
+
+    expect(error).toHaveBeenCalledTimes(1)
+    expect(error).toHaveBeenCalledWith(
+      expect.stringMatching(/^\[themercn\]/),
+      failure
+    )
+    expect(container.innerHTML).toBe(container.querySelector("main")?.outerHTML)
+  })
+
   it("drops a Themer that arrives after the page has gone", async () => {
     const themer = deferredLoad()
     await mount(themer.load)

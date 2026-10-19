@@ -27,6 +27,11 @@ stay single files with no Themer code get configs of their own:
 | `headScript` | `head-script`    | none                                                       | none                             |
 | `nextServer` | `next/server`    | none                                                       | none                             |
 
+`core` cleans `dist` before a build. The `dev` script passes `--no-clean`:
+in watch mode tsdown would delete the previous build's files at the start of
+every rebuild, and the apps' dev servers would briefly fail to resolve
+`themercn`.
+
 This differs from the two-config plan of Jbmanllr/themerCN#15 and
 Jbmanllr/themerCN#20 (a client config giving every entry `'use client'`
 through `outputOptions.intro`, and a server config with no directive):

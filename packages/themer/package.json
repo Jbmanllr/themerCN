@@ -43,7 +43,7 @@
   "scripts": {
     "build:css": "node scripts/build-css.mjs",
     "build": "tsdown",
-    "dev": "tsdown --watch",
+    "dev": "tsdown --watch --no-clean",
     "dev:css": "node scripts/watch-css.mjs",
     "check:package": "publint --strict && attw --pack . --profile esm-only && node scripts/check-pack.mjs && node scripts/check-entries.mjs",
     "format": "prettier --write \"**/*.{ts,tsx}\"",

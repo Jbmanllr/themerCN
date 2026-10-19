@@ -651,8 +651,7 @@ describe("Themer layout", () => {
 
   describe("Push", () => {
     const html = () => document.documentElement
-    const inset = () =>
-      html().style.getPropertyValue("--themer-inset-left")
+    const inset = () => html().style.getPropertyValue("--themer-inset-left")
     const margin = () => html().style.getPropertyValue("margin-left")
 
     it("shifts the Host page aside by the expanded sidebar's width", async () => {
@@ -729,9 +728,7 @@ describe("Themer layout", () => {
         "opacity 300ms ease"
       )
       expect(margin()).toBe("4px")
-      expect(html().style.getPropertyPriority("margin-left")).toBe(
-        "important"
-      )
+      expect(html().style.getPropertyPriority("margin-left")).toBe("important")
       expect(inset()).toBe("")
     })
 

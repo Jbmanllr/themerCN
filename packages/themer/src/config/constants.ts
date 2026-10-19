@@ -28,7 +28,7 @@ export const COLOR_INPUT_DEBOUNCE_MS = 150
 export const HIGHLIGHT_ANIMATION_MS = 1500
 
 /**
- * Layers of the editor chrome: `trigger` (the floating trigger) and
+ * Layers of the Themer's elements: `trigger` (the floating trigger) and
  * `sidebar` (the Themer UI, whatever its layout), each unless the Host
  * sets ThemerConfig.zIndex. Popups take the layer one above the Themer UI's:
  * themer-root.tsx passes it to ThemerScope as `popupLayer`.

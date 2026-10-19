@@ -309,10 +309,21 @@ it shows the Theme being edited.
 
 `@scope` with a lower boundary needs Chrome 118, Safari 17.4 or Firefox 146.
 
-Known leak: your unlayered element rules (for example
-`button { border: 3px dashed red }`) still reach the Themer's elements on
-properties Preflight does not reset, because they win on specificity. Layered
-CSS, which is what Tailwind emits, does not leak.
+Its `@keyframes` are all named `themer-…`, so your own `spin`, `pulse`,
+`enter`, `exit` or `accordion-*` animations keep their keyframes while the
+Themer is mounted.
+
+Known leaks:
+
+- Your unlayered element rules (for example
+  `button { border: 3px dashed red }`) still reach the Themer's elements on
+  properties Preflight does not reset, because they win on specificity.
+  Layered CSS, which is what Tailwind emits, does not leak.
+- Tailwind v4's `@property` registrations (`--tw-shadow`, `--tw-ring-color`,
+  …) are document-wide: while the Themer is mounted, those properties are
+  registered on your page too, with Tailwind's own syntax and initial values.
+  A Tailwind v4 page registers the same ones; on another page, an unset
+  `--tw-*` property reads its initial value instead of nothing.
 
 ## Themer layouts
 

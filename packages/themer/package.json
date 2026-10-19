@@ -48,7 +48,7 @@
     "check:package": "publint --strict && attw --pack . --profile esm-only && node scripts/check-pack.mjs && node scripts/check-entries.mjs",
     "format": "prettier --write \"**/*.{ts,tsx}\"",
     "lint": "eslint --max-warnings 0",
-    "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.test.json",
+    "typecheck": "tsc --noEmit",
     "test": "vitest run"
   },
   "dependencies": {

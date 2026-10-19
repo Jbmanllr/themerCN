@@ -1,6 +1,6 @@
 // RETIRED (#64): nothing imports this file. It was test-only: DynamicFontLoader
 // and the font picker load fonts through utils/font-links.ts. Excluded from
-// tsconfig.json, tsconfig.test.json and eslint.config.js until the owner
+// tsconfig.json and eslint.config.js until the owner
 // removes it.
 "use client"
 

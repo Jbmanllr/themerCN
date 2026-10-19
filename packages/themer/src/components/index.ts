@@ -1,6 +1,6 @@
 // RETIRED (#64): nothing imports this file. It was an unused barrel (the
 // package root exports only <Themer> and its types). Excluded from
-// tsconfig.json, tsconfig.test.json and eslint.config.js until the owner
+// tsconfig.json and eslint.config.js until the owner
 // removes it.
 //
 // Barrel for the editor's components. Internal: the package root

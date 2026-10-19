@@ -383,6 +383,35 @@ describe("Themer", () => {
       const content = document.querySelector('[data-testid="host-tab-content"]')
       expect(content?.closest("[data-themer-host]")).not.toBeNull()
     })
+
+    describe("in a right-to-left Host", () => {
+      beforeEach(() => {
+        document.documentElement.dir = "rtl"
+      })
+      afterEach(() => {
+        document.documentElement.removeAttribute("dir")
+      })
+
+      it("lays its UI out left-to-right and Host preview tabs in the Host's direction", async () => {
+        await mount({ previewTabs: HOST_TABS })
+        await openThemer()
+        const direction = (element: Element | null | undefined) =>
+          element?.closest("[dir]")?.getAttribute("dir")
+
+        expect(
+          direction(document.querySelector('[data-testid="themer-ui"]'))
+        ).toBe("ltr")
+
+        const hostTab = [
+          ...document.querySelectorAll<HTMLElement>('[role="tab"]'),
+        ].find((tab) => tab.textContent === "Host tab")
+        await act(async () => hostTab?.click())
+
+        expect(
+          direction(document.querySelector('[data-testid="host-tab-content"]'))
+        ).toBe("rtl")
+      })
+    })
   })
 })
 

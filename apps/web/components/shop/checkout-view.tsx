@@ -16,6 +16,8 @@ import {
   type CartSummary,
   type ShippingId,
   cartSummary,
+  lineKey,
+  shippingLabel,
   shippingOptions,
 } from "@/lib/shop"
 import { useCart } from "@/lib/stores/cart"
@@ -97,8 +99,6 @@ export function CheckoutView() {
   if (lines.length === 0) return <EmptyCart />
 
   const summary = cartSummary(lines, shipping)
-  const shippingLabel =
-    shippingOptions.find((o) => o.id === shipping)!.label + " shipping"
 
   return (
     <form
@@ -234,14 +234,13 @@ export function CheckoutView() {
           <h2 className="font-heading text-xl">Your order</h2>
           <ul className="divide-y border-y">
             {lines.map((line) => (
-              <CartLineItem
-                key={`${line.productSlug}-${JSON.stringify(line.option)}`}
-                line={line}
-                compact
-              />
+              <CartLineItem key={lineKey(line)} line={line} compact />
             ))}
           </ul>
-          <OrderSummary summary={summary} shippingLabel={shippingLabel}>
+          <OrderSummary
+            summary={summary}
+            shippingLabel={shippingLabel(shipping)}
+          >
             <Button type="submit" size="lg" className="w-full">
               Place order
             </Button>
@@ -298,9 +297,6 @@ function TextField({
 }
 
 function Confirmation({ order }: { order: PlacedOrder }) {
-  const shippingLabel =
-    shippingOptions.find((o) => o.id === order.shipping)!.label + " shipping"
-
   return (
     <div className="mx-auto flex max-w-2xl flex-col gap-10">
       <div className="flex flex-col items-center gap-5 text-center">
@@ -324,14 +320,13 @@ function Confirmation({ order }: { order: PlacedOrder }) {
         <h2 className="font-heading text-xl">What you ordered</h2>
         <ul className="divide-y border-y">
           {order.lines.map((line) => (
-            <CartLineItem
-              key={`${line.productSlug}-${JSON.stringify(line.option)}`}
-              line={line}
-              compact
-            />
+            <CartLineItem key={lineKey(line)} line={line} compact />
           ))}
         </ul>
-        <OrderSummary summary={order.summary} shippingLabel={shippingLabel} />
+        <OrderSummary
+          summary={order.summary}
+          shippingLabel={shippingLabel(order.shipping)}
+        />
       </div>
       <div className="flex flex-wrap justify-center gap-3">
         <Link href="/shop" className={buttonVariants()}>

@@ -32,6 +32,25 @@ export const shippingOptions: ShippingOption[] = [
   },
 ]
 
+/** How an order summary names a shipping option, e.g. "Standard shipping". */
+export function shippingLabel(id: ShippingId): string {
+  return `${shippingOptions.find((option) => option.id === id)!.label} shipping`
+}
+
+/**
+ * A cart line's identity: its product and its options in a canonical order,
+ * so `{ Grind, Size }` and `{ Size, Grind }` are the same line. The cart store
+ * merges lines with equal keys, and cart lists use it as the React key.
+ */
+export function lineKey(
+  line: Pick<CartLine, "productSlug" | "option">
+): string {
+  const option = Object.entries(line.option).sort(([a], [b]) =>
+    a < b ? -1 : a > b ? 1 : 0
+  )
+  return JSON.stringify([line.productSlug, option])
+}
+
 export type CartSummary = {
   /** Number of items (sum of quantities). */
   items: number

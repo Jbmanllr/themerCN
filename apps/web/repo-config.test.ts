@@ -24,6 +24,13 @@ describe("formatting", () => {
     expect(scripts["format:check"]).toBe("prettier --check .")
   })
 
+  it("the root format writes exactly what the check checks", () => {
+    const scripts = JSON.parse(read("../../package.json")).scripts
+    expect(scripts.format).toBe(
+      scripts["format:check"].replace("--check", "--write")
+    )
+  })
+
   it("format is an uncached write with no upstream chain", () => {
     const { format } = JSON.parse(read("../../turbo.json")).tasks
     expect(format.cache).toBe(false)

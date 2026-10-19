@@ -9,7 +9,7 @@
 // stays after the popover closes (as tweakcn) so the arrows keep cycling
 // through what was searched, and clears once a theme is picked from the
 // list. The trigger label carries `*` while the theme differs from its
-// preset (selectHasUnsavedChanges).
+// preset (useIsOnPreset).
 //
 // Differences: Base UI composition (`render`), and the popover sized from its
 // trigger with `--anchor-width` (no ResizeObserver). It portals into the
@@ -41,7 +41,8 @@ import {
   resolvePresetStyles,
 } from "../../config/presets"
 import { useEditorStore } from "../../stores/editor-store"
-import { selectCurrentMode, selectHasUnsavedChanges } from "../../selectors"
+import { selectCurrentMode } from "../../selectors"
+import { useIsOnPreset } from "../../hooks/use-editor-selectors"
 import type { ThemeMode } from "../../types"
 import {
   cyclePresetId,
@@ -123,7 +124,7 @@ export function PresetSelect({ value, onChange }: PresetSelectProps) {
   // do not change while mounted.
   const presetIds = React.useMemo(() => getPresetIds(), [])
   const currentMode = useEditorStore(selectCurrentMode)
-  const hasUnsavedChanges = useEditorStore(selectHasUnsavedChanges)
+  const hasUnsavedChanges = !useIsOnPreset()
   const selectedSwatchColors = useEditorStore(
     useShallow((state) => {
       const styles = state.themeState.styles[state.themeState.currentMode]

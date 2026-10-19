@@ -38,7 +38,6 @@ import {
 } from "../utils/apply-theme"
 import { useColorMode } from "./color-mode"
 import { DynamicFontLoader } from "./dynamic-font-loader"
-import { useSidebarSyncAlignment } from "../hooks/use-sidebar-sync-alignment"
 import { RESTORE_STYLE_ID, SHORTCUTS } from "../config/constants"
 import { configurePresets, getDefaultPresetId } from "../config/presets"
 import { configureExtraColors } from "../config/extra-colors"
@@ -178,10 +177,6 @@ export function ThemerProvider({
     if (!themeOverrideEnabled) return undefined
     return () => removeThemeFromElement(document.documentElement)
   }, [themeOverrideEnabled])
-
-  // Sidebar Sync re-aligns the sidebar colours after a preset, undo or
-  // import even while the Colors panel (which owns the toggle) is unmounted.
-  useSidebarSyncAlignment()
 
   // Keyboard shortcuts. useKeyboardShortcut keys its listener on the
   // shortcut string, so the fresh arrays and inline callbacks below do not

@@ -46,9 +46,9 @@ import {
 } from "@workspace/ui/components/dropdown-menu"
 import { SHORTCUTS } from "../../config/constants"
 import { useToggleMode } from "../../hooks/use-themer"
+import { useIsOnPreset } from "../../hooks/use-editor-selectors"
 import {
   selectCanRedo,
-  selectCanResetToPreset,
   selectCanUndo,
   selectCurrentMode,
 } from "../../selectors"
@@ -77,10 +77,8 @@ export function useThemerActions() {
   const reset = useEditorStore((state) => state.resetToCurrentPreset)
   const canUndo = useEditorStore(selectCanUndo)
   const canRedo = useEditorStore(selectCanRedo)
-  const sidebarColorSync = usePreferencesStore(
-    (state) => state.sidebarColorSync
-  )
-  const canReset = useEditorStore(selectCanResetToPreset(sidebarColorSync))
+  // Reset is enabled exactly when the unsaved mark shows.
+  const canReset = !useIsOnPreset()
   const themeOverrideEnabled = usePreferencesStore(
     (state) => state.themeOverrideEnabled
   )

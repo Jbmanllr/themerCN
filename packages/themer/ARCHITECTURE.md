@@ -337,8 +337,11 @@ starts fresh, see Persistence and the head script).
   Presets are registered) makes a restored Theme that still equals its
   `presetBaseline` follow the Preset's current source, so a Host token change
   reaches the page; an edited, imported or undone Theme is kept.
-- "Unsaved" (`selectHasUnsavedChanges`) compares `themeState` with the
-  resolved Preset and neutral HSL, not with the checkpoint.
+- One "on Preset" rule (`isOnPreset` in
+  [editor-selectors.ts](src/selectors/editor-selectors.ts)) drives both the
+  unsaved mark and Reset: the styles equal the resolved Preset (aligned by
+  Sidebar Sync while it is on) and the HSL adjustment is neutral (missing or
+  the identity). It never looks at the checkpoint.
 - Host extra colours (`extraColors`, registered by `configureExtraColors` in
   [config/extra-colors.ts](src/config/extra-colors.ts) during render) live in
   the same per-mode `styles`, so persistence, undo and "unsaved" need no extra
@@ -504,8 +507,11 @@ recomputed from `themeCheckpoint`
 While `sidebarColorSync` is on, each sidebar colour equals its base twin in
 both modes: `applySidebarSync` ([sidebar-sync.ts](src/utils/sidebar-sync.ts))
 is pure; turning it on is one undo entry; editing a base colour writes its
-twin; `useSidebarSyncAlignment` (mounted by the provider) re-aligns after a
-Preset, undo/redo, import or HSL change, without an undo entry.
+twin. The editor store holds the rule itself: every action that sets the
+Theme (set, apply/reset/adopt Preset, import, undo, redo, restore checkpoint,
+refresh-untouched-Preset) syncs it in the same commit, reading the preference
+from the preferences store, so each action applies and saves the Theme once,
+whatever is mounted. Undo and redo set the checkpoint to the synced Theme.
 
 ### Contrast Checker
 

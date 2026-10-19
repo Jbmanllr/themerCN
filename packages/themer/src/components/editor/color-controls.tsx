@@ -14,9 +14,9 @@
 // Sidebar Sync rules (utils/sidebar-sync.ts):
 // - turning it on aligns both modes in one undo entry;
 // - editing a base colour writes its sidebar twin in the same update;
-// - useSidebarSyncAlignment (hooks/use-sidebar-sync-alignment.ts) re-aligns
-//   in place (no undo entry) whenever the theme changes some other way:
-//   preset, undo/redo, CSS import, HSL.
+// - the editor store syncs every other way the theme is set (preset,
+//   undo/redo, CSS import, HSL) in the same commit, while the preference is
+//   on.
 //
 // Host extra colours (ThemerConfig.extraColors) follow the built-in groups.
 // An extra the theme does not set shows the host's computed value (read from
@@ -106,8 +106,8 @@ function SidebarSyncToggle() {
   const handlePressedChange = React.useCallback(
     (pressed: boolean) => {
       if (pressed) {
-        // One undo entry for the alignment, before the preference flips so
-        // the in-place re-alignment finds nothing left to do.
+        // One undo entry for the alignment. The store only syncs while the
+        // preference is on, so this aligns explicitly before it flips.
         setThemeState((prev) => ({
           ...prev,
           styles: applySidebarSync(prev.styles),

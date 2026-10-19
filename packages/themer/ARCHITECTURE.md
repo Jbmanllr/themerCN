@@ -66,11 +66,9 @@ What each entry ships:
   nothing from `node_modules` is (`deps.onlyBundle: []`), and each config has
   an import allow-list (`onlyImport`). The core's list leaves out `next`, so
   the Themer runs in any React app. `next` is an optional peer.
-- `"sideEffects": false`: no entry module runs anything Host-visible on
-  import. The core's one top-level side effect, the ColorFocusStore's
-  subscription to the ThemerUIStore (it clears the colour focus on close),
-  lands in `dist/index.js`, the module that exports `Themer`, so it ships
-  whenever the Themer does. The other entries hold only constants. The CSS
+- `"sideEffects": false`: no module runs anything on import beyond
+  creating its stores and constants (the ThemerUIStore's close actions clear
+  the colour focus, so no store subscribes to another at import). The CSS
   is injected on mount (`useThemerStyle`); the package ships no CSS file.
 - `check:package` runs after `build`: `publint --strict`, `attw` (ESM only),
   [scripts/check-pack.mjs](scripts/check-pack.mjs) (the tarball's file

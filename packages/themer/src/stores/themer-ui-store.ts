@@ -5,11 +5,12 @@
 // nothing here persists.
 //
 // Contract:
-// - Closing the editor (close or toggle) turns both modes off and closes the
-//   dialog. The inspector is kept with the Themer layout it was turned on in
-//   (useInspectorMode derives whether it is active): a switch made in the UI
-//   turns it off (useSetThemerLayout), and a Host-driven switch leaves it
-//   inactive, then ThemerUI clears it as the old layout unmounts. The colour focus store watches `isOpen` to reset its own state.
+// - Closing the editor (close or toggle) turns both modes off, closes the
+//   dialog and clears the colour focus (clearColorFocus). The inspector is
+//   kept with the Themer layout it was turned on in (useInspectorMode derives
+//   whether it is active): a switch made in the UI turns it off
+//   (useSetThemerLayout), and a Host-driven switch leaves it inactive, then
+//   ThemerUI clears it as the old layout unmounts.
 // - `dialog` is the only open-dialog state. Menus and the action bar call
 //   openDialog; ThemerUI renders the dialogs once (actions/
 //   themer-dialogs.tsx), so a dialog outlives the surface that opened it.
@@ -26,6 +27,7 @@
 import { create } from "zustand"
 import type { ThemerUIStore } from "../types"
 import { enterFullscreen, exitFullscreen } from "../utils/fullscreen"
+import { clearColorFocus } from "./color-focus-store"
 
 export const useThemerUIStore = create<ThemerUIStore>()((set, get) => {
   const setFullscreen = (fullscreenPreview: boolean) =>
@@ -41,21 +43,27 @@ export const useThemerUIStore = create<ThemerUIStore>()((set, get) => {
 
     // Actions
     open: () => set({ isOpen: true }),
-    close: () =>
+    close: () => {
+      const wasOpen = get().isOpen
       set({
         isOpen: false,
         inspectorLayout: null,
         fullscreenPreview: false,
         dialog: null,
-      }),
-    toggle: () =>
+      })
+      if (wasOpen) clearColorFocus()
+    },
+    toggle: () => {
+      const wasOpen = get().isOpen
       set((state) => ({
         isOpen: !state.isOpen,
         // Reset modes and the dialog when closing
         inspectorLayout: state.isOpen ? null : state.inspectorLayout,
         fullscreenPreview: state.isOpen ? false : state.fullscreenPreview,
         dialog: state.isOpen ? null : state.dialog,
-      })),
+      }))
+      if (wasOpen) clearColorFocus()
+    },
     setActivePanel: (panel) => set({ activePanel: panel }),
     toggleInspector: (layout) =>
       set((state) => ({

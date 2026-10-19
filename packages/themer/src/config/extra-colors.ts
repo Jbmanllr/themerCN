@@ -19,17 +19,17 @@
 // `shadow-` (apply-theme reserves that prefix) are dropped, duplicates keep
 // their first occurrence, and groups left empty are dropped.
 
-import type { ThemerExtraColorGroup } from "../types";
-import { COLOR_STYLE_KEYS, defaultLightStyles } from "./defaults";
+import type { ThemerExtraColorGroup } from "../types"
+import { COLOR_STYLE_KEYS, defaultLightStyles } from "./defaults"
 
-const EXTRA_KEY_PATTERN = /^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/;
+const EXTRA_KEY_PATTERN = /^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/
 
 /** Every built-in style key; an extra colour may not reuse one. */
 const BUILT_IN_STYLE_KEYS: ReadonlySet<string> = new Set<string>([
   ...COLOR_STYLE_KEYS,
   ...Object.keys(defaultLightStyles),
   "spacing",
-]);
+])
 
 /** Whether a key can be a Host extra colour (valid and not built in). */
 export function isValidExtraColorKey(key: string): boolean {
@@ -37,34 +37,34 @@ export function isValidExtraColorKey(key: string): boolean {
     EXTRA_KEY_PATTERN.test(key) &&
     !BUILT_IN_STYLE_KEYS.has(key) &&
     !key.startsWith("shadow-")
-  );
+  )
 }
 
 /** Pure normalisation of a host's groups (see the header for the rules). */
 export function normalizeExtraColorGroups(
-  groups: readonly ThemerExtraColorGroup[],
+  groups: readonly ThemerExtraColorGroup[]
 ): readonly ThemerExtraColorGroup[] {
-  const seen = new Set<string>();
-  const normalized: ThemerExtraColorGroup[] = [];
+  const seen = new Set<string>()
+  const normalized: ThemerExtraColorGroup[] = []
   for (const group of groups) {
     const colors = group.colors.filter((color) => {
       if (!isValidExtraColorKey(color.key) || seen.has(color.key)) {
-        return false;
+        return false
       }
-      seen.add(color.key);
-      return true;
-    });
-    if (colors.length > 0) normalized.push({ ...group, colors });
+      seen.add(color.key)
+      return true
+    })
+    if (colors.length > 0) normalized.push({ ...group, colors })
   }
-  return normalized;
+  return normalized
 }
 
-const NO_EXTRA_COLORS: readonly ThemerExtraColorGroup[] = [];
-const NO_KEYS: readonly string[] = [];
+const NO_EXTRA_COLORS: readonly ThemerExtraColorGroup[] = []
+const NO_KEYS: readonly string[] = []
 
-let registeredSource: readonly ThemerExtraColorGroup[] = NO_EXTRA_COLORS;
-let registeredGroups: readonly ThemerExtraColorGroup[] = NO_EXTRA_COLORS;
-let registeredKeys: readonly string[] = NO_KEYS;
+let registeredSource: readonly ThemerExtraColorGroup[] = NO_EXTRA_COLORS
+let registeredGroups: readonly ThemerExtraColorGroup[] = NO_EXTRA_COLORS
+let registeredKeys: readonly string[] = NO_KEYS
 
 /**
  * Register the host's extra colours (ThemerConfig.extraColors). Idempotent
@@ -72,16 +72,16 @@ let registeredKeys: readonly string[] = NO_KEYS;
  * none clears it.
  */
 export function configureExtraColors(
-  groups: readonly ThemerExtraColorGroup[] = NO_EXTRA_COLORS,
+  groups: readonly ThemerExtraColorGroup[] = NO_EXTRA_COLORS
 ): void {
-  if (groups === registeredSource) return;
-  registeredSource = groups;
+  if (groups === registeredSource) return
+  registeredSource = groups
   registeredGroups =
-    groups.length > 0 ? normalizeExtraColorGroups(groups) : NO_EXTRA_COLORS;
+    groups.length > 0 ? normalizeExtraColorGroups(groups) : NO_EXTRA_COLORS
   registeredKeys =
     registeredGroups.length > 0
       ? registeredGroups.flatMap((group) => group.colors.map((c) => c.key))
-      : NO_KEYS;
+      : NO_KEYS
 }
 
 /**
@@ -89,10 +89,10 @@ export function configureExtraColors(
  * when the registration does, so callers may memoise on it.
  */
 export function getExtraColorGroups(): readonly ThemerExtraColorGroup[] {
-  return registeredGroups;
+  return registeredGroups
 }
 
 /** Every registered extra-colour key, in list order (stable identity). */
 export function getExtraColorKeys(): readonly string[] {
-  return registeredKeys;
+  return registeredKeys
 }

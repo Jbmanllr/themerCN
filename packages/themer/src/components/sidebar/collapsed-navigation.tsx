@@ -1,4 +1,4 @@
-"use client";
+"use client"
 
 // The editor sidebar's icon-only state (ThemerSidebar renders it while the
 // SidebarProvider is collapsed): one button per panel in PANELS, the same set
@@ -14,15 +14,15 @@ import {
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
-} from "@workspace/ui/components/sidebar";
-import { PopoverTrigger } from "@workspace/ui/components/popover";
-import { useThemerUIStore } from "../../stores/themer-ui-store";
-import { PanelPopover, usePanelPopovers } from "./panel-popover";
-import { PANELS } from "./panels-config";
+} from "@workspace/ui/components/sidebar"
+import { PopoverTrigger } from "@workspace/ui/components/popover"
+import { useThemerUIStore } from "../../stores/themer-ui-store"
+import { PanelPopover, usePanelPopovers } from "./panel-popover"
+import { PANELS } from "./panels-config"
 
 export function CollapsedNavigation() {
-  const activePanel = useThemerUIStore((state) => state.activePanel);
-  const { openPanel, popoverProps } = usePanelPopovers();
+  const activePanel = useThemerUIStore((state) => state.activePanel)
+  const { openPanel, popoverProps } = usePanelPopovers()
 
   return (
     <SidebarGroup>
@@ -40,7 +40,9 @@ export function CollapsedNavigation() {
                   render={
                     <SidebarMenuButton
                       isActive={
-                        openPanel ? openPanel === panel.id : activePanel === panel.id
+                        openPanel
+                          ? openPanel === panel.id
+                          : activePanel === panel.id
                       }
                       aria-label={panel.label}
                       tooltip={panel.label}
@@ -55,5 +57,5 @@ export function CollapsedNavigation() {
         ))}
       </SidebarMenu>
     </SidebarGroup>
-  );
+  )
 }

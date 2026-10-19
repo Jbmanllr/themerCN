@@ -1,4 +1,4 @@
-"use client";
+"use client"
 
 // The editor's icon button: a Button named by `label` (its aria-label and its
 // Tooltip text), with the shortcut beside the name in the tooltip when given.
@@ -11,24 +11,24 @@
 // type). The defaults are a ghost `icon` Button, and any Button prop passed
 // overrides them: the trigger passes an outline one, toolbars `icon-sm`.
 
-import * as React from "react";
-import { Button } from "@workspace/ui/components/button";
-import { Kbd } from "@workspace/ui/components/kbd";
+import * as React from "react"
+import { Button } from "@workspace/ui/components/button"
+import { Kbd } from "@workspace/ui/components/kbd"
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from "@workspace/ui/components/tooltip";
-import { formatShortcut } from "../../hooks/use-keyboard-shortcut";
+} from "@workspace/ui/components/tooltip"
+import { formatShortcut } from "../../hooks/use-keyboard-shortcut"
 
 export interface ActionButtonProps extends Omit<
   React.ComponentProps<typeof Button>,
   "aria-label"
 > {
   /** Accessible name and tooltip text. */
-  label: string;
+  label: string
   /** Shortcut string ("ctrl+z") shown in the tooltip. */
-  shortcut?: string;
+  shortcut?: string
 }
 
 /** Ghost icon button with a tooltip naming it (and its shortcut). */
@@ -57,5 +57,5 @@ export function ActionButton({
         {shortcut ? <Kbd>{formatShortcut(shortcut)}</Kbd> : null}
       </TooltipContent>
     </Tooltip>
-  );
+  )
 }

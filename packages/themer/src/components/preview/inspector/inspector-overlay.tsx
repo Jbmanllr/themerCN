@@ -1,4 +1,4 @@
-"use client";
+"use client"
 
 // Adapted from tweakcn (Apache-2.0, github.com/jnsahaj/tweakcn @ a3b47b37); modified for themercn.
 // Source: components/editor/inspector-overlay.tsx.
@@ -10,41 +10,38 @@
 // pointer; only the card takes it, so the pointer can reach the class buttons
 // once a click has pinned the card.
 
-import { memo } from "react";
-import { Inspect, Pin } from "lucide-react";
-import { Separator } from "@workspace/ui/components/separator";
-import { cn } from "@workspace/ui/lib/utils";
-import { InspectorClassItem } from "./inspector-class-item";
-import { INSPECTOR_CARD_ATTRIBUTE, type InspectorState } from "./use-inspector";
+import { memo } from "react"
+import { Inspect, Pin } from "lucide-react"
+import { Separator } from "@workspace/ui/components/separator"
+import { cn } from "@workspace/ui/lib/utils"
+import { InspectorClassItem } from "./inspector-class-item"
+import { INSPECTOR_CARD_ATTRIBUTE, type InspectorState } from "./use-inspector"
 
-const CARD_WIDTH = 288; // w-72
-const GAP = 8;
+const CARD_WIDTH = 288 // w-72
+const GAP = 8
 /** Below this much room above the element, the card goes underneath. */
-const MIN_ROOM_ABOVE = 140;
+const MIN_ROOM_ABOVE = 140
 
-const cardAttributes = { [INSPECTOR_CARD_ATTRIBUTE]: "" };
+const cardAttributes = { [INSPECTOR_CARD_ATTRIBUTE]: "" }
 
 export const InspectorOverlay = memo(function InspectorOverlay({
   state,
   onFocusColor,
 }: {
-  state: InspectorState;
-  onFocusColor: (colorKey: string) => void;
+  state: InspectorState
+  onFocusColor: (colorKey: string) => void
 }) {
-  const { rect, classes, bounds, pinned } = state;
-  if (!rect || classes.length === 0) return null;
+  const { rect, classes, bounds, pinned } = state
+  if (!rect || classes.length === 0) return null
 
-  const above = rect.top >= MIN_ROOM_ABOVE;
+  const above = rect.top >= MIN_ROOM_ABOVE
   const left = Math.max(
     GAP,
-    Math.min(rect.left, bounds.width - CARD_WIDTH - GAP),
-  );
+    Math.min(rect.left, bounds.width - CARD_WIDTH - GAP)
+  )
   const top = above
     ? rect.top - GAP
-    : Math.min(
-        rect.top + rect.height + GAP,
-        Math.max(GAP, bounds.height - GAP),
-      );
+    : Math.min(rect.top + rect.height + GAP, Math.max(GAP, bounds.height - GAP))
 
   return (
     <div
@@ -52,7 +49,7 @@ export const InspectorOverlay = memo(function InspectorOverlay({
       className="pointer-events-none absolute inset-0 z-20 overflow-hidden"
     >
       <div
-        className="ring-primary bg-primary/10 absolute rounded-[2px] ring-2 transition-all duration-100 ease-out"
+        className="absolute rounded-[2px] bg-primary/10 ring-2 ring-primary transition-all duration-100 ease-out"
         style={{
           top: rect.top,
           left: rect.left,
@@ -63,12 +60,12 @@ export const InspectorOverlay = memo(function InspectorOverlay({
       <div
         {...cardAttributes}
         className={cn(
-          "bg-popover/90 text-popover-foreground pointer-events-auto absolute w-72 max-w-[calc(100%-1rem)] rounded-lg border shadow-xl backdrop-blur-lg",
-          above && "-translate-y-full",
+          "pointer-events-auto absolute w-72 max-w-[calc(100%-1rem)] rounded-lg border bg-popover/90 text-popover-foreground shadow-xl backdrop-blur-lg",
+          above && "-translate-y-full"
         )}
         style={{ top, left }}
       >
-        <div className="text-muted-foreground flex items-center gap-1.5 px-2 pt-2 text-sm">
+        <div className="flex items-center gap-1.5 px-2 pt-2 text-sm text-muted-foreground">
           <Inspect className="size-4" aria-hidden />
           <span className="flex-1">Inspector</span>
           {pinned ? (
@@ -92,5 +89,5 @@ export const InspectorOverlay = memo(function InspectorOverlay({
         </div>
       </div>
     </div>
-  );
-});
+  )
+})

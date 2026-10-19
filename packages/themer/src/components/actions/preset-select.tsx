@@ -1,4 +1,4 @@
-"use client";
+"use client"
 
 // Adapted from tweakcn (Apache-2.0, github.com/jnsahaj/tweakcn @ a3b47b37); modified for themercn.
 //
@@ -15,11 +15,11 @@
 // trigger with `--anchor-width` (no ResizeObserver). It portals into the
 // Themer's popup container, above the Themer UI (themer-scope.tsx).
 
-import * as React from "react";
-import { ChevronDown, ArrowLeft, ArrowRight, Shuffle } from "lucide-react";
-import { useShallow } from "zustand/react/shallow";
-import { Badge } from "@workspace/ui/components/badge";
-import { Button } from "@workspace/ui/components/button";
+import * as React from "react"
+import { ChevronDown, ArrowLeft, ArrowRight, Shuffle } from "lucide-react"
+import { useShallow } from "zustand/react/shallow"
+import { Badge } from "@workspace/ui/components/badge"
+import { Button } from "@workspace/ui/components/button"
 import {
   Command,
   CommandEmpty,
@@ -27,42 +27,37 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
-} from "@workspace/ui/components/command";
+} from "@workspace/ui/components/command"
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@workspace/ui/components/popover";
-import { Separator } from "@workspace/ui/components/separator";
+} from "@workspace/ui/components/popover"
+import { Separator } from "@workspace/ui/components/separator"
 import {
   themePresets,
   getPresetIds,
   getPresetLabel,
   resolvePresetStyles,
-} from "../../config/presets";
-import { useEditorStore } from "../../stores/editor-store";
-import { selectCurrentMode, selectHasUnsavedChanges } from "../../selectors";
-import type { ThemeMode } from "../../types";
+} from "../../config/presets"
+import { useEditorStore } from "../../stores/editor-store"
+import { selectCurrentMode, selectHasUnsavedChanges } from "../../selectors"
+import type { ThemeMode } from "../../types"
 import {
   cyclePresetId,
   filterPresetIds,
   formatPresetTriggerLabel,
   isPresetNew,
   pickRandomPresetId,
-} from "./preset-list";
-import { ActionButton } from "../ui/action-button";
+} from "./preset-list"
+import { ActionButton } from "../ui/action-button"
 
 interface PresetSelectProps {
-  value: string;
-  onChange: (preset: string) => void;
+  value: string
+  onChange: (preset: string) => void
 }
 
-const PRESET_SWATCH_KEYS = [
-  "primary",
-  "accent",
-  "secondary",
-  "border",
-] as const;
+const PRESET_SWATCH_KEYS = ["primary", "accent", "secondary", "border"] as const
 
 /**
  * Color preview boxes for theme preset
@@ -71,10 +66,10 @@ function ColorBox({ color }: { color: string }) {
   return (
     <div
       data-testid="theme-color-swatch"
-      className="border-muted size-3 rounded-sm border"
+      className="size-3 rounded-sm border border-muted"
       style={{ backgroundColor: color }}
     />
-  );
+  )
 }
 
 /**
@@ -88,22 +83,22 @@ function ThemeColors({ colors }: { colors: readonly string[] }) {
         <ColorBox key={`${color}-${index}`} color={color} />
       ))}
     </div>
-  );
+  )
 }
 
 function getPresetSwatchColors(presetId: string, mode: ThemeMode): string[] {
-  const styles = resolvePresetStyles(presetId)[mode];
-  return PRESET_SWATCH_KEYS.map((key) => styles[key] ?? "transparent");
+  const styles = resolvePresetStyles(presetId)[mode]
+  return PRESET_SWATCH_KEYS.map((key) => styles[key] ?? "transparent")
 }
 
 function CycleButton({
   direction,
   onClick,
 }: {
-  direction: "prev" | "next";
-  onClick: () => void;
+  direction: "prev" | "next"
+  onClick: () => void
 }) {
-  const label = direction === "prev" ? "Previous theme" : "Next theme";
+  const label = direction === "prev" ? "Previous theme" : "Next theme"
   return (
     <ActionButton
       label={label}
@@ -114,7 +109,7 @@ function CycleButton({
     >
       {direction === "prev" ? <ArrowLeft /> : <ArrowRight />}
     </ActionButton>
-  );
+  )
 }
 
 /**
@@ -122,37 +117,37 @@ function CycleButton({
  * Styled like tweakcn: full-width button, arrow separators, color preview
  */
 export function PresetSelect({ value, onChange }: PresetSelectProps) {
-  const [open, setOpen] = React.useState(false);
-  const [searchValue, setSearchValue] = React.useState("");
+  const [open, setOpen] = React.useState(false)
+  const [searchValue, setSearchValue] = React.useState("")
   // Host presets are registered before the first render (ThemerProvider) and
   // do not change while mounted.
-  const presetIds = React.useMemo(() => getPresetIds(), []);
-  const currentMode = useEditorStore(selectCurrentMode);
-  const hasUnsavedChanges = useEditorStore(selectHasUnsavedChanges);
+  const presetIds = React.useMemo(() => getPresetIds(), [])
+  const currentMode = useEditorStore(selectCurrentMode)
+  const hasUnsavedChanges = useEditorStore(selectHasUnsavedChanges)
   const selectedSwatchColors = useEditorStore(
     useShallow((state) => {
-      const styles = state.themeState.styles[state.themeState.currentMode];
-      return PRESET_SWATCH_KEYS.map((key) => styles[key] ?? "transparent");
-    }),
-  );
+      const styles = state.themeState.styles[state.themeState.currentMode]
+      return PRESET_SWATCH_KEYS.map((key) => styles[key] ?? "transparent")
+    })
+  )
   const filteredPresetIds = React.useMemo(
     () => filterPresetIds(presetIds, searchValue, getPresetLabel),
-    [presetIds, searchValue],
-  );
+    [presetIds, searchValue]
+  )
 
   const handleCycle = (direction: "prev" | "next") => {
-    const presetId = cyclePresetId(filteredPresetIds, value, direction);
-    if (presetId) onChange(presetId);
-  };
+    const presetId = cyclePresetId(filteredPresetIds, value, direction)
+    if (presetId) onChange(presetId)
+  }
 
   const handleShuffle = () => {
-    const presetId = pickRandomPresetId(filteredPresetIds, value);
-    if (presetId) onChange(presetId);
-  };
+    const presetId = pickRandomPresetId(filteredPresetIds, value)
+    if (presetId) onChange(presetId)
+  }
 
   const themeCount = `${filteredPresetIds.length} ${
     filteredPresetIds.length === 1 ? "theme" : "themes"
-  }`;
+  }`
 
   return (
     <div
@@ -176,7 +171,7 @@ export function PresetSelect({ value, onChange }: PresetSelectProps) {
             <span className="truncate text-start text-sm font-medium capitalize">
               {formatPresetTriggerLabel(
                 getPresetLabel(value),
-                hasUnsavedChanges,
+                hasUnsavedChanges
               )}
             </span>
           </div>
@@ -198,7 +193,7 @@ export function PresetSelect({ value, onChange }: PresetSelectProps) {
             />
             <div className="flex items-center justify-between px-3 py-1.5">
               <span
-                className="text-muted-foreground text-sm"
+                className="text-sm text-muted-foreground"
                 data-testid="themer-preset-count"
               >
                 {themeCount}
@@ -220,17 +215,17 @@ export function PresetSelect({ value, onChange }: PresetSelectProps) {
               ) : (
                 <CommandGroup heading="Built-in Themes">
                   {filteredPresetIds.map((presetId) => {
-                    const preset = themePresets[presetId];
-                    if (!preset) return null;
+                    const preset = themePresets[presetId]
+                    if (!preset) return null
                     return (
                       <CommandItem
                         key={presetId}
                         value={`${presetId} ${preset.label}`}
                         data-checked={value === presetId}
                         onSelect={() => {
-                          onChange(presetId);
-                          setSearchValue("");
-                          setOpen(false);
+                          onChange(presetId)
+                          setSearchValue("")
+                          setOpen(false)
                         }}
                         className="flex items-center gap-3 py-2.5"
                       >
@@ -251,7 +246,7 @@ export function PresetSelect({ value, onChange }: PresetSelectProps) {
                           ) : null}
                         </div>
                       </CommandItem>
-                    );
+                    )
                   })}
                 </CommandGroup>
               )}
@@ -265,5 +260,5 @@ export function PresetSelect({ value, onChange }: PresetSelectProps) {
       <Separator orientation="vertical" className="mx-1 h-6.5" />
       <CycleButton direction="next" onClick={() => handleCycle("next")} />
     </div>
-  );
+  )
 }

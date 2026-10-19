@@ -1,44 +1,44 @@
-"use client";
+"use client"
 
 // Pricing preview tab: two fixed sample plans with a monthly/yearly switch.
 //
 // Contract: the Purchase buttons are inert demo buttons that link nowhere (the
 // ported example sent them to an outside site); keep them unlinked.
 
-import { ArrowRight, CircleCheck } from "lucide-react";
-import { useState } from "react";
+import { ArrowRight, CircleCheck } from "lucide-react"
+import { useState } from "react"
 
-import { Button } from "@workspace/ui/components/button";
+import { Button } from "@workspace/ui/components/button"
 import {
   Card,
   CardContent,
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@workspace/ui/components/card";
-import { Separator } from "@workspace/ui/components/separator";
-import { Switch } from "@workspace/ui/components/switch";
+} from "@workspace/ui/components/card"
+import { Separator } from "@workspace/ui/components/separator"
+import { Switch } from "@workspace/ui/components/switch"
 
 interface PricingFeature {
-  text: string;
+  text: string
 }
 
 interface PricingPlan {
-  id: string;
-  name: string;
-  description: string;
-  monthlyPrice: string;
-  yearlyPrice: string;
-  features: PricingFeature[];
+  id: string
+  name: string
+  description: string
+  monthlyPrice: string
+  yearlyPrice: string
+  features: PricingFeature[]
   button: {
-    text: string;
-  };
+    text: string
+  }
 }
 
 interface Pricing2Props {
-  heading?: string;
-  description?: string;
-  plans?: PricingPlan[];
+  heading?: string
+  description?: string
+  plans?: PricingPlan[]
 }
 
 const Pricing2 = ({
@@ -79,17 +79,17 @@ const Pricing2 = ({
     },
   ],
 }: Pricing2Props) => {
-  const [isYearly, setIsYearly] = useState(false);
+  const [isYearly, setIsYearly] = useState(false)
   return (
     <section className="@container py-16">
       <div className="container mx-auto">
         <div className="mx-auto flex max-w-5xl flex-col items-center gap-8 text-center">
           <div className="flex size-full flex-col items-center gap-4">
-            <h2 className="text-foreground text-3xl leading-tight font-bold tracking-tight text-pretty @3xl:text-5xl">
+            <h2 className="text-3xl leading-tight font-bold tracking-tight text-pretty text-foreground @3xl:text-5xl">
               {heading}
             </h2>
             <p className="text-muted-foreground @3xl:text-xl">{description}</p>
-            <div className="text-foreground flex items-center gap-3 text-lg">
+            <div className="flex items-center gap-3 text-lg text-foreground">
               Monthly
               <Switch
                 checked={isYearly}
@@ -109,7 +109,7 @@ const Pricing2 = ({
                   <CardTitle>
                     <p>{plan.name}</p>
                   </CardTitle>
-                  <p className="text-muted-foreground text-sm">
+                  <p className="text-sm text-muted-foreground">
                     {plan.description}
                   </p>
                   <span className="text-4xl font-bold">
@@ -153,7 +153,7 @@ const Pricing2 = ({
         </div>
       </div>
     </section>
-  );
-};
+  )
+}
 
-export default Pricing2;
+export default Pricing2

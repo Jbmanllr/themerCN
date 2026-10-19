@@ -1,4 +1,4 @@
-"use client";
+"use client"
 
 // `themercn/loader`: how a Host app keeps the Themer out of builds where it
 // is off. The Host passes `() => import("themercn")` when it wants the
@@ -17,14 +17,14 @@
 //   the Themer's copy in a hidden segment).
 // - A load that resolves after the loader unmounted is dropped.
 
-import { useEffect, useState, type ComponentType } from "react";
+import { useEffect, useState, type ComponentType } from "react"
 
-import type { ThemerProps } from "./types";
+import type { ThemerProps } from "./types"
 
 /** What `load` resolves to: the `themercn` module, or anything with its `Themer`. */
 export interface ThemerModule {
   /** The `<Themer>` component the loader renders. */
-  Themer: ComponentType<ThemerProps>;
+  Themer: ComponentType<ThemerProps>
 }
 
 /**
@@ -45,27 +45,28 @@ export interface ThemerModule {
  * ```
  */
 export function createThemerLoader(
-  load: (() => Promise<ThemerModule>) | null,
+  load: (() => Promise<ThemerModule>) | null
 ): ComponentType<ThemerProps> {
-  if (load === null) return function ThemerLoader() {
-    return null;
-  };
+  if (load === null)
+    return function ThemerLoader() {
+      return null
+    }
 
   return function ThemerLoader(props: ThemerProps) {
     const [Themer, setThemer] = useState<ComponentType<ThemerProps> | null>(
-      null,
-    );
+      null
+    )
 
     useEffect(() => {
-      let active = true;
+      let active = true
       void load().then((module) => {
-        if (active) setThemer(() => module.Themer);
-      });
+        if (active) setThemer(() => module.Themer)
+      })
       return () => {
-        active = false;
-      };
-    }, []);
+        active = false
+      }
+    }, [])
 
-    return Themer ? <Themer {...props} /> : null;
-  };
+    return Themer ? <Themer {...props} /> : null
+  }
 }

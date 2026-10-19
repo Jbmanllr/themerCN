@@ -1,4 +1,4 @@
-"use client";
+"use client"
 
 // The Themer UI's panel tabs (Colors, Typography, Other),
 // shared by the desktop sidebar (ExpandedContent) and the mobile drawer
@@ -8,29 +8,29 @@
 // Contract: the panel list is PANELS. The caller owns the surface's spacing
 // and scrolling through the three className props.
 
-import * as React from "react";
+import * as React from "react"
 import {
   Tabs,
   TabsContent,
   TabsList,
   TabsTrigger,
-} from "@workspace/ui/components/tabs";
+} from "@workspace/ui/components/tabs"
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from "@workspace/ui/components/tooltip";
-import { cn } from "@workspace/ui/lib/utils";
-import { useThemerUIStore } from "../../stores/themer-ui-store";
-import { PanelContent } from "./panel-content";
-import { PANELS } from "./panels-config";
+} from "@workspace/ui/components/tooltip"
+import { cn } from "@workspace/ui/lib/utils"
+import { useThemerUIStore } from "../../stores/themer-ui-store"
+import { PanelContent } from "./panel-content"
+import { PANELS } from "./panels-config"
 
 interface PanelTabsProps {
-  className?: string;
+  className?: string
   /** Wrapper around the tab list (spacing differs per surface). */
-  listClassName?: string;
+  listClassName?: string
   /** Scroll container around the active panel. */
-  contentClassName?: string;
+  contentClassName?: string
 }
 
 export function PanelTabs({
@@ -38,16 +38,16 @@ export function PanelTabs({
   listClassName,
   contentClassName,
 }: PanelTabsProps) {
-  const activePanel = useThemerUIStore((state) => state.activePanel);
-  const setActivePanel = useThemerUIStore((state) => state.setActivePanel);
+  const activePanel = useThemerUIStore((state) => state.activePanel)
+  const setActivePanel = useThemerUIStore((state) => state.setActivePanel)
 
   const handleValueChange = React.useCallback(
     (value: unknown) => {
-      const next = PANELS.find((panel) => panel.id === value);
-      if (next) setActivePanel(next.id);
+      const next = PANELS.find((panel) => panel.id === value)
+      if (next) setActivePanel(next.id)
     },
-    [setActivePanel],
-  );
+    [setActivePanel]
+  )
 
   return (
     <Tabs
@@ -85,5 +85,5 @@ export function PanelTabs({
         </TabsContent>
       ))}
     </Tabs>
-  );
+  )
 }

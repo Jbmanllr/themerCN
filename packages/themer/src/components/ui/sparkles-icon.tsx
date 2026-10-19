@@ -1,9 +1,9 @@
-"use client";
+"use client"
 
-import { Sparkles } from "lucide-react";
+import { Sparkles } from "lucide-react"
 
 interface SparklesIconProps {
-  className?: string;
+  className?: string
 }
 
 /**
@@ -12,5 +12,5 @@ interface SparklesIconProps {
  * stays exported from `components/index.ts`.
  */
 export function SparklesIcon({ className }: SparklesIconProps) {
-  return <Sparkles aria-hidden className={className} />;
+  return <Sparkles aria-hidden className={className} />
 }

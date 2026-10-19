@@ -1,11 +1,11 @@
-"use client";
+"use client"
 
-import { MinusIcon, PlusIcon } from "lucide-react";
-import * as React from "react";
+import { MinusIcon, PlusIcon } from "lucide-react"
+import * as React from "react"
 // react-doctor-disable-next-line react-doctor/prefer-dynamic-import -- this demo is reached only through lazy(() => import("./examples/cards")) in builtin-tabs.tsx and preview-cards.tsx, so recharts already loads on demand
-import { Bar, BarChart } from "recharts";
+import { Bar, BarChart } from "recharts"
 
-import { Button } from "@workspace/ui/components/button";
+import { Button } from "@workspace/ui/components/button"
 import {
   Card,
   CardContent,
@@ -13,8 +13,8 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@workspace/ui/components/card";
-import { ChartConfig, ChartContainer } from "@workspace/ui/components/chart";
+} from "@workspace/ui/components/card"
+import { ChartConfig, ChartContainer } from "@workspace/ui/components/chart"
 
 const data = [
   {
@@ -56,20 +56,20 @@ const data = [
   {
     goal: 349,
   },
-];
+]
 
 const chartConfig = {
   goal: {
     label: "Goal",
     color: "var(--primary)",
   },
-} satisfies ChartConfig;
+} satisfies ChartConfig
 
 export function CardsActivityGoal() {
-  const [goal, setGoal] = React.useState(350);
+  const [goal, setGoal] = React.useState(350)
 
   function onClick(adjustment: number) {
-    setGoal(Math.max(200, Math.min(400, goal + adjustment)));
+    setGoal(Math.max(200, Math.min(400, goal + adjustment)))
   }
 
   return (
@@ -94,7 +94,7 @@ export function CardsActivityGoal() {
             <div className="text-4xl font-bold tracking-tighter tabular-nums">
               {goal}
             </div>
-            <div className="text-muted-foreground text-xs uppercase">
+            <div className="text-xs text-muted-foreground uppercase">
               Calories/day
             </div>
           </div>
@@ -121,5 +121,5 @@ export function CardsActivityGoal() {
         </Button>
       </CardFooter>
     </Card>
-  );
+  )
 }

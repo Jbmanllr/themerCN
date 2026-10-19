@@ -1,4 +1,4 @@
-"use client";
+"use client"
 
 // The public consumer hook: theme state, actions and preferences in one
 // object. It subscribes to the fields it returns only (useShallow per store),
@@ -11,52 +11,52 @@
 // ThemerProvider keeps themeState.currentMode in sync with it; this hook only
 // issues the change.
 
-import { useCallback } from "react";
-import { useColorMode } from "../components/color-mode";
-import { useShallow } from "zustand/react/shallow";
-import { getExtraColorKeys } from "../config/extra-colors";
-import { useEditorStore } from "../stores/editor-store";
-import { useThemerUIStore } from "../stores/themer-ui-store";
-import { usePreferencesStore } from "../stores/preferences-store";
+import { useCallback } from "react"
+import { useColorMode } from "../components/color-mode"
+import { useShallow } from "zustand/react/shallow"
+import { getExtraColorKeys } from "../config/extra-colors"
+import { useEditorStore } from "../stores/editor-store"
+import { useThemerUIStore } from "../stores/themer-ui-store"
+import { usePreferencesStore } from "../stores/preferences-store"
 import {
   selectCanUndo,
   selectCanRedo,
   selectHasUnsavedChanges,
-} from "../selectors";
+} from "../selectors"
 import {
   generateThemeCode,
   generateTailwindConfigCode,
   generateLayoutCode,
-} from "../utils/theme-generator";
+} from "../utils/theme-generator"
 import {
   runThemeTransition,
   type TransitionOrigin,
-} from "../utils/theme-transition";
+} from "../utils/theme-transition"
 import type {
   ThemeMode,
   ThemeStyleProps,
   ThemeStyleKey,
   ColorFormat,
   TailwindVersion,
-} from "../types";
+} from "../types"
 
 /** A point, or a pointer event (`onClick={toggleMode}` works as is). */
 export type ToggleModeOrigin =
-  TransitionOrigin | { clientX: number; clientY: number };
+  TransitionOrigin | { clientX: number; clientY: number }
 
 /**
  * A usable click point, or undefined (centre). A keyboard-activated click
  * reports (0, 0), which would start the reveal from the corner.
  */
 function toOrigin(
-  origin: ToggleModeOrigin | undefined,
+  origin: ToggleModeOrigin | undefined
 ): TransitionOrigin | undefined {
-  if (!origin || typeof origin !== "object") return undefined;
-  const x = "clientX" in origin ? origin.clientX : origin.x;
-  const y = "clientY" in origin ? origin.clientY : origin.y;
-  if (!Number.isFinite(x) || !Number.isFinite(y)) return undefined;
-  if (x === 0 && y === 0) return undefined;
-  return { x, y };
+  if (!origin || typeof origin !== "object") return undefined
+  const x = "clientX" in origin ? origin.clientX : origin.x
+  const y = "clientY" in origin ? origin.clientY : origin.y
+  if (!Number.isFinite(x) || !Number.isFinite(y)) return undefined
+  if (x === 0 && y === 0) return undefined
+  return { x, y }
 }
 
 /**
@@ -65,22 +65,22 @@ function toOrigin(
  * handlers only (the transition commits the change with flushSync).
  */
 export function useToggleMode(): (origin?: ToggleModeOrigin) => void {
-  const { setMode } = useColorMode();
-  const setCurrentMode = useEditorStore((state) => state.setCurrentMode);
+  const { setMode } = useColorMode()
+  const setCurrentMode = useEditorStore((state) => state.setCurrentMode)
 
   return useCallback(
     (origin?: ToggleModeOrigin) => {
       const newMode: ThemeMode =
         useEditorStore.getState().themeState.currentMode === "light"
           ? "dark"
-          : "light";
+          : "light"
       runThemeTransition(() => {
-        setMode(newMode);
-        setCurrentMode(newMode);
-      }, toOrigin(origin));
+        setMode(newMode)
+        setCurrentMode(newMode)
+      }, toOrigin(origin))
     },
-    [setMode, setCurrentMode],
-  );
+    [setMode, setCurrentMode]
+  )
 }
 
 /**
@@ -105,12 +105,12 @@ export function useThemer() {
       redo: state.redo,
       resetToCurrentPreset: state.resetToCurrentPreset,
       updateCommonStyle: state.updateCommonStyle,
-    })),
-  );
+    }))
+  )
 
-  const canUndo = useEditorStore(selectCanUndo);
-  const canRedo = useEditorStore(selectCanRedo);
-  const hasUnsavedChanges = useEditorStore(selectHasUnsavedChanges);
+  const canUndo = useEditorStore(selectCanUndo)
+  const canRedo = useEditorStore(selectCanRedo)
+  const hasUnsavedChanges = useEditorStore(selectHasUnsavedChanges)
 
   const {
     isOpen,
@@ -135,8 +135,8 @@ export function useThemer() {
       toggleInspector: state.toggleInspector,
       fullscreenPreview: state.fullscreenPreview,
       toggleFullscreen: state.toggleFullscreen,
-    })),
-  );
+    }))
+  )
 
   const {
     colorFormat,
@@ -157,10 +157,10 @@ export function useThemer() {
       setTailwindVersion: state.setTailwindVersion,
       setShowContrastWarnings: state.setShowContrastWarnings,
       setThemeOverrideEnabled: state.setThemeOverrideEnabled,
-    })),
-  );
+    }))
+  )
 
-  const toggleMode = useToggleMode();
+  const toggleMode = useToggleMode()
 
   /**
    * Update a single style property
@@ -169,7 +169,7 @@ export function useThemer() {
   const setStyleProperty = useCallback(
     (key: ThemeStyleKey, value: string, mode?: ThemeMode) => {
       setThemeState((prev) => {
-        const targetMode = mode ?? prev.currentMode;
+        const targetMode = mode ?? prev.currentMode
         return {
           ...prev,
           styles: {
@@ -179,11 +179,11 @@ export function useThemer() {
               [key]: value,
             },
           },
-        };
-      });
+        }
+      })
     },
-    [setThemeState],
-  );
+    [setThemeState]
+  )
 
   /**
    * Update multiple style properties at once
@@ -192,7 +192,7 @@ export function useThemer() {
   const setStyleProperties = useCallback(
     (properties: Partial<ThemeStyleProps>, mode?: ThemeMode) => {
       setThemeState((prev) => {
-        const targetMode = mode ?? prev.currentMode;
+        const targetMode = mode ?? prev.currentMode
         return {
           ...prev,
           styles: {
@@ -202,11 +202,11 @@ export function useThemer() {
               ...properties,
             },
           },
-        };
-      });
+        }
+      })
     },
-    [setThemeState],
-  );
+    [setThemeState]
+  )
 
   /**
    * Generate CSS code for export: the built-in keys plus the host's extra
@@ -218,11 +218,11 @@ export function useThemer() {
         themeState,
         format ?? colorFormat,
         version ?? tailwindVersion,
-        getExtraColorKeys(),
-      );
+        getExtraColorKeys()
+      )
     },
-    [themeState, colorFormat, tailwindVersion],
-  );
+    [themeState, colorFormat, tailwindVersion]
+  )
 
   /**
    * Generate the Tailwind config for export. Always the v3 JS config:
@@ -235,30 +235,30 @@ export function useThemer() {
         themeState,
         format ?? colorFormat,
         "3",
-        getExtraColorKeys(),
-      );
+        getExtraColorKeys()
+      )
     },
-    [themeState, colorFormat],
-  );
+    [themeState, colorFormat]
+  )
 
   /**
    * Generate Next.js layout code for selected font variables.
    */
   const exportLayout = useCallback(() => {
-    return generateLayoutCode(themeState);
-  }, [themeState]);
+    return generateLayoutCode(themeState)
+  }, [themeState])
 
   /**
    * Reset the theme to its preset. ThemerProvider re-applies the preset's
    * variables over the current ones in one pass (applyThemeToElement diffs),
    * so nothing is removed first and the page does not flash unstyled.
    */
-  const reset = resetToCurrentPreset;
+  const reset = resetToCurrentPreset
 
   /**
    * Get current styles for the active mode
    */
-  const currentStyles = themeState.styles[themeState.currentMode];
+  const currentStyles = themeState.styles[themeState.currentMode]
 
   return {
     // State
@@ -312,5 +312,5 @@ export function useThemer() {
     exportCSS,
     exportTailwindConfig,
     exportLayout,
-  };
+  }
 }

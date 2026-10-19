@@ -1,4 +1,4 @@
-"use client";
+"use client"
 
 // Adapted from tweakcn (Apache-2.0, github.com/jnsahaj/tweakcn @ a3b47b37); modified for themercn.
 //
@@ -25,49 +25,49 @@
 //
 // See: packages/themer/ARCHITECTURE.md (Sidebar Sync).
 
-import * as React from "react";
-import { RefreshCw, Search, X } from "lucide-react";
+import * as React from "react"
+import { RefreshCw, Search, X } from "lucide-react"
 import {
   InputGroup,
   InputGroupAddon,
   InputGroupButton,
   InputGroupInput,
-} from "@workspace/ui/components/input-group";
-import { Toggle } from "@workspace/ui/components/toggle";
+} from "@workspace/ui/components/input-group"
+import { Toggle } from "@workspace/ui/components/toggle"
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from "@workspace/ui/components/tooltip";
-import { ColorPicker } from "./color-picker";
-import { ControlSection } from "./control-section";
-import { useEditorStore } from "../../stores/editor-store";
-import { usePreferencesStore } from "../../stores/preferences-store";
-import { useColorFocusStore } from "../../stores/color-focus-store";
+} from "@workspace/ui/components/tooltip"
+import { ColorPicker } from "./color-picker"
+import { ControlSection } from "./control-section"
+import { useEditorStore } from "../../stores/editor-store"
+import { usePreferencesStore } from "../../stores/preferences-store"
+import { useColorFocusStore } from "../../stores/color-focus-store"
 import {
   COLOR_LIST_GROUPS,
   filterColorGroups,
   getColorListGroups,
   getColorSectionId,
-} from "../../utils/color-groups";
-import { getExtraColorKeys } from "../../config/extra-colors";
+} from "../../utils/color-groups"
+import { getExtraColorKeys } from "../../config/extra-colors"
 import {
   BASE_TO_SIDEBAR_MAP,
   applySidebarSync,
   isSyncedSidebarKey,
-} from "../../utils/sidebar-sync";
-import type { ThemeColorKey, ThemeModeStyles } from "../../types";
+} from "../../utils/sidebar-sync"
+import type { ThemeColorKey, ThemeModeStyles } from "../../types"
 
-const NO_HOST_VALUES: Readonly<Record<string, string>> = {};
+const NO_HOST_VALUES: Readonly<Record<string, string>> = {}
 
 function sameValues(
   a: Readonly<Record<string, string>>,
-  b: Readonly<Record<string, string>>,
+  b: Readonly<Record<string, string>>
 ): boolean {
-  const keys = Object.keys(a);
+  const keys = Object.keys(a)
   return (
     keys.length === Object.keys(b).length && keys.every((k) => a[k] === b[k])
-  );
+  )
 }
 
 /**
@@ -77,31 +77,31 @@ function sameValues(
  */
 function useHostExtraColorValues(
   extraKeys: readonly string[],
-  styles: ThemeModeStyles,
+  styles: ThemeModeStyles
 ): Readonly<Record<string, string>> {
-  const [values, setValues] = React.useState(NO_HOST_VALUES);
+  const [values, setValues] = React.useState(NO_HOST_VALUES)
 
   React.useEffect(() => {
-    const unset = extraKeys.filter((key) => !styles[key]?.trim());
-    if (unset.length === 0) return undefined;
+    const unset = extraKeys.filter((key) => !styles[key]?.trim())
+    if (unset.length === 0) return undefined
     const frame = requestAnimationFrame(() => {
-      const computed = getComputedStyle(document.documentElement);
-      const next: Record<string, string> = {};
+      const computed = getComputedStyle(document.documentElement)
+      const next: Record<string, string> = {}
       for (const key of unset) {
-        next[key] = computed.getPropertyValue(`--${key}`).trim();
+        next[key] = computed.getPropertyValue(`--${key}`).trim()
       }
-      setValues((previous) => (sameValues(previous, next) ? previous : next));
-    });
-    return () => cancelAnimationFrame(frame);
-  }, [extraKeys, styles]);
+      setValues((previous) => (sameValues(previous, next) ? previous : next))
+    })
+    return () => cancelAnimationFrame(frame)
+  }, [extraKeys, styles])
 
-  return values;
+  return values
 }
 
 function SidebarSyncToggle() {
-  const enabled = usePreferencesStore((state) => state.sidebarColorSync);
-  const setEnabled = usePreferencesStore((state) => state.setSidebarColorSync);
-  const setThemeState = useEditorStore((state) => state.setThemeState);
+  const enabled = usePreferencesStore((state) => state.sidebarColorSync)
+  const setEnabled = usePreferencesStore((state) => state.setSidebarColorSync)
+  const setThemeState = useEditorStore((state) => state.setThemeState)
 
   const handlePressedChange = React.useCallback(
     (pressed: boolean) => {
@@ -111,12 +111,12 @@ function SidebarSyncToggle() {
         setThemeState((prev) => ({
           ...prev,
           styles: applySidebarSync(prev.styles),
-        }));
+        }))
       }
-      setEnabled(pressed);
+      setEnabled(pressed)
     },
-    [setEnabled, setThemeState],
-  );
+    [setEnabled, setThemeState]
+  )
 
   return (
     <Tooltip>
@@ -140,7 +140,7 @@ function SidebarSyncToggle() {
         sidebar primary to primary...) in light and dark.
       </TooltipContent>
     </Tooltip>
-  );
+  )
 }
 
 /**
@@ -150,19 +150,19 @@ function SidebarSyncToggle() {
  */
 export function ColorControls() {
   const currentStyles = useEditorStore(
-    (state) => state.themeState.styles[state.themeState.currentMode],
-  );
-  const setThemeState = useEditorStore((state) => state.setThemeState);
-  const sidebarSync = usePreferencesStore((state) => state.sidebarColorSync);
-  const search = useColorFocusStore((state) => state.colorSearch);
-  const setSearch = useColorFocusStore((state) => state.setColorSearch);
+    (state) => state.themeState.styles[state.themeState.currentMode]
+  )
+  const setThemeState = useEditorStore((state) => state.setThemeState)
+  const sidebarSync = usePreferencesStore((state) => state.sidebarColorSync)
+  const search = useColorFocusStore((state) => state.colorSearch)
+  const setSearch = useColorFocusStore((state) => state.setColorSearch)
 
   const handleColorChange = React.useCallback(
     (value: string, name: string) => {
-      const key = name as ThemeColorKey;
+      const key = name as ThemeColorKey
       const twin = usePreferencesStore.getState().sidebarColorSync
         ? BASE_TO_SIDEBAR_MAP[key]
-        : undefined;
+        : undefined
       setThemeState((prev) => ({
         ...prev,
         styles: {
@@ -173,23 +173,20 @@ export function ColorControls() {
             ...(twin && { [twin]: value }),
           },
         },
-      }));
+      }))
     },
-    [setThemeState],
-  );
+    [setThemeState]
+  )
 
-  const isSearching = search.trim() !== "";
+  const isSearching = search.trim() !== ""
   // Built-in plus host groups; the identity only changes with the host's
   // registration, so the memo stays valid across edits.
-  const allGroups = getColorListGroups();
+  const allGroups = getColorListGroups()
   const groups = React.useMemo(
     () => filterColorGroups(search, allGroups),
-    [search, allGroups],
-  );
-  const hostValues = useHostExtraColorValues(
-    getExtraColorKeys(),
-    currentStyles,
-  );
+    [search, allGroups]
+  )
+  const hostValues = useHostExtraColorValues(getExtraColorKeys(), currentStyles)
 
   return (
     <div className="space-y-1">
@@ -218,7 +215,7 @@ export function ColorControls() {
       </InputGroup>
 
       {groups.length === 0 ? (
-        <p className="text-muted-foreground py-8 text-center text-xs">
+        <p className="py-8 text-center text-xs text-muted-foreground">
           No colors found
         </p>
       ) : null}
@@ -247,7 +244,7 @@ export function ColorControls() {
         </ControlSection>
       ))}
     </div>
-  );
+  )
 }
 
 /**
@@ -257,9 +254,9 @@ export function ColorControls() {
  */
 export function ColorGrid() {
   const currentStyles = useEditorStore(
-    (state) => state.themeState.styles[state.themeState.currentMode],
-  );
-  const allColors = COLOR_LIST_GROUPS.flatMap((group) => group.colors);
+    (state) => state.themeState.styles[state.themeState.currentMode]
+  )
+  const allColors = COLOR_LIST_GROUPS.flatMap((group) => group.colors)
 
   return (
     <div className="grid grid-cols-8 gap-1">
@@ -273,5 +270,5 @@ export function ColorGrid() {
         />
       ))}
     </div>
-  );
+  )
 }

@@ -1,32 +1,32 @@
-"use client";
+"use client"
 
-import type { ReactNode } from "react";
-import { X } from "lucide-react";
-import { cn } from "@workspace/ui/lib/utils";
-import { Button } from "@workspace/ui/components/button";
+import type { ReactNode } from "react"
+import { X } from "lucide-react"
+import { cn } from "@workspace/ui/lib/utils"
+import { Button } from "@workspace/ui/components/button"
 import {
   Sidebar,
   SidebarHeader,
   SidebarContent,
   SidebarRail,
   useSidebar,
-} from "@workspace/ui/components/sidebar";
+} from "@workspace/ui/components/sidebar"
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from "@workspace/ui/components/tooltip";
-import { CollapsedNavigation, ExpandedContent } from "./sidebar";
+} from "@workspace/ui/components/tooltip"
+import { CollapsedNavigation, ExpandedContent } from "./sidebar"
 
 interface ThemerSidebarProps {
-  onClose: () => void;
+  onClose: () => void
   /**
    * Controls placed before the Close button, for a layout with no header of
    * its own (Overlay). The collapsed rail stacks them above Close.
    */
-  headerActions?: ReactNode;
+  headerActions?: ReactNode
   /** Rendered after the panels, for a layout with no action bar of its own. */
-  footer?: ReactNode;
+  footer?: ReactNode
 }
 
 /**
@@ -46,7 +46,7 @@ export function ThemerSidebar({
 }: ThemerSidebarProps) {
   // The tooltip renders in a portal, outside the sidebar's `group`, so it is
   // shown from the sidebar state (as the stock SidebarMenuButton does).
-  const { state, isMobile } = useSidebar();
+  const { state, isMobile } = useSidebar()
 
   return (
     <Sidebar collapsible="icon">
@@ -54,14 +54,14 @@ export function ThemerSidebar({
       <SidebarHeader
         className={cn(
           "h-12 shrink-0 border-b p-0",
-          headerActions && "group-data-[collapsible=icon]:h-auto",
+          headerActions && "group-data-[collapsible=icon]:h-auto"
         )}
       >
         <div
           className={cn(
             "flex h-full items-center justify-between px-2 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0",
             headerActions &&
-              "gap-1 group-data-[collapsible=icon]:flex-col group-data-[collapsible=icon]:py-2",
+              "gap-1 group-data-[collapsible=icon]:flex-col group-data-[collapsible=icon]:py-2"
           )}
         >
           <span className="truncate text-sm font-semibold group-data-[collapsible=icon]:hidden">
@@ -103,19 +103,19 @@ export function ThemerSidebar({
 
       <SidebarRail />
     </Sidebar>
-  );
+  )
 }
 
 /**
  * Inner content that switches between expanded and collapsed views
  */
 function SidebarInnerContent() {
-  const { state } = useSidebar();
-  const isCollapsed = state === "collapsed";
+  const { state } = useSidebar()
+  const isCollapsed = state === "collapsed"
 
   if (isCollapsed) {
-    return <CollapsedNavigation />;
+    return <CollapsedNavigation />
   }
 
-  return <ExpandedContent />;
+  return <ExpandedContent />
 }

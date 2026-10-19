@@ -1,4 +1,4 @@
-"use client";
+"use client"
 
 // Puts the Themer UI beside the Host app's tree: the floating trigger and the
 // Themer UI, portaled to document.body inside the Themer's CSS scope
@@ -8,18 +8,18 @@
 //
 // See: packages/themer/ARCHITECTURE.md ("Core Entry Points").
 
-import * as React from "react";
-import { createPortal } from "react-dom";
-import { useThemerUIStore } from "../stores/themer-ui-store";
-import { useThemerContext } from "./themer-provider";
-import { useIsMobile } from "../hooks/use-is-mobile";
-import { useThemerLayout } from "../hooks/use-themer-layout";
-import { Z_INDEX } from "../config/constants";
-import { ThemerUI } from "./themer-ui";
-import { THEMER_LAYOUTS } from "./themer-ui/layouts/registry";
-import { ThemerScope } from "./themer-scope";
-import { ThemerTrigger } from "./themer-trigger";
-import { LenisPause } from "./lenis-pause";
+import * as React from "react"
+import { createPortal } from "react-dom"
+import { useThemerUIStore } from "../stores/themer-ui-store"
+import { useThemerContext } from "./themer-provider"
+import { useIsMobile } from "../hooks/use-is-mobile"
+import { useThemerLayout } from "../hooks/use-themer-layout"
+import { Z_INDEX } from "../config/constants"
+import { ThemerUI } from "./themer-ui"
+import { THEMER_LAYOUTS } from "./themer-ui/layouts/registry"
+import { ThemerScope } from "./themer-scope"
+import { ThemerTrigger } from "./themer-trigger"
+import { LenisPause } from "./lenis-pause"
 
 /**
  * The Themer UI's root: the trigger and ThemerUI in a portal on <body>, the
@@ -28,24 +28,24 @@ import { LenisPause } from "./lenis-pause";
  * mobile.
  */
 export function ThemerRoot() {
-  const isOpen = useThemerUIStore((state) => state.isOpen);
-  const { config } = useThemerContext();
-  const isMobile = useIsMobile();
-  const layout = useThemerLayout();
-  const hidesPage = isMobile || THEMER_LAYOUTS[layout].coversPage;
+  const isOpen = useThemerUIStore((state) => state.isOpen)
+  const { config } = useThemerContext()
+  const isMobile = useIsMobile()
+  const layout = useThemerLayout()
+  const hidesPage = isMobile || THEMER_LAYOUTS[layout].coversPage
 
   // Disable body scroll when open on mobile
   // Save/restore previous overflow value to avoid conflicts
   React.useEffect(() => {
-    if (!isOpen || !isMobile) return;
+    if (!isOpen || !isMobile) return
 
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = "hidden"
 
     return () => {
-      document.body.style.overflow = previousOverflow;
-    };
-  }, [isOpen, isMobile]);
+      document.body.style.overflow = previousOverflow
+    }
+  }, [isOpen, isMobile])
 
   return (
     <>
@@ -56,8 +56,8 @@ export function ThemerRoot() {
           <ThemerTrigger />
           <ThemerUI />
         </ThemerScope>,
-        document.body,
+        document.body
       )}
     </>
-  );
+  )
 }

@@ -1,7 +1,7 @@
-"use client";
+"use client"
 
 // react-doctor-disable-next-line react-doctor/prefer-dynamic-import -- this demo is reached only through lazy(() => import("./examples/cards")) in builtin-tabs.tsx and preview-cards.tsx, so recharts already loads on demand
-import { CartesianGrid, Line, LineChart, XAxis } from "recharts";
+import { CartesianGrid, Line, LineChart, XAxis } from "recharts"
 
 import {
   Card,
@@ -9,13 +9,13 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@workspace/ui/components/card";
+} from "@workspace/ui/components/card"
 import {
   ChartConfig,
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
-} from "@workspace/ui/components/chart";
+} from "@workspace/ui/components/chart"
 
 const data = [
   {
@@ -53,7 +53,7 @@ const data = [
     today: 430,
     day: "Sunday",
   },
-];
+]
 
 const chartConfig = {
   today: {
@@ -64,7 +64,7 @@ const chartConfig = {
     label: "Average",
     color: "var(--primary)",
   },
-} satisfies ChartConfig;
+} satisfies ChartConfig
 
 export function CardsExerciseMinutes() {
   return (
@@ -126,5 +126,5 @@ export function CardsExerciseMinutes() {
         </ChartContainer>
       </CardContent>
     </Card>
-  );
+  )
 }

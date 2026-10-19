@@ -10,26 +10,26 @@
  * Most undo entries editor-store keeps; the oldest is dropped first. History
  * lives in memory only (the store does not persist it).
  */
-export const MAX_HISTORY_COUNT = 30;
+export const MAX_HISTORY_COUNT = 30
 
 /**
  * An edit less than this long after the last undo entry was recorded joins
  * that entry instead of recording a new one (editor-store.ts). The window
  * runs from the entry, not from the latest edit.
  */
-export const HISTORY_DEBOUNCE_MS = 500;
+export const HISTORY_DEBOUNCE_MS = 500
 
 /**
  * Delay before a native or typed colour edit commits to the theme
  * (components/editor/color-picker.tsx).
  */
-export const COLOR_INPUT_DEBOUNCE_MS = 150;
+export const COLOR_INPUT_DEBOUNCE_MS = 150
 
 /**
  * How long the ring that marks a picker after focusColor stays on it
  * (hooks/use-color-focus.ts).
  */
-export const HIGHLIGHT_ANIMATION_MS = 1500;
+export const HIGHLIGHT_ANIMATION_MS = 1500
 
 /**
  * Layers of the editor chrome. Read today: `trigger` (the floating trigger)
@@ -45,7 +45,7 @@ export const Z_INDEX = {
   popover: 10002,
   modal: 10003,
   inspector: 10004,
-} as const;
+} as const
 
 /**
  * Editor sidebar widths, set as `--sidebar-width`/`--sidebar-width-icon` on
@@ -55,19 +55,19 @@ export const Z_INDEX = {
 export const SIDEBAR_WIDTHS = {
   expanded: "20rem", // --sidebar-width (320px) - wider for better control layout
   collapsed: "3rem", // --sidebar-width-icon (48px)
-} as const;
+} as const
 
 /**
  * Sidebar width in pixels. No reader.
  * @deprecated Use SIDEBAR_WIDTHS instead
  */
-export const SIDEBAR_WIDTH = 380;
+export const SIDEBAR_WIDTH = 380
 
 /**
  * Header height in pixels. No reader: the header, the sidebar header and the
  * action bar each set `h-12` (3rem, the same 48px) in their own classes.
  */
-export const HEADER_HEIGHT = 48;
+export const HEADER_HEIGHT = 48
 
 /**
  * Shortcut strings. `toggle` is the default of ThemerConfig.shortcut, read by
@@ -87,10 +87,10 @@ export const SHORTCUTS = {
   save: "ctrl+s",
   export: "ctrl+e",
   inspector: "ctrl+i",
-} as const;
+} as const
 
 /** Default `storageNamespace` of `<Themer>`. */
-export const DEFAULT_STORAGE_NAMESPACE = "themercn";
+export const DEFAULT_STORAGE_NAMESPACE = "themercn"
 
 /**
  * localStorage keys of a storage namespace. `editor` and `preferences` are
@@ -104,14 +104,14 @@ export function getStorageKeys(namespace: string = DEFAULT_STORAGE_NAMESPACE) {
     editor: `${namespace}:editor`,
     preferences: `${namespace}:preferences`,
     colorMode: `${namespace}:color-mode`,
-  } as const;
+  } as const
 }
 
 /**
  * Id of the <style> the pre-hydration script writes the saved Theme into.
  * ThemerProvider removes it once it applies the Theme itself.
  */
-export const RESTORE_STYLE_ID = "themercn-restore";
+export const RESTORE_STYLE_ID = "themercn-restore"
 
 /**
  * WCAG contrast ratio thresholds that utils/contrast-checker.ts grades a
@@ -126,7 +126,7 @@ export const WCAG_CONTRAST = {
   AAA_LARGE: 4.5,
   /** Minimum for normal text (AAA) */
   AAA_NORMAL: 7,
-} as const;
+} as const
 
 /**
  * Google Fonts URL and starter family names. No reader: the font picker's
@@ -171,7 +171,7 @@ export const GOOGLE_FONTS = {
     "Cousine",
     "Anonymous Pro",
   ],
-} as const;
+} as const
 
 /**
  * Shadow presets by size name. No reader: the shadow control edits the
@@ -213,7 +213,7 @@ export const SHADOW_PRESETS = {
     offsetY: "20px",
     opacity: "0.1",
   },
-} as const;
+} as const
 
 /**
  * Slider bounds for the numeric style controls. Ranges follow tweakcn's
@@ -234,9 +234,9 @@ export const CONTROL_RANGES = {
 } as const satisfies Record<
   string,
   { min: number; max: number; step: number; unit: "" | "px" | "rem" | "em" }
->;
+>
 
-export type ControlRangeKey = keyof typeof CONTROL_RANGES;
+export type ControlRangeKey = keyof typeof CONTROL_RANGES
 
 /**
  * Radius presets in rem. `full` stays a pill value (9999px); the radius
@@ -250,7 +250,7 @@ export const RADIUS_PRESETS = {
   xl: "1rem",
   "2xl": "1.5rem",
   full: "9999px",
-} as const;
+} as const
 
 /**
  * Spacing presets in rem
@@ -259,7 +259,7 @@ export const SPACING_PRESETS = {
   tight: "0.15rem",
   normal: "0.25rem",
   relaxed: "0.35rem",
-} as const;
+} as const
 
 /**
  * Letter spacing presets in em
@@ -271,4 +271,4 @@ export const LETTER_SPACING_PRESETS = {
   wide: "0.025em",
   wider: "0.05em",
   widest: "0.1em",
-} as const;
+} as const

@@ -9,13 +9,13 @@
 // COLOR_STYLE_KEYS lists the 32 shadcn colours and `shadow-color`; host extra
 // colours are not in it (extra-colors.ts).
 
-import { COMMON_STYLE_KEYS } from "../types/theme";
+import { COMMON_STYLE_KEYS } from "../types/theme"
 import type {
   ThemeStyleProps,
   ThemeStyles,
   ThemeEditorState,
   HSLAdjustments,
-} from "../types";
+} from "../types"
 
 /**
  * Default HSL adjustments (no changes)
@@ -24,7 +24,7 @@ export const defaultHSLAdjustments: HSLAdjustments = {
   hueShift: 0,
   saturationScale: 1,
   lightnessScale: 1,
-};
+}
 
 /**
  * Default light theme styles (OKLch format)
@@ -93,7 +93,7 @@ export const defaultLightStyles: ThemeStyleProps = {
   radius: "0.625rem",
   spacing: "0.25rem",
   "letter-spacing": "0em",
-};
+}
 
 /**
  * Default dark theme styles (OKLch format)
@@ -161,7 +161,7 @@ export const defaultDarkStyles: ThemeStyleProps = {
   radius: "0.625rem",
   spacing: "0.25rem",
   "letter-spacing": "0em",
-};
+}
 
 /**
  * Default theme styles containing both modes
@@ -169,7 +169,7 @@ export const defaultDarkStyles: ThemeStyleProps = {
 export const defaultThemeStyles: ThemeStyles = {
   light: defaultLightStyles,
   dark: defaultDarkStyles,
-};
+}
 
 /**
  * Default theme editor state
@@ -179,14 +179,14 @@ export const defaultThemeState: ThemeEditorState = {
   currentMode: "light",
   preset: "default",
   hslAdjustments: defaultHSLAdjustments,
-};
+}
 
 /**
  * Style keys shared by both modes (see COMMON_STYLE_KEYS in types/theme.ts,
  * the typed source). Kept as a plain string list because callers test
  * arbitrary keys with `includes`.
  */
-export const COMMON_STYLES: readonly string[] = COMMON_STYLE_KEYS;
+export const COMMON_STYLES: readonly string[] = COMMON_STYLE_KEYS
 
 /**
  * Color-only style keys (excludes non-color values)
@@ -225,4 +225,4 @@ export const COLOR_STYLE_KEYS = [
   "sidebar-border",
   "sidebar-ring",
   "shadow-color",
-] as const;
+] as const

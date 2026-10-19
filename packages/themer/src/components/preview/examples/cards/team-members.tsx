@@ -1,20 +1,20 @@
-"use client";
+"use client"
 
-import { ChevronDown } from "lucide-react";
+import { ChevronDown } from "lucide-react"
 
 import {
   Avatar,
   AvatarFallback,
   AvatarImage,
-} from "@workspace/ui/components/avatar";
-import { Button } from "@workspace/ui/components/button";
+} from "@workspace/ui/components/avatar"
+import { Button } from "@workspace/ui/components/button"
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@workspace/ui/components/card";
+} from "@workspace/ui/components/card"
 import {
   Command,
   CommandEmpty,
@@ -22,13 +22,13 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
-} from "@workspace/ui/components/command";
+} from "@workspace/ui/components/command"
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@workspace/ui/components/popover";
-import { avatarDataUri } from "../avatar-data-uri";
+} from "@workspace/ui/components/popover"
+import { avatarDataUri } from "../avatar-data-uri"
 
 const teamMembers = [
   {
@@ -49,7 +49,7 @@ const teamMembers = [
     avatar: avatarDataUri("IN", "#9333ea"),
     role: "Billing",
   },
-];
+]
 
 const roles = [
   {
@@ -68,7 +68,7 @@ const roles = [
     name: "Owner",
     description: "Admin-level access to all resources.",
   },
-];
+]
 
 export function CardsTeamMembers() {
   return (
@@ -94,7 +94,7 @@ export function CardsTeamMembers() {
                 <p className="text-sm leading-none font-medium">
                   {member.name}
                 </p>
-                <p className="text-muted-foreground text-xs">{member.email}</p>
+                <p className="text-xs text-muted-foreground">{member.email}</p>
               </div>
             </div>
             <Popover>
@@ -134,5 +134,5 @@ export function CardsTeamMembers() {
         ))}
       </CardContent>
     </Card>
-  );
+  )
 }

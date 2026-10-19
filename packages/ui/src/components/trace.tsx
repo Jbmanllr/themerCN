@@ -72,10 +72,7 @@ function TraceDescription({
   return (
     <span
       data-slot="trace-description"
-      className={cn(
-        "shrink-0 text-muted-foreground tabular-nums",
-        className
-      )}
+      className={cn("shrink-0 text-muted-foreground tabular-nums", className)}
       {...props}
     />
   )
@@ -119,8 +116,7 @@ function TraceCollapsibleTrigger({
     >
       {children}
       <TraceIcon className="transition-transform group-aria-expanded/trace-collapsible-trigger:rotate-90">
-        <ChevronRightIcon
-        />
+        <ChevronRightIcon />
       </TraceIcon>
     </CollapsibleTrigger>
   )

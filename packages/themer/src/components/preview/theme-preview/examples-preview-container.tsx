@@ -1,10 +1,10 @@
 // Wraps every preview tab body: the Suspense boundary (lazy demos suspend
 // here, behind a skeleton and spinner) and the `@container` the demos' `@3xl:`
 // style container queries resolve against.
-import { Suspense } from "react";
-import { Skeleton } from "@workspace/ui/components/skeleton";
-import { Spinner } from "@workspace/ui/components/spinner";
-import { cn } from "@workspace/ui/lib/utils";
+import { Suspense } from "react"
+import { Skeleton } from "@workspace/ui/components/skeleton"
+import { Spinner } from "@workspace/ui/components/spinner"
+import { cn } from "@workspace/ui/lib/utils"
 
 const LoadingSkeleton = () => (
   <div className="absolute inset-0 flex flex-col">
@@ -13,17 +13,17 @@ const LoadingSkeleton = () => (
     </div>
 
     <div className="absolute inset-0 flex items-center justify-center">
-      <Spinner className="text-foreground/50 size-6" />
+      <Spinner className="size-6 text-foreground/50" />
     </div>
   </div>
-);
+)
 
 const ExamplesPreviewContainer = ({
   children,
   className,
 }: {
-  children: React.ReactNode;
-  className?: string;
+  children: React.ReactNode
+  className?: string
 }) => {
   return (
     <div className={cn("space-y-6", className)}>
@@ -31,7 +31,7 @@ const ExamplesPreviewContainer = ({
         <Suspense fallback={<LoadingSkeleton />}>{children}</Suspense>
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default ExamplesPreviewContainer;
+export default ExamplesPreviewContainer

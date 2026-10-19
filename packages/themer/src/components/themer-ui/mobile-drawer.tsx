@@ -1,4 +1,4 @@
-"use client";
+"use client"
 
 // The editor on a phone-sized viewport: a bottom drawer with the preset
 // select and the same panel tabs as the desktop sidebar (MobilePanelContent).
@@ -12,17 +12,17 @@ import {
   DrawerContent,
   DrawerHeader,
   DrawerTitle,
-} from "@workspace/ui/components/drawer";
+} from "@workspace/ui/components/drawer"
 import {
   useApplyThemePreset,
   usePreset,
-} from "../../hooks/use-editor-selectors";
-import { PresetSelect } from "../actions/preset-select";
-import { MobilePanelContent } from "./mobile-panel-content";
+} from "../../hooks/use-editor-selectors"
+import { PresetSelect } from "../actions/preset-select"
+import { MobilePanelContent } from "./mobile-panel-content"
 
 interface MobileDrawerProps {
-  isOpen: boolean;
-  onClose: () => void;
+  isOpen: boolean
+  onClose: () => void
 }
 
 /**
@@ -31,8 +31,8 @@ interface MobileDrawerProps {
  */
 export function MobileDrawer({ isOpen, onClose }: MobileDrawerProps) {
   // Narrow selections: the drawer re-renders on preset changes only.
-  const preset = usePreset();
-  const applyPreset = useApplyThemePreset();
+  const preset = usePreset()
+  const applyPreset = useApplyThemePreset()
 
   return (
     <Drawer open={isOpen} onOpenChange={(open) => !open && onClose()}>
@@ -48,5 +48,5 @@ export function MobileDrawer({ isOpen, onClose }: MobileDrawerProps) {
         </div>
       </DrawerContent>
     </Drawer>
-  );
+  )
 }

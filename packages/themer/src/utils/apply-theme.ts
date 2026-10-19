@@ -32,23 +32,23 @@
 // removing the theme removes the sheet with it.
 //
 // See: packages/themer/ARCHITECTURE.md ("Applying a theme").
-import { RESTORE_STYLE_ID } from "../config/constants";
-import { defaultLightStyles } from "../config/defaults";
-import { getExtraColorKeys } from "../config/extra-colors";
-import type { ThemeEditorState, ThemeMode } from "../types";
+import { RESTORE_STYLE_ID } from "../config/constants"
+import { defaultLightStyles } from "../config/defaults"
+import { getExtraColorKeys } from "../config/extra-colors"
+import type { ThemeEditorState, ThemeMode } from "../types"
 import {
   clearThemeFonts,
   getThemeFontFamilies,
   setThemeFonts,
-} from "./font-loader";
-import { SHADOW_SCALE_KEYS, getShadowVariables } from "./shadows";
+} from "./font-loader"
+import { SHADOW_SCALE_KEYS, getShadowVariables } from "./shadows"
 
 type ApplyThemeOptions = {
   /** Toggle the `dark` class on the element. Off where next-themes owns it. */
-  updateClass?: boolean;
+  updateClass?: boolean
   /** Mode to apply; defaults to `themeState.currentMode`. */
-  mode?: ThemeMode;
-};
+  mode?: ThemeMode
+}
 
 type ApplyThemeToDocumentOptions = ApplyThemeOptions & {
   /**
@@ -56,8 +56,8 @@ type ApplyThemeToDocumentOptions = ApplyThemeOptions & {
    * document, so an iframe needs its own links; the host page gets them from
    * DynamicFontLoader instead.
    */
-  loadFonts?: boolean;
-};
+  loadFonts?: boolean
+}
 
 /**
  * The non-colour keys a theme writes as `--key` (fonts, radius, spacing,
@@ -72,10 +72,10 @@ const VARIABLE_KEYS = [
   "radius",
   "spacing",
   "letter-spacing",
-] as const;
+] as const
 
 /** Tailwind shadow utilities the override sheet rewires, by variable name. */
-const SHADOW_VARIABLE_SET: ReadonlySet<string> = new Set(SHADOW_SCALE_KEYS);
+const SHADOW_VARIABLE_SET: ReadonlySet<string> = new Set(SHADOW_SCALE_KEYS)
 
 /** tweakcn's tracking scale, as offsets from the theme's letter-spacing. */
 const TRACKING_OFFSETS = [
@@ -85,9 +85,9 @@ const TRACKING_OFFSETS = [
   ["wide", "+ 0.025em"],
   ["wider", "+ 0.05em"],
   ["widest", "+ 0.1em"],
-] as const;
+] as const
 
-export const THEMER_OVERRIDES_ATTRIBUTE = "data-themer-overrides";
+export const THEMER_OVERRIDES_ATTRIBUTE = "data-themer-overrides"
 
 /** The six inputs tweakcn's shadow map is computed from. */
 const SHADOW_INPUT_KEYS = [
@@ -97,7 +97,7 @@ const SHADOW_INPUT_KEYS = [
   "shadow-spread",
   "shadow-offset-x",
   "shadow-offset-y",
-] as const;
+] as const
 
 /**
  * Variant classes the sheet always covers. The sheet's `!important` would
@@ -110,7 +110,7 @@ const SHADOW_STATE_VARIANTS = [
   ["focus", ":focus"],
   ["focus-visible", ":focus-visible"],
   ["active", ":active"],
-] as const;
+] as const
 
 /**
  * The override sheet's fixed part: it reads the `--shadow-*` variables set on
@@ -119,28 +119,28 @@ const SHADOW_STATE_VARIANTS = [
  */
 export const SHADOW_OVERRIDE_CSS = [
   ...SHADOW_SCALE_KEYS.map(
-    (name) => `.${name} { --tw-shadow: var(--${name}) !important; }`,
+    (name) => `.${name} { --tw-shadow: var(--${name}) !important; }`
   ),
   ...SHADOW_STATE_VARIANTS.flatMap(([variant, pseudo]) =>
     SHADOW_SCALE_KEYS.map(
       (name) =>
-        `.${variant}\\:${name}${pseudo} { --tw-shadow: var(--${name}) !important; }`,
-    ),
+        `.${variant}\\:${name}${pseudo} { --tw-shadow: var(--${name}) !important; }`
+    )
   ),
-].join("\n");
+].join("\n")
 
 /** Properties last written per element (custom properties keep `--`). */
-const appliedProperties = new WeakMap<HTMLElement, Set<string>>();
+const appliedProperties = new WeakMap<HTMLElement, Set<string>>()
 /** The override `<style>` per document. */
-const overrideStyles = new WeakMap<Document, HTMLStyleElement>();
+const overrideStyles = new WeakMap<Document, HTMLStyleElement>()
 /** How many stylesheets the document had when its override was written. */
-const overrideSheetCounts = new WeakMap<Document, number>();
+const overrideSheetCounts = new WeakMap<Document, number>()
 /** Documents whose theme fonts this module loaded (applyThemeToDocument). */
-const documentsWithThemeFonts = new WeakSet<Document>();
+const documentsWithThemeFonts = new WeakSet<Document>()
 
 function trackingBase(letterSpacing: string): string {
   // `normal` is a keyword calc() cannot take; it equals zero tracking.
-  return letterSpacing === "normal" ? "0em" : "var(--letter-spacing)";
+  return letterSpacing === "normal" ? "0em" : "var(--letter-spacing)"
 }
 
 /**
@@ -150,84 +150,84 @@ function trackingBase(letterSpacing: string): string {
  */
 export function computeThemeProperties(
   themeState: ThemeEditorState,
-  mode: ThemeMode = themeState.currentMode,
+  mode: ThemeMode = themeState.currentMode
 ): Record<string, string> {
-  const styles = themeState.styles[mode];
-  const properties: Record<string, string> = {};
+  const styles = themeState.styles[mode]
+  const properties: Record<string, string> = {}
 
   for (const [key, raw] of Object.entries(styles) as [string, unknown][]) {
-    const value = typeof raw === "string" ? raw.trim() : "";
-    if (!value || key.startsWith("shadow-")) continue;
+    const value = typeof raw === "string" ? raw.trim() : ""
+    if (!value || key.startsWith("shadow-")) continue
     // Colours and the common variables alike are valid CSS as stored.
-    properties[`--${key}`] = value;
+    properties[`--${key}`] = value
   }
 
-  const letterSpacing = styles["letter-spacing"]?.trim();
+  const letterSpacing = styles["letter-spacing"]?.trim()
   if (letterSpacing) {
-    properties["letter-spacing"] = letterSpacing;
-    const base = trackingBase(letterSpacing);
+    properties["letter-spacing"] = letterSpacing
+    const base = trackingBase(letterSpacing)
     for (const [name, offset] of TRACKING_OFFSETS) {
       properties[`--tracking-${name}`] = offset
         ? `calc(${base} ${offset})`
-        : base;
+        : base
     }
   }
 
   const hasOwnShadows = SHADOW_INPUT_KEYS.some(
-    (key) => (styles[key]?.trim() ?? "") !== defaultLightStyles[key],
-  );
+    (key) => (styles[key]?.trim() ?? "") !== defaultLightStyles[key]
+  )
   const shadows = hasOwnShadows
     ? getShadowVariables({ ...themeState, currentMode: mode })
-    : {};
+    : {}
   for (const [key, value] of Object.entries(shadows)) {
     // Only the per-size results have a reader; the raw inputs do not.
-    if (SHADOW_VARIABLE_SET.has(key) && value) properties[`--${key}`] = value;
+    if (SHADOW_VARIABLE_SET.has(key) && value) properties[`--${key}`] = value
   }
 
-  return properties;
+  return properties
 }
 
 function updateThemeClass(element: HTMLElement, mode: ThemeMode): void {
-  element.classList.toggle("dark", mode === "dark");
+  element.classList.toggle("dark", mode === "dark")
 }
 
 /** What collectVariantShadowRules reads of a CSSOM rule. */
 type CssRuleLike = {
-  cssText: string;
-  selectorText?: string;
-  style?: { getPropertyValue(property: string): string };
-  cssRules?: ArrayLike<CssRuleLike>;
+  cssText: string
+  selectorText?: string
+  style?: { getPropertyValue(property: string): string }
+  cssRules?: ArrayLike<CssRuleLike>
   /** A layer block's (or keyframes') name. */
-  name?: string;
-};
+  name?: string
+}
 
 /** A Tailwind variant class on a shadow size, e.g. `hover:shadow-md`. */
-const VARIANT_SHADOW_CLASS = /:(shadow(?:-(?:2xs|xs|sm|md|lg|xl|2xl))?)$/;
+const VARIANT_SHADOW_CLASS = /:(shadow(?:-(?:2xs|xs|sm|md|lg|xl|2xl))?)$/
 /**
  * A class in a selector as the CSSOM serializes it: `\:`-style escapes, and
  * a hex escape for a leading digit (`2xl:shadow-md` is `.\32 xl\:shadow-md`).
  */
-const SELECTOR_CLASS = /\.((?:\\[\da-f]{1,6} ?|\\.|[\w-])+)/gi;
-const CSS_ESCAPE = /\\(?:([\da-f]{1,6}) ?|(.))/gi;
+const SELECTOR_CLASS = /\.((?:\\[\da-f]{1,6} ?|\\.|[\w-])+)/gi
+const CSS_ESCAPE = /\\(?:([\da-f]{1,6}) ?|(.))/gi
 
 function unescapeClass(escaped: string): string {
   return escaped.replace(
     CSS_ESCAPE,
     (_, hex: string | undefined, char: string | undefined) =>
-      hex ? String.fromCodePoint(Number.parseInt(hex, 16)) : (char ?? ""),
-  );
+      hex ? String.fromCodePoint(Number.parseInt(hex, 16)) : (char ?? "")
+  )
 }
 
 /** The one shadow size a rule's variant classes set, if any. */
 function variantShadowSize(selectorText: string): string | null {
-  let size: string | null = null;
+  let size: string | null = null
   for (const [, escaped = ""] of selectorText.matchAll(SELECTOR_CLASS)) {
-    const found = VARIANT_SHADOW_CLASS.exec(unescapeClass(escaped))?.[1];
-    if (!found) continue;
-    if (size !== null && size !== found) return null;
-    size = found;
+    const found = VARIANT_SHADOW_CLASS.exec(unescapeClass(escaped))?.[1]
+    if (!found) continue
+    if (size !== null && size !== found) return null
+    size = found
   }
-  return size;
+  return size
 }
 
 function mirrorShadowRules(rules: ArrayLike<CssRuleLike>, out: string[]) {
@@ -235,23 +235,23 @@ function mirrorShadowRules(rules: ArrayLike<CssRuleLike>, out: string[]) {
     if (rule.selectorText !== undefined) {
       const size = rule.style?.getPropertyValue("--tw-shadow")
         ? variantShadowSize(rule.selectorText)
-        : null;
+        : null
       if (size)
         out.push(
-          `${rule.selectorText} { --tw-shadow: var(--${size}) !important; }`,
-        );
-      continue;
+          `${rule.selectorText} { --tw-shadow: var(--${size}) !important; }`
+        )
+      continue
     }
-    if (!rule.cssRules) continue;
-    const inner: string[] = [];
-    mirrorShadowRules(rule.cssRules, inner);
-    if (inner.length === 0) continue;
+    if (!rule.cssRules) continue
+    const inner: string[] = []
+    mirrorShadowRules(rule.cssRules, inner)
+    if (inner.length === 0) continue
     // A layer block's rules go in unwrapped (the sheet stays unlayered); any
     // other group (@media, @supports, @container) keeps its own condition.
-    if (typeof rule.name === "string") out.push(...inner);
+    if (typeof rule.name === "string") out.push(...inner)
     else {
-      const prelude = rule.cssText.slice(0, rule.cssText.indexOf("{")).trim();
-      out.push(`${prelude} {\n${inner.join("\n")}\n}`);
+      const prelude = rule.cssText.slice(0, rule.cssText.indexOf("{")).trim()
+      out.push(`${prelude} {\n${inner.join("\n")}\n}`)
     }
   }
 }
@@ -265,24 +265,24 @@ function mirrorShadowRules(rules: ArrayLike<CssRuleLike>, out: string[]) {
  * opacity modifiers are left alone; a cross-origin sheet cannot be read.
  */
 function collectVariantShadowRules(doc: Document): string {
-  const out: string[] = [];
+  const out: string[] = []
   for (const sheet of Array.from(doc.styleSheets)) {
-    const owner = sheet.ownerNode;
+    const owner = sheet.ownerNode
     if (
       owner &&
       "hasAttribute" in owner &&
       owner.hasAttribute(THEMER_OVERRIDES_ATTRIBUTE)
     )
-      continue;
-    let rules: ArrayLike<CssRuleLike>;
+      continue
+    let rules: ArrayLike<CssRuleLike>
     try {
-      rules = sheet.cssRules;
+      rules = sheet.cssRules
     } catch {
-      continue;
+      continue
     }
-    mirrorShadowRules(rules, out);
+    mirrorShadowRules(rules, out)
   }
-  return out.join("\n");
+  return out.join("\n")
 }
 
 /**
@@ -291,33 +291,33 @@ function collectVariantShadowRules(doc: Document): string {
  * that chunk's variant rules too.
  */
 function ensureOverrideStyle(doc: Document): void {
-  const existing = overrideStyles.get(doc);
-  const connected = existing?.isConnected === true;
+  const existing = overrideStyles.get(doc)
+  const connected = existing?.isConnected === true
   if (connected && overrideSheetCounts.get(doc) === doc.styleSheets.length)
-    return;
+    return
 
-  const mirrored = collectVariantShadowRules(doc);
+  const mirrored = collectVariantShadowRules(doc)
   const css = mirrored
     ? `${SHADOW_OVERRIDE_CSS}\n${mirrored}`
-    : SHADOW_OVERRIDE_CSS;
+    : SHADOW_OVERRIDE_CSS
   if (existing && connected) {
-    existing.textContent = css;
+    existing.textContent = css
   } else {
-    const style = doc.createElement("style");
-    style.setAttribute(THEMER_OVERRIDES_ATTRIBUTE, "");
-    style.textContent = css;
-    doc.head.appendChild(style);
-    overrideStyles.set(doc, style);
+    const style = doc.createElement("style")
+    style.setAttribute(THEMER_OVERRIDES_ATTRIBUTE, "")
+    style.textContent = css
+    doc.head.appendChild(style)
+    overrideStyles.set(doc, style)
   }
   // Read after the append: the sheet itself is one of the document's.
-  overrideSheetCounts.set(doc, doc.styleSheets.length);
+  overrideSheetCounts.set(doc, doc.styleSheets.length)
 }
 
 function removeOverrideStyle(doc: Document | null | undefined): void {
-  if (!doc) return;
-  overrideStyles.get(doc)?.remove();
-  overrideStyles.delete(doc);
-  overrideSheetCounts.delete(doc);
+  if (!doc) return
+  overrideStyles.get(doc)?.remove()
+  overrideStyles.delete(doc)
+  overrideSheetCounts.delete(doc)
 }
 
 /**
@@ -329,31 +329,31 @@ function removeOverrideStyle(doc: Document | null | undefined): void {
 export function applyThemeToElement(
   themeState: ThemeEditorState,
   element: HTMLElement = document.documentElement,
-  options: ApplyThemeOptions = {},
+  options: ApplyThemeOptions = {}
 ): string[] {
-  const { updateClass = true, mode = themeState.currentMode } = options;
-  const properties = computeThemeProperties(themeState, mode);
-  const keys = Object.keys(properties);
-  const next = new Set(keys);
+  const { updateClass = true, mode = themeState.currentMode } = options
+  const properties = computeThemeProperties(themeState, mode)
+  const keys = Object.keys(properties)
+  const next = new Set(keys)
 
   for (const previous of appliedProperties.get(element) ?? []) {
-    if (!next.has(previous)) element.style.removeProperty(previous);
+    if (!next.has(previous)) element.style.removeProperty(previous)
   }
   for (const key of keys) {
-    element.style.setProperty(key, properties[key]!);
+    element.style.setProperty(key, properties[key]!)
   }
-  appliedProperties.set(element, next);
+  appliedProperties.set(element, next)
 
-  if (updateClass) updateThemeClass(element, mode);
+  if (updateClass) updateThemeClass(element, mode)
 
-  const doc = element.ownerDocument;
+  const doc = element.ownerDocument
   if (keys.some((key) => SHADOW_VARIABLE_SET.has(key.slice(2)))) {
-    ensureOverrideStyle(doc);
+    ensureOverrideStyle(doc)
   } else {
-    removeOverrideStyle(doc);
+    removeOverrideStyle(doc)
   }
 
-  return keys;
+  return keys
 }
 
 /**
@@ -363,17 +363,17 @@ export function applyThemeToElement(
  * element are not the editor's.
  */
 function knownThemeProperties(): string[] {
-  const keys = new Set<string>(["letter-spacing"]);
+  const keys = new Set<string>(["letter-spacing"])
   for (const key of [
     ...Object.keys(defaultLightStyles),
     ...getExtraColorKeys(),
   ]) {
-    if (!key.startsWith("shadow-")) keys.add(`--${key}`);
+    if (!key.startsWith("shadow-")) keys.add(`--${key}`)
   }
-  for (const key of VARIABLE_KEYS) keys.add(`--${key}`);
-  for (const key of SHADOW_SCALE_KEYS) keys.add(`--${key}`);
-  for (const [name] of TRACKING_OFFSETS) keys.add(`--tracking-${name}`);
-  return [...keys];
+  for (const key of VARIABLE_KEYS) keys.add(`--${key}`)
+  for (const key of SHADOW_SCALE_KEYS) keys.add(`--${key}`)
+  for (const [name] of TRACKING_OFFSETS) keys.add(`--tracking-${name}`)
+  return [...keys]
 }
 
 /**
@@ -383,15 +383,15 @@ function knownThemeProperties(): string[] {
  */
 export function removeThemeFromElement(
   element: HTMLElement = document.documentElement,
-  keys?: readonly string[],
+  keys?: readonly string[]
 ): void {
-  if (!element?.style) return;
+  if (!element?.style) return
 
-  const recorded = appliedProperties.get(element);
-  const targets = keys ?? (recorded ? [...recorded] : knownThemeProperties());
-  for (const key of targets) element.style.removeProperty(key);
-  appliedProperties.delete(element);
-  removeOverrideStyle(element.ownerDocument);
+  const recorded = appliedProperties.get(element)
+  const targets = keys ?? (recorded ? [...recorded] : knownThemeProperties())
+  for (const key of targets) element.style.removeProperty(key)
+  appliedProperties.delete(element)
+  removeOverrideStyle(element.ownerDocument)
 }
 
 /**
@@ -405,33 +405,33 @@ export function removeThemeFromElement(
 export function applyThemeToDocument(
   doc: Document,
   themeState: ThemeEditorState,
-  options: ApplyThemeToDocumentOptions = {},
+  options: ApplyThemeToDocumentOptions = {}
 ): string[] {
-  const { loadFonts = false, ...applyOptions } = options;
+  const { loadFonts = false, ...applyOptions } = options
   const keys = applyThemeToElement(
     themeState,
     doc.documentElement,
-    applyOptions,
-  );
-  doc.getElementById(RESTORE_STYLE_ID)?.remove();
+    applyOptions
+  )
+  doc.getElementById(RESTORE_STYLE_ID)?.remove()
 
   if (loadFonts) {
     setThemeFonts(
       doc,
-      getThemeFontFamilies(themeState.styles.light, themeState.styles.dark),
-    );
-    documentsWithThemeFonts.add(doc);
+      getThemeFontFamilies(themeState.styles.light, themeState.styles.dark)
+    )
+    documentsWithThemeFonts.add(doc)
   }
 
-  return keys;
+  return keys
 }
 
 /** Undo applyThemeToDocument: variables, override sheet and its fonts. */
 export function removeThemeFromDocument(doc: Document): void {
-  removeThemeFromElement(doc.documentElement);
+  removeThemeFromElement(doc.documentElement)
   if (documentsWithThemeFonts.has(doc)) {
-    clearThemeFonts(doc);
-    documentsWithThemeFonts.delete(doc);
+    clearThemeFonts(doc)
+    documentsWithThemeFonts.delete(doc)
   }
 }
 
@@ -441,17 +441,17 @@ export function removeThemeFromDocument(doc: Document): void {
  */
 export function applyThemeToIframe(
   themeState: ThemeEditorState,
-  iframe: HTMLIFrameElement,
+  iframe: HTMLIFrameElement
 ): void {
-  let iframeDoc: Document | null = null;
+  let iframeDoc: Document | null = null
   try {
-    iframeDoc = iframe.contentDocument;
+    iframeDoc = iframe.contentDocument
   } catch {
-    return;
+    return
   }
-  if (!iframeDoc) return;
+  if (!iframeDoc) return
 
-  applyThemeToDocument(iframeDoc, themeState, { loadFonts: true });
+  applyThemeToDocument(iframeDoc, themeState, { loadFonts: true })
 }
 
 /**
@@ -463,20 +463,20 @@ export function applyThemeToIframe(
  */
 export function createThemeStyleElement(
   themeState: ThemeEditorState,
-  doc: Document = document,
+  doc: Document = document
 ): HTMLStyleElement {
-  const properties = computeThemeProperties(themeState);
+  const properties = computeThemeProperties(themeState)
   const declarations = Object.entries(properties)
     .map(([key, value]) => `  ${key}: ${value};`)
-    .join("\n");
+    .join("\n")
 
-  let css = `:root {\n${declarations}\n}\n`;
+  let css = `:root {\n${declarations}\n}\n`
   if (themeState.currentMode === "dark") {
-    css += "\n:root { color-scheme: dark; }\n";
+    css += "\n:root { color-scheme: dark; }\n"
   }
-  css += `\n${SHADOW_OVERRIDE_CSS}\n`;
+  css += `\n${SHADOW_OVERRIDE_CSS}\n`
 
-  const style = doc.createElement("style");
-  style.textContent = css;
-  return style;
+  const style = doc.createElement("style")
+  style.textContent = css
+  return style
 }

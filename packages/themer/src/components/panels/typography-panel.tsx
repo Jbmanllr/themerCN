@@ -1,12 +1,12 @@
-"use client";
+"use client"
 
 // The Typography tab: the four font slots and letter spacing, each in a
 // ControlSection whose open state persists (ids `typography-fonts`,
 // `typography-letter-spacing`).
 
-import { FontControls, FontSlotPicker } from "../editor/font-picker";
-import { LetterSpacingControl } from "../editor/letter-spacing-control";
-import { ControlSection } from "../editor/control-section";
+import { FontControls, FontSlotPicker } from "../editor/font-picker"
+import { LetterSpacingControl } from "../editor/letter-spacing-control"
+import { ControlSection } from "../editor/control-section"
 
 /**
  * Heading font (`--font-heading`), shared by both modes. Uses the same
@@ -14,7 +14,7 @@ import { ControlSection } from "../editor/control-section";
  * serif (resolvePresetStyles).
  */
 export function HeadingFontControl() {
-  return <FontSlotPicker slot="font-heading" />;
+  return <FontSlotPicker slot="font-heading" />
 }
 
 /**
@@ -43,5 +43,5 @@ export function TypographyPanel() {
         <LetterSpacingControl />
       </ControlSection>
     </div>
-  );
+  )
 }

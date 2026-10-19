@@ -1,21 +1,21 @@
-import { LucideIcon } from "lucide-react";
+import { LucideIcon } from "lucide-react"
 
-import { cn } from "@workspace/ui/lib/utils";
-import { buttonVariants } from "@workspace/ui/components/button";
+import { cn } from "@workspace/ui/lib/utils"
+import { buttonVariants } from "@workspace/ui/components/button"
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from "@workspace/ui/components/tooltip";
+} from "@workspace/ui/components/tooltip"
 
 interface NavProps {
-  isCollapsed: boolean;
+  isCollapsed: boolean
   links: {
-    title: string;
-    label?: string;
-    icon: LucideIcon;
-    variant: "default" | "ghost";
-  }[];
+    title: string
+    label?: string
+    icon: LucideIcon
+    variant: "default" | "ghost"
+  }[]
 }
 
 export function Nav({ links, isCollapsed }: NavProps) {
@@ -37,7 +37,7 @@ export function Nav({ links, isCollapsed }: NavProps) {
                       buttonVariants({ variant: link.variant, size: "icon" }),
                       "h-9 w-9",
                       link.variant === "default" &&
-                        "dark:bg-muted dark:text-muted-foreground dark:hover:bg-muted dark:hover:text-white",
+                        "dark:bg-muted dark:text-muted-foreground dark:hover:bg-muted dark:hover:text-white"
                     )}
                   >
                     <link.icon className="h-4 w-4" />
@@ -48,7 +48,7 @@ export function Nav({ links, isCollapsed }: NavProps) {
               <TooltipContent side="right" className="flex items-center gap-4">
                 {link.title}
                 {link.label && (
-                  <span className="text-muted-foreground ml-auto">
+                  <span className="ml-auto text-muted-foreground">
                     {link.label}
                   </span>
                 )}
@@ -62,7 +62,7 @@ export function Nav({ links, isCollapsed }: NavProps) {
                 buttonVariants({ variant: link.variant, size: "sm" }),
                 link.variant === "default" &&
                   "group dark:bg-muted dark:text-foreground dark:hover:bg-muted dark:hover:text-foreground",
-                "justify-start",
+                "justify-start"
               )}
             >
               <link.icon className="mr-2 h-4 w-4" />
@@ -72,16 +72,16 @@ export function Nav({ links, isCollapsed }: NavProps) {
                   className={cn(
                     "ml-auto",
                     link.variant === "default" &&
-                      "text-background dark:text-muted-foreground",
+                      "text-background dark:text-muted-foreground"
                   )}
                 >
                   {link.label}
                 </span>
               )}
             </button>
-          ),
+          )
         )}
       </nav>
     </div>
-  );
+  )
 }

@@ -1,4 +1,4 @@
-"use client";
+"use client"
 
 // The contrast checker as a dialog (the file is still named "popover"). The
 // action bar opens it controlled (`open`, from its own Contrast checker
@@ -6,28 +6,28 @@
 //
 // See: packages/themer/ARCHITECTURE.md (Contrast Checker).
 
-import * as React from "react";
-import { Eye } from "lucide-react";
+import * as React from "react"
+import { Eye } from "lucide-react"
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@workspace/ui/components/dialog";
-import { ScrollArea } from "@workspace/ui/components/scroll-area";
-import { Button } from "@workspace/ui/components/button";
-import { ContrastChecker } from "./contrast-checker";
+} from "@workspace/ui/components/dialog"
+import { ScrollArea } from "@workspace/ui/components/scroll-area"
+import { Button } from "@workspace/ui/components/button"
+import { ContrastChecker } from "./contrast-checker"
 
 interface ContrastCheckerDialogProps {
   /** Custom button props for the trigger */
-  buttonProps?: React.ComponentProps<typeof Button>;
+  buttonProps?: React.ComponentProps<typeof Button>
   /** Custom children for the trigger button */
-  children?: React.ReactNode;
+  children?: React.ReactNode
   /** Controlled open state, for a dialog opened from elsewhere. */
-  open?: boolean;
+  open?: boolean
   /** Called when the dialog asks to open or close. */
-  onOpenChange?: (open: boolean) => void;
+  onOpenChange?: (open: boolean) => void
 }
 
 /**
@@ -37,7 +37,7 @@ interface ContrastCheckerDialogProps {
  */
 const CONTRAST_DIALOG_STYLE: React.CSSProperties = {
   maxWidth: "min(32rem, calc(100% - 2rem))",
-};
+}
 
 /**
  * Contrast checker as a dialog. Uncontrolled, it renders its own trigger
@@ -53,9 +53,9 @@ export function ContrastCheckerDialog({
 }: ContrastCheckerDialogProps) {
   // Focus the dialog itself on open, not its first control (the mode toggle),
   // which would otherwise open with a focus ring on "Light".
-  const popupRef = React.useRef<HTMLDivElement>(null);
+  const popupRef = React.useRef<HTMLDivElement>(null)
   const hasTrigger =
-    open === undefined || children !== undefined || buttonProps !== undefined;
+    open === undefined || children !== undefined || buttonProps !== undefined
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -87,5 +87,5 @@ export function ContrastCheckerDialog({
         </ScrollArea>
       </DialogContent>
     </Dialog>
-  );
+  )
 }

@@ -1,32 +1,32 @@
-"use client";
+"use client"
 
 // Border radius: PresetSliderControl bound to `radius` (rem), with a preview
 // of four shapes. Shown in the Other panel.
 
-import { PresetSliderControl } from "./preset-slider-control";
-import { RADIUS_PRESETS } from "../../config/constants";
+import { PresetSliderControl } from "./preset-slider-control"
+import { RADIUS_PRESETS } from "../../config/constants"
 
 function RadiusPreview(radius: string) {
   return (
     <div className="grid grid-cols-4 gap-2 pt-2">
       <div
-        className="bg-primary h-10 w-full"
+        className="h-10 w-full bg-primary"
         style={{ borderRadius: radius }}
       />
       <div
-        className="border-primary h-10 w-full border-2"
+        className="h-10 w-full border-2 border-primary"
         style={{ borderRadius: radius }}
       />
       <div
-        className="bg-secondary h-10 w-full"
+        className="h-10 w-full bg-secondary"
         style={{ borderRadius: `calc(${radius} - 2px)` }}
       />
       <div
-        className="bg-muted h-10 w-full"
+        className="h-10 w-full bg-muted"
         style={{ borderRadius: `calc(${radius} + 4px)` }}
       />
     </div>
-  );
+  )
 }
 
 /**
@@ -42,5 +42,5 @@ export function RadiusControl() {
       fallback={0.625}
       renderPreview={RadiusPreview}
     />
-  );
+  )
 }

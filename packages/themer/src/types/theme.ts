@@ -49,13 +49,13 @@ export type ThemeColorKey =
   | "sidebar-accent"
   | "sidebar-accent-foreground"
   | "sidebar-border"
-  | "sidebar-ring";
+  | "sidebar-ring"
 
 /**
  * Theme typography variable names
  */
 export type ThemeFontKey =
-  "font-sans" | "font-heading" | "font-serif" | "font-mono";
+  "font-sans" | "font-heading" | "font-serif" | "font-mono"
 
 /**
  * Theme shadow variable names
@@ -66,18 +66,18 @@ export type ThemeShadowKey =
   | "shadow-blur"
   | "shadow-spread"
   | "shadow-offset-x"
-  | "shadow-offset-y";
+  | "shadow-offset-y"
 
 /**
  * Theme spacing variable names
  */
-export type ThemeSpacingKey = "radius" | "spacing" | "letter-spacing";
+export type ThemeSpacingKey = "radius" | "spacing" | "letter-spacing"
 
 /**
  * All theme style property keys
  */
 export type ThemeStyleKey =
-  ThemeColorKey | ThemeFontKey | ThemeShadowKey | ThemeSpacingKey;
+  ThemeColorKey | ThemeFontKey | ThemeShadowKey | ThemeSpacingKey
 
 /**
  * Style properties for a single theme mode (light or dark). A type alias, not
@@ -86,86 +86,86 @@ export type ThemeStyleKey =
  */
 export type ThemeStyleProps = {
   // Colors
-  background: string;
-  foreground: string;
-  card: string;
-  "card-foreground": string;
-  popover: string;
-  "popover-foreground": string;
-  primary: string;
-  "primary-foreground": string;
-  secondary: string;
-  "secondary-foreground": string;
-  muted: string;
-  "muted-foreground": string;
-  accent: string;
-  "accent-foreground": string;
-  destructive: string;
-  "destructive-foreground": string;
-  border: string;
-  input: string;
-  ring: string;
-  "chart-1": string;
-  "chart-2": string;
-  "chart-3": string;
-  "chart-4": string;
-  "chart-5": string;
-  sidebar: string;
-  "sidebar-foreground": string;
-  "sidebar-primary": string;
-  "sidebar-primary-foreground": string;
-  "sidebar-accent": string;
-  "sidebar-accent-foreground": string;
-  "sidebar-border": string;
-  "sidebar-ring": string;
+  background: string
+  foreground: string
+  card: string
+  "card-foreground": string
+  popover: string
+  "popover-foreground": string
+  primary: string
+  "primary-foreground": string
+  secondary: string
+  "secondary-foreground": string
+  muted: string
+  "muted-foreground": string
+  accent: string
+  "accent-foreground": string
+  destructive: string
+  "destructive-foreground": string
+  border: string
+  input: string
+  ring: string
+  "chart-1": string
+  "chart-2": string
+  "chart-3": string
+  "chart-4": string
+  "chart-5": string
+  sidebar: string
+  "sidebar-foreground": string
+  "sidebar-primary": string
+  "sidebar-primary-foreground": string
+  "sidebar-accent": string
+  "sidebar-accent-foreground": string
+  "sidebar-border": string
+  "sidebar-ring": string
 
   // Typography. `font-heading` is the host's display face for headings;
   // presets from tweakcn have none and resolve it to their serif
   // (resolvePresetStyles).
-  "font-sans": string;
-  "font-heading": string;
-  "font-serif": string;
-  "font-mono": string;
+  "font-sans": string
+  "font-heading": string
+  "font-serif": string
+  "font-mono": string
 
   // Shadows
-  "shadow-color": string;
-  "shadow-opacity": string;
-  "shadow-blur": string;
-  "shadow-spread": string;
-  "shadow-offset-x": string;
-  "shadow-offset-y": string;
+  "shadow-color": string
+  "shadow-opacity": string
+  "shadow-blur": string
+  "shadow-spread": string
+  "shadow-offset-x": string
+  "shadow-offset-y": string
 
   // Spacing
-  radius: string;
-  spacing?: string;
-  "letter-spacing": string;
-};
+  radius: string
+  spacing?: string
+  "letter-spacing": string
+}
 
 /**
  * Values of Host extra colours (ThemerConfig.extraColors) by CSS custom
  * property name without `--`. Optional by nature: an extra a theme does not
  * set is absent, and the host's own CSS value shows.
  */
-export type ExtraColorValues = { [extraKey: string]: string | undefined };
+export type ExtraColorValues = { [extraKey: string]: string | undefined }
 
 /**
  * One mode's styles as the editor stores them: every built-in key (typed as
  * in ThemeStyleProps) plus any Host extra colours that have a value.
  */
-export type ThemeModeStyles = ThemeStyleProps & ExtraColorValues;
+export type ThemeModeStyles = ThemeStyleProps & ExtraColorValues
 
 /**
  * Complete theme styles containing both light and dark modes
  */
 export interface ThemeStyles {
-  light: ThemeModeStyles;
-  dark: ThemeModeStyles;
+  light: ThemeModeStyles
+  dark: ThemeModeStyles
 }
 
 /**
  * Theme mode type
  */
-export type ThemeMode = "light" | "dark";
+export type ThemeMode = "light" | "dark"
 
 /**
  * HSL adjustment values for color manipulation: `hueShift` in degrees, the
@@ -173,9 +173,9 @@ export type ThemeMode = "light" | "dark";
  * (defaultHSLAdjustments in config/defaults.ts).
  */
 export interface HSLAdjustments {
-  hueShift: number;
-  saturationScale: number;
-  lightnessScale: number;
+  hueShift: number
+  saturationScale: number
+  lightnessScale: number
 }
 
 /**
@@ -183,15 +183,14 @@ export interface HSLAdjustments {
  * override). Host extra colours may be included; a preset that leaves one
  * out leaves it unset.
  */
-export type PartialThemeStyleProps = Partial<ThemeStyleProps> &
-  ExtraColorValues;
+export type PartialThemeStyleProps = Partial<ThemeStyleProps> & ExtraColorValues
 
 /**
  * Partial theme styles for presets
  */
 export interface PartialThemeStyles {
-  light: PartialThemeStyleProps;
-  dark: PartialThemeStyleProps;
+  light: PartialThemeStyleProps
+  dark: PartialThemeStyleProps
 }
 
 /**
@@ -204,52 +203,52 @@ export interface ThemePreset {
    * Unique id, persisted as the Theme's preset. A Host Preset with a
    * built-in id replaces that built-in Preset.
    */
-  id: string;
+  id: string
   /** Name shown in the preset picker, which sorts by it. */
-  label: string;
+  label: string
   /** Free-form description; the Themer UI does not show it. */
-  description?: string;
+  description?: string
   /** Free-form origin tag; the Themer UI does not read it. */
-  source?: string;
+  source?: string
   /**
    * Date string (ISO 8601). The picker shows a "New" badge for 5 days after
    * it.
    */
-  createdAt?: string;
+  createdAt?: string
   /**
    * Token values by mode, CSS custom property names without `--` (`primary`,
    * `font-sans`, `radius`, and any Host extra colour). Light is laid over the
    * defaults; dark is laid over the Preset's resolved light values.
    */
-  styles: PartialThemeStyles;
+  styles: PartialThemeStyles
 }
 
 /**
  * A saved theme record. Nothing in the Themer UI saves or lists these.
  */
 export interface SavedTheme {
-  id: string;
-  name: string;
-  description?: string;
-  styles: ThemeStyles;
-  preset?: string;
-  hslAdjustments?: HSLAdjustments;
-  createdAt: string;
-  updatedAt: string;
-  createdBy?: string;
-  isPublic?: boolean;
-  previewImage?: string;
+  id: string
+  name: string
+  description?: string
+  styles: ThemeStyles
+  preset?: string
+  hslAdjustments?: HSLAdjustments
+  createdAt: string
+  updatedAt: string
+  createdBy?: string
+  isPublic?: boolean
+  previewImage?: string
 }
 
 /**
  * Color format for export
  */
-export type ColorFormat = "hex" | "rgb" | "hsl" | "oklch";
+export type ColorFormat = "hex" | "rgb" | "hsl" | "oklch"
 
 /**
  * Tailwind version for export
  */
-export type TailwindVersion = "3" | "4";
+export type TailwindVersion = "3" | "4"
 
 /**
  * Color groups for organizing the editor UI
@@ -287,7 +286,7 @@ export const COLOR_GROUPS = {
     "sidebar-border",
     "sidebar-ring",
   ],
-} as const;
+} as const
 
 /**
  * Style keys shared by both modes: the editor writes them to light and dark
@@ -309,14 +308,14 @@ export const COMMON_STYLE_KEYS = [
   "shadow-offset-y",
   "letter-spacing",
   "spacing",
-] as const satisfies readonly ThemeStyleKey[];
+] as const satisfies readonly ThemeStyleKey[]
 
 /** A style key that `updateCommonStyle` writes to both modes. */
-export type CommonStyleKey = (typeof COMMON_STYLE_KEYS)[number];
+export type CommonStyleKey = (typeof COMMON_STYLE_KEYS)[number]
 
 /** Narrow a style key to one shared by both modes. */
 export function isCommonStyleKey(key: string): key is CommonStyleKey {
-  return (COMMON_STYLE_KEYS as readonly string[]).includes(key);
+  return (COMMON_STYLE_KEYS as readonly string[]).includes(key)
 }
 
 /**
@@ -335,4 +334,4 @@ export const NON_COLOR_KEYS: ThemeStyleKey[] = [
   "shadow-spread",
   "shadow-offset-x",
   "shadow-offset-y",
-];
+]

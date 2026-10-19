@@ -3,42 +3,42 @@
 // types. Not listed here: Themer, ThemerRoot and LenisPause.
 
 // Main components
-export { ThemerProvider, useThemerContext } from "./themer-provider";
-export { ThemerTrigger } from "./themer-trigger";
-export { ThemerUI } from "./themer-ui";
-export { ThemerSidebar } from "./themer-sidebar";
-export { ActionBar } from "./action-bar";
+export { ThemerProvider, useThemerContext } from "./themer-provider"
+export { ThemerTrigger } from "./themer-trigger"
+export { ThemerUI } from "./themer-ui"
+export { ThemerSidebar } from "./themer-sidebar"
+export { ActionBar } from "./action-bar"
 
 // Theme initialization: the pre-paint script is src/head-script.ts (the
 // `themercn/head-script` entry); ThemerProvider mounts DynamicFontLoader itself
-export { DynamicFontLoader } from "./dynamic-font-loader";
+export { DynamicFontLoader } from "./dynamic-font-loader"
 
 // Editor components
-export { ControlSection } from "./editor/control-section";
-export { SectionContext, useSectionContext } from "./editor/section-context";
-export { SliderWithInput } from "./editor/slider-with-input";
-export { ColorPicker } from "./editor/color-picker";
-export { ColorSelectorPopover } from "./editor/color-selector-popover";
-export { ColorControls } from "./editor/color-controls";
-export { FontPicker, FontControls } from "./editor/font-picker";
-export { ShadowControl } from "./editor/shadow-control";
-export { RadiusControl } from "./editor/radius-control";
-export { SpacingControl, SpacingControls } from "./editor/spacing-controls";
-export { HSLAdjustments as HSLAdjustmentControls } from "./editor/hsl-adjustments";
-export { ContrastChecker, ContrastBadge } from "./editor/contrast-checker";
-export { ContrastCheckerDialog } from "./editor/contrast-checker-popover";
-export { LetterSpacingControl } from "./editor/letter-spacing-control";
-export { PresetSliderControl } from "./editor/preset-slider-control";
+export { ControlSection } from "./editor/control-section"
+export { SectionContext, useSectionContext } from "./editor/section-context"
+export { SliderWithInput } from "./editor/slider-with-input"
+export { ColorPicker } from "./editor/color-picker"
+export { ColorSelectorPopover } from "./editor/color-selector-popover"
+export { ColorControls } from "./editor/color-controls"
+export { FontPicker, FontControls } from "./editor/font-picker"
+export { ShadowControl } from "./editor/shadow-control"
+export { RadiusControl } from "./editor/radius-control"
+export { SpacingControl, SpacingControls } from "./editor/spacing-controls"
+export { HSLAdjustments as HSLAdjustmentControls } from "./editor/hsl-adjustments"
+export { ContrastChecker, ContrastBadge } from "./editor/contrast-checker"
+export { ContrastCheckerDialog } from "./editor/contrast-checker-popover"
+export { LetterSpacingControl } from "./editor/letter-spacing-control"
+export { PresetSliderControl } from "./editor/preset-slider-control"
 
 // Action components
-export { PresetSelect } from "./actions/preset-select";
-export { CodePanelDialog } from "./actions/code-panel-dialog";
-export { CssImportDialog } from "./actions/css-import-dialog";
+export { PresetSelect } from "./actions/preset-select"
+export { CodePanelDialog } from "./actions/code-panel-dialog"
+export { CssImportDialog } from "./actions/css-import-dialog"
 
 // Preview components
-export { InspectorOverlay } from "./preview/inspector-overlay";
-export { PreviewCards } from "./preview/preview-cards";
-export { PreviewTabs } from "./preview/preview-tabs";
+export { InspectorOverlay } from "./preview/inspector-overlay"
+export { PreviewCards } from "./preview/preview-cards"
+export { PreviewTabs } from "./preview/preview-tabs"
 
 // Themer UI parts
 export {
@@ -46,14 +46,10 @@ export {
   MobilePanelContent,
   ThemerHeader,
   PreviewPanel,
-} from "./themer-ui";
+} from "./themer-ui"
 
 // Panel components
-export {
-  ColorsPanel,
-  TypographyPanel,
-  OtherPanel,
-} from "./panels";
+export { ColorsPanel, TypographyPanel, OtherPanel } from "./panels"
 
 // Sidebar components
 export {
@@ -63,7 +59,7 @@ export {
   CollapsedNavigation,
   ExpandedContent,
   PanelContent,
-} from "./sidebar";
+} from "./sidebar"
 
 // UI components
-export { LoadingDots, SparklesIcon } from "./ui";
+export { LoadingDots, SparklesIcon } from "./ui"

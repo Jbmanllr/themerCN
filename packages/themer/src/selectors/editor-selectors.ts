@@ -9,29 +9,29 @@
 // component each time; wrap such a selector in useShallow (as
 // hooks/use-themer.ts does) or derive the value in the component.
 
-import type { EditorStore, ThemeStyleProps } from "../types";
-import { resolvePresetStyles } from "../config/presets";
-import { defaultHSLAdjustments } from "../config/defaults";
-import { isDeepEqual } from "../utils/deep-equal";
-import { applySidebarSync } from "../utils/sidebar-sync";
+import type { EditorStore, ThemeStyleProps } from "../types"
+import { resolvePresetStyles } from "../config/presets"
+import { defaultHSLAdjustments } from "../config/defaults"
+import { isDeepEqual } from "../utils/deep-equal"
+import { applySidebarSync } from "../utils/sidebar-sync"
 
 /** Whether there is an undo entry. */
 export const selectCanUndo = (state: EditorStore): boolean =>
-  state.history.length > 0;
+  state.history.length > 0
 
 /** Whether there is a redo entry. */
 export const selectCanRedo = (state: EditorStore): boolean =>
-  state.future.length > 0;
+  state.future.length > 0
 
 /** The mode the editor is showing ("light" or "dark"). */
 export const selectCurrentMode = (state: EditorStore) =>
-  state.themeState.currentMode;
+  state.themeState.currentMode
 
 /** The current preset id; undefined when the state carries none. */
-export const selectPreset = (state: EditorStore) => state.themeState.preset;
+export const selectPreset = (state: EditorStore) => state.themeState.preset
 
 /** The whole theme state. It changes identity on every theme edit. */
-export const selectThemeState = (state: EditorStore) => state.themeState;
+export const selectThemeState = (state: EditorStore) => state.themeState
 
 /**
  * The styles of the current mode. The reference changes when an edit touches
@@ -39,30 +39,30 @@ export const selectThemeState = (state: EditorStore) => state.themeState;
  * styles change.
  */
 export const selectCurrentStyles = (state: EditorStore): ThemeStyleProps =>
-  state.themeState.styles[state.themeState.currentMode];
+  state.themeState.styles[state.themeState.currentMode]
 
 /** The styles of both modes (`{ light, dark }`), for a reader of both. */
-export const selectStyles = (state: EditorStore) => state.themeState.styles;
+export const selectStyles = (state: EditorStore) => state.themeState.styles
 
 /**
  * The current HSL adjustment values. The styles already include their effect
  * (computed from themeCheckpoint); do not apply them again.
  */
 export const selectHSLAdjustments = (state: EditorStore) =>
-  state.themeState.hslAdjustments;
+  state.themeState.hslAdjustments
 
 /**
  * Whether the theme differs from its preset (resolved as when applied) or
  * has HSL adjustments. Drives the "unsaved" indicator.
  */
 export const selectHasUnsavedChanges = (state: EditorStore): boolean => {
-  const { themeState } = state;
-  const presetStyles = resolvePresetStyles(themeState.preset ?? "default");
+  const { themeState } = state
+  const presetStyles = resolvePresetStyles(themeState.preset ?? "default")
   return (
     !isDeepEqual(themeState.styles, presetStyles) ||
     !isDeepEqual(themeState.hslAdjustments, defaultHSLAdjustments)
-  );
-};
+  )
+}
 
 /**
  * Selector factory for the Reset button: whether resetting would change the
@@ -74,15 +74,15 @@ export const selectHasUnsavedChanges = (state: EditorStore): boolean => {
 export const selectCanResetToPreset =
   (sidebarSync: boolean) =>
   (state: EditorStore): boolean => {
-    const { themeState } = state;
-    const presetStyles = resolvePresetStyles(themeState.preset ?? "default");
+    const { themeState } = state
+    const presetStyles = resolvePresetStyles(themeState.preset ?? "default")
     return (
       !isDeepEqual(
         themeState.styles,
-        sidebarSync ? applySidebarSync(presetStyles) : presetStyles,
+        sidebarSync ? applySidebarSync(presetStyles) : presetStyles
       ) || !isDeepEqual(themeState.hslAdjustments, defaultHSLAdjustments)
-    );
-  };
+    )
+  }
 
 /**
  * Selector factory: `selectStyleProperty(key)` reads one style value of the
@@ -92,33 +92,32 @@ export const selectCanResetToPreset =
 export const selectStyleProperty =
   (key: keyof ThemeStyleProps) =>
   (state: EditorStore): string | undefined =>
-    state.themeState.styles[state.themeState.currentMode][key];
+    state.themeState.styles[state.themeState.currentMode][key]
 
 // Store actions: stable references for the store's lifetime, so a component
 // that selects one never re-renders because of it.
-export const selectSetThemeState = (state: EditorStore) => state.setThemeState;
+export const selectSetThemeState = (state: EditorStore) => state.setThemeState
 
 export const selectApplyThemePreset = (state: EditorStore) =>
-  state.applyThemePreset;
+  state.applyThemePreset
 
-export const selectUndo = (state: EditorStore) => state.undo;
+export const selectUndo = (state: EditorStore) => state.undo
 
-export const selectRedo = (state: EditorStore) => state.redo;
+export const selectRedo = (state: EditorStore) => state.redo
 
 export const selectResetToCurrentPreset = (state: EditorStore) =>
-  state.resetToCurrentPreset;
+  state.resetToCurrentPreset
 
-export const selectSetCurrentMode = (state: EditorStore) =>
-  state.setCurrentMode;
+export const selectSetCurrentMode = (state: EditorStore) => state.setCurrentMode
 
 export const selectSaveThemeCheckpoint = (state: EditorStore) =>
-  state.saveThemeCheckpoint;
+  state.saveThemeCheckpoint
 
 export const selectRestoreThemeCheckpoint = (state: EditorStore) =>
-  state.restoreThemeCheckpoint;
+  state.restoreThemeCheckpoint
 
 export const selectUpdateCommonStyle = (state: EditorStore) =>
-  state.updateCommonStyle;
+  state.updateCommonStyle
 
 export const selectImportThemeStyles = (state: EditorStore) =>
-  state.importThemeStyles;
+  state.importThemeStyles

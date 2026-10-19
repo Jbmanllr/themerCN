@@ -1,17 +1,17 @@
-"use client";
+"use client"
 
 // Viewport hooks for the editor's layout switch (desktop vs mobile drawer).
 
-import { useState, useEffect, useCallback, useSyncExternalStore } from "react";
+import { useState, useEffect, useCallback, useSyncExternalStore } from "react"
 
 // The editor switches to its mobile drawer below 1280 (1280px).
 // Its desktop layout renders the stock @workspace/ui Sidebar, which becomes a
 // Sheet below shadcn's own 768px, so this value must never drop under 768:
 // the desktop layout would then draw around a Sidebar in Sheet mode.
-const MOBILE_BREAKPOINT = 1280;
+const MOBILE_BREAKPOINT = 1280
 
 function getServerSnapshot() {
-  return false;
+  return false
 }
 
 /**
@@ -20,20 +20,20 @@ function getServerSnapshot() {
  * gets the right value on its first render; the server snapshot is false.
  */
 export function useIsMobile(breakpoint: number = MOBILE_BREAKPOINT): boolean {
-  const query = `(max-width: ${breakpoint - 1}px)`;
+  const query = `(max-width: ${breakpoint - 1}px)`
   const subscribe = useCallback(
     (onStoreChange: () => void) => {
-      const media = window.matchMedia(query);
-      media.addEventListener("change", onStoreChange);
-      return () => media.removeEventListener("change", onStoreChange);
+      const media = window.matchMedia(query)
+      media.addEventListener("change", onStoreChange)
+      return () => media.removeEventListener("change", onStoreChange)
     },
-    [query],
-  );
+    [query]
+  )
   const getSnapshot = useCallback(
     () => window.matchMedia(query).matches,
-    [query],
-  );
-  return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+    [query]
+  )
+  return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot)
 }
 
 /**
@@ -41,20 +41,20 @@ export function useIsMobile(breakpoint: number = MOBILE_BREAKPOINT): boolean {
  * first effect has run: never size anything from it on the first render.
  */
 export function useViewportSize(): { width: number; height: number } {
-  const [size, setSize] = useState({ width: 0, height: 0 });
+  const [size, setSize] = useState({ width: 0, height: 0 })
 
   useEffect(() => {
     const updateSize = () => {
       setSize({
         width: window.innerWidth,
         height: window.innerHeight,
-      });
-    };
+      })
+    }
 
-    updateSize();
-    window.addEventListener("resize", updateSize);
-    return () => window.removeEventListener("resize", updateSize);
-  }, []);
+    updateSize()
+    window.addEventListener("resize", updateSize)
+    return () => window.removeEventListener("resize", updateSize)
+  }, [])
 
-  return size;
+  return size
 }

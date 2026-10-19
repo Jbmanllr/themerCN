@@ -1,29 +1,29 @@
-"use client";
+"use client"
 
 import {
   Avatar,
   AvatarFallback,
   AvatarImage,
-} from "@workspace/ui/components/avatar";
-import { Button } from "@workspace/ui/components/button";
+} from "@workspace/ui/components/avatar"
+import { Button } from "@workspace/ui/components/button"
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@workspace/ui/components/card";
-import { Input } from "@workspace/ui/components/input";
-import { Label } from "@workspace/ui/components/label";
+} from "@workspace/ui/components/card"
+import { Input } from "@workspace/ui/components/input"
+import { Label } from "@workspace/ui/components/label"
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@workspace/ui/components/select";
-import { Separator } from "@workspace/ui/components/separator";
-import { avatarDataUri } from "../avatar-data-uri";
+} from "@workspace/ui/components/select"
+import { Separator } from "@workspace/ui/components/separator"
+import { avatarDataUri } from "../avatar-data-uri"
 
 const people = [
   {
@@ -46,7 +46,7 @@ const people = [
     email: "e@example.com",
     avatar: avatarDataUri("ET", "#16a34a"),
   },
-];
+]
 export function CardsShare() {
   return (
     <Card>
@@ -89,7 +89,7 @@ export function CardsShare() {
                     <p className="text-sm leading-none font-medium">
                       {person.name}
                     </p>
-                    <p className="text-muted-foreground text-sm">
+                    <p className="text-sm text-muted-foreground">
                       {person.email}
                     </p>
                   </div>
@@ -109,5 +109,5 @@ export function CardsShare() {
         </div>
       </CardContent>
     </Card>
-  );
+  )
 }

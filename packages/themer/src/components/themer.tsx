@@ -1,4 +1,4 @@
-"use client";
+"use client"
 
 // The Themer as a Host app mounts it: one component beside the Host's tree,
 // configured by flat props (ThemerProps). Everything under it is internal.
@@ -23,24 +23,20 @@
 // - `presets`, `extraColors`, `previewTabs` and `previewWrapper` must be
 //   stable module-level values: a new identity re-registers or rebuilds them.
 
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { useState } from "react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
+import { useState } from "react"
 
-import type { ThemerConfig, ThemerProps } from "../types";
-import {
-  DEFAULT_STORAGE_NAMESPACE,
-  getStorageKeys,
-} from "../config/constants";
-import { useHydrated } from "../hooks/use-hydrated";
-import { hydrateThemerStores } from "../stores/hydrate";
+import type { ThemerConfig, ThemerProps } from "../types"
+import { DEFAULT_STORAGE_NAMESPACE, getStorageKeys } from "../config/constants"
+import { useHydrated } from "../hooks/use-hydrated"
+import { hydrateThemerStores } from "../stores/hydrate"
 
-import { ColorModeProvider } from "./color-mode";
-import { ThemerProvider } from "./themer-provider";
-import { ThemerRoot } from "./themer-root";
-import { useThemerStyle } from "./themer-scope";
+import { ColorModeProvider } from "./color-mode"
+import { ThemerProvider } from "./themer-provider"
+import { ThemerRoot } from "./themer-root"
+import { useThemerStyle } from "./themer-scope"
 
-const DAY_MS = 24 * 60 * 60 * 1000;
-
+const DAY_MS = 24 * 60 * 60 * 1000
 
 /**
  * The Themer: a live editor for the page's shadcn Theme. Mount it once, next
@@ -57,11 +53,11 @@ const DAY_MS = 24 * 60 * 60 * 1000;
  */
 export function Themer(props: ThemerProps) {
   // Everything under it may assume a hydrated client.
-  const hydrated = useHydrated();
+  const hydrated = useHydrated()
 
-  if (!hydrated || window.self !== window.top) return null;
+  if (!hydrated || window.self !== window.top) return null
 
-  return <ThemerApp {...props} />;
+  return <ThemerApp {...props} />
 }
 
 function ThemerApp({
@@ -72,8 +68,8 @@ function ThemerApp({
 }: ThemerProps) {
   // Before any child reads the stores, so the first render already shows
   // the persisted Theme of this namespace.
-  hydrateThemerStores(storageNamespace);
-  useThemerStyle();
+  hydrateThemerStores(storageNamespace)
+  useThemerStyle()
 
   const [queryClient] = useState(
     () =>
@@ -86,10 +82,10 @@ function ThemerApp({
             staleTime: DAY_MS,
           },
         },
-      }),
-  );
+      })
+  )
 
-  const config = useShallowStable<ThemerConfig>(editorProps);
+  const config = useShallowStable<ThemerConfig>(editorProps)
 
   return (
     <QueryClientProvider client={queryClient}>
@@ -103,7 +99,7 @@ function ThemerApp({
         </ThemerProvider>
       </ColorModeProvider>
     </QueryClientProvider>
-  );
+  )
 }
 
 /**
@@ -111,22 +107,22 @@ function ThemerApp({
  * Host re-render with unchanged props keeps the config's identity.
  */
 function useShallowStable<T extends object>(value: T): T {
-  const [stable, setStable] = useState(value);
-  if (stable === value || isShallowEqual(stable, value)) return stable;
-  setStable(value);
-  return value;
+  const [stable, setStable] = useState(value)
+  if (stable === value || isShallowEqual(stable, value)) return stable
+  setStable(value)
+  return value
 }
 
 function isShallowEqual(a: object, b: object): boolean {
-  const aKeys = Object.keys(a);
-  const bKeys = Object.keys(b);
+  const aKeys = Object.keys(a)
+  const bKeys = Object.keys(b)
   return (
     aKeys.length === bKeys.length &&
     aKeys.every((key) =>
       Object.is(
         (a as Record<string, unknown>)[key],
-        (b as Record<string, unknown>)[key],
-      ),
+        (b as Record<string, unknown>)[key]
+      )
     )
-  );
+  )
 }

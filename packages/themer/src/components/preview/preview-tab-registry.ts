@@ -10,30 +10,30 @@
 //
 // See: packages/themer/README.md ("`<Themer>` props")
 
-import type { ComponentType } from "react";
-import type { ThemerPreviewTab } from "../../types";
+import type { ComponentType } from "react"
+import type { ThemerPreviewTab } from "../../types"
 
 /** A resolved tab: built-in or host, with the fields the preview area uses. */
 export interface PreviewTabDefinition {
-  id: string;
-  label: string;
-  component: ComponentType;
-  scroll: "y" | "xy" | "none";
-  order: number;
+  id: string
+  label: string
+  component: ComponentType
+  scroll: "y" | "xy" | "none"
+  order: number
   /** Host tabs render inside `ThemerConfig.previewWrapper`. */
-  source: "builtin" | "host";
+  source: "builtin" | "host"
   /** Listed in the "More previews" menu instead of the tab bar. */
-  inMenu?: boolean;
+  inMenu?: boolean
   /** Hidden from the tab bar below `md` (wide demos). */
-  wideOnly?: boolean;
+  wideOnly?: boolean
   /** The body is a same-origin frame the inspector binds to. */
-  frame?: boolean;
+  frame?: boolean
   /** Fills the area edge to edge (no inner padding or rounding). */
-  bare?: boolean;
+  bare?: boolean
 }
 
 /** A built-in tab before merging (order and scroll are required there). */
-export type BuiltinPreviewTab = Omit<PreviewTabDefinition, "source">;
+export type BuiltinPreviewTab = Omit<PreviewTabDefinition, "source">
 
 /**
  * Merge built-in and host tabs, sorted by `order`. A host tab replaces a
@@ -43,15 +43,15 @@ export type BuiltinPreviewTab = Omit<PreviewTabDefinition, "source">;
  */
 export function mergePreviewTabs(
   builtins: readonly BuiltinPreviewTab[],
-  hostTabs: readonly ThemerPreviewTab[] = [],
+  hostTabs: readonly ThemerPreviewTab[] = []
 ): PreviewTabDefinition[] {
   const lastBuiltinOrder = builtins.reduce(
     (max, tab) => Math.max(max, tab.order),
-    0,
-  );
-  const hostById = new Map<string, PreviewTabDefinition>();
+    0
+  )
+  const hostById = new Map<string, PreviewTabDefinition>()
   hostTabs.forEach((tab, index) => {
-    if (hostById.has(tab.id)) return;
+    if (hostById.has(tab.id)) return
     hostById.set(tab.id, {
       id: tab.id,
       label: tab.label,
@@ -60,25 +60,25 @@ export function mergePreviewTabs(
       // Fractional offsets keep array order among host tabs without `order`.
       order: tab.order ?? lastBuiltinOrder + 1 + index / (hostTabs.length + 1),
       source: "host",
-    });
-  });
+    })
+  })
 
   const merged: PreviewTabDefinition[] = [
     ...builtins
       .filter((tab) => !hostById.has(tab.id))
       .map((tab) => ({ ...tab, source: "builtin" as const })),
     ...hostById.values(),
-  ];
+  ]
   // Array.prototype.sort is stable, so equal orders keep insertion order
   // (built-ins first).
-  return merged.sort((a, b) => a.order - b.order);
+  return merged.sort((a, b) => a.order - b.order)
 }
 
 /** The tab to show for a persisted id: that tab, else the first one. */
 export function resolveActiveTabId(
   tabs: readonly PreviewTabDefinition[],
-  persisted: string | undefined,
+  persisted: string | undefined
 ): string {
-  if (persisted && tabs.some((tab) => tab.id === persisted)) return persisted;
-  return tabs[0]?.id ?? "";
+  if (persisted && tabs.some((tab) => tab.id === persisted)) return persisted
+  return tabs[0]?.id ?? ""
 }

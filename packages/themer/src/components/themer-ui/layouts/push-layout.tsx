@@ -1,4 +1,4 @@
-"use client";
+"use client"
 
 // Push: the Themer layout where the sidebar sits beside the Host app's real
 // page and shifts it aside instead of covering it. It is the in-place sidebar
@@ -20,13 +20,13 @@
 //   `left: var(--themer-inset-inline-start, 0)`; the viewport does not
 //   shrink, so breakpoints and viewport units do not react.
 
-import * as React from "react";
-import { useThemerSidebarWidth } from "../themer-sidebar-provider";
-import { InPlaceSidebarLayout } from "./in-place-sidebar-layout";
-import type { ThemerLayoutProps } from "./types";
+import * as React from "react"
+import { useThemerSidebarWidth } from "../themer-sidebar-provider"
+import { InPlaceSidebarLayout } from "./in-place-sidebar-layout"
+import type { ThemerLayoutProps } from "./types"
 
 /** The variable fixed Host elements opt in with (README, "Push"). */
-const INSET_VARIABLE = "--themer-inset-inline-start";
+const INSET_VARIABLE = "--themer-inset-inline-start"
 
 /**
  * Shifts the Host page aside by `width` (margin-inline-start on <html>) and
@@ -36,29 +36,29 @@ const INSET_VARIABLE = "--themer-inset-inline-start";
  */
 function usePageInset(width: string) {
   React.useLayoutEffect(() => {
-    const style = document.documentElement.style;
+    const style = document.documentElement.style
     const inset: Record<string, string> = {
       [INSET_VARIABLE]: width,
       "margin-inline-start": width,
-    };
+    }
     const previous = Object.keys(inset).map((property) => ({
       property,
       value: style.getPropertyValue(property),
       priority: style.getPropertyPriority(property),
-    }));
+    }))
     for (const [property, value] of Object.entries(inset)) {
-      style.setProperty(property, value);
+      style.setProperty(property, value)
     }
     return () => {
       for (const { property, value, priority } of previous) {
-        if (value) style.setProperty(property, value, priority);
-        else style.removeProperty(property);
+        if (value) style.setProperty(property, value, priority)
+        else style.removeProperty(property)
       }
-    };
-  }, [width]);
+    }
+  }, [width])
 }
 
 export function PushLayout(props: ThemerLayoutProps) {
-  usePageInset(useThemerSidebarWidth());
-  return <InPlaceSidebarLayout layout="push" {...props} />;
+  usePageInset(useThemerSidebarWidth())
+  return <InPlaceSidebarLayout layout="push" {...props} />
 }

@@ -33,9 +33,7 @@ test("the Overlay floats the sidebar over the real page, which stays usable", as
     .getByRole("link", { name: "Pricing", exact: true })
     .click()
   await expect(page).toHaveURL(/\/pricing$/)
-  await expect(
-    page.getByRole("button", { name: "Close Themer" })
-  ).toBeVisible()
+  await expect(page.getByRole("button", { name: "Close Themer" })).toBeVisible()
 })
 
 test("the user's layout survives a reload", async ({ page }) => {

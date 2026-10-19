@@ -109,9 +109,7 @@ test("mounting the Themer leaves the Host's computed styles and animations uncha
   releaseScripts()
   await expect(page.locator("style[data-themer-style]")).toHaveCount(1)
   await expect(page.locator("[data-themer]")).toHaveCount(1)
-  await expect(
-    page.getByRole("button", { name: "Open Themer" })
-  ).toBeVisible()
+  await expect(page.getByRole("button", { name: "Open Themer" })).toBeVisible()
 
   expect(await hostStyles(page)).toEqual(before)
 })

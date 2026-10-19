@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 
-import { cartSummary } from "./shop"
+import { cartSummary, lineKey, shippingLabel } from "./shop"
 
 describe("cartSummary", () => {
   it("adds up lines and charges standard shipping below the free threshold", () => {
@@ -42,5 +42,42 @@ describe("cartSummary", () => {
       shipping: 0,
       total: 0,
     })
+  })
+})
+
+describe("lineKey", () => {
+  it("is the same for equal options, whatever their order", () => {
+    expect(
+      lineKey({
+        productSlug: "ethiopia-guji",
+        option: { Grind: "Filter", Size: "250g" },
+      })
+    ).toBe(
+      lineKey({
+        productSlug: "ethiopia-guji",
+        option: { Size: "250g", Grind: "Filter" },
+      })
+    )
+  })
+
+  it("differs when the product or an option differs", () => {
+    const base = lineKey({
+      productSlug: "ethiopia-guji",
+      option: { Grind: "Filter" },
+    })
+    expect(
+      lineKey({ productSlug: "decaf-dusk", option: { Grind: "Filter" } })
+    ).not.toBe(base)
+    expect(
+      lineKey({ productSlug: "ethiopia-guji", option: { Grind: "Espresso" } })
+    ).not.toBe(base)
+    expect(lineKey({ productSlug: "ethiopia-guji", option: {} })).not.toBe(base)
+  })
+})
+
+describe("shippingLabel", () => {
+  it("names the shipping option", () => {
+    expect(shippingLabel("standard")).toBe("Standard shipping")
+    expect(shippingLabel("express")).toBe("Express shipping")
   })
 })

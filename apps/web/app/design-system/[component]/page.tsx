@@ -14,14 +14,16 @@ export function generateStaticParams() {
   return uiComponents.map((component) => ({ component: component.slug }))
 }
 
-type Props = { params: Promise<{ component: string }> }
-
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
+export async function generateMetadata({
+  params,
+}: PageProps<"/design-system/[component]">): Promise<Metadata> {
   const component = getUiComponent((await params).component)
   return { title: component?.name }
 }
 
-export default async function Page({ params }: Props) {
+export default async function Page({
+  params,
+}: PageProps<"/design-system/[component]">) {
   const component = getUiComponent((await params).component)
   if (!component) notFound()
 

@@ -12,7 +12,6 @@ import {
   configurePresets,
   getDefaultPresetId,
   getPresetIds,
-  getPresetLabel,
   hasPreset,
   isTweakcnPreset,
   resolvePresetStyles,

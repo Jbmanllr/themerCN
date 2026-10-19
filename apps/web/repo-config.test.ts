@@ -69,9 +69,14 @@ describe("linting", () => {
       )
     })
 
-  it("covers the Playground, the Vite app and the ui package", () => {
+  it("covers the Playground, the Vite app, the ui package and themercn", () => {
     expect(linted).toEqual(
-      expect.arrayContaining(["apps/vite", "apps/web", "packages/ui"])
+      expect.arrayContaining([
+        "apps/vite",
+        "apps/web",
+        "packages/themer",
+        "packages/ui",
+      ])
     )
   })
 

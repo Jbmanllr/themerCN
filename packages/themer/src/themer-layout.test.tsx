@@ -82,7 +82,6 @@ const query = <E extends Element = Element>(selector: string) =>
   document.querySelector<E>(selector)
 const preview = () => query('[data-testid="themer-preview"]')
 const sidebar = () => query('[data-testid="themer-ui"] [data-slot="sidebar"]')
-const drawer = () => query('[data-testid="themer-mobile-drawer"]')
 const toolbar = () => query('[data-testid="themer-ui"][role="toolbar"]')
 
 const layoutSwitcher = () => query<HTMLElement>('[aria-label^="Themer layout"]')

@@ -1,10 +1,12 @@
 // The CSS behind a specimen's light and dark halves (`data-mode`).
 //
 // The page's own mode needs nothing: that half inherits the tokens on <html>,
-// including the Themer's live edits. The other half re-declares the Theme's
-// colours for its mode, and only the colours, so radius, fonts, spacing,
-// tracking and shadows still follow the Themer in both halves. `dark:`
-// utilities follow the half through the `dark` variant in app/globals.css.
+// including the Themer's live edits. The other half re-declares the Nightjar
+// Preset's colours for its mode, and only the colours, so radius, fonts,
+// spacing, tracking and shadows still follow the Themer in both halves.
+// `dark:` utilities follow the half through the `dark` variant in
+// app/globals.css. mode-scope.test.ts pins the colour-token rule against the
+// Preset's keys.
 
 type ModeTokens = Record<string, string | undefined>
 

@@ -82,7 +82,9 @@ const query = <E extends Element = Element>(selector: string) =>
   document.querySelector<E>(selector)
 const preview = () => query('[data-testid="themer-preview"]')
 const sidebar = () => query('[data-testid="themer-ui"] [data-slot="sidebar"]')
-const toolbar = () => query('[data-testid="themer-ui"][role="toolbar"]')
+/** The Toolbar's bar: a region named with the glossary's words. */
+const TOOLBAR = '[role="region"][aria-label="Themer toolbar"]'
+const toolbar = () => query(`[data-testid="themer-ui"] ${TOOLBAR}`)
 
 const layoutSwitcher = () => query<HTMLElement>('[aria-label^="Themer layout"]')
 
@@ -145,15 +147,22 @@ describe("Themer layout", () => {
   })
 
   describe("the Toolbar's controls", () => {
-    const inBar = (label: string) =>
-      query(`[role="toolbar"] [aria-label="${label}"]`)
+    const inBar = (label: string) => query(`${TOOLBAR} [aria-label="${label}"]`)
+
+    it("is a labelled region, not a toolbar: it has no arrow-key navigation", async () => {
+      await mount({ layout: "toolbar" })
+      await open()
+
+      expect(toolbar()).not.toBeNull()
+      expect(query('[role="toolbar"]')).toBeNull()
+    })
 
     it("has the preset picker, undo/redo, the colour mode and Close in the bar", async () => {
       await mount({ layout: "toolbar" })
       await open()
 
       expect(
-        query('[role="toolbar"] [data-testid="themer-preset-trigger"]')
+        query(`${TOOLBAR} [data-testid="themer-preset-trigger"]`)
       ).not.toBeNull()
       for (const label of [
         "Undo",
@@ -364,7 +373,7 @@ describe("Themer layout", () => {
 
   describe("the Toolbar's panel groups", () => {
     const group = (label: string) =>
-      query(`[role="toolbar"] button[aria-label="${label}"]`)
+      query(`${TOOLBAR} button[aria-label="${label}"]`)
     const openPopups = () =>
       [...document.querySelectorAll('[data-slot="popover-content"]')].map(
         (popup) => popup.textContent ?? ""
@@ -629,6 +638,17 @@ describe("Themer layout", () => {
       }
     )
 
+    it("shows the Toolbar's card beside the bar, not inside it", async () => {
+      await mount({ layout: "toolbar" })
+      await open()
+
+      await click(inspectorToggle())
+      await pointer("mousemove", pageButton)
+
+      expect(card()).not.toBeNull()
+      expect(card()?.closest(TOOLBAR)).toBeNull()
+    })
+
     it.each(["overlay", "push"] as const)(
       "pins a clicked page element and opens its colour control in the %s layout, without the page acting",
       async (layout) => {
@@ -744,6 +764,55 @@ describe("Themer layout", () => {
       expect(pressed(query('[data-testid="themer-preview-inspector"]'))).toBe(
         "false"
       )
+    })
+
+    /**
+     * The capture listeners bound from now on on <html>, the surface the page
+     * inspector intercepts the Host's clicks on. (Menus bind theirs on the
+     * document, so it is left out.)
+     */
+    function watchCaptureListeners() {
+      const bound: string[] = []
+      const html = document.documentElement
+      const add = html.addEventListener.bind(html)
+      vi.spyOn(html, "addEventListener").mockImplementation(
+        (type, listener, options) => {
+          const capture =
+            options === true ||
+            (typeof options === "object" && options.capture === true)
+          if (capture) bound.push(type)
+          add(type, listener, options)
+        }
+      )
+      return bound
+    }
+
+    it("binds no page listener when the user switches layout with it on", async () => {
+      await mount({ layout: "overlay" })
+      await open()
+      await click(inspectorToggle())
+      const bound = watchCaptureListeners()
+
+      await switchLayout("Push")
+
+      expect(pressed(inspectorToggle())).toBe("false")
+      expect(bound).toEqual([])
+    })
+
+    it("binds no page listener when the Host switches layout with it on", async () => {
+      await mount({ layout: "overlay" })
+      await open()
+      await click(inspectorToggle())
+      const bound = watchCaptureListeners()
+
+      await act(async () =>
+        root?.render(<Themer storageNamespace={namespace} layout="push" />)
+      )
+
+      expect(pressed(inspectorToggle())).toBe("false")
+      expect(bound).toEqual([])
+      await pointer("mousemove", pageButton)
+      expect(card()).toBeNull()
     })
 
     it("turns off when the Themer UI closes", async () => {
@@ -894,12 +963,12 @@ describe("Themer layout", () => {
       await switchLayout("Toolbar")
       expect(toolbar()).not.toBeNull()
       expect(
-        query<HTMLButtonElement>('[role="toolbar"] button[aria-label="Undo"]')
+        query<HTMLButtonElement>(`${TOOLBAR} button[aria-label="Undo"]`)
           ?.disabled
       ).toBe(false)
-      await click(query('[role="toolbar"] button[aria-label="Typography"]'))
+      await click(query(`${TOOLBAR} button[aria-label="Typography"]`))
 
-      await click(query('[role="toolbar"] [aria-label="More actions"]'))
+      await click(query(`${TOOLBAR} [aria-label="More actions"]`))
       await click(
         [...document.querySelectorAll('[role="menuitem"]')].find((item) =>
           item.textContent?.startsWith("Layout")

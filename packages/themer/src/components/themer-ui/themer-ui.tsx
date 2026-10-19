@@ -13,13 +13,15 @@
 // - Layouts read every editing state from the stores, so switching layout
 //   keeps the Theme, undo history and active panel. The inspector is the
 //   exception: each layout inspects its own surface (Preview tabs or the
-//   Host page), so a switch turns it off, as closing does.
+//   Host page), so a switch turns it off, as closing does: the switch action
+//   clears it, and a Host-driven switch leaves it inactive
+//   (hooks/use-themer-layout.ts).
 // - The action dialogs render here, once, beside the layout (ThemerDialogs):
 //   a dialog survives the surface that opened it, and a layout switch.
 //
 // See: packages/themer/ARCHITECTURE.md ("Themer layouts").
 
-import { useEffect, type ComponentType } from "react"
+import type { ComponentType } from "react"
 import { useThemerUIStore } from "../../stores/themer-ui-store"
 import { useThemerContext } from "../themer-provider"
 import { useIsMobile } from "../../hooks/use-is-mobile"
@@ -66,10 +68,6 @@ export function ThemerUI() {
     getActive: getFullscreen,
     setActive: setFullscreen,
   })
-
-  useEffect(() => {
-    useThemerUIStore.setState({ inspectorMode: false })
-  }, [layout])
 
   if (!isOpen) {
     return null

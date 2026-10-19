@@ -282,8 +282,12 @@ export interface ThemerUIState {
   isOpen: boolean
   /** Current active panel. */
   activePanel: "colors" | "typography" | "other"
-  /** Inspector mode enabled */
-  inspectorMode: boolean
+  /**
+   * The Themer layout the inspector was turned on in, or null when off. It
+   * is active only while that layout is in force (useInspectorMode): each
+   * layout inspects its own surface.
+   */
+  inspectorLayout: ThemerLayout | null
   /** Fullscreen preview layout flag (see hooks/use-fullscreen.ts) */
   fullscreenPreview: boolean
   /** The open action dialog, whichever surface opened it. */
@@ -302,8 +306,10 @@ export interface ThemerUIActions {
   toggle: () => void
   /** Set active panel */
   setActivePanel: (panel: ThemerUIState["activePanel"]) => void
-  /** Toggle inspector mode */
-  toggleInspector: () => void
+  /** Toggle the inspector in the Themer layout in force */
+  toggleInspector: (layout: ThemerLayout) => void
+  /** Turn the inspector off */
+  turnOffInspector: () => void
   /** Toggle fullscreen preview */
   toggleFullscreen: () => void
   /** Open an action's dialog, closing any other */

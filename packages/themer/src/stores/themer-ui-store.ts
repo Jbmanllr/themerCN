@@ -6,7 +6,10 @@
 //
 // Contract:
 // - Closing the editor (close or toggle) turns both modes off and closes the
-//   dialog. The colour focus store watches `isOpen` to reset its own state.
+//   dialog. The inspector is kept with the Themer layout it was turned on in
+//   (useInspectorMode derives whether it is active): a switch made in the UI
+//   turns it off (useSetThemerLayout), and a Host-driven switch leaves it
+//   inactive. The colour focus store watches `isOpen` to reset its own state.
 // - `dialog` is the only open-dialog state. Menus and the action bar call
 //   openDialog; ThemerUI renders the dialogs once (actions/
 //   themer-dialogs.tsx), so a dialog outlives the surface that opened it.
@@ -32,7 +35,7 @@ export const useThemerUIStore = create<ThemerUIStore>()((set, get) => {
     // State
     isOpen: false,
     activePanel: "colors",
-    inspectorMode: false,
+    inspectorLayout: null,
     fullscreenPreview: false,
     dialog: null,
 
@@ -41,7 +44,7 @@ export const useThemerUIStore = create<ThemerUIStore>()((set, get) => {
     close: () =>
       set({
         isOpen: false,
-        inspectorMode: false,
+        inspectorLayout: null,
         fullscreenPreview: false,
         dialog: null,
       }),
@@ -49,13 +52,16 @@ export const useThemerUIStore = create<ThemerUIStore>()((set, get) => {
       set((state) => ({
         isOpen: !state.isOpen,
         // Reset modes and the dialog when closing
-        inspectorMode: state.isOpen ? false : state.inspectorMode,
+        inspectorLayout: state.isOpen ? null : state.inspectorLayout,
         fullscreenPreview: state.isOpen ? false : state.fullscreenPreview,
         dialog: state.isOpen ? null : state.dialog,
       })),
     setActivePanel: (panel) => set({ activePanel: panel }),
-    toggleInspector: () =>
-      set((state) => ({ inspectorMode: !state.inspectorMode })),
+    toggleInspector: (layout) =>
+      set((state) => ({
+        inspectorLayout: state.inspectorLayout === layout ? null : layout,
+      })),
+    turnOffInspector: () => set({ inspectorLayout: null }),
     // Runs inside the click handler, so the browser sees the user gesture
     // that requestFullscreen needs.
     toggleFullscreen: () => {

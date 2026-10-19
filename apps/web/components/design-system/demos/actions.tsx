@@ -175,7 +175,7 @@ export function KbdDemo() {
             <Kbd>⌘</Kbd>
             <Kbd>K</Kbd>
           </KbdGroup>{" "}
-          to search the shop, or <Kbd>D</Kbd> to switch light and dark.
+          to search the shop, and <Kbd>Esc</Kbd> to close the search.
         </p>
       </State>
     </>

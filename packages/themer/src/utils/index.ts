@@ -68,8 +68,8 @@ export {
   applySidebarSync,
   isSidebarSynced,
 } from "./sidebar-sync"
-// COLOR_GROUPS (./types) is the plain key list; COLOR_LIST_GROUPS is the
-// labelled colour-list layout built from the same keys.
+// COLOR_LIST_GROUPS is the labelled colour-list layout of THEME_COLOR_KEYS
+// (./types).
 export {
   COLOR_LIST_GROUPS,
   getColorListGroups,
@@ -81,7 +81,6 @@ export {
   type ColorGroupEntry,
 } from "./color-groups"
 export {
-  HSL_ADJUSTABLE_KEYS,
   isIdentityHslAdjustment,
   adjustColor,
   adjustThemeStyles,

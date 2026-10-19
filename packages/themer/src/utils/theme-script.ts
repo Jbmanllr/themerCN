@@ -10,7 +10,7 @@
 // Its imports are constants only, so the head-script entry stays small and
 // reaches no Themer code (scripts/check-entries.mjs).
 
-import { COMMON_STYLE_KEYS } from "../types/theme"
+import { THEME_FONT_KEYS } from "../types/theme"
 import {
   EDITOR_STATE_VERSION,
   PREFERENCES_VERSION,
@@ -112,7 +112,7 @@ export function generateThemeScript({
       // Typography is shared: both modes take the light fonts.
       var light = Object.assign({}, styles.light);
       var dark = Object.assign({}, styles.dark);
-      var fontKeys = ${JSON.stringify(COMMON_STYLE_KEYS.filter((key) => key.startsWith("font-")))};
+      var fontKeys = ${JSON.stringify(THEME_FONT_KEYS)};
       fontKeys.forEach(function(key) {
         if (light[key] !== undefined) dark[key] = light[key];
       });

@@ -27,12 +27,14 @@ import type {
   ThemeStyleProps,
   ThemeStyles,
 } from "../types"
-import { NON_COLOR_KEYS } from "../types"
 import {
   COLOR_STYLE_KEYS,
-  defaultLightStyles,
-  defaultDarkStyles,
-} from "../config/defaults"
+  COMMON_STYLE_KEYS,
+  THEME_FONT_KEYS,
+  THEME_STYLE_KEYS,
+  type ThemeShadowKey,
+} from "../types/theme"
+import { defaultLightStyles, defaultDarkStyles } from "../config/defaults"
 
 export interface ParseThemeCssOptions {
   /**
@@ -58,28 +60,15 @@ type Mode = "light" | "dark"
 // ---------------------------------------------------------------------------
 
 const COLOR_KEYS = new Set<string>(COLOR_STYLE_KEYS)
-// The three font stacks plus `font-heading` (ThemeStyleProps, types/theme.ts).
-const FONT_KEYS = new Set([
-  "font-sans",
-  "font-serif",
-  "font-mono",
-  "font-heading",
-])
-const SHADOW_LENGTH_KEYS = new Set([
+const FONT_KEYS = new Set<string>(THEME_FONT_KEYS)
+/** The shadow inputs that hold a length (normalised to px). */
+const SHADOW_LENGTH_KEYS = new Set<string>([
   "shadow-blur",
   "shadow-spread",
   "shadow-offset-x",
   "shadow-offset-y",
-])
-const EDITOR_KEYS = new Set<string>([
-  ...COLOR_KEYS,
-  ...FONT_KEYS,
-  ...SHADOW_LENGTH_KEYS,
-  "shadow-opacity",
-  "radius",
-  "spacing",
-  "letter-spacing",
-])
+] satisfies ThemeShadowKey[])
+const EDITOR_KEYS = new Set<string>(THEME_STYLE_KEYS)
 // tweakcn / shadcn themes write the shadow knobs as --shadow-x, --shadow-y...
 const SHADOW_ALIASES: Record<string, string> = {
   x: "shadow-offset-x",
@@ -647,7 +636,7 @@ export function parseThemeCss(
   // Radius, fonts, spacing... are shared by both modes in most stylesheets and
   // only written under :root; mirror them so the dark theme is not left on the
   // previous values. Colours never mirror: a missing dark colour is a choice.
-  for (const key of NON_COLOR_KEYS) {
+  for (const key of COMMON_STYLE_KEYS) {
     if (result.light[key] !== undefined && result.dark[key] === undefined) {
       result.dark[key] = result.light[key]
     }

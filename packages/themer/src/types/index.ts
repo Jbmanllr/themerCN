@@ -27,12 +27,7 @@ export type {
   TailwindVersion,
 } from "./theme"
 
-export {
-  COLOR_GROUPS,
-  COMMON_STYLE_KEYS,
-  NON_COLOR_KEYS,
-  isCommonStyleKey,
-} from "./theme"
+export { COMMON_STYLE_KEYS, isCommonStyleKey } from "./theme"
 
 export type {
   FilterFontCategory,

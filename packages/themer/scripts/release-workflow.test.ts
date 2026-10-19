@@ -79,14 +79,18 @@ describe("release.yml", () => {
     for (const checkout of checkouts) expect(checkout.with?.ref).toBe(HEAD_SHA)
   })
 
-  it("pins every action to a full commit SHA with a version comment", () => {
-    const uses = [
-      ...readText("release.yml").matchAll(/^\s*(?:-\s+)?uses:\s*(.+)$/gm),
-    ].map((match) => match[1]!.trim())
-    expect(uses.length).toBeGreaterThan(0)
-    for (const use of uses)
-      expect(use).toMatch(/^[\w.-]+\/[\w./-]+@[0-9a-f]{40} # v\d+\.\d+\.\d+$/)
-  })
+  // CI is pinned too: it gates the release and writes the pnpm cache.
+  it.each(["release.yml", "ci.yml"])(
+    "pins every action in %s to a full commit SHA with a version comment",
+    (file) => {
+      const uses = [
+        ...readText(file).matchAll(/^\s*(?:-\s+)?uses:\s*(.+)$/gm),
+      ].map((match) => match[1]!.trim())
+      expect(uses.length).toBeGreaterThan(0)
+      for (const use of uses)
+        expect(use).toMatch(/^[\w.-]+\/[\w./-]+@[0-9a-f]{40} # v\d+\.\d+\.\d+$/)
+    }
+  )
 
   it("installs an exact npm version for publishing", () => {
     const npmInstalls = steps

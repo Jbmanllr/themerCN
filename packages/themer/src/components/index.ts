@@ -1,6 +1,11 @@
-// Barrel for the editor's components, re-exported by the package root
-// Internal: the package root (src/index.ts) exports only <Themer> and its
-// types. Not listed here: Themer, ThemerRoot and LenisPause.
+// RETIRED (#64): nothing imports this file. It was an unused barrel (the
+// package root exports only <Themer> and its types). Excluded from
+// tsconfig.json, tsconfig.test.json and eslint.config.js until the owner
+// removes it.
+//
+// Barrel for the editor's components. Internal: the package root
+// (src/index.ts) exports only <Themer> and its types. Not listed here:
+// Themer, ThemerRoot and LenisPause.
 
 // Main components
 export { ThemerProvider } from "./themer-provider"

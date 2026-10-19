@@ -10,6 +10,11 @@
   "exclude": [
     "**/*.test.ts",
     "**/*.test.tsx",
-    "src/components/preview/examples/typography/typography-demo.tsx"
+    "src/components/preview/examples/typography/typography-demo.tsx",
+    "src/components/index.ts",
+    "src/components/editor/index.ts",
+    "src/hooks/index.ts",
+    "src/hooks/use-font-loader.ts",
+    "src/utils/index.ts"
   ]
 }

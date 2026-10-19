@@ -1,3 +1,7 @@
+// RETIRED (#64): nothing imports this file. It was an unused barrel; callers
+// import each file directly. Excluded from tsconfig.json, tsconfig.test.json
+// and eslint.config.js until the owner removes it.
+//
 // Barrel of the editor controls. Nothing imports it: components/index.ts
 // re-exports the controls from their own files and leaves ColorGrid out.
 

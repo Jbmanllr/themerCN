@@ -1,3 +1,7 @@
+// RETIRED (#64): nothing imports this file. It was test-only: DynamicFontLoader
+// and the font picker load fonts through utils/font-links.ts. Excluded from
+// tsconfig.json, tsconfig.test.json and eslint.config.js until the owner
+// removes it.
 "use client"
 
 // Hooks that hold Google font families in the Host app's document while a component
@@ -14,7 +18,7 @@
 //
 // The editor does not call these: the theme's fonts load through
 // DynamicFontLoader (setThemeFonts) and the font picker holds its own
-// families. They are exported through the package root.
+// families. Internal.
 
 import { useState, useEffect, useCallback } from "react"
 import { acquireGoogleFont, waitForFont } from "../utils/font-links"

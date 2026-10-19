@@ -3,6 +3,8 @@ import { fileURLToPath } from "node:url"
 
 import { expect, test } from "@playwright/test"
 
+import { hydrated } from "./page"
+
 import { postCategories, posts } from "../lib/mock/blog"
 
 // The marketing and blog screens (#24): every route renders under the site
@@ -42,6 +44,7 @@ test("pricing switches the plans between monthly and yearly billing", async ({
   page,
 }) => {
   await page.goto("/pricing")
+  await hydrated(page)
   const nightShift = page.getByRole("article", { name: "Night Shift" })
   await expect(nightShift).toContainText("$32")
 
@@ -50,11 +53,34 @@ test("pricing switches the plans between monthly and yearly billing", async ({
   await expect(nightShift).toContainText("billed yearly")
 })
 
-test("the contact form ends on a confirmation", async ({ page }) => {
+test("the contact form flags every missing field and focuses the first", async ({
+  page,
+}) => {
   await page.goto("/contact")
+  await hydrated(page)
   await page.getByRole("button", { name: "Send message" }).click()
-  await expect(page.getByLabel("Name")).toHaveAttribute("aria-invalid", "true")
 
+  for (const { label, error } of [
+    { label: "Name", error: "Add your name so we know who to reply to." },
+    {
+      label: "Email",
+      error: "Add an email address we can reply to, like you@example.com.",
+    },
+    { label: "Message", error: "Write a message before sending." },
+  ]) {
+    const input = page.getByLabel(label, { exact: true })
+    await expect(input).toHaveAttribute("aria-invalid", "true")
+    await expect(input).toHaveAccessibleDescription(error)
+    await expect(
+      page.getByRole("alert").filter({ hasText: error })
+    ).toBeVisible()
+  }
+  await expect(page.getByLabel("Name")).toBeFocused()
+})
+
+test("the contact form ends on a focused confirmation", async ({ page }) => {
+  await page.goto("/contact")
+  await hydrated(page)
   await page.getByLabel("Name").fill("Ada Brennan")
   await page.getByLabel("Email").fill("ada@example.com")
   await page.getByLabel("Topic").selectOption("Wholesale")
@@ -64,6 +90,7 @@ test("the contact form ends on a confirmation", async ({ page }) => {
   const confirmation = page.getByRole("status")
   await expect(confirmation).toContainText("Message sent")
   await expect(confirmation).toContainText("ada@example.com")
+  await expect(confirmation).toBeFocused()
   await expect(page.getByRole("button", { name: "Send message" })).toHaveCount(
     0
   )
@@ -73,6 +100,7 @@ test("a journal post opens from the index with its author and block body", async
   page,
 }) => {
   await page.goto("/blog")
+  await hydrated(page)
   await page
     .getByRole("link", { name: "How to dial in espresso" })
     .first()
@@ -99,6 +127,7 @@ test("a journal post opens from the index with its author and block body", async
 
 test("a journal category lists only its posts", async ({ page }) => {
   await page.goto("/blog")
+  await hydrated(page)
   await page
     .getByRole("navigation", { name: "Journal categories" })
     .getByRole("link", { name: "Origins" })

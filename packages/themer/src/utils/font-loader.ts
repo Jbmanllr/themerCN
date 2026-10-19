@@ -1,3 +1,7 @@
+// RETIRED: nothing imports this file. It was split into utils/font-names.ts,
+// utils/font-links.ts, utils/font-catalog-data.ts and api/google-fonts.ts;
+// change those. It stays only until the owner removes it from the repo.
+//
 // Google Fonts for the theme editor: family-name helpers, a per-document
 // reference-counted <link> registry, and the catalogue fetch and paging that
 // packages/themer/src/api/font-catalog.ts serves to the picker, with the
@@ -23,7 +27,7 @@ import type {
   GoogleFont,
   GoogleFontsAPIResponse,
   PaginatedFontsResponse,
-} from "../types/fonts";
+} from "../types/fonts"
 
 export type {
   FilterFontCategory,
@@ -31,15 +35,15 @@ export type {
   FontInfo,
   GoogleFont,
   PaginatedFontsResponse,
-};
+}
 
 /** The editor's font slots; heading takes serif faces by default. */
-export type ThemeFontRole = "sans" | "heading" | "serif" | "mono";
-type FontWeight = number | string;
+export type ThemeFontRole = "sans" | "heading" | "serif" | "mono"
+type FontWeight = number | string
 
 export const GOOGLE_FONTS_API_URL =
-  "https://www.googleapis.com/webfonts/v1/webfonts";
-export const GOOGLE_FONTS_CSS_URL = "https://fonts.googleapis.com/css2";
+  "https://www.googleapis.com/webfonts/v1/webfonts"
+export const GOOGLE_FONTS_CSS_URL = "https://fonts.googleapis.com/css2"
 
 export const FONT_CATEGORIES: Record<
   FontCategory,
@@ -65,7 +69,7 @@ export const FONT_CATEGORIES: Record<
     label: "Handwriting",
     fallback: "cursive",
   },
-};
+}
 
 export const SYSTEM_FONTS = [
   "ui-sans-serif",
@@ -77,7 +81,7 @@ export const SYSTEM_FONTS = [
   "monospace",
   "cursive",
   "fantasy",
-];
+]
 
 export const SYSTEM_FONTS_FALLBACKS: Record<FontCategory, string> = {
   "sans-serif": FONT_CATEGORIES["sans-serif"].fallback,
@@ -85,21 +89,21 @@ export const SYSTEM_FONTS_FALLBACKS: Record<FontCategory, string> = {
   monospace: FONT_CATEGORIES.monospace.fallback,
   display: FONT_CATEGORIES.display.fallback,
   handwriting: FONT_CATEGORIES.handwriting.fallback,
-};
+}
 
 export const fontFallbacks: Record<ThemeFontRole, readonly string[]> = {
   sans: ["ui-sans-serif", "sans-serif", "system-ui"],
   heading: ["ui-serif", "serif"],
   serif: ["ui-serif", "serif"],
   mono: ["ui-monospace", "monospace"],
-};
+}
 
 const roleToCategory: Record<ThemeFontRole, FontCategory> = {
   sans: "sans-serif",
   heading: "serif",
   serif: "serif",
   mono: "monospace",
-};
+}
 
 /**
  * The bundled catalogue: ~130 popular Latin families from Google's public
@@ -930,26 +934,25 @@ export const POPULAR_FONTS: Record<FontCategory, FontInfo[]> = {
       variable: false,
     },
   ],
-};
+}
 
 // Pure, so entries that need only the name lists (head-script) drop the catalogue.
-export const FALLBACK_FONTS: FontInfo[] = /* @__PURE__ */ Object.values(
-  POPULAR_FONTS,
-).flat();
+export const FALLBACK_FONTS: FontInfo[] =
+  /* @__PURE__ */ Object.values(POPULAR_FONTS).flat()
 
 function normalizeWeights(weights: readonly FontWeight[]): string[] {
-  return weights.map((weight) => String(weight));
+  return weights.map((weight) => String(weight))
 }
 
 function isThemeFontRole(value: string): value is ThemeFontRole {
-  return Object.hasOwn(roleToCategory, value);
+  return Object.hasOwn(roleToCategory, value)
 }
 
 export function toFontCategory(
-  category: ThemeFontRole | FontCategory,
+  category: ThemeFontRole | FontCategory
 ): FontCategory {
-  if (isThemeFontRole(category)) return roleToCategory[category];
-  return category;
+  if (isThemeFontRole(category)) return roleToCategory[category]
+  return category
 }
 
 /** Generic keywords and CSS-wide values: never a family to fetch. */
@@ -962,7 +965,7 @@ export const GENERIC_FONT_FAMILIES = new Set([
   "inherit",
   "initial",
   "unset",
-]);
+])
 
 /**
  * A family name as CSS needs it in a font-family list. Names with spaces or
@@ -971,19 +974,19 @@ export const GENERIC_FONT_FAMILIES = new Set([
  * (quoting `serif` would turn the keyword into a family called "serif").
  */
 export function quoteFontFamily(family: string): string {
-  const name = family.trim();
-  if (!name) return name;
-  if (/^(["']).*\1$/u.test(name) || name.startsWith("var(")) return name;
-  if (GENERIC_FONT_FAMILIES.has(name.toLowerCase())) return name;
-  if (/^-?[A-Za-z_][\w-]*$/u.test(name)) return name;
-  return `"${name.replace(/["\\]/gu, (char) => `\\${char}`)}"`;
+  const name = family.trim()
+  if (!name) return name
+  if (/^(["']).*\1$/u.test(name) || name.startsWith("var(")) return name
+  if (GENERIC_FONT_FAMILIES.has(name.toLowerCase())) return name
+  if (/^-?[A-Za-z_][\w-]*$/u.test(name)) return name
+  return `"${name.replace(/["\\]/gu, (char) => `\\${char}`)}"`
 }
 
 export function buildFontFamily(
   fontFamily: string,
-  category: FontCategory,
+  category: FontCategory
 ): string {
-  return `${quoteFontFamily(fontFamily)}, ${SYSTEM_FONTS_FALLBACKS[category]}`;
+  return `${quoteFontFamily(fontFamily)}, ${SYSTEM_FONTS_FALLBACKS[category]}`
 }
 
 /**
@@ -993,23 +996,23 @@ export function buildFontFamily(
  * must not be requested from Google).
  */
 export function extractFontFamily(
-  fontFamilyValue: string | undefined | null,
+  fontFamilyValue: string | undefined | null
 ): string | null {
-  if (!fontFamilyValue) return null;
+  if (!fontFamilyValue) return null
 
-  const firstFont = fontFamilyValue.split(",")[0]?.trim() ?? "";
-  if (firstFont.startsWith("var(")) return null;
-  const cleanFont = firstFont.replace(/['"]/g, "").trim();
+  const firstFont = fontFamilyValue.split(",")[0]?.trim() ?? ""
+  if (firstFont.startsWith("var(")) return null
+  const cleanFont = firstFont.replace(/['"]/g, "").trim()
 
   if (!cleanFont || GENERIC_FONT_FAMILIES.has(cleanFont.toLowerCase())) {
-    return null;
+    return null
   }
 
-  return cleanFont;
+  return cleanFont
 }
 
 /** Alias of extractFontFamily. */
-export const extractGoogleFontFamily = extractFontFamily;
+export const extractGoogleFontFamily = extractFontFamily
 
 /**
  * Families every desktop OS ships, which Google Fonts does not serve. Theme
@@ -1032,12 +1035,12 @@ export const LOCAL_FONT_FAMILY_NAMES = [
   "times",
   "times new roman",
   "verdana",
-] as const;
+] as const
 
-const LOCAL_FONT_FAMILIES = new Set<string>(LOCAL_FONT_FAMILY_NAMES);
+const LOCAL_FONT_FAMILIES = new Set<string>(LOCAL_FONT_FAMILY_NAMES)
 
 export function isLocalFontFamily(family: string): boolean {
-  return LOCAL_FONT_FAMILIES.has(family.toLowerCase());
+  return LOCAL_FONT_FAMILIES.has(family.toLowerCase())
 }
 
 /** What a theme font value names, for the picker's label. */
@@ -1048,7 +1051,7 @@ export type FontValueDescription =
   | { kind: "variable"; variable: string; family: string | null }
   /** Only generic or system names, e.g. `ui-sans-serif, system-ui`. */
   | { kind: "system"; generic: string }
-  | { kind: "empty" };
+  | { kind: "empty" }
 
 /**
  * Describe a font-family value. `resolveVariable` reads a custom property
@@ -1057,30 +1060,30 @@ export type FontValueDescription =
  */
 export function describeFontValue(
   value: string | undefined | null,
-  resolveVariable?: (name: string) => string,
+  resolveVariable?: (name: string) => string
 ): FontValueDescription {
-  const first = value?.split(",")[0]?.trim() ?? "";
-  if (!first) return { kind: "empty" };
+  const first = value?.split(",")[0]?.trim() ?? ""
+  if (!first) return { kind: "empty" }
 
-  const variable = /^var\(\s*(--[\w-]+)/u.exec(first)?.[1];
+  const variable = /^var\(\s*(--[\w-]+)/u.exec(first)?.[1]
   if (variable) {
-    let resolved: string | null = null;
-    let current = variable;
+    let resolved: string | null = null
+    let current = variable
     for (let depth = 0; depth < 4 && resolveVariable; depth += 1) {
-      const next = resolveVariable(current).trim();
-      const nested = /^var\(\s*(--[\w-]+)/u.exec(next)?.[1];
+      const next = resolveVariable(current).trim()
+      const nested = /^var\(\s*(--[\w-]+)/u.exec(next)?.[1]
       if (!nested) {
-        resolved = extractFontFamily(next);
-        break;
+        resolved = extractFontFamily(next)
+        break
       }
-      current = nested;
+      current = nested
     }
-    return { kind: "variable", variable, family: resolved };
+    return { kind: "variable", variable, family: resolved }
   }
 
-  const family = extractFontFamily(value);
-  if (family) return { kind: "family", family };
-  return { kind: "system", generic: first.replace(/['"]/g, "") };
+  const family = extractFontFamily(value)
+  if (family) return { kind: "family", family }
+  return { kind: "system", generic: first.replace(/['"]/g, "") }
 }
 
 /** The upright numeric weights a catalogue variant list can name. */
@@ -1094,7 +1097,7 @@ const NUMERIC_FONT_WEIGHTS: ReadonlySet<string> = new Set([
   "700",
   "800",
   "900",
-]);
+])
 
 /**
  * The weights to request for a family's catalogue variants, ascending: its
@@ -1104,18 +1107,18 @@ const NUMERIC_FONT_WEIGHTS: ReadonlySet<string> = new Set([
  */
 export function getDefaultWeights(variants: string[]): string[] {
   const availableWeights = variants.filter((variant) =>
-    NUMERIC_FONT_WEIGHTS.has(variant),
-  );
+    NUMERIC_FONT_WEIGHTS.has(variant)
+  )
 
-  if (availableWeights.length === 0) return ["400"];
+  if (availableWeights.length === 0) return ["400"]
 
-  const preferredWeights = ["400", "500", "600", "700"];
+  const preferredWeights = ["400", "500", "600", "700"]
   const selectedWeights = preferredWeights.filter((weight) =>
-    availableWeights.includes(weight),
-  );
+    availableWeights.includes(weight)
+  )
 
   if (selectedWeights.length === 0) {
-    return availableWeights.slice(0, 2).sort((a, b) => Number(a) - Number(b));
+    return availableWeights.slice(0, 2).sort((a, b) => Number(a) - Number(b))
   }
 
   return [
@@ -1124,26 +1127,26 @@ export function getDefaultWeights(variants: string[]): string[] {
     ...availableWeights.filter((weight) => !selectedWeights.includes(weight)),
   ]
     .slice(0, 4)
-    .sort((a, b) => Number(a) - Number(b));
+    .sort((a, b) => Number(a) - Number(b))
 }
 
-const DEFAULT_THEME_WEIGHTS = ["400", "500", "600", "700"] as const;
+const DEFAULT_THEME_WEIGHTS = ["400", "500", "600", "700"] as const
 
 export function buildFontCssUrl(
   family: string,
-  weights: readonly FontWeight[] = DEFAULT_THEME_WEIGHTS,
+  weights: readonly FontWeight[] = DEFAULT_THEME_WEIGHTS
 ): string {
-  const weightsParam = normalizeWeights(weights).join(";");
+  const weightsParam = normalizeWeights(weights).join(";")
   return `${GOOGLE_FONTS_CSS_URL}?family=${encodeURIComponent(
-    family,
-  )}:wght@${weightsParam}&display=swap`;
+    family
+  )}:wght@${weightsParam}&display=swap`
 }
 
 /** The family at its default weight: what Google serves for any family. */
 function buildPlainFontCssUrl(family: string): string {
   return `${GOOGLE_FONTS_CSS_URL}?family=${encodeURIComponent(
-    family,
-  )}&display=swap`;
+    family
+  )}&display=swap`
 }
 
 /**
@@ -1151,7 +1154,7 @@ function buildPlainFontCssUrl(family: string): string {
  * subset), a few hundred bytes instead of the whole family.
  */
 export function buildFontPreviewUrl(family: string, text = family): string {
-  return `${buildPlainFontCssUrl(family)}&text=${encodeURIComponent(text)}`;
+  return `${buildPlainFontCssUrl(family)}&text=${encodeURIComponent(text)}`
 }
 
 // ---------------------------------------------------------------------------
@@ -1159,34 +1162,34 @@ export function buildFontPreviewUrl(family: string, text = family): string {
 // document (rationale in the file header).
 // ---------------------------------------------------------------------------
 
-export const FONT_LINK_ATTRIBUTE = "data-themer-font";
+export const FONT_LINK_ATTRIBUTE = "data-themer-font"
 
 /** Releases one reference; calling it again is a no-op. */
-export type FontRelease = () => void;
+export type FontRelease = () => void
 
 type FontLinkEntry = {
-  link: HTMLLinkElement;
-  refs: number;
+  link: HTMLLinkElement
+  refs: number
   /** Settles once the stylesheet loaded, or failed with no retry to come. */
-  ready: Promise<void>;
-};
+  ready: Promise<void>
+}
 
-const fontRegistries = new WeakMap<Document, Map<string, FontLinkEntry>>();
+const fontRegistries = new WeakMap<Document, Map<string, FontLinkEntry>>()
 
-const noopRelease: FontRelease = () => {};
+const noopRelease: FontRelease = () => {}
 
 function resolveDocument(doc?: Document): Document | undefined {
-  if (doc) return doc;
-  return typeof document === "undefined" ? undefined : document;
+  if (doc) return doc
+  return typeof document === "undefined" ? undefined : document
 }
 
 function registryFor(doc: Document): Map<string, FontLinkEntry> {
-  let registry = fontRegistries.get(doc);
+  let registry = fontRegistries.get(doc)
   if (!registry) {
-    registry = new Map();
-    fontRegistries.set(doc, registry);
+    registry = new Map()
+    fontRegistries.set(doc, registry)
   }
-  return registry;
+  return registry
 }
 
 function acquireFontLink(
@@ -1194,63 +1197,63 @@ function acquireFontLink(
   key: string,
   family: string,
   href: string,
-  fallbackHref?: string,
+  fallbackHref?: string
 ): FontRelease {
-  const registry = registryFor(doc);
-  let entry = registry.get(key);
+  const registry = registryFor(doc)
+  let entry = registry.get(key)
   // A link someone else removed (e.g. a host re-render of <head>) is stale.
   if (entry && !entry.link.isConnected) {
-    registry.delete(key);
-    entry = undefined;
+    registry.delete(key)
+    entry = undefined
   }
 
   if (!entry) {
-    const link = doc.createElement("link");
-    link.setAttribute("rel", "stylesheet");
-    link.setAttribute("href", href);
-    link.setAttribute(FONT_LINK_ATTRIBUTE, family);
+    const link = doc.createElement("link")
+    link.setAttribute("rel", "stylesheet")
+    link.setAttribute("href", href)
+    link.setAttribute(FONT_LINK_ATTRIBUTE, family)
     const retryHref =
-      fallbackHref && fallbackHref !== href ? fallbackHref : null;
+      fallbackHref && fallbackHref !== href ? fallbackHref : null
     if (retryHref) {
       // Google answers 400 when a static family lacks a requested weight;
       // retry once with the family's default weight.
       link.addEventListener(
         "error",
         () => link.setAttribute("href", retryHref),
-        { once: true },
-      );
+        { once: true }
+      )
     }
     const ready = new Promise<void>((resolve) => {
-      link.addEventListener("load", () => resolve(), { once: true });
+      link.addEventListener("load", () => resolve(), { once: true })
       link.addEventListener(
         "error",
         () => {
           if (retryHref) {
             // The retry's own load, or its error, settles it.
-            link.addEventListener("error", () => resolve(), { once: true });
+            link.addEventListener("error", () => resolve(), { once: true })
           } else {
-            resolve();
+            resolve()
           }
         },
-        { once: true },
-      );
-    });
-    doc.head.appendChild(link);
-    entry = { link, refs: 0, ready };
-    registry.set(key, entry);
+        { once: true }
+      )
+    })
+    doc.head.appendChild(link)
+    entry = { link, refs: 0, ready }
+    registry.set(key, entry)
   }
 
-  const held = entry;
-  held.refs += 1;
-  let released = false;
+  const held = entry
+  held.refs += 1
+  let released = false
   return () => {
-    if (released) return;
-    released = true;
-    held.refs -= 1;
-    if (held.refs > 0) return;
-    held.link.remove();
-    if (registry.get(key) === held) registry.delete(key);
-  };
+    if (released) return
+    released = true
+    held.refs -= 1
+    if (held.refs > 0) return
+    held.link.remove()
+    if (registry.get(key) === held) registry.delete(key)
+  }
 }
 
 /**
@@ -1259,19 +1262,19 @@ function acquireFontLink(
  */
 export function acquireGoogleFont(
   family: string,
-  options: { weights?: readonly FontWeight[]; doc?: Document } = {},
+  options: { weights?: readonly FontWeight[]; doc?: Document } = {}
 ): FontRelease {
-  const doc = resolveDocument(options.doc);
-  const name = family.trim();
-  if (!doc || !name || extractFontFamily(name) === null) return noopRelease;
+  const doc = resolveDocument(options.doc)
+  const name = family.trim()
+  if (!doc || !name || extractFontFamily(name) === null) return noopRelease
 
   return acquireFontLink(
     doc,
     `family:${name}`,
     name,
     buildFontCssUrl(name, options.weights),
-    buildPlainFontCssUrl(name),
-  );
+    buildPlainFontCssUrl(name)
+  )
 }
 
 /**
@@ -1281,27 +1284,27 @@ export function acquireGoogleFont(
  */
 export function acquireFontPreview(
   family: string,
-  options: { text?: string; doc?: Document } = {},
+  options: { text?: string; doc?: Document } = {}
 ): FontRelease {
-  const doc = resolveDocument(options.doc);
-  const name = family.trim();
-  if (!doc || !name || extractFontFamily(name) === null) return noopRelease;
+  const doc = resolveDocument(options.doc)
+  const name = family.trim()
+  if (!doc || !name || extractFontFamily(name) === null) return noopRelease
 
   // The family is already loaded in full (a theme font): share that link.
   // A subset under the same family name, added later, would win over the
   // full face for page text until the picker closes.
-  const full = fontRegistries.get(doc)?.get(`family:${name}`);
+  const full = fontRegistries.get(doc)?.get(`family:${name}`)
   if (full?.link.isConnected) {
-    return acquireFontLink(doc, `family:${name}`, name, full.link.href);
+    return acquireFontLink(doc, `family:${name}`, name, full.link.href)
   }
 
-  const text = options.text ?? name;
+  const text = options.text ?? name
   return acquireFontLink(
     doc,
     `preview:${name}:${text}`,
     name,
-    buildFontPreviewUrl(name, text),
-  );
+    buildFontPreviewUrl(name, text)
+  )
 }
 
 /** Style keys that carry a font-family value. */
@@ -1310,7 +1313,7 @@ export const THEME_FONT_KEYS = [
   "font-heading",
   "font-serif",
   "font-mono",
-] as const;
+] as const
 
 /**
  * The Google families named by the theme's font keys, across the given style
@@ -1322,19 +1325,19 @@ export function getThemeFontFamilies(
     Partial<Record<(typeof THEME_FONT_KEYS)[number], string>> | undefined
   >
 ): string[] {
-  const families = new Set<string>();
+  const families = new Set<string>()
   for (const styles of styleSets) {
-    if (!styles) continue;
+    if (!styles) continue
     for (const key of THEME_FONT_KEYS) {
-      const family = extractFontFamily(styles[key]);
-      if (family && !isLocalFontFamily(family)) families.add(family);
+      const family = extractFontFamily(styles[key])
+      if (family && !isLocalFontFamily(family)) families.add(family)
     }
   }
-  return [...families];
+  return [...families]
 }
 
 /** The families the theme currently holds per document. */
-const themeFontSlots = new WeakMap<Document, Map<string, FontRelease>>();
+const themeFontSlots = new WeakMap<Document, Map<string, FontRelease>>()
 
 /**
  * Make `families` the document's theme fonts: newly named families are
@@ -1343,44 +1346,44 @@ const themeFontSlots = new WeakMap<Document, Map<string, FontRelease>>();
  */
 export function setThemeFonts(
   doc: Document | undefined,
-  families: Iterable<string>,
+  families: Iterable<string>
 ): void {
-  const target = resolveDocument(doc);
-  if (!target) return;
+  const target = resolveDocument(doc)
+  if (!target) return
 
-  const wanted = new Set(families);
-  let slot = themeFontSlots.get(target);
+  const wanted = new Set(families)
+  let slot = themeFontSlots.get(target)
   if (!slot) {
-    slot = new Map();
-    themeFontSlots.set(target, slot);
+    slot = new Map()
+    themeFontSlots.set(target, slot)
   }
 
   for (const [family, release] of slot) {
-    if (wanted.has(family)) continue;
-    release();
-    slot.delete(family);
+    if (wanted.has(family)) continue
+    release()
+    slot.delete(family)
   }
-  const registry = fontRegistries.get(target);
+  const registry = fontRegistries.get(target)
   for (const family of wanted) {
-    const held = slot.get(family);
+    const held = slot.get(family)
     // A link removed from <head> by someone else (a host re-render) is
     // re-requested instead of being trusted as loaded.
-    const link = registry?.get(`family:${family}`)?.link;
-    if (held && link?.isConnected) continue;
-    held?.();
-    slot.set(family, acquireGoogleFont(family, { doc: target }));
+    const link = registry?.get(`family:${family}`)?.link
+    if (held && link?.isConnected) continue
+    held?.()
+    slot.set(family, acquireGoogleFont(family, { doc: target }))
   }
 }
 
 /** Release every theme font of a document (override off, unmount). */
 export function clearThemeFonts(doc?: Document): void {
-  const target = resolveDocument(doc);
-  if (!target) return;
+  const target = resolveDocument(doc)
+  if (!target) return
 
-  const slot = themeFontSlots.get(target);
-  if (!slot) return;
-  for (const release of slot.values()) release();
-  themeFontSlots.delete(target);
+  const slot = themeFontSlots.get(target)
+  if (!slot) return
+  for (const release of slot.values()) release()
+  themeFontSlots.delete(target)
 }
 
 /**
@@ -1390,26 +1393,26 @@ export function clearThemeFonts(doc?: Document): void {
 export function loadGoogleFont(
   family: string,
   weights: readonly FontWeight[] = DEFAULT_THEME_WEIGHTS,
-  doc?: Document,
+  doc?: Document
 ): void {
-  acquireGoogleFont(family, { weights, doc });
+  acquireGoogleFont(family, { weights, doc })
 }
 
 export function loadGoogleFonts(fonts: string[], doc?: Document): void {
-  fonts.forEach((font) => loadGoogleFont(font, DEFAULT_THEME_WEIGHTS, doc));
+  fonts.forEach((font) => loadGoogleFont(font, DEFAULT_THEME_WEIGHTS, doc))
 }
 
 /** Remove every link of a family from a document, whoever holds it. */
 export function unloadGoogleFont(family: string, doc?: Document): void {
-  const target = resolveDocument(doc);
-  if (!target) return;
+  const target = resolveDocument(doc)
+  if (!target) return
 
-  const registry = fontRegistries.get(target);
-  if (!registry) return;
+  const registry = fontRegistries.get(target)
+  if (!registry) return
   for (const [key, entry] of registry) {
-    if (entry.link.getAttribute(FONT_LINK_ATTRIBUTE) !== family) continue;
-    entry.link.remove();
-    registry.delete(key);
+    if (entry.link.getAttribute(FONT_LINK_ATTRIBUTE) !== family) continue
+    entry.link.remove()
+    registry.delete(key)
   }
 }
 
@@ -1417,15 +1420,15 @@ export function unloadGoogleFont(family: string, doc?: Document): void {
 export function isGoogleFontLoaded(
   family: string,
   weight: FontWeight = "400",
-  doc?: Document,
+  doc?: Document
 ): boolean {
-  const target = resolveDocument(doc);
-  if (!target?.fonts) return false;
-  return target.fonts.check(`${weight} 16px ${quoteFontFamily(family)}`);
+  const target = resolveDocument(doc)
+  if (!target?.fonts) return false
+  return target.fonts.check(`${weight} 16px ${quoteFontFamily(family)}`)
 }
 
 /** Alias of isGoogleFontLoaded. */
-export const isFontLoaded = isGoogleFontLoaded;
+export const isFontLoaded = isGoogleFontLoaded
 
 /**
  * Waits for the family's face, then resolves whether the browser has it at
@@ -1439,92 +1442,92 @@ export async function waitForFont(
   family: string,
   weight: FontWeight = "400",
   timeout = 3000,
-  doc?: Document,
+  doc?: Document
 ): Promise<boolean> {
-  const target = resolveDocument(doc);
-  if (!target?.fonts) return false;
+  const target = resolveDocument(doc)
+  if (!target?.fonts) return false
 
-  const font = `${weight} 16px ${quoteFontFamily(family)}`;
+  const font = `${weight} 16px ${quoteFontFamily(family)}`
   // The family's stylesheet, when this module added it. Until the sheet is
   // parsed the document has no face for the family (at most a picker row's
   // preview subset), so fonts.load alone would resolve at once.
-  const sheet = fontRegistries.get(target)?.get(`family:${family.trim()}`);
-  let timer: ReturnType<typeof setTimeout> | undefined;
+  const sheet = fontRegistries.get(target)?.get(`family:${family.trim()}`)
+  let timer: ReturnType<typeof setTimeout> | undefined
 
   try {
     await Promise.race([
       (async () => {
-        await sheet?.ready;
-        await target.fonts.load(font);
+        await sheet?.ready
+        await target.fonts.load(font)
       })(),
       new Promise((_, reject) => {
         timer = setTimeout(
           () => reject(new Error("Font load timeout")),
-          timeout,
-        );
+          timeout
+        )
       }),
-    ]);
-    return target.fonts.check(font);
+    ])
+    return target.fonts.check(font)
   } catch {
-    return false;
+    return false
   } finally {
-    clearTimeout(timer);
+    clearTimeout(timer)
   }
 }
 
 export function formatFontFamily(fonts: string[]): string {
-  return fonts.map((font) => quoteFontFamily(font)).join(", ");
+  return fonts.map((font) => quoteFontFamily(font)).join(", ")
 }
 
 export function getPopularFonts(
-  category: ThemeFontRole | FontCategory | "all",
+  category: ThemeFontRole | FontCategory | "all"
 ): FontInfo[] {
   if (category === "all") {
     return [
       ...POPULAR_FONTS["sans-serif"].slice(0, 2),
       ...POPULAR_FONTS.serif.slice(0, 1),
       ...POPULAR_FONTS.monospace.slice(0, 1),
-    ];
+    ]
   }
 
-  return POPULAR_FONTS[toFontCategory(category)] ?? [];
+  return POPULAR_FONTS[toFontCategory(category)] ?? []
 }
 
 export function getFontPreviewUrl(
   family: string,
-  text = "The quick brown fox",
+  text = "The quick brown fox"
 ): string {
   return `https://fonts.google.com/specimen/${encodeURIComponent(
-    family,
-  )}?preview.text=${encodeURIComponent(text)}`;
+    family
+  )}?preview.text=${encodeURIComponent(text)}`
 }
 
 export function generateFontCSS(
   family: string,
-  fallbacks: string[] = ["sans-serif"],
+  fallbacks: string[] = ["sans-serif"]
 ): string {
-  return formatFontFamily([family, ...fallbacks]);
+  return formatFontFamily([family, ...fallbacks])
 }
 
 export function transformGoogleFontsResponse(
-  response: GoogleFontsAPIResponse,
+  response: GoogleFontsAPIResponse
 ): FontInfo[] {
   return response.items.map((font: GoogleFont) => ({
     family: font.family,
     category: font.category,
     variants: font.variants,
     variable: font.variants.some(
-      (variant) => variant.includes("wght") || variant.includes("ital,wght"),
+      (variant) => variant.includes("wght") || variant.includes("ital,wght")
     ),
-  }));
+  }))
 }
 
 type FontFetchOptions = RequestInit & {
   next?: {
-    revalidate?: number | false;
-    tags?: string[];
-  };
-};
+    revalidate?: number | false
+    tags?: string[]
+  }
+}
 
 /**
  * The Google Fonts developer-API catalogue. Throws when the key is empty or
@@ -1533,38 +1536,38 @@ type FontFetchOptions = RequestInit & {
  */
 export async function fetchGoogleFontsCatalog(
   googleFontsApiKey: string,
-  options?: FontFetchOptions,
+  options?: FontFetchOptions
 ): Promise<FontInfo[]> {
   if (!googleFontsApiKey) {
-    throw new Error("Google Fonts API key is required.");
+    throw new Error("Google Fonts API key is required.")
   }
 
   const response = await fetch(
     `${GOOGLE_FONTS_API_URL}?key=${encodeURIComponent(googleFontsApiKey)}`,
-    options,
-  );
+    options
+  )
 
   if (!response.ok) {
-    throw new Error(`Google Fonts API error: ${response.status}`);
+    throw new Error(`Google Fonts API error: ${response.status}`)
   }
 
   return transformGoogleFontsResponse(
-    (await response.json()) as GoogleFontsAPIResponse,
-  );
+    (await response.json()) as GoogleFontsAPIResponse
+  )
 }
 
 /** Google's public, keyless catalog (the one fonts.google.com renders). */
 export const GOOGLE_FONTS_METADATA_URL =
-  "https://fonts.google.com/metadata/fonts";
+  "https://fonts.google.com/metadata/fonts"
 
 type GoogleFontsMetadata = {
   familyMetadataList: Array<{
-    family: string;
-    category: string;
-    fonts: Record<string, unknown>;
-    axes?: unknown[];
-  }>;
-};
+    family: string
+    category: string
+    fonts: Record<string, unknown>
+    axes?: unknown[]
+  }>
+}
 
 const METADATA_CATEGORIES: Record<string, FontCategory> = {
   "sans serif": "sans-serif",
@@ -1572,10 +1575,10 @@ const METADATA_CATEGORIES: Record<string, FontCategory> = {
   monospace: "monospace",
   display: "display",
   handwriting: "handwriting",
-};
+}
 
 export function transformGoogleFontsMetadata(
-  metadata: GoogleFontsMetadata,
+  metadata: GoogleFontsMetadata
 ): FontInfo[] {
   return metadata.familyMetadataList.map((font) => ({
     family: font.family,
@@ -1584,7 +1587,7 @@ export function transformGoogleFontsMetadata(
     // format getDefaultWeights reads.
     variants: Object.keys(font.fonts).filter((key) => /^\d+$/u.test(key)),
     variable: (font.axes?.length ?? 0) > 0,
-  }));
+  }))
 }
 
 /**
@@ -1592,24 +1595,24 @@ export function transformGoogleFontsMetadata(
  * response may carry the `)]}'` JSON-hijacking guard prefix.
  */
 export async function fetchGoogleFontsMetadataCatalog(
-  options?: FontFetchOptions,
+  options?: FontFetchOptions
 ): Promise<FontInfo[]> {
-  const response = await fetch(GOOGLE_FONTS_METADATA_URL, options);
+  const response = await fetch(GOOGLE_FONTS_METADATA_URL, options)
   if (!response.ok) {
-    throw new Error(`Google Fonts metadata error: ${response.status}`);
+    throw new Error(`Google Fonts metadata error: ${response.status}`)
   }
-  const text = (await response.text()).replace(/^\)\]\}'\s*/u, "");
-  return transformGoogleFontsMetadata(JSON.parse(text) as GoogleFontsMetadata);
+  const text = (await response.text()).replace(/^\)\]\}'\s*/u, "")
+  return transformGoogleFontsMetadata(JSON.parse(text) as GoogleFontsMetadata)
 }
 
 function normalizeCatalogLimit(value: number): number {
-  if (!Number.isFinite(value)) return 50;
-  return Math.max(1, Math.min(Math.trunc(value), 100));
+  if (!Number.isFinite(value)) return 50
+  return Math.max(1, Math.min(Math.trunc(value), 100))
 }
 
 function normalizeCatalogOffset(value: number): number {
-  if (!Number.isFinite(value)) return 0;
-  return Math.max(0, Math.trunc(value));
+  if (!Number.isFinite(value)) return 0
+  return Math.max(0, Math.trunc(value))
 }
 
 /**
@@ -1626,35 +1629,32 @@ export function filterAndPaginateFonts(
     limit = 50,
     offset = 0,
   }: {
-    query?: string;
-    category?: FilterFontCategory | string;
-    limit?: number;
-    offset?: number;
-  },
+    query?: string
+    category?: FilterFontCategory | string
+    limit?: number
+    offset?: number
+  }
 ): PaginatedFontsResponse {
-  const normalizedQuery = query.trim().toLowerCase();
-  const normalizedCategory = category.toLowerCase();
-  const safeLimit = normalizeCatalogLimit(limit);
-  const safeOffset = normalizeCatalogOffset(offset);
+  const normalizedQuery = query.trim().toLowerCase()
+  const normalizedCategory = category.toLowerCase()
+  const safeLimit = normalizeCatalogLimit(limit)
+  const safeOffset = normalizeCatalogOffset(offset)
 
-  let filteredFonts = fonts;
+  let filteredFonts = fonts
 
   if (normalizedQuery) {
     filteredFonts = filteredFonts.filter((font) =>
-      font.family.toLowerCase().includes(normalizedQuery),
-    );
+      font.family.toLowerCase().includes(normalizedQuery)
+    )
   }
 
   if (normalizedCategory !== "all") {
     filteredFonts = filteredFonts.filter(
-      (font) => font.category === normalizedCategory,
-    );
+      (font) => font.category === normalizedCategory
+    )
   }
 
-  const paginatedFonts = filteredFonts.slice(
-    safeOffset,
-    safeOffset + safeLimit,
-  );
+  const paginatedFonts = filteredFonts.slice(safeOffset, safeOffset + safeLimit)
 
   return {
     fonts: paginatedFonts,
@@ -1662,5 +1662,5 @@ export function filterAndPaginateFonts(
     offset: safeOffset,
     limit: safeLimit,
     hasMore: safeOffset + safeLimit < filteredFonts.length,
-  };
+  }
 }

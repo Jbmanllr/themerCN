@@ -1,3 +1,7 @@
+// RETIRED: nothing imports this file. It moved to config/themer-layouts.ts
+// (layering: hooks read it, and hooks import no component); change that one.
+// It stays only until the owner removes it from the repo.
+//
 // What the Themer knows about each Themer layout, apart from its component
 // (../themer-ui.tsx maps a layout to its component): its name and icon in the
 // layout switcher, whether it covers the Host page, and which layout is in
@@ -19,19 +23,19 @@ import {
   PanelTop,
   SquareSplitHorizontal,
   type LucideIcon,
-} from "lucide-react";
-import type { ThemerLayout } from "../../../types";
+} from "lucide-react"
+import type { ThemerLayout } from "../../../types"
 
 export interface ThemerLayoutDefinition {
   /** Name in the layout switcher. */
-  label: string;
+  label: string
   /** Icon in the layout switcher (its trigger shows the current one). */
-  icon: LucideIcon;
+  icon: LucideIcon
   /**
    * The layout hides the Host page, so the page is paused while it is open
    * (Lenis smooth scroll). In-place layouts leave the page usable.
    */
-  coversPage: boolean;
+  coversPage: boolean
 }
 
 export const THEMER_LAYOUTS: Record<ThemerLayout, ThemerLayoutDefinition> = {
@@ -39,20 +43,20 @@ export const THEMER_LAYOUTS: Record<ThemerLayout, ThemerLayoutDefinition> = {
   overlay: { label: "Overlay", icon: Layers2, coversPage: false },
   push: { label: "Push", icon: SquareSplitHorizontal, coversPage: false },
   toolbar: { label: "Toolbar", icon: PanelTop, coversPage: false },
-};
+}
 
-export const DEFAULT_THEMER_LAYOUT: ThemerLayout = "workspace";
+export const DEFAULT_THEMER_LAYOUT: ThemerLayout = "workspace"
 
 export function isThemerLayout(value: unknown): value is ThemerLayout {
-  return typeof value === "string" && Object.hasOwn(THEMER_LAYOUTS, value);
+  return typeof value === "string" && Object.hasOwn(THEMER_LAYOUTS, value)
 }
 
 /** The layout in force: the user's choice, else the Host's, else Workspace. */
 export function resolveThemerLayout(
   userChoice: unknown,
-  hostDefault: unknown,
+  hostDefault: unknown
 ): ThemerLayout {
-  if (isThemerLayout(userChoice)) return userChoice;
-  if (isThemerLayout(hostDefault)) return hostDefault;
-  return DEFAULT_THEMER_LAYOUT;
+  if (isThemerLayout(userChoice)) return userChoice
+  if (isThemerLayout(hostDefault)) return hostDefault
+  return DEFAULT_THEMER_LAYOUT
 }

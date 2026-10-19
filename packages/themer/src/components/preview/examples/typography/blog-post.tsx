@@ -10,11 +10,11 @@ import {
   Avatar,
   AvatarFallback,
   AvatarImage,
-} from "@workspace/ui/components/avatar";
-import { Badge } from "@workspace/ui/components/badge";
-import { Button } from "@workspace/ui/components/button";
-import { Card, CardContent } from "@workspace/ui/components/card";
-import { Separator } from "@workspace/ui/components/separator";
+} from "@workspace/ui/components/avatar"
+import { Badge } from "@workspace/ui/components/badge"
+import { Button } from "@workspace/ui/components/button"
+import { Card, CardContent } from "@workspace/ui/components/card"
+import { Separator } from "@workspace/ui/components/separator"
 import {
   Bookmark,
   Calendar,
@@ -22,13 +22,13 @@ import {
   Heart,
   MessageCircle,
   Share2,
-} from "lucide-react";
-import { avatarDataUri } from "../avatar-data-uri";
+} from "lucide-react"
+import { avatarDataUri } from "../avatar-data-uri"
 
 export function BlogPost() {
   return (
-    <Card className="bg-background flex min-h-screen flex-col overflow-hidden">
-      <div className="bg-card flex items-center justify-between border-b px-4 py-2">
+    <Card className="flex min-h-screen flex-col overflow-hidden bg-background">
+      <div className="flex items-center justify-between border-b bg-card px-4 py-2">
         <div className="flex items-center gap-3">
           <div className="flex gap-2">
             <div className="size-3 rounded-full bg-red-500"></div>
@@ -51,7 +51,7 @@ export function BlogPost() {
               The Future of Web Development: Embracing Modern Technologies
             </h1>
 
-            <p className="text-muted-foreground text-xl leading-relaxed">
+            <p className="text-xl leading-relaxed text-muted-foreground">
               Discover how cutting-edge technologies are reshaping the landscape
               of web development, from AI-powered tools to revolutionary
               frameworks that are changing how we build for the web.
@@ -69,13 +69,13 @@ export function BlogPost() {
                 </Avatar>
                 <div>
                   <p className="font-semibold">Jane Doe</p>
-                  <p className="text-muted-foreground text-sm">
+                  <p className="text-sm text-muted-foreground">
                     Senior Developer
                   </p>
                 </div>
               </div>
 
-              <div className="text-muted-foreground flex items-center gap-4 text-sm">
+              <div className="flex items-center gap-4 text-sm text-muted-foreground">
                 <div className="flex items-center gap-1">
                   <Calendar className="h-4 w-4" />
                   <span>Dec 15, 2024</span>
@@ -92,7 +92,7 @@ export function BlogPost() {
 
           {/* Featured image: a plain block; the host serves no image file. */}
           <div className="relative aspect-video overflow-hidden rounded-lg">
-            <div aria-hidden className="bg-muted size-full" />
+            <div aria-hidden className="size-full bg-muted" />
           </div>
 
           {/* Content */}
@@ -115,7 +115,7 @@ export function BlogPost() {
               anim id est laborum.
             </p>
 
-            <blockquote className="border-primary my-6 border-l-4 pl-6 text-lg italic">
+            <blockquote className="my-6 border-l-4 border-primary pl-6 text-lg italic">
               &quot;The best way to predict the future is to create it. In web
               development, we&apos;re not just following trends—we&apos;re
               setting them.&quot;
@@ -144,7 +144,7 @@ export function BlogPost() {
               <Card>
                 <CardContent className="p-6">
                   <h4 className="mb-2 font-semibold">💡 Pro Tip</h4>
-                  <p className="text-muted-foreground text-sm">
+                  <p className="text-sm text-muted-foreground">
                     Always stay updated with the latest web standards and best
                     practices. The web development landscape evolves rapidly,
                     and continuous learning is key to staying relevant.
@@ -208,7 +208,7 @@ export function BlogPost() {
                 </Avatar>
                 <div className="flex-1">
                   <h3 className="text-lg font-semibold">Jane Doe</h3>
-                  <p className="text-muted-foreground mb-2">
+                  <p className="mb-2 text-muted-foreground">
                     Senior Developer & Tech Writer
                   </p>
                   <p className="text-sm">
@@ -228,5 +228,5 @@ export function BlogPost() {
         </article>
       </div>
     </Card>
-  );
+  )
 }

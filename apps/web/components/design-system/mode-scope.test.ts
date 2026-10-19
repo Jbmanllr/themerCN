@@ -1,6 +1,8 @@
+import { parse } from "culori"
 import { expect, it } from "vitest"
 
-import { renderModeScopeCss } from "./mode-scope"
+import { nightjarPreset } from "../../lib/brand/nightjar"
+import { isColourToken, renderModeScopeCss } from "./mode-scope"
 
 const preset = {
   light: {
@@ -36,3 +38,19 @@ it("pins each half's colours when the page is in the other mode", () => {
     ].join("\n")
   )
 })
+
+// Pins the colour-token rule against the Nightjar Preset's keys: a key counts
+// as a colour exactly when its value is a colour, so a token added to the
+// Preset that the rule misclassifies fails here.
+it.each(["light", "dark"] as const)(
+  "classifies every Nightjar %s token by whether its value is a colour",
+  (mode) => {
+    const tokens = Object.entries(nightjarPreset.styles[mode])
+    const misclassified = tokens
+      .filter(([key, value]) => isColourToken(key) !== Boolean(parse(value)))
+      .map(([key]) => key)
+
+    expect(tokens.length).toBeGreaterThan(0)
+    expect(misclassified).toEqual([])
+  }
+)

@@ -11,8 +11,6 @@
 // for the picker's list, which color-selector-popover.tsx reads through
 // getTailwindPaletteEntries and tailwindPaletteFamilies.
 
-import * as culori from "culori";
-
 /**
  * Tailwind CSS v4.3 color palette, OKLCH: the values of tailwindcss's
  * dist/colors, copied so the editor needs no tailwindcss at runtime.
@@ -305,21 +303,7 @@ export const tailwindColors = {
     900: "oklch(41% 0.159 10.272)",
     950: "oklch(27.1% 0.105 12.094)",
   },
-} as const;
-
-/**
- * Color family names
- */
-export const colorFamilies = Object.keys(
-  tailwindColors,
-) as (keyof typeof tailwindColors)[];
-
-/**
- * Shade values
- */
-export const shades = [
-  50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 950,
-] as const;
+} as const
 
 export const tailwindSpecialColors = {
   white: {
@@ -331,7 +315,7 @@ export const tailwindSpecialColors = {
   transparent: {
     DEFAULT: "transparent",
   },
-} as const;
+} as const
 
 /** The picker's list in display order: the special colours, then families. */
 export const tailwindPalette = {
@@ -360,18 +344,18 @@ export const tailwindPalette = {
   zinc: tailwindColors.zinc,
   neutral: tailwindColors.neutral,
   stone: tailwindColors.stone,
-} as const;
+} as const
 
 export const tailwindPaletteFamilies = Object.keys(
-  tailwindPalette,
-) as (keyof typeof tailwindPalette)[];
+  tailwindPalette
+) as (keyof typeof tailwindPalette)[]
 
 export interface TailwindPaletteEntry {
-  family: keyof typeof tailwindPalette;
-  shade: string;
-  name: string;
-  color: string;
-  isDefault: boolean;
+  family: keyof typeof tailwindPalette
+  shade: string
+  name: string
+  color: string
+  isDefault: boolean
 }
 
 const tailwindPaletteEntries: TailwindPaletteEntry[] =
@@ -382,12 +366,12 @@ const tailwindPaletteEntries: TailwindPaletteEntry[] =
       name: shade === "DEFAULT" ? family : `${family}-${shade}`,
       color,
       isDefault: shade === "DEFAULT",
-    })),
-  );
+    }))
+  )
 
 /** Every picker entry, built once (stable identity). */
 export function getTailwindPaletteEntries(): readonly TailwindPaletteEntry[] {
-  return tailwindPaletteEntries;
+  return tailwindPaletteEntries
 }
 
 /**
@@ -397,83 +381,17 @@ export function getTailwindPaletteEntries(): readonly TailwindPaletteEntry[] {
  */
 export function filterTailwindPaletteEntries(
   query: string,
-  entries: readonly TailwindPaletteEntry[] = tailwindPaletteEntries,
+  entries: readonly TailwindPaletteEntry[] = tailwindPaletteEntries
 ): TailwindPaletteEntry[] {
-  const tokens = query.trim().toLowerCase().split(/\s+/).filter(Boolean);
+  const tokens = query.trim().toLowerCase().split(/\s+/).filter(Boolean)
 
   if (tokens.length === 0) {
-    return [...entries];
+    return [...entries]
   }
 
   return entries.filter((entry) => {
     const searchableValue =
-      `${entry.name} ${entry.family} ${entry.shade} ${entry.color}`.toLowerCase();
-    return tokens.every((token) => searchableValue.includes(token));
-  });
-}
-
-/**
- * Get a specific Tailwind color by family and shade
- */
-export function getTailwindColor(
-  family: keyof typeof tailwindColors,
-  shade: keyof typeof tailwindColors.slate,
-): string {
-  return tailwindColors[family][shade];
-}
-
-/**
- * Parse a Tailwind color class name (e.g., "blue-500") to its CSS color value
- */
-export function parseTailwindColorClass(className: string): string | null {
-  const specialColor =
-    tailwindSpecialColors[className as keyof typeof tailwindSpecialColors];
-  if (specialColor) {
-    return specialColor.DEFAULT;
-  }
-
-  const match = className.match(/^([a-z]+)-(\d+)$/);
-  if (!match) return null;
-
-  const [, family, shade] = match;
-  const colorFamily = tailwindColors[family as keyof typeof tailwindColors];
-  if (!colorFamily) return null;
-
-  const shadeValue = parseInt(shade!, 10) as keyof typeof tailwindColors.slate;
-  return colorFamily[shadeValue] ?? null;
-}
-
-/**
- * Find the Tailwind color closest to any CSS color, by CIEDE2000 difference
- */
-export function findClosestTailwindColor(
-  color: string,
-): { family: string; shade: number; color: string } | null {
-  const target = culori.parse(color);
-  if (!target) return null;
-  const difference = culori.differenceCiede2000();
-
-  let closest: {
-    family: string;
-    shade: number;
-    color: string;
-    distance: number;
-  } | null = null;
-
-  for (const family of colorFamilies) {
-    for (const shade of shades) {
-      const entryColor = tailwindColors[family][shade];
-      const entry = culori.parse(entryColor);
-      if (!entry) continue;
-
-      const distance = difference(target, entry);
-      if (!closest || distance < closest.distance) {
-        closest = { family, shade, color: entryColor, distance };
-      }
-    }
-  }
-
-  return closest
-    ? { family: closest.family, shade: closest.shade, color: closest.color }
-    : null;
+      `${entry.name} ${entry.family} ${entry.shade} ${entry.color}`.toLowerCase()
+    return tokens.every((token) => searchableValue.includes(token))
+  })
 }

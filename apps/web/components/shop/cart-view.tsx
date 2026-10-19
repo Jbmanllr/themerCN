@@ -9,7 +9,7 @@ import { OrderSummary } from "@/components/shop/order-summary"
 import { QuantityStepper } from "@/components/shop/quantity-stepper"
 import { formatPrice } from "@/lib/format"
 import { getProduct } from "@/lib/mock"
-import { FREE_SHIPPING_FROM, cartSummary } from "@/lib/shop"
+import { FREE_SHIPPING_FROM, cartSummary, lineKey } from "@/lib/shop"
 import { useCart } from "@/lib/stores/cart"
 import { Button, buttonVariants } from "@workspace/ui/components/button"
 import { Progress } from "@workspace/ui/components/progress"
@@ -33,10 +33,7 @@ export function CartView() {
           {lines.map((line, index) => {
             const name = getProduct(line.productSlug)?.name ?? line.productSlug
             return (
-              <CartLineItem
-                key={`${line.productSlug}-${JSON.stringify(line.option)}`}
-                line={line}
-              >
+              <CartLineItem key={lineKey(line)} line={line}>
                 <div className="mt-2 flex items-center gap-2">
                   <QuantityStepper
                     value={line.qty}
@@ -60,11 +57,7 @@ export function CartView() {
           })}
         </ul>
 
-        <OrderSummary
-          summary={summary}
-          shippingLabel="Standard shipping"
-          testIdPrefix="cart"
-        >
+        <OrderSummary summary={summary} shippingLabel="Standard shipping">
           <div className="flex flex-col gap-2">
             <Progress
               value={Math.min(

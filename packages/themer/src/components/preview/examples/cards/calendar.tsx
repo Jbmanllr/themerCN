@@ -1,11 +1,11 @@
-"use client";
+"use client"
 
-import { addDays } from "date-fns";
+import { addDays } from "date-fns"
 
-import { Calendar } from "@workspace/ui/components/calendar";
-import { Card, CardContent } from "@workspace/ui/components/card";
+import { Calendar } from "@workspace/ui/components/calendar"
+import { Card, CardContent } from "@workspace/ui/components/card"
 
-const start = new Date(2025, 5, 5);
+const start = new Date(2025, 5, 5)
 
 export function CardsCalendar() {
   return (
@@ -22,5 +22,5 @@ export function CardsCalendar() {
         />
       </CardContent>
     </Card>
-  );
+  )
 }

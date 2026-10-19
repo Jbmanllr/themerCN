@@ -1,7 +1,9 @@
 // The package's types: re-exports of the theme, font and editor types, plus
 // ThemerProps (the public `<Themer>` props) and the preview-tab and
-// extra-colour types it uses. Only ThemerProps, ThemePreset,
-// ThemerExtraColorGroup and ThemerPreviewTab leave the package (src/index.ts).
+// extra-colour types it uses. ThemerProps and the types its props reference
+// (ThemePreset, PartialThemeStyles, ThemerExtraColorGroup, ThemerExtraColor,
+// ThemerLayout, ThemerColorMode, ThemerPreviewTab) leave the package
+// (src/index.ts); the rest is internal.
 
 // Theme types
 export type {
@@ -20,17 +22,9 @@ export type {
   PartialThemeStyleProps,
   PartialThemeStyles,
   ThemePreset,
-  SavedTheme,
   ColorFormat,
   TailwindVersion,
-} from "./theme";
-
-export {
-  COLOR_GROUPS,
-  COMMON_STYLE_KEYS,
-  NON_COLOR_KEYS,
-  isCommonStyleKey,
-} from "./theme";
+} from "./theme"
 
 export type {
   FilterFontCategory,
@@ -41,7 +35,7 @@ export type {
   GoogleFontFiles,
   GoogleFontsAPIResponse,
   PaginatedFontsResponse,
-} from "./fonts";
+} from "./fonts"
 
 // Editor types
 export type {
@@ -61,74 +55,15 @@ export type {
   ColorFocusState,
   ColorFocusActions,
   ColorFocusStore,
+  ThemerDialog,
   ThemerUIState,
   ThemerUIActions,
   ThemerUIStore,
-} from "./editor";
+} from "./editor"
 
 // Import for use in interfaces below
-import type { ComponentType, ReactNode } from "react";
-import type { ThemePreset } from "./theme";
-
-// Component prop types, part of the public type surface. Nothing imports
-// them: each component declares its own props next to its code.
-export interface ColorPickerProps {
-  /** Current color value */
-  color: string;
-  /** Change handler */
-  onChange: (color: string) => void;
-  /** Display label */
-  label: string;
-  /** Variable name for focus tracking */
-  name?: string;
-  /** Disabled state */
-  disabled?: boolean;
-}
-
-export interface SliderControlProps {
-  /** Current value */
-  value: number;
-  /** Change handler */
-  onChange: (value: number) => void;
-  /** Display label */
-  label: string;
-  /** Minimum value */
-  min: number;
-  /** Maximum value */
-  max: number;
-  /** Step increment */
-  step: number;
-  /** Unit display (e.g., 'px', 'rem', '%') */
-  unit?: string;
-  /** Disabled state */
-  disabled?: boolean;
-}
-
-export interface FontPickerProps {
-  /** Current font family */
-  value: string;
-  /** Change handler */
-  onChange: (font: string) => void;
-  /** Font category (sans, serif, mono) */
-  category: "sans" | "serif" | "mono";
-  /** Display label */
-  label: string;
-  /** Disabled state */
-  disabled?: boolean;
-  /** Override the host-owned font catalog endpoint */
-  fontCatalogEndpoint?: string;
-}
-
-export interface PresetSelectProps {
-  /** Currently selected preset */
-  value: string;
-  /** Change handler */
-  onChange: (preset: string) => void;
-  /** Available presets */
-  presets?: Array<{ id: string; label: string }>;
-  /** Disabled state */
-  disabled?: boolean;
-}
+import type { ComponentType, ReactNode } from "react"
+import type { ThemePreset } from "./theme"
 
 /**
  * A preview tab a Host adds next to the built-in ones (Live, Cards,
@@ -142,21 +77,21 @@ export interface ThemerPreviewTab {
    * Unique tab id; persisted as the selected tab (`previewTab` preference).
    * A host tab with a built-in id replaces that built-in tab.
    */
-  id: string;
+  id: string
   /** Label shown in the preview tab bar. */
-  label: string;
+  label: string
   /**
    * Tab content. Pass a `React.lazy` component so the host's preview code
    * loads only when the tab is opened (the preview area wraps it in Suspense).
    */
-  component: ComponentType;
+  component: ComponentType
   /** Scrolling of the tab body: vertical (default), both axes, or none. */
-  scroll?: "y" | "xy" | "none";
+  scroll?: "y" | "xy" | "none"
   /**
    * Sort position among all tabs. Built-in tabs use 0, 10, 20, …; a Host tab
    * without `order` goes after them, in array order.
    */
-  order?: number;
+  order?: number
 }
 
 /** One Host extra colour: a CSS custom property the editor also edits. */
@@ -167,9 +102,9 @@ export interface ThemerExtraColor {
    * kebab-case, names a built-in style key, starts with `shadow-`, or repeats
    * an earlier key.
    */
-  key: string;
+  key: string
   /** Label shown in the colour list. */
-  label: string;
+  label: string
 }
 
 /**
@@ -179,11 +114,11 @@ export interface ThemerExtraColor {
  */
 export interface ThemerExtraColorGroup {
   /** Section heading in the colour list; keep it unique. */
-  title: string;
+  title: string
   /** Short text shown under the heading. */
-  description?: string;
+  description?: string
   /** The tokens of the group, in display order. */
-  colors: readonly ThemerExtraColor[];
+  colors: readonly ThemerExtraColor[]
 }
 
 /**
@@ -193,14 +128,14 @@ export interface ThemerExtraColorGroup {
  * - `"overlay"`: the sidebar floats over the Host app's real page, which
  *   stays usable beside it.
  * - `"push"`: the sidebar sits beside the Host app's real page and shifts it
- *   aside (`margin-inline-start` on `<html>`, `--themer-inset-inline-start`).
+ *   aside (`margin-left` on `<html>`, `--themer-inset-left`).
  * - `"toolbar"`: no sidebar; every control sits in a bar at the top of the
  *   Host app's real page, each group of controls in its own popup.
  */
-export type ThemerLayout = "workspace" | "overlay" | "push" | "toolbar";
+export type ThemerLayout = "workspace" | "overlay" | "push" | "toolbar"
 
 /** Light or dark: the value of `ThemerProps.colorMode`. */
-export type ThemerColorMode = "light" | "dark";
+export type ThemerColorMode = "light" | "dark"
 
 /**
  * Props of `<Themer>`. Every prop is optional. Props that take arrays or
@@ -214,67 +149,78 @@ export interface ThemerProps {
    * Must name a built-in or Host Preset; an unknown id falls back to
    * `"default"`.
    */
-  defaultPreset?: string;
+  defaultPreset?: string
   /**
    * Host Presets, listed after the built-in ones. On an id clash the Host
    * Preset wins, so a Preset with id `"default"` replaces the built-in
    * default. Pass a module-level constant.
    */
-  presets?: readonly ThemePreset[];
+  presets?: readonly ThemePreset[]
   /**
    * Host colour tokens beyond the built-in shadcn colours. The Themer lists,
    * edits, applies, adjusts, imports and exports them like the built-in ones.
    * Pass a module-level constant.
    */
-  extraColors?: readonly ThemerExtraColorGroup[];
+  extraColors?: readonly ThemerExtraColorGroup[]
   /**
    * Host preview tabs, merged with the built-in ones. Pass a module-level
    * constant with lazy components.
    */
-  previewTabs?: readonly ThemerPreviewTab[];
+  previewTabs?: readonly ThemerPreviewTab[]
   /**
    * Wraps every Host preview tab (not the built-in ones), so Host components
    * get the providers they need. Pass a stable module-level component.
    */
-  previewWrapper?: ComponentType<{ children: ReactNode }>;
+  previewWrapper?: ComponentType<{ children: ReactNode }>
   /**
    * Keyboard shortcut that toggles the Themer (default `"ctrl+shift+e"`; on
-   * macOS Cmd stands in for ctrl).
+   * macOS Cmd stands in for ctrl). Modifiers: `ctrl`/`control`, `alt`/`option`,
+   * `shift`, `meta`/`cmd`/`command`. An unrecognisable shortcut warns in
+   * development and falls back to the default.
    */
-  shortcut?: string;
+  shortcut?: string
   /**
    * Themer layout the Themer opens in (default `"workspace"`). The user can
    * switch from the Themer UI's header; their choice is remembered in this
    * browser and wins over this default. Below 1280 px every layout opens as
    * the same bottom drawer.
    */
-  layout?: ThemerLayout;
+  layout?: ThemerLayout
   /** Show the floating trigger button (default `true`). */
-  showTrigger?: boolean;
+  showTrigger?: boolean
   /** Z-index of the Themer UI and the trigger (default: the Themer's own layers). */
-  zIndex?: number;
+  zIndex?: number
   /**
-   * Prefix of the localStorage keys the Themer persists to:
-   * `<storageNamespace>:editor` and `<storageNamespace>:preferences`
-   * (default `"themercn"`). Read when the Themer mounts.
+   * Prefix of the localStorage keys the Themer persists to (default
+   * `"themercn"`):
+   * - `<storageNamespace>:editor`: the edited Theme;
+   * - `<storageNamespace>:preferences`: Themer UI choices (layout, colour
+   *   format, preview tab, sidebar state, override on/off);
+   * - `<storageNamespace>:color-mode`: the light/dark mode, saved only when
+   *   the Themer owns the mode (`colorMode` and `onColorModeChange` unset).
+   *
+   * Give `getThemerHeadScript` / `<ThemerHeadScript>` the same value. It may
+   * change at runtime (per tenant or user): the Themer then shows what the
+   * new namespace stored, or your default Preset when it stored nothing, and
+   * the undo history starts empty.
    */
-  storageNamespace?: string;
+  storageNamespace?: string
   /**
    * Controlled light/dark mode, for a Host app with its own mode state (a
    * theme library). Pass it with `onColorModeChange`; the Host keeps the
    * `.dark` class on `<html>`. Leave both unset and the Themer toggles `.dark`
    * on `<html>` itself and follows changes made by anyone else.
    */
-  colorMode?: ThemerColorMode;
+  colorMode?: ThemerColorMode
   /** Called with the mode the user switched to, in controlled mode. */
-  onColorModeChange?: (mode: ThemerColorMode) => void;
+  onColorModeChange?: (mode: ThemerColorMode) => void
   /**
    * Font catalog endpoint, answering
    * `GET ?q=&category=&limit=&offset=` with
    * `{ fonts, total, offset, limit, hasMore }`. Unset: the font picker
    * searches the bundled list in the browser.
    */
-  fontCatalogEndpoint?: string;
+  fontCatalogEndpoint?: string
 }
 
 /**
@@ -284,10 +230,10 @@ export interface ThemerProps {
 export type ThemerConfig = Omit<
   ThemerProps,
   "storageNamespace" | "colorMode" | "onColorModeChange"
->;
+>
 
 // Context types
 export interface ThemerContextValue {
   /** Current configuration: the host's `config` merged over the defaults. */
-  config: ThemerConfig;
+  config: ThemerConfig
 }

@@ -1,6 +1,6 @@
 import Link from "next/link"
 
-import { AuthForm } from "@/components/auth/auth-form"
+import { LoginForm } from "@/components/auth/auth-form"
 import {
   Card,
   CardContent,
@@ -25,25 +25,7 @@ export default function Page() {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <AuthForm
-          submitLabel="Log in"
-          fields={[
-            {
-              name: "email",
-              label: "Email",
-              type: "email",
-              autoComplete: "email",
-              placeholder: "you@example.com",
-              missing: "Enter your email address.",
-            },
-            {
-              name: "password",
-              label: "Password",
-              type: "password",
-              autoComplete: "current-password",
-              missing: "Enter your password.",
-            },
-          ]}
+        <LoginForm
           footer={
             <FieldDescription className="text-center">
               New to Nightjar? <Link href="/signup">Create an account</Link>

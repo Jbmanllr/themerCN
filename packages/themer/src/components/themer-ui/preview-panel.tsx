@@ -1,4 +1,4 @@
-"use client";
+"use client"
 
 // The desktop editor's right-hand pane: the action bar above the preview tabs
 // (built-in tabs merged with ThemerConfig.previewTabs).
@@ -9,18 +9,18 @@
 //
 // See: packages/themer/ARCHITECTURE.md (Preview System).
 
-import * as React from "react";
-import { cn } from "@workspace/ui/lib/utils";
-import { ActionBar } from "../action-bar";
-import { PreviewTabs } from "../preview/preview-tabs";
-import { BUILTIN_TABS } from "../preview/builtin-tabs";
+import * as React from "react"
+import { cn } from "@workspace/ui/lib/utils"
+import { ActionBar } from "../action-bar"
+import { PreviewTabs } from "../preview/preview-tabs"
+import { BUILTIN_TABS } from "../preview/builtin-tabs"
 import {
   mergePreviewTabs,
   resolveActiveTabId,
-} from "../preview/preview-tab-registry";
-import { useThemerContext } from "../themer-provider";
-import { usePreferencesStore } from "../../stores/preferences-store";
-import { useThemerUIStore } from "../../stores/themer-ui-store";
+} from "../preview/preview-tab-registry"
+import { useThemerContext } from "../../hooks/use-themer-context"
+import { usePreferencesStore } from "../../stores/preferences-store"
+import { useThemerUIStore } from "../../stores/themer-ui-store"
 
 /**
  * Right preview panel with action bar.
@@ -31,14 +31,14 @@ import { useThemerUIStore } from "../../stores/themer-ui-store";
  * then, so keyboard focus cannot land on hidden controls.
  */
 export function PreviewPanel() {
-  const previewTab = usePreferencesStore((state) => state.previewTab);
-  const isFullscreen = useThemerUIStore((state) => state.fullscreenPreview);
-  const { config } = useThemerContext();
+  const previewTab = usePreferencesStore((state) => state.previewTab)
+  const isFullscreen = useThemerUIStore((state) => state.fullscreenPreview)
+  const { config } = useThemerContext()
   const tabs = React.useMemo(
     () => mergePreviewTabs(BUILTIN_TABS, config.previewTabs),
-    [config.previewTabs],
-  );
-  const isLivePreview = resolveActiveTabId(tabs, previewTab) === "live";
+    [config.previewTabs]
+  )
+  const isLivePreview = resolveActiveTabId(tabs, previewTab) === "live"
 
   return (
     <div className="flex h-full flex-1 flex-col overflow-hidden">
@@ -52,7 +52,7 @@ export function PreviewPanel() {
           data-testid="themer-preview-scroll"
           className={cn(
             "absolute inset-0 overflow-y-auto",
-            isLivePreview ? "px-2 pt-2 pb-6" : "px-6 pt-2 pb-6",
+            isLivePreview ? "px-2 pt-2 pb-6" : "px-6 pt-2 pb-6"
           )}
           data-lenis-prevent
         >
@@ -60,5 +60,5 @@ export function PreviewPanel() {
         </div>
       </div>
     </div>
-  );
+  )
 }

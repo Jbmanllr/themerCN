@@ -1,20 +1,20 @@
-"use client";
+"use client"
 
 // Letter spacing: PresetSliderControl bound to `letter-spacing` (em), with a
 // sample-sentence preview. Shown in the Typography panel.
 
-import { PresetSliderControl } from "./preset-slider-control";
-import { LETTER_SPACING_PRESETS } from "../../config/constants";
+import { PresetSliderControl } from "./preset-slider-control"
+import { LETTER_SPACING_PRESETS } from "../../config/constants"
 
 function LetterSpacingPreview(letterSpacing: string) {
   return (
     <div
-      className="bg-muted text-foreground mt-2 rounded p-3 text-sm"
+      className="mt-2 rounded bg-muted p-3 text-sm text-foreground"
       style={{ letterSpacing }}
     >
       The quick brown fox jumps over the lazy dog.
     </div>
-  );
+  )
 }
 
 /**
@@ -32,5 +32,5 @@ export function LetterSpacingControl() {
       presetClassName="capitalize"
       renderPreview={LetterSpacingPreview}
     />
-  );
+  )
 }

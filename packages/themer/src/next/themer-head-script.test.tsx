@@ -9,64 +9,64 @@
 // paint), if its body drifts from getThemerHeadScript for the given
 // namespace, or if a client render brings back React's "Encountered a script
 // tag" warning.
-import { act } from "react";
-import { createRoot, hydrateRoot, type Root } from "react-dom/client";
-import { renderToString } from "react-dom/server";
-import { afterEach, beforeEach, expect, it, vi } from "vitest";
+import { act } from "react"
+import { createRoot, hydrateRoot, type Root } from "react-dom/client"
+import { renderToString } from "react-dom/server"
+import { afterEach, beforeEach, expect, it, vi } from "vitest"
 
-import { getThemerHeadScript } from "../head-script";
-import { ThemerHeadScript } from "./index";
+import { getThemerHeadScript } from "../head-script"
+import { ThemerHeadScript } from "./index"
 
-(
+;(
   globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT: boolean }
-).IS_REACT_ACT_ENVIRONMENT = true;
+).IS_REACT_ACT_ENVIRONMENT = true
 
-let root: Root | null = null;
-let container: HTMLDivElement;
-let consoleError: ReturnType<typeof vi.spyOn>;
+let root: Root | null = null
+let container: HTMLDivElement
+let consoleError: ReturnType<typeof vi.spyOn>
 
 beforeEach(() => {
-  container = document.createElement("div");
-  document.body.append(container);
-  consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
-});
+  container = document.createElement("div")
+  document.body.append(container)
+  consoleError = vi.spyOn(console, "error").mockImplementation(() => {})
+})
 
 afterEach(async () => {
-  await act(async () => root?.unmount());
-  root = null;
-  container.remove();
-  vi.restoreAllMocks();
-});
+  await act(async () => root?.unmount())
+  root = null
+  container.remove()
+  vi.restoreAllMocks()
+})
 
 it("puts the restore code in the server HTML as a raw inline script", () => {
   expect(renderToString(<ThemerHeadScript />)).toBe(
-    `<script id="themer-head-script">${getThemerHeadScript()}</script>`,
-  );
-});
+    `<script id="themer-head-script">${getThemerHeadScript()}</script>`
+  )
+})
 
 it("restores the Host's storage namespace", () => {
   expect(renderToString(<ThemerHeadScript storageNamespace="shop" />)).toBe(
-    `<script id="themer-head-script">${getThemerHeadScript({ storageNamespace: "shop" })}</script>`,
-  );
-});
+    `<script id="themer-head-script">${getThemerHeadScript({ storageNamespace: "shop" })}</script>`
+  )
+})
 
 it("hydrates the server's script as it is, without a warning", async () => {
-  container.innerHTML = renderToString(<ThemerHeadScript />);
-  const script = container.querySelector("script");
+  container.innerHTML = renderToString(<ThemerHeadScript />)
+  const script = container.querySelector("script")
 
   await act(async () => {
-    root = hydrateRoot(container, <ThemerHeadScript />);
-  });
+    root = hydrateRoot(container, <ThemerHeadScript />)
+  })
 
-  expect(container.querySelector("script")).toBe(script);
-  expect(script?.textContent).toBe(getThemerHeadScript());
-  expect(consoleError).not.toHaveBeenCalled();
-});
+  expect(container.querySelector("script")).toBe(script)
+  expect(script?.textContent).toBe(getThemerHeadScript())
+  expect(consoleError).not.toHaveBeenCalled()
+})
 
 it("renders an inert data block, without a warning, when drawn on the client", async () => {
-  root = createRoot(container);
-  await act(async () => root?.render(<ThemerHeadScript />));
+  root = createRoot(container)
+  await act(async () => root?.render(<ThemerHeadScript />))
 
-  expect(container.querySelector("script")?.type).toBe("application/json");
-  expect(consoleError).not.toHaveBeenCalled();
-});
+  expect(container.querySelector("script")?.type).toBe("application/json")
+  expect(consoleError).not.toHaveBeenCalled()
+})

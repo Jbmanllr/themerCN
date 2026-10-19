@@ -1,5 +1,6 @@
 import { expect, test, type Page } from "@playwright/test"
 
+import { hydrated } from "./page"
 import {
   openLayout,
   openToolbarPanel,
@@ -56,7 +57,7 @@ const screens: {
     show: async (page) => {
       await page.goto("/shop/p/night-owl-blend")
       await expect(heading(page, "Night Owl Blend")).toBeVisible()
-      await expect(themerTrigger(page)).toBeVisible({ timeout: 15_000 })
+      await hydrated(page)
       await page.getByRole("button", { name: "Add to cart" }).click()
       await page.getByRole("link", { name: "Cart, 1 item" }).click()
       await expect(page).toHaveURL(/\/cart$/)
@@ -111,6 +112,7 @@ const screens: {
     show: async (page) => {
       await page.goto("/")
       await expect(heading(page, "Good coffee, slowly.")).toBeVisible()
+      await hydrated(page)
       await themerTrigger(page).click()
       await expect(
         page.getByRole("button", { name: /^Primary & Secondary/ })
@@ -124,6 +126,7 @@ const screens: {
     show: async (page) => {
       await page.goto("/")
       await expect(heading(page, "Good coffee, slowly.")).toBeVisible()
+      await hydrated(page)
       await openLayout(page, "Overlay")
     },
   },
@@ -134,6 +137,7 @@ const screens: {
     show: async (page) => {
       await page.goto("/")
       await expect(heading(page, "Good coffee, slowly.")).toBeVisible()
+      await hydrated(page)
       await openLayout(page, "Push")
     },
   },
@@ -144,6 +148,7 @@ const screens: {
     show: async (page) => {
       await page.goto("/")
       await expect(heading(page, "Good coffee, slowly.")).toBeVisible()
+      await hydrated(page)
       const colors = await openToolbarPanel(page, "Colors")
       await expect(
         colors.getByRole("button", { name: /^Primary & Secondary/ })

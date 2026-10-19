@@ -1,9 +1,9 @@
-"use client";
+"use client"
 
-// The editor's own preview tabs. Demos are lazy so their code (recharts in
+// The editor's own preview tabs. Previews are lazy so their code (recharts in
 // Cards and Dashboard, the data table, the mail fixtures) loads only when a
 // tab opens; the Live frame and the colour palette are small and eager.
-// Wide demos keep a minimum width and scroll on both axes.
+// Wide previews keep a minimum width and scroll on both axes.
 //
 // Contract: a tab `id` is persisted as the `previewTab` preference, and an
 // unknown persisted id falls back to the first tab, so renaming an id resets
@@ -13,49 +13,49 @@
 //
 // See: packages/themer/ARCHITECTURE.md (Preview System)
 
-import { lazy } from "react";
-import { useEditorStore } from "../../stores/editor-store";
-import ColorPreview from "./theme-preview/color-preview";
-import { LivePreview } from "./live-preview";
-import type { BuiltinPreviewTab } from "./preview-tab-registry";
+import { lazy } from "react"
+import { useEditorStore } from "../../stores/editor-store"
+import ColorPreview from "./theme-preview/color-preview"
+import { LivePreview } from "./live-preview"
+import type { BuiltinPreviewTab } from "./preview-tab-registry"
 
-const DemoCards = lazy(() => import("./examples/cards"));
-const DemoMail = lazy(() => import("./examples/mail"));
-const DemoDashboard = lazy(() => import("./examples/dashboard"));
-const DemoPricing = lazy(() => import("./examples/pricing/pricing"));
-const TypographyDemo = lazy(
-  () => import("./examples/typography/typography-demo"),
-);
+const CardsPreview = lazy(() => import("./examples/cards"))
+const MailPreview = lazy(() => import("./examples/mail"))
+const DashboardPreview = lazy(() => import("./examples/dashboard"))
+const PricingPreview = lazy(() => import("./examples/pricing/pricing"))
+const TypographyPreview = lazy(
+  () => import("./examples/typography/typography-preview")
+)
 
 function DashboardTab() {
   return (
     <div className="size-full min-w-[1400px]">
-      <DemoDashboard />
+      <DashboardPreview />
     </div>
-  );
+  )
 }
 
 function MailTab() {
   return (
     <div className="size-full min-w-[1300px] rounded-lg border">
-      <DemoMail />
+      <MailPreview />
     </div>
-  );
+  )
 }
 
 /**
- * The demos read no editor state (they follow the CSS variables the editor
+ * The previews read no editor state (they follow the CSS variables the editor
  * writes on <html>); the palette lists token values, so it subscribes to the
  * theme, and only to the part it shows.
  */
 function ColorPaletteTab() {
-  const styles = useEditorStore((state) => state.themeState.styles);
-  const currentMode = useEditorStore((state) => state.themeState.currentMode);
+  const styles = useEditorStore((state) => state.themeState.styles)
+  const currentMode = useEditorStore((state) => state.themeState.currentMode)
   return (
     <div className="p-4">
       <ColorPreview styles={styles} currentMode={currentMode} />
     </div>
-  );
+  )
 }
 
 /** Built-in tabs; orders leave room for host tabs in between. */
@@ -69,7 +69,13 @@ export const BUILTIN_TABS: readonly BuiltinPreviewTab[] = [
     frame: true,
     bare: true,
   },
-  { id: "cards", label: "Cards", component: DemoCards, scroll: "y", order: 10 },
+  {
+    id: "cards",
+    label: "Cards",
+    component: CardsPreview,
+    scroll: "y",
+    order: 10,
+  },
   {
     id: "dashboard",
     label: "Dashboard",
@@ -89,7 +95,7 @@ export const BUILTIN_TABS: readonly BuiltinPreviewTab[] = [
   {
     id: "pricing",
     label: "Pricing",
-    component: DemoPricing,
+    component: PricingPreview,
     scroll: "y",
     order: 40,
   },
@@ -103,9 +109,9 @@ export const BUILTIN_TABS: readonly BuiltinPreviewTab[] = [
   {
     id: "typography",
     label: "Typography",
-    component: TypographyDemo,
+    component: TypographyPreview,
     scroll: "y",
     order: 60,
     inMenu: true,
   },
-];
+]

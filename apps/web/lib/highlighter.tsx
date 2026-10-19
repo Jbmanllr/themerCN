@@ -1,3 +1,5 @@
+// RETIRED: unused, and its `shiki` dependency is gone. Excluded from
+// tsconfig.json and eslint.config.js until the owner deletes this file.
 import * as React from "react"
 import {
   createHighlighterCore,

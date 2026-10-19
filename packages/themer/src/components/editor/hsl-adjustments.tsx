@@ -1,4 +1,4 @@
-"use client";
+"use client"
 
 // The HSL adjustment controls: a grid of presets (hslPresets) and three
 // sliders (hue shift, saturation and lightness multipliers) that transform
@@ -14,53 +14,53 @@
 //
 // See: packages/themer/ARCHITECTURE.md (HSL Adjustments).
 
-import * as React from "react";
-import { ChevronDown } from "lucide-react";
-import { Button } from "@workspace/ui/components/button";
+import * as React from "react"
+import { ChevronDown } from "lucide-react"
+import { Button } from "@workspace/ui/components/button"
 import {
   ToggleGroup,
   ToggleGroupItem,
-} from "@workspace/ui/components/toggle-group";
+} from "@workspace/ui/components/toggle-group"
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from "@workspace/ui/components/tooltip";
-import { cn } from "@workspace/ui/lib/utils";
-import { useShallow } from "zustand/react/shallow";
-import { SliderWithInput } from "./slider-with-input";
-import { useEditorStore } from "../../stores/editor-store";
-import { hslPresets } from "../../config/presets";
-import { defaultHSLAdjustments } from "../../config/defaults";
-import { getExtraColorKeys } from "../../config/extra-colors";
+} from "@workspace/ui/components/tooltip"
+import { cn } from "@workspace/ui/lib/utils"
+import { useShallow } from "zustand/react/shallow"
+import { SliderWithInput } from "./slider-with-input"
+import { useEditorStore } from "../../stores/editor-store"
+import { hslPresets } from "../../config/presets"
+import { defaultHSLAdjustments } from "../../config/defaults"
+import { getExtraColorKeys } from "../../config/extra-colors"
 import {
   adjustColor,
   adjustThemeStyles,
   isIdentityHslAdjustment,
-} from "../../utils/hsl-adjust";
-import { debounce } from "../../utils/debounce";
-import type { HSLAdjustments } from "../../types";
+} from "../../utils/hsl-adjust"
+import { debounce } from "../../utils/debounce"
+import type { HSLAdjustments } from "../../types"
 
-const HSL_UPDATE_DEBOUNCE_MS = 10;
+const HSL_UPDATE_DEBOUNCE_MS = 10
 
 function applyHslAdjustments(adjustments: HSLAdjustments) {
   const { themeCheckpoint, themeState, setThemeState } =
-    useEditorStore.getState();
-  const base = (themeCheckpoint ?? themeState).styles;
+    useEditorStore.getState()
+  const base = (themeCheckpoint ?? themeState).styles
   setThemeState((prev) => ({
     ...prev,
     hslAdjustments: adjustments,
     styles: adjustThemeStyles(base, adjustments, getExtraColorKeys()),
-  }));
+  }))
 }
 
 /** Save the checkpoint before the first adjustment away from neutral. */
 function checkpointIfNeutral() {
-  const { themeState, saveThemeCheckpoint } = useEditorStore.getState();
+  const { themeState, saveThemeCheckpoint } = useEditorStore.getState()
   if (
     isIdentityHslAdjustment(themeState.hslAdjustments ?? defaultHSLAdjustments)
   ) {
-    saveThemeCheckpoint();
+    saveThemeCheckpoint()
   }
 }
 
@@ -70,12 +70,12 @@ function checkpointIfNeutral() {
  * follow the grid's column count at each container width.
  */
 function collapsedPresetClass(index: number): string | undefined {
-  if (index < 5) return undefined;
-  if (index < 7) return "hidden @sm:block";
-  if (index < 9) return "hidden @md:block";
-  if (index < 11) return "hidden @lg:block";
-  if (index < 13) return "hidden @xl:block";
-  return "hidden";
+  if (index < 5) return undefined
+  if (index < 7) return "hidden @sm:block"
+  if (index < 9) return "hidden @md:block"
+  if (index < 11) return "hidden @lg:block"
+  if (index < 13) return "hidden @xl:block"
+  return "hidden"
 }
 
 /**
@@ -83,50 +83,50 @@ function collapsedPresetClass(index: number): string | undefined {
  * degrees, saturation multiplier 0 to 2, lightness multiplier 0.2 to 2.
  */
 export function HSLAdjustments() {
-  const [isExpanded, setIsExpanded] = React.useState(false);
-  const gridId = React.useId();
+  const [isExpanded, setIsExpanded] = React.useState(false)
+  const gridId = React.useId()
   const currentAdjustments = useEditorStore(
-    (state) => state.themeState.hslAdjustments ?? defaultHSLAdjustments,
-  );
+    (state) => state.themeState.hslAdjustments ?? defaultHSLAdjustments
+  )
   // Preset previews start from the same base the adjustment uses.
   const baseColors = useEditorStore(
     useShallow((state) => {
-      const base = state.themeCheckpoint ?? state.themeState;
-      const mode = state.themeState.currentMode;
+      const base = state.themeCheckpoint ?? state.themeState
+      const mode = state.themeState.currentMode
       return {
         primary: base.styles[mode].primary,
         secondary: base.styles[mode].secondary,
-      };
-    }),
-  );
+      }
+    })
+  )
 
   const debouncedUpdate = React.useMemo(
     () => debounce(applyHslAdjustments, HSL_UPDATE_DEBOUNCE_MS),
-    [],
-  );
+    []
+  )
 
-  React.useEffect(() => () => debouncedUpdate.cancel(), [debouncedUpdate]);
+  React.useEffect(() => () => debouncedUpdate.cancel(), [debouncedUpdate])
 
   const handleAdjustmentChange = (key: keyof HSLAdjustments, value: number) => {
-    checkpointIfNeutral();
-    debouncedUpdate({ ...currentAdjustments, [key]: value });
-  };
+    checkpointIfNeutral()
+    debouncedUpdate({ ...currentAdjustments, [key]: value })
+  }
 
   const handlePresetClick = (preset: (typeof hslPresets)[number]) => {
-    checkpointIfNeutral();
+    checkpointIfNeutral()
     debouncedUpdate({
       hueShift: preset.hueShift,
       saturationScale: preset.saturationScale,
       lightnessScale: preset.lightnessScale,
-    });
-  };
+    })
+  }
 
   const selectedLabel = hslPresets.find(
     (preset) =>
       currentAdjustments.hueShift === preset.hueShift &&
       currentAdjustments.saturationScale === preset.saturationScale &&
-      currentAdjustments.lightnessScale === preset.lightnessScale,
-  )?.label;
+      currentAdjustments.lightnessScale === preset.lightnessScale
+  )?.label
 
   return (
     <div className="@container">
@@ -143,14 +143,14 @@ export function HSLAdjustments() {
         spacing={2}
         value={selectedLabel ? [selectedLabel] : []}
         onValueChange={(values) => {
-          const preset = hslPresets.find((item) => item.label === values[0]);
-          if (preset) handlePresetClick(preset);
+          const preset = hslPresets.find((item) => item.label === values[0])
+          if (preset) handlePresetClick(preset)
         }}
         className={cn(
           // rounded-none: the stock group's rounding would clip the corner
           // presets' shadows and rings with this overflow-hidden.
           "-m-1 mb-2 grid w-full grid-cols-5 gap-2 overflow-hidden rounded-none p-1 transition-all duration-300 ease-in-out @sm:grid-cols-7 @md:grid-cols-9 @lg:grid-cols-11 @xl:grid-cols-13",
-          isExpanded ? "h-auto" : "h-10",
+          isExpanded ? "h-auto" : "h-10"
         )}
       >
         {hslPresets.map((preset, index) => (
@@ -173,13 +173,13 @@ export function HSLAdjustments() {
           onClick={() => setIsExpanded(!isExpanded)}
           aria-expanded={isExpanded}
           aria-controls={gridId}
-          className="text-muted-foreground mb-4 flex w-full items-center justify-center text-xs"
+          className="mb-4 flex w-full items-center justify-center text-xs text-muted-foreground"
         >
           {isExpanded ? "Hide" : "Show more"} presets
           <ChevronDown
             className={cn(
               "ms-1 size-4 transition-transform duration-200",
-              isExpanded && "rotate-180",
+              isExpanded && "rotate-180"
             )}
           />
         </Button>
@@ -218,26 +218,28 @@ export function HSLAdjustments() {
         />
       </div>
     </div>
-  );
+  )
 }
 
 interface HslPresetButtonProps {
-  preset: (typeof hslPresets)[number];
-  basePrimary: string;
-  baseSecondary: string;
-  isSelected: boolean;
-  className?: string;
+  preset: (typeof hslPresets)[number]
+  basePrimary: string
+  baseSecondary: string
+  isSelected: boolean
+  className?: string
 }
 
-function HslPresetButton({
+// Memoised: its props are a constant preset and the two base colours, so a
+// slider tick (which changes neither) does not repeat its colour conversions.
+const HslPresetButton = React.memo(function HslPresetButton({
   preset,
   basePrimary,
   baseSecondary,
   isSelected,
   className,
 }: HslPresetButtonProps) {
-  const previewPrimary = adjustColor(basePrimary, preset);
-  const previewSecondary = adjustColor(baseSecondary, preset);
+  const previewPrimary = adjustColor(basePrimary, preset)
+  const previewSecondary = adjustColor(baseSecondary, preset)
 
   return (
     <Tooltip>
@@ -252,9 +254,9 @@ function HslPresetButton({
               "relative h-8 w-full min-w-0 overflow-hidden rounded-md p-0 shadow-sm transition-all duration-200",
               "hover:scale-105 hover:shadow-md",
               isSelected
-                ? "ring-primary ring-1 ring-offset-1"
-                : "border-border border",
-              className,
+                ? "ring-1 ring-primary ring-offset-1"
+                : "border border-border",
+              className
             )}
           />
         }
@@ -271,12 +273,12 @@ function HslPresetButton({
           />
         </div>
         {isSelected && (
-          <div className="bg-primary absolute end-0.5 bottom-0.5 size-2 rounded-full" />
+          <div className="absolute end-0.5 bottom-0.5 size-2 rounded-full bg-primary" />
         )}
       </TooltipTrigger>
       <TooltipContent side="bottom" sideOffset={4}>
         <p className="text-xs font-medium">{preset.label}</p>
       </TooltipContent>
     </Tooltip>
-  );
-}
+  )
+})

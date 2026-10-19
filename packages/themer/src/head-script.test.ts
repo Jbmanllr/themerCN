@@ -7,47 +7,50 @@
 // marker the Vite smoke app greps for to prove nothing of the Themer shipped.
 // What the script does with a saved edit is covered in
 // utils/theme-script.test.ts.
-import { beforeEach, expect, it } from "vitest";
+import { beforeEach, expect, it } from "vitest"
 
-import { getThemerHeadScript } from "./head-script";
+import { EDITOR_STATE_VERSION } from "./config/constants"
+import { getThemerHeadScript } from "./head-script"
 
 function save(namespace: string, primary: string) {
   localStorage.setItem(
     `${namespace}:editor`,
     JSON.stringify({
-      state: { themeState: { currentMode: "light", styles: { light: { primary } } } },
-      version: 0,
-    }),
-  );
+      state: {
+        themeState: { currentMode: "light", styles: { light: { primary } } },
+      },
+      version: EDITOR_STATE_VERSION,
+    })
+  )
 }
 
 const primary = () =>
   getComputedStyle(document.documentElement)
     .getPropertyValue("--primary")
-    .trim();
+    .trim()
 
 beforeEach(() => {
-  localStorage.clear();
-  document.head.innerHTML = "";
-});
+  localStorage.clear()
+  document.head.innerHTML = ""
+})
 
 it("restores the Theme saved under the Host's storage namespace", () => {
-  save("themercn", "#111111");
-  save("shop", "#222222");
+  save("themercn", "#111111")
+  save("shop", "#222222")
 
-  new Function(getThemerHeadScript({ storageNamespace: "shop" }))();
+  new Function(getThemerHeadScript({ storageNamespace: "shop" }))()
 
-  expect(primary()).toBe("#222222");
-});
+  expect(primary()).toBe("#222222")
+})
 
 it("restores the default namespace's Theme when given none", () => {
-  save("themercn", "#111111");
+  save("themercn", "#111111")
 
-  new Function(getThemerHeadScript())();
+  new Function(getThemerHeadScript())()
 
-  expect(primary()).toBe("#111111");
-});
+  expect(primary()).toBe("#111111")
+})
 
 it("does not carry the data-themer marker", () => {
-  expect(getThemerHeadScript()).not.toContain("data-themer");
-});
+  expect(getThemerHeadScript()).not.toContain("data-themer")
+})

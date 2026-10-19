@@ -1,4 +1,4 @@
-"use client";
+"use client"
 
 // The Tailwind palette popover beside each colour token: a searchable list
 // and a swatch grid of the bundled Tailwind v4 palette
@@ -15,9 +15,9 @@
 // mounts only while open and the palette's grid rows and normalised colours
 // are built once per page, not per picker.
 
-import * as React from "react";
-import { LayoutGrid, List } from "lucide-react";
-import { Button } from "@workspace/ui/components/button";
+import * as React from "react"
+import { LayoutGrid, List } from "lucide-react"
+import { Button } from "@workspace/ui/components/button"
 import {
   Command,
   CommandEmpty,
@@ -25,68 +25,68 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
-} from "@workspace/ui/components/command";
+} from "@workspace/ui/components/command"
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@workspace/ui/components/popover";
-import { ScrollArea } from "@workspace/ui/components/scroll-area";
-import { Separator } from "@workspace/ui/components/separator";
+} from "@workspace/ui/components/popover"
+import { ScrollArea } from "@workspace/ui/components/scroll-area"
+import { Separator } from "@workspace/ui/components/separator"
 import {
   Tabs,
   TabsContent,
   TabsList,
   TabsTrigger,
-} from "@workspace/ui/components/tabs";
-import { cn } from "@workspace/ui/lib/utils";
+} from "@workspace/ui/components/tabs"
+import { cn } from "@workspace/ui/lib/utils"
 import {
   filterTailwindPaletteEntries,
   getTailwindPaletteEntries,
   tailwindPaletteFamilies,
   type TailwindPaletteEntry,
-} from "../../config/tailwind-palette";
-import { usePreferencesStore } from "../../stores/preferences-store";
-import { normalizeColorForCompare } from "../../utils/color-converter";
-import { useScrollBoundary } from "./scroll-boundary";
+} from "../../config/tailwind-palette"
+import { usePreferencesStore } from "../../stores/preferences-store"
+import { normalizeColorForCompare } from "../../utils/color-converter"
+import { useScrollBoundary } from "./scroll-boundary"
 
 interface ColorSelectorPopoverProps {
-  currentColor: string;
-  onChange: (color: string) => void;
-  disabled?: boolean;
+  currentColor: string
+  onChange: (color: string) => void
+  disabled?: boolean
 }
 
-type ViewMode = "list" | "palette";
+type ViewMode = "list" | "palette"
 
 function isViewMode(value: unknown): value is ViewMode {
-  return value === "list" || value === "palette";
+  return value === "list" || value === "palette"
 }
 
 type PaletteGroup = {
-  family: TailwindPaletteEntry["family"];
-  colorName: string;
-  entries: readonly TailwindPaletteEntry[];
-};
+  family: TailwindPaletteEntry["family"]
+  colorName: string
+  entries: readonly TailwindPaletteEntry[]
+}
 
 const COLOR_SELECTOR_BODY_HEIGHT =
-  "min(calc(var(--spacing, 0.25rem) * 84), calc(var(--available-height) - 2.75rem))";
-const COLOR_SELECTOR_WIDTH = "min(18.75rem, calc(100vw - 1rem))";
-const SCROLL_AREA_VIEWPORT = '[data-slot="scroll-area-viewport"]';
+  "min(calc(var(--spacing, 0.25rem) * 84), calc(var(--available-height) - 2.75rem))"
+const COLOR_SELECTOR_WIDTH = "min(18.75rem, calc(100vw - 1rem))"
+const SCROLL_AREA_VIEWPORT = '[data-slot="scroll-area-viewport"]'
 
 export function ColorSelectorPopover({
   currentColor,
   onChange,
   disabled = false,
 }: ColorSelectorPopoverProps) {
-  const [open, setOpen] = React.useState(false);
+  const [open, setOpen] = React.useState(false)
 
   const handleColorSelect = React.useCallback(
     (color: string) => {
-      onChange(color);
-      setOpen(false);
+      onChange(color)
+      setOpen(false)
     },
-    [onChange],
-  );
+    [onChange]
+  )
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -119,7 +119,7 @@ export function ColorSelectorPopover({
         />
       </PopoverContent>
     </Popover>
-  );
+  )
 }
 
 // The popup body. It mounts only while the popup is open, so a closed picker
@@ -129,51 +129,51 @@ function ColorSelectorPanel({
   currentColor,
   onSelect,
 }: {
-  currentColor: string;
-  onSelect: (color: string) => void;
+  currentColor: string
+  onSelect: (color: string) => void
 }) {
   // The last view (list or palette) persists as a preference.
-  const viewMode = usePreferencesStore((state) => state.colorSelectorTab);
-  const setViewMode = usePreferencesStore((state) => state.setColorSelectorTab);
-  const [searchValue, setSearchValue] = React.useState("");
-  const listScrollAreaRef = React.useRef<HTMLDivElement>(null);
-  const paletteScrollAreaRef = React.useRef<HTMLDivElement>(null);
+  const viewMode = usePreferencesStore((state) => state.colorSelectorTab)
+  const setViewMode = usePreferencesStore((state) => state.setColorSelectorTab)
+  const [searchValue, setSearchValue] = React.useState("")
+  const listScrollAreaRef = React.useRef<HTMLDivElement>(null)
+  const paletteScrollAreaRef = React.useRef<HTMLDivElement>(null)
 
-  const paletteGridRows = getStaticPaletteGridRows();
+  const paletteGridRows = getStaticPaletteGridRows()
 
   const filteredPaletteGroups = React.useMemo(
     () =>
       groupPaletteEntries(
-        filterTailwindPaletteEntries(searchValue, getTailwindPaletteEntries()),
+        filterTailwindPaletteEntries(searchValue, getTailwindPaletteEntries())
       ),
-    [searchValue],
-  );
+    [searchValue]
+  )
 
   const selectedEntryName = React.useMemo(
     () => getSelectedPaletteEntryName(currentColor),
-    [currentColor],
-  );
+    [currentColor]
+  )
 
   useScrollBoundary(listScrollAreaRef, {
     enabled: viewMode === "list",
     viewportSelector: SCROLL_AREA_VIEWPORT,
     rebindKey: filteredPaletteGroups.length,
-  });
+  })
   useScrollBoundary(paletteScrollAreaRef, {
     enabled: viewMode === "palette",
     viewportSelector: SCROLL_AREA_VIEWPORT,
-  });
+  })
 
   const isColorSelected = React.useCallback(
     (entry: TailwindPaletteEntry) => entry.name === selectedEntryName,
-    [selectedEntryName],
-  );
+    [selectedEntryName]
+  )
 
   return (
     <Tabs
       value={viewMode}
       onValueChange={(value) => {
-        if (isViewMode(value)) setViewMode(value);
+        if (isViewMode(value)) setViewMode(value)
       }}
       className="max-h-(--available-height) min-h-0 gap-0"
       style={{ maxHeight: "var(--available-height)", width: "100%" }}
@@ -184,7 +184,7 @@ function ColorSelectorPanel({
       >
         <div className="flex items-center gap-1.5">
           <TailwindIcon className="size-4" />
-          <span className="text-muted-foreground text-sm tabular-nums">
+          <span className="text-sm text-muted-foreground tabular-nums">
             Tailwind v4
           </span>
         </div>
@@ -192,14 +192,14 @@ function ColorSelectorPanel({
         <TabsList className="h-8 gap-1 bg-transparent p-0">
           <TabsTrigger
             value="list"
-            className="data-active:bg-input/25 dark:data-active:bg-input/25 size-8 p-0 data-active:shadow-none!"
+            className="size-8 p-0 data-active:bg-input/25 data-active:shadow-none! dark:data-active:bg-input/25"
           >
             <List className="size-4" />
             <span className="sr-only">List view</span>
           </TabsTrigger>
           <TabsTrigger
             value="palette"
-            className="data-active:bg-input/25 dark:data-active:bg-input/25 size-8 p-0 data-active:shadow-none!"
+            className="size-8 p-0 data-active:bg-input/25 data-active:shadow-none! dark:data-active:bg-input/25"
           >
             <LayoutGrid className="size-4" />
             <span className="sr-only">Palette view</span>
@@ -227,14 +227,14 @@ function ColorSelectorPanel({
             <ScrollArea className="h-full overflow-hidden">
               <CommandList className="max-h-none overflow-visible p-1">
                 {filteredPaletteGroups.length === 0 ? (
-                  <CommandEmpty className="text-muted-foreground p-4 text-center">
+                  <CommandEmpty className="p-4 text-center text-muted-foreground">
                     No Tailwind color found.
                   </CommandEmpty>
                 ) : (
                   filteredPaletteGroups.map((group) => (
                     <CommandGroup heading={group.colorName} key={group.family}>
                       {group.entries.map((entry) => {
-                        const isSelected = isColorSelected(entry);
+                        const isSelected = isColorSelected(entry)
 
                         return (
                           <CommandItem
@@ -255,7 +255,7 @@ function ColorSelectorPanel({
                             />
                             <span>{entry.name}</span>
                           </CommandItem>
-                        );
+                        )
                       })}
                     </CommandGroup>
                   ))
@@ -302,11 +302,11 @@ function ColorSelectorPanel({
         </div>
       </TabsContent>
     </Tabs>
-  );
+  )
 }
 
 function groupPaletteEntries(
-  entries: readonly TailwindPaletteEntry[],
+  entries: readonly TailwindPaletteEntry[]
 ): PaletteGroup[] {
   return tailwindPaletteFamilies
     .map((family) => ({
@@ -314,55 +314,55 @@ function groupPaletteEntries(
       colorName: family.charAt(0).toUpperCase() + family.slice(1),
       entries: entries.filter((entry) => entry.family === family),
     }))
-    .filter((group) => group.entries.length > 0);
+    .filter((group) => group.entries.length > 0)
 }
 
 function getPaletteGridRows(
-  groups: readonly PaletteGroup[],
+  groups: readonly PaletteGroup[]
 ): readonly (readonly TailwindPaletteEntry[])[] {
   const specialEntries = groups
     .filter((group) => group.entries.every((entry) => entry.isDefault))
-    .flatMap((group) => group.entries);
+    .flatMap((group) => group.entries)
   const colorRows = groups
     .filter((group) => group.entries.some((entry) => !entry.isDefault))
-    .map((group) => group.entries);
+    .map((group) => group.entries)
 
-  return specialEntries.length > 0 ? [specialEntries, ...colorRows] : colorRows;
+  return specialEntries.length > 0 ? [specialEntries, ...colorRows] : colorRows
 }
 
 // The palette is static: its grid rows and its normalised colours are built
 // once, on the first open of any picker.
 let staticPaletteGridRows:
-  readonly (readonly TailwindPaletteEntry[])[] | undefined;
+  readonly (readonly TailwindPaletteEntry[])[] | undefined
 
 function getStaticPaletteGridRows() {
   return (staticPaletteGridRows ??= getPaletteGridRows(
-    groupPaletteEntries(getTailwindPaletteEntries()),
-  ));
+    groupPaletteEntries(getTailwindPaletteEntries())
+  ))
 }
 
-let normalizedPaletteColors: ReadonlyMap<string, string> | undefined;
+let normalizedPaletteColors: ReadonlyMap<string, string> | undefined
 
 function getSelectedPaletteEntryName(currentColor: string) {
-  const entries = getTailwindPaletteEntries();
+  const entries = getTailwindPaletteEntries()
   const normalizedColors = (normalizedPaletteColors ??= new Map(
-    entries.map((entry) => [entry.name, normalizeColorForCompare(entry.color)]),
-  ));
-  const normalizedCurrent = normalizeColorForCompare(currentColor);
+    entries.map((entry) => [entry.name, normalizeColorForCompare(entry.color)])
+  ))
+  const normalizedCurrent = normalizeColorForCompare(currentColor)
   return (
     entries.find(
-      (entry) => normalizedColors.get(entry.name) === normalizedCurrent,
+      (entry) => normalizedColors.get(entry.name) === normalizedCurrent
     )?.name ?? null
-  );
+  )
 }
 
-type SwatchSize = "sm" | "md" | "lg";
+type SwatchSize = "sm" | "md" | "lg"
 
 const SWATCH_SIZE_CLASSES: Record<SwatchSize, string> = {
   sm: "size-5",
   md: "size-6",
   lg: "size-8",
-};
+}
 
 // The swatch look, shared by the list view's decorative swatch (the option
 // itself is the control) and the palette grid's swatch button.
@@ -372,14 +372,14 @@ function getSwatchAppearance({
   size = "sm",
   className,
 }: {
-  color: string;
-  isSelected: boolean;
-  size?: SwatchSize;
-  className?: string;
+  color: string
+  isSelected: boolean
+  size?: SwatchSize
+  className?: string
 }): { className: string; style: React.CSSProperties } {
-  const isTransparent = color === "transparent";
+  const isTransparent = color === "transparent"
   const needsContrastBorder =
-    color === "#ffffff" || color === "#000000" || isTransparent;
+    color === "#ffffff" || color === "#000000" || isTransparent
   const style = isTransparent
     ? ({
         backgroundImage:
@@ -387,25 +387,25 @@ function getSwatchAppearance({
         backgroundPosition: "0 0, 0 4px, 4px -4px, -4px 0",
         backgroundSize: "8px 8px",
       } satisfies React.CSSProperties)
-    : ({ backgroundColor: color } satisfies React.CSSProperties);
+    : ({ backgroundColor: color } satisfies React.CSSProperties)
 
   return {
     className: cn(
       "relative cursor-pointer rounded-md border transition-transform hover:z-10 hover:scale-105",
       needsContrastBorder ? "border-border/60" : "border-transparent",
       SWATCH_SIZE_CLASSES[size],
-      isSelected && "ring-foreground/70 ring-2",
-      className,
+      isSelected && "ring-2 ring-foreground/70",
+      className
     ),
     style,
-  };
+  }
 }
 
 interface ColorSwatchProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  isSelected: boolean;
-  color: string;
-  name: string;
-  size?: SwatchSize;
+  isSelected: boolean
+  color: string
+  name: string
+  size?: SwatchSize
 }
 
 function ColorSwatch({
@@ -425,13 +425,13 @@ function ColorSwatch({
       {...getSwatchAppearance({ color, isSelected, size, className })}
       {...props}
     />
-  );
+  )
 }
 
 function TailwindIcon({ className, ...props }: React.SVGProps<SVGSVGElement>) {
   // Each icon instance needs its own clipPath id: one per picker, ~32 on
   // the page, and duplicate ids make url(#id) resolve to the first one.
-  const clipId = `tailwind-icon-${React.useId().replace(/:/g, "")}`;
+  const clipId = `tailwind-icon-${React.useId().replace(/:/g, "")}`
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -455,5 +455,5 @@ function TailwindIcon({ className, ...props }: React.SVGProps<SVGSVGElement>) {
         </clipPath>
       </defs>
     </svg>
-  );
+  )
 }

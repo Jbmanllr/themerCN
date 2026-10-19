@@ -1,6 +1,6 @@
-"use client";
+"use client"
 
-import { Button } from "@workspace/ui/components/button";
+import { Button } from "@workspace/ui/components/button"
 import {
   Card,
   CardContent,
@@ -8,12 +8,15 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@workspace/ui/components/card";
-import { Checkbox } from "@workspace/ui/components/checkbox";
-import { Input } from "@workspace/ui/components/input";
-import { Label } from "@workspace/ui/components/label";
-import { RadioGroup, RadioGroupItem } from "@workspace/ui/components/radio-group";
-import { Textarea } from "@workspace/ui/components/textarea";
+} from "@workspace/ui/components/card"
+import { Checkbox } from "@workspace/ui/components/checkbox"
+import { Input } from "@workspace/ui/components/input"
+import { Label } from "@workspace/ui/components/label"
+import {
+  RadioGroup,
+  RadioGroupItem,
+} from "@workspace/ui/components/radio-group"
+import { Textarea } from "@workspace/ui/components/textarea"
 
 const plans = [
   {
@@ -28,7 +31,7 @@ const plans = [
     description: "More features and storage.",
     price: "$20",
   },
-] as const;
+] as const
 
 export function CardsForms() {
   return (
@@ -66,7 +69,7 @@ export function CardsForms() {
           </div>
           <fieldset className="flex flex-col gap-3">
             <legend className="text-sm font-medium">Plan</legend>
-            <p className="text-muted-foreground text-sm">
+            <p className="text-sm text-muted-foreground">
               Select the plan that best fits your needs.
             </p>
             <RadioGroup
@@ -75,7 +78,7 @@ export function CardsForms() {
             >
               {plans.map((plan) => (
                 <Label
-                  className="has-[[data-checked]]:border-ring has-[[data-checked]]:bg-input/20 flex items-start gap-3 rounded-lg border p-3"
+                  className="flex items-start gap-3 rounded-lg border p-3 has-[[data-checked]]:border-ring has-[[data-checked]]:bg-input/20"
                   key={plan.id}
                 >
                   <RadioGroupItem
@@ -85,7 +88,7 @@ export function CardsForms() {
                   />
                   <div className="grid gap-1 font-normal">
                     <div className="font-medium">{plan.name}</div>
-                    <div className="text-muted-foreground text-xs leading-snug text-balance">
+                    <div className="text-xs leading-snug text-balance text-muted-foreground">
                       {plan.description}
                     </div>
                   </div>
@@ -120,5 +123,5 @@ export function CardsForms() {
         <Button size="sm">Upgrade Plan</Button>
       </CardFooter>
     </Card>
-  );
+  )
 }

@@ -1,4 +1,6 @@
 {
-  "extends": "@workspace/typescript-config/base.json"
+  // Claims no file: each workspace's own tsconfig.json covers its files, so
+  // an editor never falls back to this one (NodeNext, no JSX) for them.
+  "extends": "@workspace/typescript-config/base.json",
+  "files": []
 }
-

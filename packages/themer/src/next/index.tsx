@@ -1,4 +1,4 @@
-"use client";
+"use client"
 
 // `themercn/next`: the Next Adapter's client side. `<ThemerHeadScript>` puts
 // the head-script string (../head-script.ts) in the root layout's <head> as a
@@ -18,13 +18,13 @@
 //   hydration, so the hydrated markup matches the server's.
 // - No CSP nonce or next.config helper: CSP is the Host app's job.
 
-import { getThemerHeadScript } from "../head-script";
-import { useHydrated } from "../hooks/use-hydrated";
+import { getThemerHeadScript } from "../head-script"
+import { useHydrated } from "../hooks/use-hydrated"
 
 /** Props of `<ThemerHeadScript>`. */
 export interface ThemerHeadScriptProps {
   /** The `storageNamespace` of the Host's `<Themer>`. Default `"themercn"`. */
-  storageNamespace?: string;
+  storageNamespace?: string
 }
 
 /**
@@ -32,7 +32,7 @@ export interface ThemerHeadScriptProps {
  * layout's `<head>`, with the same `storageNamespace` as your `<Themer>`.
  */
 export function ThemerHeadScript({ storageNamespace }: ThemerHeadScriptProps) {
-  const hydrated = useHydrated();
+  const hydrated = useHydrated()
   return (
     <script
       dangerouslySetInnerHTML={{
@@ -41,5 +41,5 @@ export function ThemerHeadScript({ storageNamespace }: ThemerHeadScriptProps) {
       id="themer-head-script"
       type={hydrated ? "application/json" : undefined}
     />
-  );
+  )
 }

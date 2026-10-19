@@ -1,10 +1,10 @@
-"use client";
+"use client"
 
-import { HSLAdjustments } from "../editor/hsl-adjustments";
-import { RadiusControl } from "../editor/radius-control";
-import { SpacingControl } from "../editor/spacing-controls";
-import { ShadowControl } from "../editor/shadow-control";
-import { ControlSection } from "../editor/control-section";
+import { HSLAdjustments } from "../editor/hsl-adjustments"
+import { RadiusControl } from "../editor/radius-control"
+import { SpacingControl } from "../editor/spacing-controls"
+import { ShadowControl } from "../editor/shadow-control"
+import { ControlSection } from "../editor/control-section"
 
 /**
  * Other panel - HSL Adjustments + Radius + Spacing + Shadows
@@ -44,5 +44,5 @@ export function OtherPanel() {
         <ShadowControl />
       </ControlSection>
     </div>
-  );
+  )
 }

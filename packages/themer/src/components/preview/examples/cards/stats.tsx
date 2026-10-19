@@ -1,7 +1,7 @@
-"use client";
+"use client"
 
-// react-doctor-disable-next-line react-doctor/prefer-dynamic-import -- this demo is reached only through lazy(() => import("./examples/cards")) in builtin-tabs.tsx and preview-cards.tsx, so recharts already loads on demand
-import { Area, AreaChart, Line, LineChart } from "recharts";
+// react-doctor-disable-next-line react-doctor/prefer-dynamic-import -- this demo is reached only through lazy(() => import("./examples/cards")) in builtin-tabs.tsx, so recharts already loads on demand
+import { Area, AreaChart, Line, LineChart } from "recharts"
 
 import {
   Card,
@@ -9,8 +9,8 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@workspace/ui/components/card";
-import { ChartConfig, ChartContainer } from "@workspace/ui/components/chart";
+} from "@workspace/ui/components/card"
+import { ChartConfig, ChartContainer } from "@workspace/ui/components/chart"
 
 const data = [
   {
@@ -45,7 +45,7 @@ const data = [
     revenue: 26475,
     subscription: 89,
   },
-];
+]
 
 const chartConfig = {
   revenue: {
@@ -56,7 +56,7 @@ const chartConfig = {
     label: "Subscriptions",
     color: "var(--primary)",
   },
-} satisfies ChartConfig;
+} satisfies ChartConfig
 
 export function CardsStats() {
   return (
@@ -123,5 +123,5 @@ export function CardsStats() {
         </CardContent>
       </Card>
     </div>
-  );
+  )
 }

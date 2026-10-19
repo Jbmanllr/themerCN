@@ -3,7 +3,10 @@
 import { getProduct } from "./mock"
 import type { CartLine, Cents } from "./mock/types"
 
-export type ShippingId = "standard" | "express"
+/** Every shipping option's id; the checkout schema validates against it. */
+export const SHIPPING_IDS = ["standard", "express"] as const
+
+export type ShippingId = (typeof SHIPPING_IDS)[number]
 
 export type ShippingOption = {
   id: ShippingId
@@ -31,6 +34,25 @@ export const shippingOptions: ShippingOption[] = [
     description: "Next day if you order before 2 pm. $12.00.",
   },
 ]
+
+/** How an order summary names a shipping option, e.g. "Standard shipping". */
+export function shippingLabel(id: ShippingId): string {
+  return `${shippingOptions.find((option) => option.id === id)!.label} shipping`
+}
+
+/**
+ * A cart line's identity: its product and its options in a canonical order,
+ * so `{ Grind, Size }` and `{ Size, Grind }` are the same line. The cart store
+ * merges lines with equal keys, and cart lists use it as the React key.
+ */
+export function lineKey(
+  line: Pick<CartLine, "productSlug" | "option">
+): string {
+  const option = Object.entries(line.option).sort(([a], [b]) =>
+    a < b ? -1 : a > b ? 1 : 0
+  )
+  return JSON.stringify([line.productSlug, option])
+}
 
 export type CartSummary = {
   /** Number of items (sum of quantities). */

@@ -1,4 +1,4 @@
-"use client";
+"use client"
 
 // The editor's user preferences (colour format, Tailwind version, Themer
 // layout, preview tab, sidebar and section states, theme override and more),
@@ -8,8 +8,11 @@
 //
 // Contract:
 // - The whole state persists (no partialize), versioned by
-//   PREFERENCES_VERSION with no migrations (pre-release): stored preferences
-//   of another version are dropped.
+//   PREFERENCES_VERSION (config/constants.ts) with no migrations
+//   (pre-release): stored preferences of another version are dropped without
+//   an error and the key rewritten (dropOtherVersion), and the head script
+//   ignores them. Writes go through guardedLocalStorage
+//   (stores/persist-options.ts).
 // - utils/theme-script.ts reads `state.themeOverrideEnabled` from this entry
 //   before hydration (absent means on): keep that path and the storage key.
 // - colorFormat is always one of getAvailableColorFormats(): Tailwind 3 has
@@ -18,18 +21,16 @@
 //
 // See: packages/themer/ARCHITECTURE.md (PreferencesStore)
 
-import { create } from "zustand";
-import { persist } from "zustand/middleware";
-import type { PreferencesStore } from "../types";
-import { getStorageKeys } from "../config/constants";
-
-/** Version of the persisted preferences (zustand persist `version`). */
-export const PREFERENCES_VERSION = 1;
+import { create } from "zustand"
+import { persist } from "zustand/middleware"
+import type { PreferencesStore } from "../types"
+import { PREFERENCES_VERSION, getStorageKeys } from "../config/constants"
+import { dropOtherVersion, guardedLocalStorage } from "./persist-options"
 
 const colorFormatsByVersion = {
   "3": ["hex", "rgb", "hsl"],
   "4": ["hex", "rgb", "hsl", "oklch"],
-} as const;
+} as const
 
 /**
  * User preferences store. `sectionStates` holds each ControlSection's open
@@ -55,15 +56,15 @@ export const usePreferencesStore = create<PreferencesStore>()(
       // Actions
       setColorFormat: (format) => {
         if (get().getAvailableColorFormats().includes(format)) {
-          set({ colorFormat: format });
+          set({ colorFormat: format })
         }
       },
       setTailwindVersion: (version) => {
-        const next: Partial<PreferencesStore> = { tailwindVersion: version };
+        const next: Partial<PreferencesStore> = { tailwindVersion: version }
         if (version === "3" && get().colorFormat === "oklch") {
-          next.colorFormat = "hsl";
+          next.colorFormat = "hsl"
         }
-        set(next);
+        set(next)
       },
       setPackageManager: (packageManager) => set({ packageManager }),
       setShowContrastWarnings: (show) => set({ showContrastWarnings: show }),
@@ -72,13 +73,12 @@ export const usePreferencesStore = create<PreferencesStore>()(
       setLayout: (layout) => set({ layout }),
       setThemeOverrideEnabled: (enabled) =>
         set({ themeOverrideEnabled: enabled }),
-      setSidebarColorSync: (enabled) => set({ sidebarColorSync: enabled }),
       setColorSelectorTab: (tab) => set({ colorSelectorTab: tab }),
       setSectionOpen: (id, open) =>
         set((state) =>
           state.sectionStates[id] === open
             ? state
-            : { sectionStates: { ...state.sectionStates, [id]: open } },
+            : { sectionStates: { ...state.sectionStates, [id]: open } }
         ),
       getAvailableColorFormats: () =>
         colorFormatsByVersion[get().tailwindVersion],
@@ -88,6 +88,16 @@ export const usePreferencesStore = create<PreferencesStore>()(
       // <Themer> names the namespace and hydrates (stores/hydrate.ts).
       skipHydration: true,
       version: PREFERENCES_VERSION,
-    },
-  ),
-);
+      migrate: dropOtherVersion,
+      // On the initial state, never the current one, so a namespace switch
+      // (stores/hydrate.ts) keeps no preference of the previous namespace.
+      merge: (persistedState): PreferencesStore => ({
+        ...usePreferencesStore.getInitialState(),
+        ...(persistedState as Partial<PreferencesStore> | undefined),
+      }),
+      // Guarded writes, skipped when nothing changed (setSectionOpen with
+      // the value already set).
+      storage: guardedLocalStorage(),
+    }
+  )
+)

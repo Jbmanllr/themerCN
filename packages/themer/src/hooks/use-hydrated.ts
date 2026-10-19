@@ -4,13 +4,13 @@
 // everything under it with it; `<ThemerHeadScript>` switches its script to a
 // data block with it.
 
-import { useSyncExternalStore } from "react";
+import { useSyncExternalStore } from "react"
 
-const subscribeNever = () => () => {};
-const onClient = () => true;
-const onServer = () => false;
+const subscribeNever = () => () => {}
+const onClient = () => true
+const onServer = () => false
 
 /** True once the client has hydrated; false on the server and while hydrating. */
 export function useHydrated(): boolean {
-  return useSyncExternalStore(subscribeNever, onClient, onServer);
+  return useSyncExternalStore(subscribeNever, onClient, onServer)
 }

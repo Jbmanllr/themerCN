@@ -1,9 +1,11 @@
-"use client";
+// RETIRED (#64): nothing imports this file. It was an unused icon wrapper. It
+// stays only until the owner removes it from the repo.
+"use client"
 
-import { Sparkles } from "lucide-react";
+import { Sparkles } from "lucide-react"
 
 interface SparklesIconProps {
-  className?: string;
+  className?: string
 }
 
 /**
@@ -12,5 +14,5 @@ interface SparklesIconProps {
  * stays exported from `components/index.ts`.
  */
 export function SparklesIcon({ className }: SparklesIconProps) {
-  return <Sparkles aria-hidden className={className} />;
+  return <Sparkles aria-hidden className={className} />
 }

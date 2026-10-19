@@ -1,6 +1,9 @@
-"use client";
+// RETIRED (#64): nothing imports this file. It was unused; the editor uses
+// @workspace/ui's Spinner. It stays only until the owner removes it from the
+// repo.
+"use client"
 
-import { cn } from "@workspace/ui/lib/utils";
+import { cn } from "@workspace/ui/lib/utils"
 
 /**
  * Three bouncing dots, announced to assistive technology as "Loading". The
@@ -13,16 +16,16 @@ export function LoadingDots({ className }: { className?: string }) {
       <span className="sr-only">Loading</span>
       <div
         aria-hidden
-        className="bg-foreground/50 h-2 w-2 animate-bounce rounded-full [animation-delay:-0.3s]"
+        className="h-2 w-2 animate-bounce rounded-full bg-foreground/50 [animation-delay:-0.3s]"
       />
       <div
         aria-hidden
-        className="bg-foreground/50 h-2 w-2 animate-bounce rounded-full [animation-delay:-0.15s]"
+        className="h-2 w-2 animate-bounce rounded-full bg-foreground/50 [animation-delay:-0.15s]"
       />
       <div
         aria-hidden
-        className="bg-foreground/50 h-2 w-2 animate-bounce rounded-full"
+        className="h-2 w-2 animate-bounce rounded-full bg-foreground/50"
       />
     </div>
-  );
+  )
 }

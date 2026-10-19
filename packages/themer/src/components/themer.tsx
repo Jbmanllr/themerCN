@@ -1,4 +1,4 @@
-"use client";
+"use client"
 
 // The Themer as a Host app mounts it: one component beside the Host's tree,
 // configured by flat props (ThemerProps). Everything under it is internal.
@@ -17,30 +17,41 @@
 //   mounted, scoped to its `[data-themer]` root (themer-scope.tsx). The Host
 //   app compiles and imports nothing of the Themer's.
 // - The persisted stores hydrate from `<storageNamespace>:editor` and
-//   `<storageNamespace>:preferences` when it first renders on the client; an
-//   uncontrolled light/dark mode is saved under `<storageNamespace>:color-mode`
-//   (color-mode.tsx).
+//   `<storageNamespace>:preferences` in a layout effect, before the tree that
+//   reads them renders; an uncontrolled light/dark mode is saved under
+//   `<storageNamespace>:color-mode` (color-mode.tsx).
+// - A new `storageNamespace` rehydrates the stores from its keys (no write to
+//   either namespace) and remounts the tree under the providers, keyed by
+//   namespace: ThemerProvider adopts the Host's default Preset again for an
+//   empty namespace, and the colour mode is read from the new key. The undo
+//   history does not carry over.
 // - `presets`, `extraColors`, `previewTabs` and `previewWrapper` must be
 //   stable module-level values: a new identity re-registers or rebuilds them.
 
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { useState } from "react";
-
-import type { ThemerConfig, ThemerProps } from "../types";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import {
-  DEFAULT_STORAGE_NAMESPACE,
-  getStorageKeys,
-} from "../config/constants";
-import { useHydrated } from "../hooks/use-hydrated";
-import { hydrateThemerStores } from "../stores/hydrate";
+  useEffect,
+  useLayoutEffect,
+  useState,
+  useSyncExternalStore,
+} from "react"
 
-import { ColorModeProvider } from "./color-mode";
-import { ThemerProvider } from "./themer-provider";
-import { ThemerRoot } from "./themer-root";
-import { useThemerStyle } from "./themer-scope";
+import type { ThemerConfig, ThemerProps } from "../types"
+import { DEFAULT_STORAGE_NAMESPACE, getStorageKeys } from "../config/constants"
+import { useHydrated } from "../hooks/use-hydrated"
+import { isProduction } from "../utils/is-production"
+import {
+  getHydratedNamespace,
+  hydrateThemerStores,
+  subscribeHydratedNamespace,
+} from "../stores/hydrate"
 
-const DAY_MS = 24 * 60 * 60 * 1000;
+import { ColorModeProvider } from "./color-mode"
+import { ThemerProvider } from "./themer-provider"
+import { ThemerRoot } from "./themer-root"
+import { useThemerStyle } from "./themer-scope"
 
+const DAY_MS = 24 * 60 * 60 * 1000
 
 /**
  * The Themer: a live editor for the page's shadcn Theme. Mount it once, next
@@ -57,11 +68,11 @@ const DAY_MS = 24 * 60 * 60 * 1000;
  */
 export function Themer(props: ThemerProps) {
   // Everything under it may assume a hydrated client.
-  const hydrated = useHydrated();
+  const hydrated = useHydrated()
 
-  if (!hydrated || window.self !== window.top) return null;
+  if (!hydrated || window.self !== window.top) return null
 
-  return <ThemerApp {...props} />;
+  return <ThemerApp {...props} />
 }
 
 function ThemerApp({
@@ -70,10 +81,33 @@ function ThemerApp({
   storageNamespace = DEFAULT_STORAGE_NAMESPACE,
   ...editorProps
 }: ThemerProps) {
-  // Before any child reads the stores, so the first render already shows
-  // the persisted Theme of this namespace.
-  hydrateThemerStores(storageNamespace);
-  useThemerStyle();
+  // The tree renders only while the stores hold this namespace, keyed by
+  // it, so no child reads, or adopts a Preset into, another namespace (the
+  // stores are module singletons, and may hold another instance's
+  // namespace). The layout effect hydrates outside render; the subscription
+  // then re-renders in the same task, in practice before the first paint.
+  const hydratedNamespace = useSyncExternalStore(
+    subscribeHydratedNamespace,
+    getHydratedNamespace,
+    getHydratedNamespace
+  )
+  useLayoutEffect(() => {
+    hydrateThemerStores(storageNamespace)
+  }, [storageNamespace])
+  // Another mounted <Themer> on another namespace took the stores: this one
+  // now renders nothing. The live value, not the render's: during this
+  // instance's own switch the render still holds the previous namespace.
+  useEffect(() => {
+    const current = getHydratedNamespace()
+    if (current === null || current === storageNamespace) return
+    if (isProduction()) return
+    console.warn(
+      `themercn: another <Themer> (storageNamespace "${current}") holds the ` +
+        `Themer's stores, so the one on "${storageNamespace}" renders ` +
+        `nothing. Mount one <Themer> per page.`
+    )
+  }, [hydratedNamespace, storageNamespace])
+  useThemerStyle()
 
   const [queryClient] = useState(
     () =>
@@ -86,14 +120,17 @@ function ThemerApp({
             staleTime: DAY_MS,
           },
         },
-      }),
-  );
+      })
+  )
 
-  const config = useShallowStable<ThemerConfig>(editorProps);
+  const config = useShallowStable<ThemerConfig>(editorProps)
+
+  if (hydratedNamespace !== storageNamespace) return null
 
   return (
     <QueryClientProvider client={queryClient}>
       <ColorModeProvider
+        key={storageNamespace}
         colorMode={colorMode}
         onColorModeChange={onColorModeChange}
         storageKey={getStorageKeys(storageNamespace).colorMode}
@@ -103,7 +140,7 @@ function ThemerApp({
         </ThemerProvider>
       </ColorModeProvider>
     </QueryClientProvider>
-  );
+  )
 }
 
 /**
@@ -111,22 +148,22 @@ function ThemerApp({
  * Host re-render with unchanged props keeps the config's identity.
  */
 function useShallowStable<T extends object>(value: T): T {
-  const [stable, setStable] = useState(value);
-  if (stable === value || isShallowEqual(stable, value)) return stable;
-  setStable(value);
-  return value;
+  const [stable, setStable] = useState(value)
+  if (stable === value || isShallowEqual(stable, value)) return stable
+  setStable(value)
+  return value
 }
 
 function isShallowEqual(a: object, b: object): boolean {
-  const aKeys = Object.keys(a);
-  const bKeys = Object.keys(b);
+  const aKeys = Object.keys(a)
+  const bKeys = Object.keys(b)
   return (
     aKeys.length === bKeys.length &&
     aKeys.every((key) =>
       Object.is(
         (a as Record<string, unknown>)[key],
-        (b as Record<string, unknown>)[key],
-      ),
+        (b as Record<string, unknown>)[key]
+      )
     )
-  );
+  )
 }

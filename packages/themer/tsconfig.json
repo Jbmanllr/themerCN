@@ -1,25 +1,22 @@
 {
+  // The one config for the package: `typecheck`, editors (tests included)
+  // and tsdown's declarations (which only reach the entries' imports).
+  // `allowJs` lets the script tests import the build scripts (.mjs).
+  "extends": "@workspace/typescript-config/react-library.json",
   "compilerOptions": {
-    "target": "ES2022",
-    "lib": [
-      "dom",
-      "dom.iterable",
-      "esnext"
-    ],
-    "strict": true,
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
     "noEmit": true,
-    "esModuleInterop": true,
-    "module": "esnext",
-    "moduleResolution": "bundler",
-    "jsx": "react-jsx",
-    "skipLibCheck": true
+    "declarationMap": false,
+    "allowJs": true
   },
-  "include": [
-    "src/**/*.ts",
-    "src/**/*.tsx"
-  ],
+  "include": ["src/**/*.ts", "src/**/*.tsx", "scripts/**/*.test.ts"],
   "exclude": [
-    "**/*.test.ts",
-    "**/*.test.tsx"
+    "src/components/preview/examples/typography/typography-demo.tsx",
+    "src/components/index.ts",
+    "src/components/editor/index.ts",
+    "src/hooks/index.ts",
+    "src/hooks/use-font-loader.ts",
+    "src/utils/index.ts"
   ]
 }

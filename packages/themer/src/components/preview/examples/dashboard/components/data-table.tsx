@@ -7,7 +7,7 @@
 // template-literal fragments: a missing space once corrupted the drag opacity
 // class and the highlight never applied (proved by data-table.test.tsx).
 
-import * as React from "react";
+import * as React from "react"
 import {
   DndContext,
   KeyboardSensor,
@@ -18,15 +18,15 @@ import {
   useSensors,
   type DragEndEvent,
   type UniqueIdentifier,
-} from "@dnd-kit/core";
-import { restrictToVerticalAxis } from "@dnd-kit/modifiers";
+} from "@dnd-kit/core"
+import { restrictToVerticalAxis } from "@dnd-kit/modifiers"
 import {
   SortableContext,
   arrayMove,
   useSortable,
   verticalListSortingStrategy,
-} from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
+} from "@dnd-kit/sortable"
+import { CSS } from "@dnd-kit/utilities"
 import {
   ColumnDef,
   ColumnFiltersState,
@@ -49,7 +49,7 @@ import {
   tableFeatures,
   useTable,
   ColumnVisibilityState,
-} from "@tanstack/react-table";
+} from "@tanstack/react-table"
 import {
   ChevronDownIcon,
   ChevronLeftIcon,
@@ -61,22 +61,22 @@ import {
   MoreVerticalIcon,
   PlusIcon,
   TrendingUpIcon,
-} from "lucide-react";
+} from "lucide-react"
 // react-doctor-disable-next-line react-doctor/prefer-dynamic-import -- this demo is reached only through lazy(() => import("./examples/dashboard")) in builtin-tabs.tsx, so recharts already loads on demand
-import { Area, AreaChart, CartesianGrid, XAxis } from "recharts";
-import { toast } from "sonner";
-import { z } from "zod";
+import { Area, AreaChart, CartesianGrid, XAxis } from "recharts"
+import { toast } from "sonner"
+import { z } from "zod"
 
-import { useIsMobile } from "../../../../../hooks/use-is-mobile";
-import { Badge } from "@workspace/ui/components/badge";
-import { Button } from "@workspace/ui/components/button";
+import { useIsMobile } from "../../../../../hooks/use-is-mobile"
+import { Badge } from "@workspace/ui/components/badge"
+import { Button } from "@workspace/ui/components/button"
 import {
   ChartConfig,
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
-} from "@workspace/ui/components/chart";
-import { Checkbox } from "@workspace/ui/components/checkbox";
+} from "@workspace/ui/components/chart"
+import { Checkbox } from "@workspace/ui/components/checkbox"
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -84,17 +84,17 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@workspace/ui/components/dropdown-menu";
-import { Input } from "@workspace/ui/components/input";
-import { Label } from "@workspace/ui/components/label";
+} from "@workspace/ui/components/dropdown-menu"
+import { Input } from "@workspace/ui/components/input"
+import { Label } from "@workspace/ui/components/label"
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@workspace/ui/components/select";
-import { Separator } from "@workspace/ui/components/separator";
+} from "@workspace/ui/components/select"
+import { Separator } from "@workspace/ui/components/separator"
 import {
   Sheet,
   SheetClose,
@@ -104,7 +104,7 @@ import {
   SheetHeader,
   SheetTitle,
   SheetTrigger,
-} from "@workspace/ui/components/sheet";
+} from "@workspace/ui/components/sheet"
 import {
   Table,
   TableBody,
@@ -112,13 +112,13 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@workspace/ui/components/table";
+} from "@workspace/ui/components/table"
 import {
   Tabs,
   TabsContent,
   TabsList,
   TabsTrigger,
-} from "@workspace/ui/components/tabs";
+} from "@workspace/ui/components/tabs"
 
 // react-doctor-disable-next-line react-doctor/only-export-components -- as in the stock shadcn dashboard, this schema only derives the row type through z.infer, so unexported it would fail no-unused-vars; the cost is a full reload when editing this demo
 export const schema = z.object({
@@ -128,12 +128,12 @@ export const schema = z.object({
   target: z.string(),
   limit: z.string(),
   reviewer: z.string(),
-});
+})
 
 function DragHandle({ id }: { id: number }) {
   const { attributes, listeners } = useSortable({
     id,
-  });
+  })
 
   return (
     <Button
@@ -141,12 +141,12 @@ function DragHandle({ id }: { id: number }) {
       {...listeners}
       variant="ghost"
       size="icon"
-      className="text-muted-foreground size-7 hover:bg-transparent"
+      className="size-7 text-muted-foreground hover:bg-transparent"
     >
-      <GripVerticalIcon className="text-muted-foreground size-3" />
+      <GripVerticalIcon className="size-3 text-muted-foreground" />
       <span className="sr-only">Drag to reorder</span>
     </Button>
-  );
+  )
 }
 
 // TanStack Table v9 registers only the features a table uses; each feature
@@ -166,7 +166,7 @@ const features = tableFeatures({
   facetedUniqueValues: createFacetedUniqueValues(),
   filterFns,
   sortFns,
-});
+})
 
 const columns: ColumnDef<typeof features, z.infer<typeof schema>>[] = [
   {
@@ -205,7 +205,7 @@ const columns: ColumnDef<typeof features, z.infer<typeof schema>>[] = [
     accessorKey: "header",
     header: "Header",
     cell: ({ row }) => {
-      return <TableCellViewer item={row.original} />;
+      return <TableCellViewer item={row.original} />
     },
     enableHiding: false,
   },
@@ -214,7 +214,7 @@ const columns: ColumnDef<typeof features, z.infer<typeof schema>>[] = [
     header: "Section Type",
     cell: ({ row }) => (
       <div className="w-32">
-        <Badge variant="outline" className="text-muted-foreground px-1.5">
+        <Badge variant="outline" className="px-1.5 text-muted-foreground">
           {row.original.type}
         </Badge>
       </div>
@@ -226,19 +226,19 @@ const columns: ColumnDef<typeof features, z.infer<typeof schema>>[] = [
     cell: ({ row }) => (
       <form
         onSubmit={(e) => {
-          e.preventDefault();
+          e.preventDefault()
           toast.promise(new Promise((resolve) => setTimeout(resolve, 1000)), {
             loading: `Saving ${row.original.header}`,
             success: "Done",
             error: "Error",
-          });
+          })
         }}
       >
         <Label htmlFor={`${row.original.id}-target`} className="sr-only">
           Target
         </Label>
         <Input
-          className="hover:bg-input/30 focus-visible:bg-background h-8 w-16 border-transparent bg-transparent text-right shadow-none focus-visible:border"
+          className="h-8 w-16 border-transparent bg-transparent text-right shadow-none hover:bg-input/30 focus-visible:border focus-visible:bg-background"
           defaultValue={row.original.target}
           id={`${row.original.id}-target`}
         />
@@ -251,19 +251,19 @@ const columns: ColumnDef<typeof features, z.infer<typeof schema>>[] = [
     cell: ({ row }) => (
       <form
         onSubmit={(e) => {
-          e.preventDefault();
+          e.preventDefault()
           toast.promise(new Promise((resolve) => setTimeout(resolve, 1000)), {
             loading: `Saving ${row.original.header}`,
             success: "Done",
             error: "Error",
-          });
+          })
         }}
       >
         <Label htmlFor={`${row.original.id}-limit`} className="sr-only">
           Limit
         </Label>
         <Input
-          className="hover:bg-input/30 focus-visible:bg-background h-8 w-16 border-transparent bg-transparent text-right shadow-none focus-visible:border"
+          className="h-8 w-16 border-transparent bg-transparent text-right shadow-none hover:bg-input/30 focus-visible:border focus-visible:bg-background"
           defaultValue={row.original.limit}
           id={`${row.original.id}-limit`}
         />
@@ -274,10 +274,10 @@ const columns: ColumnDef<typeof features, z.infer<typeof schema>>[] = [
     accessorKey: "reviewer",
     header: "Reviewer",
     cell: ({ row }) => {
-      const isAssigned = row.original.reviewer !== "Assign reviewer";
+      const isAssigned = row.original.reviewer !== "Assign reviewer"
 
       if (isAssigned) {
-        return row.original.reviewer;
+        return row.original.reviewer
       }
 
       return (
@@ -300,7 +300,7 @@ const columns: ColumnDef<typeof features, z.infer<typeof schema>>[] = [
             </SelectContent>
           </Select>
         </>
-      );
+      )
     },
   },
   {
@@ -311,7 +311,7 @@ const columns: ColumnDef<typeof features, z.infer<typeof schema>>[] = [
           render={
             <Button
               variant="ghost"
-              className="text-muted-foreground data-popup-open:bg-muted flex size-8"
+              className="flex size-8 text-muted-foreground data-popup-open:bg-muted"
               size="icon"
             >
               <MoreVerticalIcon />
@@ -329,16 +329,16 @@ const columns: ColumnDef<typeof features, z.infer<typeof schema>>[] = [
       </DropdownMenu>
     ),
   },
-];
+]
 
 function DraggableRow({
   row,
 }: {
-  row: Row<typeof features, z.infer<typeof schema>>;
+  row: Row<typeof features, z.infer<typeof schema>>
 }) {
   const { transform, transition, setNodeRef, isDragging } = useSortable({
     id: row.original.id,
-  });
+  })
 
   return (
     <TableRow
@@ -357,37 +357,37 @@ function DraggableRow({
         </TableCell>
       ))}
     </TableRow>
-  );
+  )
 }
 
 export function DataTable({
   data: initialData,
 }: {
-  data: z.infer<typeof schema>[];
+  data: z.infer<typeof schema>[]
 }) {
-  const [data, setData] = React.useState(() => initialData);
-  const [rowSelection, setRowSelection] = React.useState({});
+  const [data, setData] = React.useState(() => initialData)
+  const [rowSelection, setRowSelection] = React.useState({})
   const [columnVisibility, setColumnVisibility] =
-    React.useState<ColumnVisibilityState>({});
+    React.useState<ColumnVisibilityState>({})
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
-    [],
-  );
-  const [sorting, setSorting] = React.useState<SortingState>([]);
+    []
+  )
+  const [sorting, setSorting] = React.useState<SortingState>([])
   const [pagination, setPagination] = React.useState({
     pageIndex: 0,
     pageSize: 10,
-  });
-  const sortableId = React.useId();
+  })
+  const sortableId = React.useId()
   const sensors = useSensors(
     useSensor(MouseSensor, {}),
     useSensor(TouchSensor, {}),
-    useSensor(KeyboardSensor, {}),
-  );
+    useSensor(KeyboardSensor, {})
+  )
 
   const dataIds = React.useMemo<UniqueIdentifier[]>(
     () => data?.map(({ id }) => id) || [],
-    [data],
-  );
+    [data]
+  )
 
   const table = useTable({
     features,
@@ -407,16 +407,16 @@ export function DataTable({
     onColumnFiltersChange: setColumnFilters,
     onColumnVisibilityChange: setColumnVisibility,
     onPaginationChange: setPagination,
-  });
+  })
 
   function handleDragEnd(event: DragEndEvent) {
-    const { active, over } = event;
+    const { active, over } = event
     if (active && over && active.id !== over.id) {
       setData((data) => {
-        const oldIndex = dataIds.indexOf(active.id);
-        const newIndex = dataIds.indexOf(over.id);
-        return arrayMove(data, oldIndex, newIndex);
-      });
+        const oldIndex = dataIds.indexOf(active.id)
+        const newIndex = dataIds.indexOf(over.id)
+        return arrayMove(data, oldIndex, newIndex)
+      })
     }
   }
 
@@ -449,7 +449,7 @@ export function DataTable({
             Past Performance{" "}
             <Badge
               variant="secondary"
-              className="bg-muted-foreground/30 flex h-5 w-5 items-center justify-center rounded-full"
+              className="flex h-5 w-5 items-center justify-center rounded-full bg-muted-foreground/30"
             >
               3
             </Badge>
@@ -458,7 +458,7 @@ export function DataTable({
             Key Personnel{" "}
             <Badge
               variant="secondary"
-              className="bg-muted-foreground/30 flex h-5 w-5 items-center justify-center rounded-full"
+              className="flex h-5 w-5 items-center justify-center rounded-full bg-muted-foreground/30"
             >
               2
             </Badge>
@@ -483,7 +483,7 @@ export function DataTable({
                 .filter(
                   (column) =>
                     typeof column.accessorFn !== "undefined" &&
-                    column.getCanHide(),
+                    column.getCanHide()
                 )
                 .map((column) => {
                   return (
@@ -497,7 +497,7 @@ export function DataTable({
                     >
                       {column.id}
                     </DropdownMenuCheckboxItem>
-                  );
+                  )
                 })}
             </DropdownMenuContent>
           </DropdownMenu>
@@ -520,7 +520,7 @@ export function DataTable({
             id={sortableId}
           >
             <Table>
-              <TableHeader className="bg-muted sticky top-0 z-10">
+              <TableHeader className="sticky top-0 z-10 bg-muted">
                 {table.getHeaderGroups().map((headerGroup) => (
                   <TableRow key={headerGroup.id}>
                     {headerGroup.headers.map((header) => {
@@ -530,10 +530,10 @@ export function DataTable({
                             ? null
                             : flexRender(
                                 header.column.columnDef.header,
-                                header.getContext(),
+                                header.getContext()
                               )}
                         </TableHead>
-                      );
+                      )
                     })}
                   </TableRow>
                 ))}
@@ -563,7 +563,7 @@ export function DataTable({
           </DndContext>
         </div>
         <div className="flex items-center justify-between px-4">
-          <div className="text-muted-foreground hidden flex-1 text-sm lg:flex">
+          <div className="hidden flex-1 text-sm text-muted-foreground lg:flex">
             {table.getFilteredSelectedRowModel().rows.length} of{" "}
             {table.getFilteredRowModel().rows.length} row(s) selected.
           </div>
@@ -575,7 +575,7 @@ export function DataTable({
               <Select
                 value={`${table.state.pagination.pageSize}`}
                 onValueChange={(value) => {
-                  table.setPageSize(Number(value));
+                  table.setPageSize(Number(value))
                 }}
               >
                 <SelectTrigger className="w-20" id="rows-per-page">
@@ -654,7 +654,7 @@ export function DataTable({
         <div className="aspect-video w-full flex-1 rounded-lg border border-dashed"></div>
       </TabsContent>
     </Tabs>
-  );
+  )
 }
 
 const chartData = [
@@ -664,7 +664,7 @@ const chartData = [
   { month: "April", desktop: 73, mobile: 190 },
   { month: "May", desktop: 209, mobile: 130 },
   { month: "June", desktop: 214, mobile: 140 },
-];
+]
 
 const chartConfig = {
   desktop: {
@@ -675,10 +675,10 @@ const chartConfig = {
     label: "Mobile",
     color: "var(--primary)",
   },
-} satisfies ChartConfig;
+} satisfies ChartConfig
 
 function TableCellViewer({ item }: { item: z.infer<typeof schema> }) {
-  const isMobile = useIsMobile();
+  const isMobile = useIsMobile()
 
   return (
     <Sheet>
@@ -686,7 +686,7 @@ function TableCellViewer({ item }: { item: z.infer<typeof schema> }) {
         render={
           <Button
             variant="link"
-            className="text-foreground w-fit px-0 text-left"
+            className="w-fit px-0 text-left text-foreground"
           >
             {item.header}
           </Button>
@@ -825,5 +825,5 @@ function TableCellViewer({ item }: { item: z.infer<typeof schema> }) {
         </SheetFooter>
       </SheetContent>
     </Sheet>
-  );
+  )
 }

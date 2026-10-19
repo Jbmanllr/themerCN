@@ -3,7 +3,7 @@
 // injects at mount. Run by the `build:css` script before typecheck, test
 // and build (turbo.json); the output is not checked in.
 //
-// After Tailwind, three rewrites (the scoping decision of #11, see
+// After Tailwind, four rewrites (the scoping decision of #11, see
 // src/styles/themer.css):
 // 1. Strip every custom property declared as a reference to itself
 //    (`--spacing: var(--spacing, …)`): `@theme inline` keys named like the
@@ -12,117 +12,151 @@
 // 2. Unwrap every `@layer`; Preflight, the base rules and the utilities go
 //    into one `@scope ([data-themer]) to ([data-themer-host])`, with `html`,
 //    `:root` and `:host` selectors rewritten to `:scope`.
-// 3. `@property`, `@keyframes` and `@font-face` stay at the top level
+// 3. Prefix every `@keyframes` name with `themer-` and rewrite each
+//    `animation`/`animation-name` reference to match: keyframes are
+//    document-wide, so an unprefixed `spin` or `enter` would replace the
+//    Host's own animation of that name.
+// 4. `@property`, `@keyframes` and `@font-face` stay at the top level
 //    (document-wide by nature), and view-transition.css is appended as is.
-import fs from "node:fs";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
-import tailwind from "@tailwindcss/postcss";
-import postcss from "postcss";
+//    The `@property` registrations (Tailwind's `--tw-*`) are the one
+//    remaining leak, listed in the README.
+import fs from "node:fs"
+import path from "node:path"
+import { fileURLToPath } from "node:url"
+import tailwind from "@tailwindcss/postcss"
+import postcss from "postcss"
 
-const pkg = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const entry = path.join(pkg, "src/styles/themer.css");
-const appended = path.join(pkg, "src/styles/view-transition.css");
-const outFile = path.join(pkg, "src/generated/themer-css.ts");
+const pkg = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..")
+const entry = path.join(pkg, "src/styles/themer.css")
+const appended = path.join(pkg, "src/styles/view-transition.css")
+const outFile = path.join(pkg, "src/generated/themer-css.ts")
 
-export const SCOPE_PRELUDE = "([data-themer]) to ([data-themer-host])";
-const TOP_LEVEL_AT_RULES = new Set(["property", "keyframes", "font-face"]);
-const ROOT_SELECTOR = /^(html|:root|:host)$/;
+export const SCOPE_PRELUDE = "([data-themer]) to ([data-themer-host])"
+const TOP_LEVEL_AT_RULES = new Set(["property", "keyframes", "font-face"])
+const ROOT_SELECTOR = /^(html|:root|:host)$/
+export const KEYFRAMES_PREFIX = "themer-"
 
-const escapeRegExp = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+const escapeRegExp = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
 
 /** True for `--x: var(--x)` and `--x: var(--x, fallback)`. */
 export function isSelfReference(decl) {
-  if (!decl.prop.startsWith("--")) return false;
+  if (!decl.prop.startsWith("--")) return false
   return new RegExp(`^var\\(\\s*${escapeRegExp(decl.prop)}\\s*[,)]`).test(
-    decl.value.trim(),
-  );
+    decl.value.trim()
+  )
 }
 
 /** Drops rules and blocks left empty, repeating as parents empty in turn. */
 function removeEmpty(container) {
-  let removed = true;
+  let removed = true
   while (removed) {
-    removed = false;
+    removed = false
     container.walk((node) => {
       if (node.nodes?.length === 0) {
-        node.remove();
-        removed = true;
+        node.remove()
+        removed = true
       }
-    });
+    })
   }
 }
 
 function rootToScope(node) {
   const rewrite = (rule) => {
     const selectors = rule.selectors.map((s) =>
-      ROOT_SELECTOR.test(s.trim()) ? ":scope" : s,
-    );
-    rule.selectors = [...new Set(selectors)];
-  };
-  if (node.type === "rule") rewrite(node);
-  node.walkRules?.(rewrite);
+      ROOT_SELECTOR.test(s.trim()) ? ":scope" : s
+    )
+    rule.selectors = [...new Set(selectors)]
+  }
+  if (node.type === "rule") rewrite(node)
+  node.walkRules?.(rewrite)
 }
 
 /** Flattens `@layer` blocks into a list of top-level nodes, in order. */
 function unlayer(nodes) {
   return nodes.flatMap((node) => {
     if (node.type === "atrule" && node.name === "layer")
-      return node.nodes ? unlayer(node.nodes.slice()) : [];
-    return [node];
-  });
+      return node.nodes ? unlayer(node.nodes.slice()) : []
+    return [node]
+  })
+}
+
+/**
+ * Renames every `@keyframes` to `themer-<name>` (names already prefixed are
+ * kept) and rewrites the `animation`/`animation-name` declarations that use
+ * them.
+ */
+export function prefixKeyframes(root) {
+  const renamed = new Map()
+  root.walkAtRules("keyframes", (rule) => {
+    const name = rule.params.trim()
+    if (name.startsWith(KEYFRAMES_PREFIX)) return
+    renamed.set(name, `${KEYFRAMES_PREFIX}${name}`)
+    rule.params = renamed.get(name)
+  })
+  if (!renamed.size) return
+  // A name is a whole identifier: `enter` but not `--tw-enter-opacity`.
+  const names = new RegExp(
+    `(?<![\\w-])(${[...renamed.keys()].map(escapeRegExp).join("|")})(?![\\w-])`,
+    "g"
+  )
+  root.walkDecls(/^animation(-name)?$/, (decl) => {
+    decl.value = decl.value.replace(names, (name) => renamed.get(name))
+  })
 }
 
 /** Tailwind's output → the Themer's scoped, unlayered sheet. */
 export function scopeThemerCss(css) {
-  const root = postcss.parse(css);
+  const root = postcss.parse(css)
 
   root.walkDecls((decl) => {
-    if (isSelfReference(decl)) decl.remove();
-  });
-  removeEmpty(root);
+    if (isSelfReference(decl)) decl.remove()
+  })
+  removeEmpty(root)
+  prefixKeyframes(root)
 
-  const scope = postcss.atRule({ name: "scope", params: SCOPE_PRELUDE });
-  const top = [];
+  const scope = postcss.atRule({ name: "scope", params: SCOPE_PRELUDE })
+  const top = []
   for (const node of unlayer(root.nodes.slice())) {
-    if (node.type === "comment") continue;
+    if (node.type === "comment") continue
     if (node.type === "atrule" && TOP_LEVEL_AT_RULES.has(node.name)) {
-      top.push(node);
-      continue;
+      top.push(node)
+      continue
     }
-    rootToScope(node);
-    scope.append(node);
+    rootToScope(node)
+    scope.append(node)
   }
 
-  const out = postcss.root();
-  out.append(top.map((n) => n.clone()));
-  if (scope.nodes.length) out.append(scope);
-  return out.toString();
+  const out = postcss.root()
+  out.append(top.map((n) => n.clone()))
+  if (scope.nodes.length) out.append(scope)
+  return out.toString()
 }
 
 async function build() {
-  const input = fs.readFileSync(entry, "utf8");
-  const compiled = await postcss([tailwind({ optimize: { minify: true } })]).process(
-    input,
-    { from: entry },
-  );
-  const css = `${scopeThemerCss(compiled.css)}\n${fs.readFileSync(appended, "utf8")}`;
+  const input = fs.readFileSync(entry, "utf8")
+  const compiled = await postcss([
+    tailwind({ optimize: { minify: true } }),
+  ]).process(input, { from: entry })
+  const css = `${scopeThemerCss(compiled.css)}\n${fs.readFileSync(appended, "utf8")}`
   const moduleSource = [
     "// Generated by scripts/build-css.mjs from src/styles/. Do not edit.",
     "/** The Themer UI's CSS, scoped to `[data-themer]`; injected at mount. */",
     `export const THEMER_CSS = ${JSON.stringify(css)};`,
     "",
-  ].join("\n");
+  ].join("\n")
 
-  fs.mkdirSync(path.dirname(outFile), { recursive: true });
+  fs.mkdirSync(path.dirname(outFile), { recursive: true })
   // Atomic: typecheck and test may build concurrently.
-  const tmp = `${outFile}.${process.pid}.tmp`;
-  fs.writeFileSync(tmp, moduleSource);
-  fs.renameSync(tmp, outFile);
+  const tmp = `${outFile}.${process.pid}.tmp`
+  fs.writeFileSync(tmp, moduleSource)
+  fs.renameSync(tmp, outFile)
   console.log(
-    `themer css: ${(css.length / 1024).toFixed(1)} kB -> ${path.relative(pkg, outFile)}`,
-  );
+    `themer css: ${(css.length / 1024).toFixed(1)} kB -> ${path.relative(pkg, outFile)}`
+  )
 }
 
-if (process.argv[1] && fileURLToPath(import.meta.url) === path.resolve(process.argv[1]))
-  await build();
+if (
+  process.argv[1] &&
+  fileURLToPath(import.meta.url) === path.resolve(process.argv[1])
+)
+  await build()

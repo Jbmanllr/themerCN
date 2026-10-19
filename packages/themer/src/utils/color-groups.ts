@@ -11,19 +11,19 @@
 //
 // See: packages/themer/ARCHITECTURE.md ("Color System").
 
-import { getExtraColorGroups } from "../config/extra-colors";
-import type { ThemeColorKey } from "../types";
+import { getExtraColorGroups } from "../config/extra-colors"
+import type { ThemeColorKey } from "../types"
 
 /** One colour row; built-in rows are typed by ThemeColorKey. */
 export interface ColorGroupEntry<K extends string = string> {
-  key: K;
-  label: string;
+  key: K
+  label: string
 }
 
 export interface ColorGroup<K extends string = string> {
-  title: string;
-  description?: string;
-  colors: readonly ColorGroupEntry<K>[];
+  title: string
+  description?: string
+  colors: readonly ColorGroupEntry<K>[]
 }
 
 /** The built-in shadcn colour groups. */
@@ -105,10 +105,10 @@ export const COLOR_LIST_GROUPS: readonly ColorGroup<ThemeColorKey>[] = [
       { key: "sidebar-ring", label: "Sidebar Ring" },
     ],
   },
-];
+]
 
-let cachedExtraGroups: readonly ColorGroup[] | null = null;
-let cachedListGroups: readonly ColorGroup[] = COLOR_LIST_GROUPS;
+let cachedExtraGroups: readonly ColorGroup[] | null = null
+let cachedListGroups: readonly ColorGroup[] = COLOR_LIST_GROUPS
 
 /**
  * The full colour list: built-in groups, then the registered host extra
@@ -116,28 +116,28 @@ let cachedListGroups: readonly ColorGroup[] = COLOR_LIST_GROUPS;
  * COLOR_LIST_GROUPS itself when the host has none.
  */
 export function getColorListGroups(): readonly ColorGroup[] {
-  const extras = getExtraColorGroups();
+  const extras = getExtraColorGroups()
   if (extras !== cachedExtraGroups) {
-    cachedExtraGroups = extras;
+    cachedExtraGroups = extras
     cachedListGroups =
-      extras.length > 0 ? [...COLOR_LIST_GROUPS, ...extras] : COLOR_LIST_GROUPS;
+      extras.length > 0 ? [...COLOR_LIST_GROUPS, ...extras] : COLOR_LIST_GROUPS
   }
-  return cachedListGroups;
+  return cachedListGroups
 }
 
 /** ControlSection id of a colour group (persisted open state key). */
 export function getColorSectionId(group: Pick<ColorGroup, "title">): string {
-  return `colors-${group.title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
+  return `colors-${group.title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`
 }
 
 /** The group that holds a colour token, or undefined for unknown names. */
 export function findColorGroup(
   name: string,
-  groups: readonly ColorGroup[] = getColorListGroups(),
+  groups: readonly ColorGroup[] = getColorListGroups()
 ): ColorGroup | undefined {
   return groups.find((group) =>
-    group.colors.some((color) => color.key === name),
-  );
+    group.colors.some((color) => color.key === name)
+  )
 }
 
 /**
@@ -147,29 +147,29 @@ export function findColorGroup(
  */
 export function filterColorGroups(
   query: string,
-  groups: readonly ColorGroup[] = getColorListGroups(),
+  groups: readonly ColorGroup[] = getColorListGroups()
 ): readonly ColorGroup[] {
-  const needle = query.trim().toLowerCase();
-  if (!needle) return groups;
+  const needle = query.trim().toLowerCase()
+  if (!needle) return groups
   return groups.flatMap((group) => {
-    const titleMatches = group.title.toLowerCase().includes(needle);
+    const titleMatches = group.title.toLowerCase().includes(needle)
     const colors = group.colors.filter(
       (color) =>
         titleMatches ||
         color.label.toLowerCase().includes(needle) ||
-        color.key.toLowerCase().includes(needle),
-    );
-    return colors.length > 0 ? [{ ...group, colors }] : [];
-  });
+        color.key.toLowerCase().includes(needle)
+    )
+    return colors.length > 0 ? [{ ...group, colors }] : []
+  })
 }
 
 /** Whether a token is visible in the list under a search query. */
 export function colorMatchesSearch(
   name: string,
   query: string,
-  groups: readonly ColorGroup[] = getColorListGroups(),
+  groups: readonly ColorGroup[] = getColorListGroups()
 ): boolean {
   return filterColorGroups(query, groups).some((group) =>
-    group.colors.some((color) => color.key === name),
-  );
+    group.colors.some((color) => color.key === name)
+  )
 }

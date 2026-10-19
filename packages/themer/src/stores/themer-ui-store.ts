@@ -1,14 +1,22 @@
-"use client";
+"use client"
 
-// Themer UI state: open/closed, the active sidebar panel, and the two preview
-// modes (inspector, fullscreen). Transient: nothing here persists.
+// Themer UI state: open/closed, the active sidebar panel, the two preview
+// modes (inspector, fullscreen) and the open action dialog. Transient:
+// nothing here persists.
 //
 // Contract:
-// - Closing the editor (close or toggle) turns both modes off. The colour
-//   focus store watches `isOpen` to reset its own state.
+// - Closing the editor (close or toggle) turns both modes off, closes the
+//   dialog and clears the colour focus (clearColorFocus). The inspector is
+//   kept with the Themer layout it was turned on in (useInspectorMode derives
+//   whether it is active): a switch made in the UI turns it off
+//   (useSetThemerLayout), and a Host-driven switch leaves it inactive, then
+//   ThemerUI clears it as the old layout unmounts.
+// - `dialog` is the only open-dialog state. Menus and the action bar call
+//   openDialog; ThemerUI renders the dialogs once (actions/
+//   themer-dialogs.tsx), so a dialog outlives the surface that opened it.
 // - `fullscreenPreview` means the preview covers the editor (a CSS layout),
 //   not that the browser is in native fullscreen: enterFullscreen
-//   (hooks/use-fullscreen.ts) sets it before asking for native fullscreen,
+//   (utils/fullscreen.ts) sets it before asking for native fullscreen,
 //   and a refused request leaves it on. That module also keeps it in step
 //   with the Fullscreen API (ThemerUI mounts that sync).
 // - toggleFullscreen must run inside the user's click handler, because
@@ -16,41 +24,60 @@
 //
 // See: packages/themer/ARCHITECTURE.md (ThemerUIStore)
 
-import { create } from "zustand";
-import type { ThemerUIStore } from "../types";
-import { enterFullscreen, exitFullscreen } from "../hooks/use-fullscreen";
+import { create } from "zustand"
+import type { ThemerUIStore } from "../types"
+import { enterFullscreen, exitFullscreen } from "../utils/fullscreen"
+import { clearColorFocus } from "./color-focus-store"
 
 export const useThemerUIStore = create<ThemerUIStore>()((set, get) => {
   const setFullscreen = (fullscreenPreview: boolean) =>
-    set({ fullscreenPreview });
+    set({ fullscreenPreview })
 
   return {
     // State
     isOpen: false,
     activePanel: "colors",
-    inspectorMode: false,
+    inspectorLayout: null,
     fullscreenPreview: false,
+    dialog: null,
 
     // Actions
     open: () => set({ isOpen: true }),
-    close: () =>
-      set({ isOpen: false, inspectorMode: false, fullscreenPreview: false }),
-    toggle: () =>
+    close: () => {
+      const wasOpen = get().isOpen
+      set({
+        isOpen: false,
+        inspectorLayout: null,
+        fullscreenPreview: false,
+        dialog: null,
+      })
+      if (wasOpen) clearColorFocus()
+    },
+    toggle: () => {
+      const wasOpen = get().isOpen
       set((state) => ({
         isOpen: !state.isOpen,
-        // Reset modes when closing
-        inspectorMode: state.isOpen ? false : state.inspectorMode,
+        // Reset modes and the dialog when closing
+        inspectorLayout: state.isOpen ? null : state.inspectorLayout,
         fullscreenPreview: state.isOpen ? false : state.fullscreenPreview,
-      })),
+        dialog: state.isOpen ? null : state.dialog,
+      }))
+      if (wasOpen) clearColorFocus()
+    },
     setActivePanel: (panel) => set({ activePanel: panel }),
-    toggleInspector: () =>
-      set((state) => ({ inspectorMode: !state.inspectorMode })),
+    toggleInspector: (layout) =>
+      set((state) => ({
+        inspectorLayout: state.inspectorLayout === layout ? null : layout,
+      })),
+    turnOffInspector: () => set({ inspectorLayout: null }),
     // Runs inside the click handler, so the browser sees the user gesture
     // that requestFullscreen needs.
     toggleFullscreen: () => {
-      if (typeof document === "undefined") return;
-      if (get().fullscreenPreview) void exitFullscreen(document, setFullscreen);
-      else void enterFullscreen(document, setFullscreen);
+      if (typeof document === "undefined") return
+      if (get().fullscreenPreview) void exitFullscreen(document, setFullscreen)
+      else void enterFullscreen(document, setFullscreen)
     },
-  };
-});
+    openDialog: (dialog) => set({ dialog }),
+    closeDialog: () => set({ dialog: null }),
+  }
+})

@@ -1,9 +1,13 @@
+// RETIRED (#64): nothing imports this file. It was an unused barrel; callers
+// import each file directly. Excluded from tsconfig.json
+// and eslint.config.js until the owner removes it.
+//
 // The editor's utilities, as one internal barrel (the package root exports
-// none of them). Not here: font-loader's link registry (acquireGoogleFont,
+// none of them). Not here: font-links' link registry (acquireGoogleFont,
 // setThemeFonts, ...), describeFontValue and theme-script; import those from
 // their own files.
-export { isDeepEqual } from "./deep-equal";
-export { debounce } from "./debounce";
+export { isDeepEqual } from "./deep-equal"
+export { debounce } from "./debounce"
 export {
   colorFormatter,
   convertToHSL,
@@ -18,7 +22,7 @@ export {
   adjustColorByHsl,
   interpolateColors,
   generateColorScale,
-} from "./color-converter";
+} from "./color-converter"
 export {
   getContrastRatio,
   formatContrastRatio,
@@ -30,7 +34,7 @@ export {
   type ColorPair,
   type ContrastPair,
   type ContrastResult,
-} from "./contrast-checker";
+} from "./contrast-checker"
 export {
   applyThemeToElement,
   removeThemeFromElement,
@@ -40,7 +44,7 @@ export {
   THEMER_OVERRIDES_ATTRIBUTE,
   applyThemeToIframe,
   createThemeStyleElement,
-} from "./apply-theme";
+} from "./apply-theme"
 export {
   getShadowMap,
   SHADOW_SCALE_KEYS,
@@ -49,27 +53,27 @@ export {
   getShadowVariables,
   getShadowParams,
   createCustomShadow,
-} from "./shadows";
+} from "./shadows"
 export {
   generateThemeCode,
   generateTailwindConfigCode,
   generateLayoutCode,
-} from "./theme-generator";
-export { parseLength, clampToRange, type LengthUnit } from "./length";
+} from "./theme-generator"
+export { parseLength, clampToRange, type LengthUnit } from "./length"
 export {
   runThemeTransition,
   transitionOriginPercent,
   type TransitionOrigin,
-} from "./theme-transition";
+} from "./theme-transition"
 export {
   SIDEBAR_SYNC_MAP,
   BASE_TO_SIDEBAR_MAP,
   isSyncedSidebarKey,
   applySidebarSync,
   isSidebarSynced,
-} from "./sidebar-sync";
-// COLOR_GROUPS (./types) is the plain key list; COLOR_LIST_GROUPS is the
-// labelled colour-list layout built from the same keys.
+} from "./sidebar-sync"
+// COLOR_LIST_GROUPS is the labelled colour-list layout of THEME_COLOR_KEYS
+// (./types).
 export {
   COLOR_LIST_GROUPS,
   getColorListGroups,
@@ -79,13 +83,12 @@ export {
   colorMatchesSearch,
   type ColorGroup,
   type ColorGroupEntry,
-} from "./color-groups";
+} from "./color-groups"
 export {
-  HSL_ADJUSTABLE_KEYS,
   isIdentityHslAdjustment,
   adjustColor,
   adjustThemeStyles,
-} from "./hsl-adjust";
+} from "./hsl-adjust"
 export {
   parseThemeCss,
   type ParsedThemeCss,
@@ -94,39 +97,47 @@ export {
   stylesToCSS,
   validateCSSInput,
   extractColorVariables,
-} from "./parse-css";
+} from "./parse-css"
 export {
   FALLBACK_FONTS,
-  FONT_CATEGORIES,
-  GOOGLE_FONTS_API_URL,
-  GOOGLE_FONTS_CSS_URL,
   POPULAR_FONTS,
-  SYSTEM_FONTS,
-  SYSTEM_FONTS_FALLBACKS,
-  buildFontCssUrl,
-  buildFontFamily,
-  fetchGoogleFontsCatalog,
   filterAndPaginateFonts,
+  getPopularFonts,
+} from "./font-catalog-data"
+export {
+  GOOGLE_FONTS_CSS_URL,
+  buildFontCssUrl,
+  getDefaultWeights,
+  getFontPreviewUrl,
+  isFontLoaded,
+  isGoogleFontLoaded,
   loadGoogleFont,
   loadGoogleFonts,
   unloadGoogleFont,
-  isFontLoaded,
-  isGoogleFontLoaded,
   waitForFont,
+} from "./font-links"
+export {
+  FONT_CATEGORIES,
+  SYSTEM_FONTS,
+  SYSTEM_FONTS_FALLBACKS,
+  buildFontFamily,
   extractFontFamily,
   extractGoogleFontFamily,
-  formatFontFamily,
-  getDefaultWeights,
-  getPopularFonts,
-  getFontPreviewUrl,
-  generateFontCSS,
   fontFallbacks,
+  formatFontFamily,
+  generateFontCSS,
   toFontCategory,
-  transformGoogleFontsResponse,
-  type FilterFontCategory,
-  type FontCategory,
-  type FontInfo,
-  type GoogleFont,
-  type PaginatedFontsResponse,
   type ThemeFontRole,
-} from "./font-loader";
+} from "./font-names"
+export {
+  GOOGLE_FONTS_API_URL,
+  fetchGoogleFontsCatalog,
+  transformGoogleFontsResponse,
+} from "../api/google-fonts"
+export type {
+  FilterFontCategory,
+  FontCategory,
+  FontInfo,
+  GoogleFont,
+  PaginatedFontsResponse,
+} from "../types/fonts"

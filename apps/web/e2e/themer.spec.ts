@@ -1,27 +1,8 @@
 import { expect, test, type Page } from "@playwright/test"
 
 import { nightjarPreset } from "../lib/brand/nightjar"
+import { hydrated, resolveColor } from "./page"
 import { themerTrigger } from "./themer-ui"
-
-// Resolves a colour on the page to sRGB `rgb(r, g, b)`, through a probe
-// element and a canvas pixel, so values compare whatever syntax the Themer
-// or the CSS build wrote them in (the build may lower oklch() to lab()).
-function resolveColor(page: Page, color: string) {
-  return page.evaluate((value) => {
-    const probe = document.createElement("div")
-    probe.style.color = value
-    document.body.append(probe)
-    const computed = getComputedStyle(probe).color
-    probe.remove()
-    const canvas = document.createElement("canvas")
-    canvas.width = canvas.height = 1
-    const context = canvas.getContext("2d")!
-    context.fillStyle = computed
-    context.fillRect(0, 0, 1, 1)
-    const [r, g, b] = context.getImageData(0, 0, 1, 1).data
-    return `rgb(${r}, ${g}, ${b})`
-  }, color)
-}
 
 const pagePrimary = (page: Page) => resolveColor(page, "var(--primary)")
 const home = (page: Page) =>
@@ -31,6 +12,7 @@ test("the page starts on Nightjar, and the Themer applying it changes nothing", 
   page,
 }) => {
   await page.goto("/")
+  await hydrated(page)
   await expect(home(page)).toBeVisible()
   const nightjarPrimary = await resolveColor(
     page,
@@ -49,6 +31,7 @@ test("a token edited in the Themer restyles the page and survives a reload", asy
   page,
 }) => {
   await page.goto("/")
+  await hydrated(page)
   await expect(home(page)).toBeVisible()
   expect(await pagePrimary(page)).not.toBe("rgb(255, 0, 0)")
 
@@ -67,6 +50,7 @@ test("a reload paints the saved Theme in the mode next-themes restores, whatever
   page,
 }) => {
   await page.goto("/")
+  await hydrated(page)
   await expect(home(page)).toBeVisible()
   await themerTrigger(page).click()
   await page.getByRole("button", { name: /^Primary & Secondary/ }).click()

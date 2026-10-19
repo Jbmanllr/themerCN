@@ -2,14 +2,25 @@
   "$schema": "https://turbo.build/schema.json",
   "extends": ["//"],
   "tasks": {
-    "typecheck": {
-      "dependsOn": ["^typecheck", "^build"]
+    "dev": {
+      "with": ["themercn#dev"],
+      "passThroughEnv": ["GOOGLE_FONTS_API_KEY"]
     },
     "test": {
       "inputs": [
         "$TURBO_DEFAULT$",
         "$TURBO_ROOT$/.github/workflows/ci.yml",
-        "$TURBO_ROOT$/apps/vite/package.json"
+        "$TURBO_ROOT$/package.json",
+        "$TURBO_ROOT$/pnpm-workspace.yaml",
+        "$TURBO_ROOT$/README.md",
+        "$TURBO_ROOT$/turbo.json",
+        "$TURBO_ROOT$/apps/*/package.json",
+        "$TURBO_ROOT$/apps/*/turbo.json",
+        "$TURBO_ROOT$/apps/*/eslint.config.js",
+        "$TURBO_ROOT$/packages/*/package.json",
+        "$TURBO_ROOT$/packages/*/turbo.json",
+        "$TURBO_ROOT$/packages/*/eslint.config.js",
+        "$TURBO_ROOT$/packages/eslint-config/*.js"
       ]
     }
   }

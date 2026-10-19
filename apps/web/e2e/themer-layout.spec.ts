@@ -6,6 +6,7 @@ import {
   themerToolbar,
   toolbarPanel,
 } from "./themer-ui"
+import { hydrated } from "./page"
 
 // The Playground sets no `layout`, so it opens the Workspace; the user
 // switches to Overlay from the Themer UI's header.
@@ -14,6 +15,7 @@ test("the Overlay floats the sidebar over the real page, which stays usable", as
   page,
 }) => {
   await page.goto("/")
+  await hydrated(page)
   await openLayout(page, "Overlay")
 
   await expect(page.getByTestId("themer-preview")).toHaveCount(0)
@@ -21,7 +23,9 @@ test("the Overlay floats the sidebar over the real page, which stays usable", as
   // Right of the 320px sidebar, the page takes the wheel and the click.
   await page.mouse.move(900, 500)
   await page.mouse.wheel(0, 800)
-  await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(0)
+  await expect
+    .poll(() => page.evaluate(() => window.scrollY))
+    .toBeGreaterThan(0)
 
   await page.evaluate(() => window.scrollTo(0, 0))
   await page
@@ -29,15 +33,17 @@ test("the Overlay floats the sidebar over the real page, which stays usable", as
     .getByRole("link", { name: "Pricing", exact: true })
     .click()
   await expect(page).toHaveURL(/\/pricing$/)
-  await expect(page.getByRole("button", { name: "Close theme editor" })).toBeVisible()
+  await expect(page.getByRole("button", { name: "Close Themer" })).toBeVisible()
 })
 
 test("the user's layout survives a reload", async ({ page }) => {
   await page.goto("/")
+  await hydrated(page)
   await openLayout(page, "Overlay")
 
   await page.reload()
-  await page.getByRole("button", { name: "Open Theme Editor" }).click()
+  await hydrated(page)
+  await page.getByRole("button", { name: "Open Themer" }).click()
 
   await expect(
     page.getByRole("button", { name: "Themer layout: Overlay" })
@@ -50,6 +56,7 @@ test.describe("the Toolbar", () => {
     page,
   }) => {
     await page.goto("/")
+    await hydrated(page)
     const colors = await openToolbarPanel(page, "Colors")
 
     await expect(
@@ -69,7 +76,9 @@ test.describe("the Toolbar", () => {
     await page.mouse.click(120, 700)
     await expect(colors).toBeVisible()
 
-    await themerToolbar(page).getByRole("button", { name: "Typography" }).click()
+    await themerToolbar(page)
+      .getByRole("button", { name: "Typography" })
+      .click()
     await expect(toolbarPanel(page, "typography")).toBeVisible()
     await expect(colors).toHaveCount(0)
 
@@ -81,6 +90,7 @@ test.describe("the Toolbar", () => {
     page,
   }) => {
     await page.goto("/")
+    await hydrated(page)
     const colors = await openToolbarPanel(page, "Colors")
 
     /** Whether the element is what the browser paints at its own centre. */
@@ -102,7 +112,9 @@ test.describe("the Toolbar", () => {
     await page.keyboard.press("Escape")
     await expect(colors).toBeVisible()
 
-    await themerToolbar(page).getByRole("button", { name: "Typography" }).click()
+    await themerToolbar(page)
+      .getByRole("button", { name: "Typography" })
+      .click()
     await toolbarPanel(page, "typography")
       .getByRole("button", { name: /^Font Families/ })
       .click()
@@ -119,12 +131,13 @@ test("the inspector works on the real page beside the Overlay, never on the Them
   page,
 }) => {
   await page.goto("/")
+  await hydrated(page)
   await openLayout(page, "Overlay")
   await page.getByRole("tab", { name: "Typography" }).click()
   await page.getByRole("button", { name: "Inspector" }).click()
   const card = page.getByTestId("themer-inspector-overlay")
 
-  await page.getByRole("button", { name: "Close theme editor" }).hover()
+  await page.getByRole("button", { name: "Close Themer" }).hover()
   await expect(card).toHaveCount(0)
 
   const link = page
@@ -157,6 +170,7 @@ test.describe("the sidebar", () => {
       page,
     }) => {
       await page.goto("/")
+      await hydrated(page)
       await openLayout(page, layout)
       const sidebar = page.locator(
         '[data-themer-ui] [data-slot="sidebar-container"]'
@@ -179,7 +193,7 @@ test.describe("the sidebar", () => {
           )
           return {
             sidebar: container?.getBoundingClientRect().width,
-            page: getComputedStyle(document.documentElement).marginInlineStart,
+            page: getComputedStyle(document.documentElement).marginLeft,
           }
         })
 
@@ -197,10 +211,9 @@ test.describe("the sidebar", () => {
     page,
   }) => {
     await page.goto("/")
+    await hydrated(page)
     await openLayout(page, "Overlay")
-    await page
-      .locator('[data-themer-ui] [data-slot="sidebar-trigger"]')
-      .click()
+    await page.locator('[data-themer-ui] [data-slot="sidebar-trigger"]').click()
 
     await page
       .locator('[data-themer-ui] [data-slot="sidebar"]')

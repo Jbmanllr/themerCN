@@ -1,13 +1,13 @@
-"use client";
+"use client"
 
 // The Themer's actions as a bar (tweakcn's action bar, minus its account
 // features): contrast check, light/dark, undo/redo, reset, CSS import, the
 // code export and the theme override switch. Workspace shows it as the bar
 // above the preview; Overlay and Push at the foot of their expanded sidebar
 // (`stacked`), where it wraps onto two rows. The actions themselves (names,
-// icons, state, handlers, dialogs) are defined in
-// ./actions/themer-actions.tsx, shared with the Toolbar and the collapsed
-// rail's menus; this file only lays them out.
+// icons, state, handlers) are defined in ./actions/themer-actions.tsx, shared
+// with the Toolbar and the collapsed rail's menus; this file only lays them
+// out. Their dialogs belong to ThemerUI (./actions/themer-dialogs.tsx).
 //
 // Every value is selected narrowly from the stores so the bar does not
 // re-render on unrelated edits (it re-renders when undo/redo availability or
@@ -23,21 +23,18 @@
 //
 // See: packages/themer/ARCHITECTURE.md
 
-import { Button } from "@workspace/ui/components/button";
-import { cn } from "@workspace/ui/lib/utils";
-import { ButtonGroup } from "@workspace/ui/components/button-group";
-import { Separator } from "@workspace/ui/components/separator";
-import { Switch } from "@workspace/ui/components/switch";
+import { Button } from "@workspace/ui/components/button"
+import { cn } from "@workspace/ui/lib/utils"
+import { ButtonGroup } from "@workspace/ui/components/button-group"
+import { Separator } from "@workspace/ui/components/separator"
+import { Switch } from "@workspace/ui/components/switch"
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from "@workspace/ui/components/tooltip";
-import {
-  ThemerActionButton,
-  useThemerActions,
-} from "./actions/themer-actions";
-import { ModeToggle } from "./ui/mode-toggle";
+} from "@workspace/ui/components/tooltip"
+import { ThemerActionButton, useThemerActions } from "./actions/themer-actions"
+import { ModeToggle } from "./ui/mode-toggle"
 
 /**
  * The Themer's actions: `bar` is the strip above Workspace's preview,
@@ -47,21 +44,21 @@ import { ModeToggle } from "./ui/mode-toggle";
 export function ActionBar({
   variant = "bar",
 }: {
-  variant?: "bar" | "stacked";
+  variant?: "bar" | "stacked"
 }) {
-  const { actions, override, dialogs } = useThemerActions();
+  const { actions, override } = useThemerActions()
 
   return (
     <div
       className={cn(
         variant === "bar" &&
-          "bg-background/95 h-12 shrink-0 border-b backdrop-blur-sm",
+          "h-12 shrink-0 border-b bg-background/95 backdrop-blur-sm"
       )}
     >
       <div
         className={cn(
           "flex items-center justify-between",
-          variant === "bar" ? "h-full px-4" : "flex-wrap gap-2",
+          variant === "bar" ? "h-full px-4" : "flex-wrap gap-2"
         )}
       >
         <div className="flex items-center gap-1">
@@ -108,8 +105,6 @@ export function ActionBar({
           </Tooltip>
         </div>
       </div>
-
-      {dialogs}
     </div>
-  );
+  )
 }

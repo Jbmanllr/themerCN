@@ -1,7 +1,7 @@
-import { addDays } from "date-fns";
-import { addHours } from "date-fns";
-import { format } from "date-fns";
-import { nextSaturday } from "date-fns";
+import { addDays } from "date-fns"
+import { addHours } from "date-fns"
+import { format } from "date-fns"
+import { nextSaturday } from "date-fns"
 import {
   Archive,
   ArchiveX,
@@ -11,41 +11,41 @@ import {
   Reply,
   ReplyAll,
   Trash2,
-} from "lucide-react";
+} from "lucide-react"
 
 import {
   DropdownMenuContent,
   DropdownMenuItem,
-} from "@workspace/ui/components/dropdown-menu";
+} from "@workspace/ui/components/dropdown-menu"
 import {
   Avatar,
   AvatarFallback,
   AvatarImage,
-} from "@workspace/ui/components/avatar";
-import { Button } from "@workspace/ui/components/button";
-import { Calendar } from "@workspace/ui/components/calendar";
+} from "@workspace/ui/components/avatar"
+import { Button } from "@workspace/ui/components/button"
+import { Calendar } from "@workspace/ui/components/calendar"
 import {
   DropdownMenu,
   DropdownMenuTrigger,
-} from "@workspace/ui/components/dropdown-menu";
-import { Label } from "@workspace/ui/components/label";
+} from "@workspace/ui/components/dropdown-menu"
+import { Label } from "@workspace/ui/components/label"
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@workspace/ui/components/popover";
-import { Separator } from "@workspace/ui/components/separator";
-import { Switch } from "@workspace/ui/components/switch";
-import { Textarea } from "@workspace/ui/components/textarea";
-import { Mail } from "../data";
-import { useState } from "react";
+} from "@workspace/ui/components/popover"
+import { Separator } from "@workspace/ui/components/separator"
+import { Switch } from "@workspace/ui/components/switch"
+import { Textarea } from "@workspace/ui/components/textarea"
+import { Mail } from "../data"
+import { useState } from "react"
 
 interface MailDisplayProps {
-  mail: Mail | null;
+  mail: Mail | null
 }
 
 export function MailDisplay({ mail }: MailDisplayProps) {
-  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date())
 
   return (
     <div className="flex h-full flex-col">
@@ -95,25 +95,25 @@ export function MailDisplay({ mail }: MailDisplayProps) {
                 <div className="grid min-w-[250px] gap-1">
                   <Button variant="ghost" className="justify-start font-normal">
                     Later today{" "}
-                    <span className="text-muted-foreground ml-auto">
+                    <span className="ml-auto text-muted-foreground">
                       {format(addHours(selectedDate, 4), "E, h:mm b")}
                     </span>
                   </Button>
                   <Button variant="ghost" className="justify-start font-normal">
                     Tomorrow
-                    <span className="text-muted-foreground ml-auto">
+                    <span className="ml-auto text-muted-foreground">
                       {format(addDays(selectedDate, 1), "E, h:mm b")}
                     </span>
                   </Button>
                   <Button variant="ghost" className="justify-start font-normal">
                     This weekend
-                    <span className="text-muted-foreground ml-auto">
+                    <span className="ml-auto text-muted-foreground">
                       {format(nextSaturday(selectedDate), "E, h:mm b")}
                     </span>
                   </Button>
                   <Button variant="ghost" className="justify-start font-normal">
                     Next week
-                    <span className="text-muted-foreground ml-auto">
+                    <span className="ml-auto text-muted-foreground">
                       {format(addDays(selectedDate, 7), "E, h:mm b")}
                     </span>
                   </Button>
@@ -191,7 +191,7 @@ export function MailDisplay({ mail }: MailDisplayProps) {
               </div>
             </div>
             {mail.date && (
-              <div className="text-muted-foreground ml-auto text-xs">
+              <div className="ml-auto text-xs text-muted-foreground">
                 {format(new Date(mail.date), "PPpp")}
               </div>
             )}
@@ -229,10 +229,10 @@ export function MailDisplay({ mail }: MailDisplayProps) {
           </div>
         </div>
       ) : (
-        <div className="text-muted-foreground p-8 text-center">
+        <div className="p-8 text-center text-muted-foreground">
           No message selected
         </div>
       )}
     </div>
-  );
+  )
 }

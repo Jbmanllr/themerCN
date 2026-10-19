@@ -1,73 +1,62 @@
 "use client"
 
+import { zodResolver } from "@hookform/resolvers/zod"
 import { CheckIcon } from "lucide-react"
-import { useRef, useState, type FormEvent } from "react"
+import { useState } from "react"
+import { Controller, useForm } from "react-hook-form"
+import * as z from "zod"
 
+import { TextField } from "@/components/forms/text-field"
+import { emailAddress, focusOnMount } from "@/lib/forms"
 import { Button } from "@workspace/ui/components/button"
-import {
-  Field,
-  FieldDescription,
-  FieldError,
-  FieldGroup,
-  FieldLabel,
-} from "@workspace/ui/components/field"
-import { Input } from "@workspace/ui/components/input"
+import { Field, FieldGroup, FieldLabel } from "@workspace/ui/components/field"
 import {
   NativeSelect,
   NativeSelectOption,
 } from "@workspace/ui/components/native-select"
-import { Textarea } from "@workspace/ui/components/textarea"
 
 const topics = ["An order", "My subscription", "Wholesale", "Something else"]
 
-type Values = { name: string; email: string; topic: string; message: string }
-type Errors = Partial<Record<keyof Values, string>>
+const REPLY_ADDRESS =
+  "Add an email address we can reply to, like you@example.com."
 
-function validate(values: Values): Errors {
-  const errors: Errors = {}
-  if (!values.name.trim())
-    errors.name = "Add your name so we know who to reply to."
-  if (!/^\S+@\S+\.\S+$/.test(values.email))
-    errors.email = "Add an email address we can reply to, like you@example.com."
-  if (!values.message.trim()) errors.message = "Write a message before sending."
-  return errors
+const contactSchema = z.object({
+  name: z.string().trim().min(1, "Add your name so we know who to reply to."),
+  // One message for empty and malformed: either way we can't reply.
+  email: emailAddress({
+    missing: REPLY_ADDRESS,
+    invalid: REPLY_ADDRESS,
+  }),
+  topic: z.string(),
+  message: z.string().trim().min(1, "Write a message before sending."),
+})
+
+type ContactValues = z.infer<typeof contactSchema>
+
+const empty: ContactValues = {
+  name: "",
+  email: "",
+  topic: topics[0]!,
+  message: "",
 }
 
 /**
- * The fake contact form: it validates, sends nothing, and ends on a
- * confirmation that names the reply address.
+ * The fake contact form, on shadcn's Field + React Hook Form + Zod pattern:
+ * it validates, sends nothing, and ends on a focused confirmation that names
+ * the reply address. `method="post"` keeps a pre-hydration submit out of the
+ * URL.
  */
 export function ContactForm() {
-  const [errors, setErrors] = useState<Errors>({})
   const [sentTo, setSentTo] = useState<string | null>(null)
-  const confirmation = useRef<HTMLDivElement>(null)
-
-  function onSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-    const data = new FormData(event.currentTarget)
-    const values = Object.fromEntries(
-      ["name", "email", "topic", "message"].map((key) => [
-        key,
-        String(data.get(key) ?? ""),
-      ])
-    ) as Values
-    const found = validate(values)
-    setErrors(found)
-    const firstInvalid = Object.keys(found)[0]
-    if (firstInvalid) {
-      event.currentTarget
-        .querySelector<HTMLElement>(`[name="${firstInvalid}"]`)
-        ?.focus()
-      return
-    }
-    setSentTo(values.email)
-    requestAnimationFrame(() => confirmation.current?.focus())
-  }
+  const form = useForm<ContactValues>({
+    resolver: zodResolver(contactSchema),
+    defaultValues: empty,
+  })
 
   if (sentTo) {
     return (
       <div
-        ref={confirmation}
+        ref={focusOnMount}
         role="status"
         tabIndex={-1}
         className="flex flex-col items-start gap-4 rounded-3xl bg-accent p-8 text-accent-foreground outline-none"
@@ -80,7 +69,13 @@ export function ContactForm() {
           Thanks for writing. We reply from the roastery within two working
           days, to {sentTo}.
         </p>
-        <Button variant="outline" onClick={() => setSentTo(null)}>
+        <Button
+          variant="outline"
+          onClick={() => {
+            form.reset(empty)
+            setSentTo(null)
+          }}
+        >
           Write another message
         </Button>
       </div>
@@ -88,68 +83,59 @@ export function ContactForm() {
   }
 
   return (
-    <form noValidate onSubmit={onSubmit} aria-label="Contact the roastery">
+    <form
+      method="post"
+      noValidate
+      onSubmit={form.handleSubmit((values) => setSentTo(values.email))}
+      aria-label="Contact the roastery"
+    >
       <FieldGroup>
         <div className="grid gap-6 sm:grid-cols-2">
-          <Field data-invalid={errors.name ? true : undefined}>
-            <FieldLabel htmlFor="contact-name">Name</FieldLabel>
-            <Input
-              id="contact-name"
-              name="name"
-              autoComplete="name"
-              aria-invalid={errors.name ? true : undefined}
-              aria-describedby={errors.name ? "contact-name-error" : undefined}
-            />
-            <FieldError id="contact-name-error">{errors.name}</FieldError>
-          </Field>
-          <Field data-invalid={errors.email ? true : undefined}>
-            <FieldLabel htmlFor="contact-email">Email</FieldLabel>
-            <Input
-              id="contact-email"
-              name="email"
-              type="email"
-              autoComplete="email"
-              aria-invalid={errors.email ? true : undefined}
-              aria-describedby={
-                errors.email ? "contact-email-error" : undefined
-              }
-            />
-            <FieldError id="contact-email-error">{errors.email}</FieldError>
-          </Field>
-        </div>
-        <Field>
-          <FieldLabel htmlFor="contact-topic">Topic</FieldLabel>
-          <NativeSelect
-            id="contact-topic"
-            name="topic"
-            className="w-full sm:w-64"
-          >
-            {topics.map((topic) => (
-              <NativeSelectOption key={topic} value={topic}>
-                {topic}
-              </NativeSelectOption>
-            ))}
-          </NativeSelect>
-        </Field>
-        <Field data-invalid={errors.message ? true : undefined}>
-          <FieldLabel htmlFor="contact-message">Message</FieldLabel>
-          <Textarea
-            id="contact-message"
-            name="message"
-            rows={6}
-            aria-invalid={errors.message ? true : undefined}
-            aria-describedby={
-              errors.message ? "contact-message-error" : "contact-message-hint"
-            }
+          <TextField
+            control={form.control}
+            name="name"
+            id="contact-name"
+            label="Name"
+            autoComplete="name"
           />
-          {errors.message ? (
-            <FieldError id="contact-message-error">{errors.message}</FieldError>
-          ) : (
-            <FieldDescription id="contact-message-hint">
-              For an order, include its number (it starts with NJ-).
-            </FieldDescription>
+          <TextField
+            control={form.control}
+            name="email"
+            id="contact-email"
+            label="Email"
+            type="email"
+            autoComplete="email"
+          />
+        </div>
+        <Controller
+          name="topic"
+          control={form.control}
+          render={({ field }) => (
+            <Field>
+              <FieldLabel htmlFor="contact-topic">Topic</FieldLabel>
+              <NativeSelect
+                {...field}
+                id="contact-topic"
+                className="w-full sm:w-64"
+              >
+                {topics.map((topic) => (
+                  <NativeSelectOption key={topic} value={topic}>
+                    {topic}
+                  </NativeSelectOption>
+                ))}
+              </NativeSelect>
+            </Field>
           )}
-        </Field>
+        />
+        <TextField
+          control={form.control}
+          name="message"
+          id="contact-message"
+          label="Message"
+          multiline
+          rows={6}
+          description="For an order, include its number (it starts with NJ-)."
+        />
         <div>
           <Button type="submit" size="lg">
             Send message

@@ -1,4 +1,4 @@
-"use client";
+"use client"
 
 // Keeps the editor's native scrolling working in a host that uses Lenis smooth
 // scroll. Mounted by ThemerRoot, active while a Themer UI that hides the page
@@ -6,24 +6,24 @@
 // page's scrolling alone. In a Host app without Lenis the fallback below only
 // sets a `lenis-paused` class that nothing styles.
 
-import { useEffect } from "react";
+import { useEffect } from "react"
 
 interface LenisLike {
-  stop: () => void;
-  start: () => void;
+  stop: () => void
+  start: () => void
 }
 
 function findLenis(): LenisLike | null {
   const w = window as typeof window & {
-    lenis?: Partial<LenisLike>;
-    __lenis?: Partial<LenisLike>;
-  };
-  const lenis = w.lenis ?? w.__lenis;
+    lenis?: Partial<LenisLike>
+    __lenis?: Partial<LenisLike>
+  }
+  const lenis = w.lenis ?? w.__lenis
   return lenis &&
     typeof lenis.stop === "function" &&
     typeof lenis.start === "function"
     ? (lenis as LenisLike)
-    : null;
+    : null
 }
 
 /**
@@ -37,18 +37,18 @@ function findLenis(): LenisLike | null {
  */
 export function LenisPause({ active }: { active: boolean }) {
   useEffect(() => {
-    if (!active) return undefined;
+    if (!active) return undefined
 
-    const lenis = findLenis();
+    const lenis = findLenis()
     if (lenis) {
-      lenis.stop();
-      return () => lenis.start();
+      lenis.stop()
+      return () => lenis.start()
     }
 
-    const root = document.documentElement;
-    root.classList.add("lenis-paused");
-    return () => root.classList.remove("lenis-paused");
-  }, [active]);
+    const root = document.documentElement
+    root.classList.add("lenis-paused")
+    return () => root.classList.remove("lenis-paused")
+  }, [active])
 
-  return null;
+  return null
 }

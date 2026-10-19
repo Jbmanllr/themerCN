@@ -2,24 +2,24 @@
 // queries (`@2xl:` to `@7xl:`), so in the tab it follows the preview width,
 // not the window's (the `@container` is in
 // ../../theme-preview/examples-preview-container.tsx). Default export: loaded
-// through `lazy()` by ../../builtin-tabs.tsx and ../../preview-cards.tsx.
+// through `lazy()` by ../../builtin-tabs.tsx.
 
-import { CardsActivityGoal } from "./activity-goal";
-import { CardsCalendar } from "./calendar";
-import { CardsChat } from "./chat";
-import { CardsCookieSettings } from "./cookie-settings";
-import { CardsCreateAccount } from "./create-account";
-import { CardsExerciseMinutes } from "./exercise-minutes";
-import { CardsForms } from "./forms";
-import { CardsPayments } from "./payments";
-import { CardsReportIssue } from "./report-issue";
-import { CardsShare } from "./share";
-import { CardsStats } from "./stats";
-import { CardsTeamMembers } from "./team-members";
-import { DatePickerWithRange } from "./date-picker-with-range";
-import { GithubCard } from "./github-card";
+import { CardsActivityGoal } from "./activity-goal"
+import { CardsCalendar } from "./calendar"
+import { CardsChat } from "./chat"
+import { CardsCookieSettings } from "./cookie-settings"
+import { CardsCreateAccount } from "./create-account"
+import { CardsExerciseMinutes } from "./exercise-minutes"
+import { CardsForms } from "./forms"
+import { CardsPayments } from "./payments"
+import { CardsReportIssue } from "./report-issue"
+import { CardsShare } from "./share"
+import { CardsStats } from "./stats"
+import { CardsTeamMembers } from "./team-members"
+import { DatePickerWithRange } from "./date-picker-with-range"
+import { GithubCard } from "./github-card"
 
-export default function CardsDemo() {
+export default function CardsPreview() {
   return (
     <div className="grid p-2 **:data-[slot=card]:shadow-none md:p-4 md:pt-1 @3xl:gap-4 @5xl:grid-cols-10 @7xl:grid-cols-11">
       <div className="grid gap-4 @5xl:col-span-4 @7xl:col-span-6">
@@ -74,5 +74,5 @@ export default function CardsDemo() {
         </div>
       </div>
     </div>
-  );
+  )
 }

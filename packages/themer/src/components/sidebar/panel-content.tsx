@@ -1,12 +1,12 @@
-"use client";
+"use client"
 
-import { ColorsPanel } from "../panels/colors-panel";
-import { TypographyPanel } from "../panels/typography-panel";
-import { OtherPanel } from "../panels/other-panel";
-import type { Panel } from "./panels-config";
+import { ColorsPanel } from "../panels/colors-panel"
+import { TypographyPanel } from "../panels/typography-panel"
+import { OtherPanel } from "../panels/other-panel"
+import type { Panel } from "./panels-config"
 
 interface PanelContentProps {
-  panel: Panel;
+  panel: Panel
 }
 
 /**
@@ -15,12 +15,12 @@ interface PanelContentProps {
 export function PanelContent({ panel }: PanelContentProps) {
   switch (panel) {
     case "colors":
-      return <ColorsPanel />;
+      return <ColorsPanel />
     case "typography":
-      return <TypographyPanel />;
+      return <TypographyPanel />
     case "other":
-      return <OtherPanel />;
+      return <OtherPanel />
     default:
-      return null;
+      return null
   }
 }

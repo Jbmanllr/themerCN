@@ -8,54 +8,54 @@
 // `ring-offset` + `background`, not `ring` + `offset-background`), bracketed
 // variants may contain `:`, and important markers are dropped.
 
-import { COLOR_UTILITY_PREFIXES } from "./theme-class-regex";
+import { COLOR_UTILITY_PREFIXES } from "./theme-class-regex"
 
 export interface ClassNameSegments {
-  selector: string | null;
-  prefix: string | null;
-  value: string | null;
-  opacity: string | null;
+  selector: string | null
+  prefix: string | null
+  value: string | null
+  opacity: string | null
 }
 
-const SELECTOR_REGEX = /^((?:(?:[^:\s[]|\[[^\]]*\])+:)*)/;
+const SELECTOR_REGEX = /^((?:(?:[^:\s[]|\[[^\]]*\])+:)*)/
 
 export function segmentClassName(className: string): ClassNameSegments {
-  const selectorMatch = className.match(SELECTOR_REGEX);
-  let selector = "";
-  let remaining = className;
+  const selectorMatch = className.match(SELECTOR_REGEX)
+  let selector = ""
+  let remaining = className
 
   if (selectorMatch?.[1]) {
-    selector = selectorMatch[1].slice(0, -1); // Remove trailing colon
-    remaining = className.slice(selectorMatch[1].length);
+    selector = selectorMatch[1].slice(0, -1) // Remove trailing colon
+    remaining = className.slice(selectorMatch[1].length)
   }
-  remaining = remaining.replace(/^!|!$/g, "");
+  remaining = remaining.replace(/^!|!$/g, "")
 
   // Handle opacity modifier (e.g., "card/80", "card/[0.35]")
-  const opacityMatch = remaining.match(/^([^/]+)\/(.+)$/);
-  let baseClass = remaining;
-  let opacity = "";
+  const opacityMatch = remaining.match(/^([^/]+)\/(.+)$/)
+  let baseClass = remaining
+  let opacity = ""
   if (opacityMatch) {
-    baseClass = opacityMatch[1]!;
-    opacity = opacityMatch[2]!;
+    baseClass = opacityMatch[1]!
+    opacity = opacityMatch[2]!
   }
 
   // Split into prefix and value on a known colour utility; otherwise on the
   // first dash, as tweakcn does.
   const known = COLOR_UTILITY_PREFIXES.find((prefix) =>
-    baseClass.startsWith(`${prefix}-`),
-  );
-  let prefix = "";
-  let value = "";
+    baseClass.startsWith(`${prefix}-`)
+  )
+  let prefix: string
+  let value = ""
   if (known) {
-    prefix = known;
-    value = baseClass.slice(known.length + 1);
+    prefix = known
+    value = baseClass.slice(known.length + 1)
   } else {
-    const dashIndex = baseClass.indexOf("-");
+    const dashIndex = baseClass.indexOf("-")
     if (dashIndex === -1) {
-      prefix = baseClass;
+      prefix = baseClass
     } else {
-      prefix = baseClass.slice(0, dashIndex);
-      value = baseClass.slice(dashIndex + 1);
+      prefix = baseClass.slice(0, dashIndex)
+      value = baseClass.slice(dashIndex + 1)
     }
   }
 
@@ -64,5 +64,5 @@ export function segmentClassName(className: string): ClassNameSegments {
     prefix: prefix || null,
     value: value || null,
     opacity: opacity || null,
-  };
+  }
 }

@@ -1,4 +1,4 @@
-"use client";
+"use client"
 
 // Adapted from tweakcn (Apache-2.0, github.com/jnsahaj/tweakcn @ a3b47b37); modified for themercn.
 //
@@ -8,15 +8,14 @@
 //
 // Store access is narrow: the current mode's styles object (stable until a
 // style changes) and individual preferences. Every write is a functional
-// setThemeState, reading the sync preference at write time, so the change
-// handler is stable and pickers' debounces survive re-renders.
+// setThemeState, so the change handler is stable and pickers' debounces
+// survive re-renders.
 //
-// Sidebar Sync rules (utils/sidebar-sync.ts):
-// - turning it on aligns both modes in one undo entry;
-// - editing a base colour writes its sidebar twin in the same update;
-// - useSidebarSyncAlignment (hooks/use-sidebar-sync-alignment.ts) re-aligns
-//   in place (no undo entry) whenever the theme changes some other way:
-//   preset, undo/redo, CSS import, HSL.
+// Sidebar Sync (utils/sidebar-sync.ts) is held by the editor store: the
+// toggle calls its setSidebarColorSync, which aligns both modes in one undo
+// entry when it turns on, and every action that sets the Theme (a base
+// colour edit included) writes the sidebar twins in the same commit while
+// the preference is on. Here the sidebar inputs are only disabled.
 //
 // Host extra colours (ThemerConfig.extraColors) follow the built-in groups.
 // An extra the theme does not set shows the host's computed value (read from
@@ -25,49 +24,44 @@
 //
 // See: packages/themer/ARCHITECTURE.md (Sidebar Sync).
 
-import * as React from "react";
-import { RefreshCw, Search, X } from "lucide-react";
+import * as React from "react"
+import { RefreshCw, Search, X } from "lucide-react"
 import {
   InputGroup,
   InputGroupAddon,
   InputGroupButton,
   InputGroupInput,
-} from "@workspace/ui/components/input-group";
-import { Toggle } from "@workspace/ui/components/toggle";
+} from "@workspace/ui/components/input-group"
+import { Toggle } from "@workspace/ui/components/toggle"
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from "@workspace/ui/components/tooltip";
-import { ColorPicker } from "./color-picker";
-import { ControlSection } from "./control-section";
-import { useEditorStore } from "../../stores/editor-store";
-import { usePreferencesStore } from "../../stores/preferences-store";
-import { useColorFocusStore } from "../../stores/color-focus-store";
+} from "@workspace/ui/components/tooltip"
+import { ColorPicker } from "./color-picker"
+import { ControlSection } from "./control-section"
+import { useEditorStore } from "../../stores/editor-store"
+import { usePreferencesStore } from "../../stores/preferences-store"
+import { useColorFocusStore } from "../../stores/color-focus-store"
 import {
-  COLOR_LIST_GROUPS,
   filterColorGroups,
   getColorListGroups,
   getColorSectionId,
-} from "../../utils/color-groups";
-import { getExtraColorKeys } from "../../config/extra-colors";
-import {
-  BASE_TO_SIDEBAR_MAP,
-  applySidebarSync,
-  isSyncedSidebarKey,
-} from "../../utils/sidebar-sync";
-import type { ThemeColorKey, ThemeModeStyles } from "../../types";
+} from "../../utils/color-groups"
+import { getExtraColorKeys } from "../../config/extra-colors"
+import { isSyncedSidebarKey } from "../../utils/sidebar-sync"
+import type { ThemeColorKey, ThemeModeStyles } from "../../types"
 
-const NO_HOST_VALUES: Readonly<Record<string, string>> = {};
+const NO_HOST_VALUES: Readonly<Record<string, string>> = {}
 
 function sameValues(
   a: Readonly<Record<string, string>>,
-  b: Readonly<Record<string, string>>,
+  b: Readonly<Record<string, string>>
 ): boolean {
-  const keys = Object.keys(a);
+  const keys = Object.keys(a)
   return (
     keys.length === Object.keys(b).length && keys.every((k) => a[k] === b[k])
-  );
+  )
 }
 
 /**
@@ -77,46 +71,31 @@ function sameValues(
  */
 function useHostExtraColorValues(
   extraKeys: readonly string[],
-  styles: ThemeModeStyles,
+  styles: ThemeModeStyles
 ): Readonly<Record<string, string>> {
-  const [values, setValues] = React.useState(NO_HOST_VALUES);
+  const [values, setValues] = React.useState(NO_HOST_VALUES)
 
   React.useEffect(() => {
-    const unset = extraKeys.filter((key) => !styles[key]?.trim());
-    if (unset.length === 0) return undefined;
+    const unset = extraKeys.filter((key) => !styles[key]?.trim())
+    if (unset.length === 0) return undefined
     const frame = requestAnimationFrame(() => {
-      const computed = getComputedStyle(document.documentElement);
-      const next: Record<string, string> = {};
+      const computed = getComputedStyle(document.documentElement)
+      const next: Record<string, string> = {}
       for (const key of unset) {
-        next[key] = computed.getPropertyValue(`--${key}`).trim();
+        next[key] = computed.getPropertyValue(`--${key}`).trim()
       }
-      setValues((previous) => (sameValues(previous, next) ? previous : next));
-    });
-    return () => cancelAnimationFrame(frame);
-  }, [extraKeys, styles]);
+      setValues((previous) => (sameValues(previous, next) ? previous : next))
+    })
+    return () => cancelAnimationFrame(frame)
+  }, [extraKeys, styles])
 
-  return values;
+  return values
 }
 
 function SidebarSyncToggle() {
-  const enabled = usePreferencesStore((state) => state.sidebarColorSync);
-  const setEnabled = usePreferencesStore((state) => state.setSidebarColorSync);
-  const setThemeState = useEditorStore((state) => state.setThemeState);
-
-  const handlePressedChange = React.useCallback(
-    (pressed: boolean) => {
-      if (pressed) {
-        // One undo entry for the alignment, before the preference flips so
-        // the in-place re-alignment finds nothing left to do.
-        setThemeState((prev) => ({
-          ...prev,
-          styles: applySidebarSync(prev.styles),
-        }));
-      }
-      setEnabled(pressed);
-    },
-    [setEnabled, setThemeState],
-  );
+  const enabled = usePreferencesStore((state) => state.sidebarColorSync)
+  // Turning it on aligns the Theme in one undo entry (editor store).
+  const setEnabled = useEditorStore((state) => state.setSidebarColorSync)
 
   return (
     <Tooltip>
@@ -126,7 +105,7 @@ function SidebarSyncToggle() {
             size="sm"
             variant="outline"
             pressed={enabled}
-            onPressedChange={handlePressedChange}
+            onPressedChange={setEnabled}
             aria-label="Sync sidebar colors"
             className="gap-1 text-[11px] tracking-wider uppercase"
           />
@@ -140,7 +119,7 @@ function SidebarSyncToggle() {
         sidebar primary to primary...) in light and dark.
       </TooltipContent>
     </Tooltip>
-  );
+  )
 }
 
 /**
@@ -150,19 +129,17 @@ function SidebarSyncToggle() {
  */
 export function ColorControls() {
   const currentStyles = useEditorStore(
-    (state) => state.themeState.styles[state.themeState.currentMode],
-  );
-  const setThemeState = useEditorStore((state) => state.setThemeState);
-  const sidebarSync = usePreferencesStore((state) => state.sidebarColorSync);
-  const search = useColorFocusStore((state) => state.colorSearch);
-  const setSearch = useColorFocusStore((state) => state.setColorSearch);
+    (state) => state.themeState.styles[state.themeState.currentMode]
+  )
+  const setThemeState = useEditorStore((state) => state.setThemeState)
+  const sidebarSync = usePreferencesStore((state) => state.sidebarColorSync)
+  const search = useColorFocusStore((state) => state.colorSearch)
+  const setSearch = useColorFocusStore((state) => state.setColorSearch)
 
   const handleColorChange = React.useCallback(
     (value: string, name: string) => {
-      const key = name as ThemeColorKey;
-      const twin = usePreferencesStore.getState().sidebarColorSync
-        ? BASE_TO_SIDEBAR_MAP[key]
-        : undefined;
+      const key = name as ThemeColorKey
+      // The store writes the sidebar twin while Sidebar Sync is on.
       setThemeState((prev) => ({
         ...prev,
         styles: {
@@ -170,26 +147,22 @@ export function ColorControls() {
           [prev.currentMode]: {
             ...prev.styles[prev.currentMode],
             [key]: value,
-            ...(twin && { [twin]: value }),
           },
         },
-      }));
+      }))
     },
-    [setThemeState],
-  );
+    [setThemeState]
+  )
 
-  const isSearching = search.trim() !== "";
+  const isSearching = search.trim() !== ""
   // Built-in plus host groups; the identity only changes with the host's
   // registration, so the memo stays valid across edits.
-  const allGroups = getColorListGroups();
+  const allGroups = getColorListGroups()
   const groups = React.useMemo(
     () => filterColorGroups(search, allGroups),
-    [search, allGroups],
-  );
-  const hostValues = useHostExtraColorValues(
-    getExtraColorKeys(),
-    currentStyles,
-  );
+    [search, allGroups]
+  )
+  const hostValues = useHostExtraColorValues(getExtraColorKeys(), currentStyles)
 
   return (
     <div className="space-y-1">
@@ -218,7 +191,7 @@ export function ColorControls() {
       </InputGroup>
 
       {groups.length === 0 ? (
-        <p className="text-muted-foreground py-8 text-center text-xs">
+        <p className="py-8 text-center text-xs text-muted-foreground">
           No colors found
         </p>
       ) : null}
@@ -247,31 +220,5 @@ export function ColorControls() {
         </ControlSection>
       ))}
     </div>
-  );
-}
-
-/**
- * Read-only swatch grid of the built-in colours of the current mode (no host
- * extra colours). No panel mounts it and the components/index.ts barrel
- * leaves it out; no package entry exports it.
- */
-export function ColorGrid() {
-  const currentStyles = useEditorStore(
-    (state) => state.themeState.styles[state.themeState.currentMode],
-  );
-  const allColors = COLOR_LIST_GROUPS.flatMap((group) => group.colors);
-
-  return (
-    <div className="grid grid-cols-8 gap-1">
-      {allColors.map(({ key, label }) => (
-        <div
-          key={key}
-          role="img"
-          aria-label={label}
-          className="size-6 rounded-sm border"
-          style={{ backgroundColor: currentStyles[key] }}
-        />
-      ))}
-    </div>
-  );
+  )
 }

@@ -49,18 +49,17 @@ The Playground ships it everywhere, uses `next-themes` for light/dark (so it
 passes `colorMode` and `onColorModeChange`), and adds its own brand Preset:
 
 <!-- recipe: apps/web/components/themer/playground-themer.tsx -->
+
 ```tsx
 import { useTheme } from "next-themes"
 import { createThemerLoader } from "themercn/loader"
 
 import { NIGHTJAR_PRESET_ID, playgroundPresets } from "@/lib/brand/nightjar"
+import { FONT_CATALOG_ENDPOINT } from "@/lib/themer"
 
 // Unconditional: the Playground always ships the Themer. A Host app that
 // wants it off in some builds passes `null` here instead.
 const ThemerLoader = createThemerLoader(() => import("themercn"))
-
-/** The route `createFontCatalogRoute` answers on. */
-export const FONT_CATALOG_ENDPOINT = "/api/themer/fonts"
 
 export function PlaygroundThemer() {
   const { resolvedTheme, setTheme } = useTheme()
@@ -81,10 +80,22 @@ The file starts with `"use client"`. Without a theme library, render
 `<ThemerLoader />` with no props: the Themer toggles `.dark` on `<html>`
 itself.
 
+The font route's path lives in a plain module (`lib/themer.ts`, no
+`"use client"`), so a Server Component that imports it gets the string rather
+than a client reference:
+
+<!-- recipe: apps/web/lib/themer.ts -->
+
+```ts
+/** The route `createFontCatalogRoute` answers on (app/api/themer/fonts/route.ts). */
+export const FONT_CATALOG_ENDPOINT = "/api/themer/fonts"
+```
+
 **2. The root layout.** `<ThemerHeadScript>` (from `themercn/next`) goes in
 `<head>`; the loader goes beside the page, never around it:
 
 <!-- recipe: apps/web/app/layout.tsx -->
+
 ```tsx
 <head>
   {/* Restores the saved Theme before first paint (README, Next quick
@@ -107,6 +118,7 @@ If you set `storageNamespace` on the Themer, pass the same value to
 the bundled list of 130 families). `app/api/themer/fonts/route.ts`:
 
 <!-- recipe: apps/web/app/api/themer/fonts/route.ts -->
+
 ```ts
 import { createFontCatalogRoute } from "themercn/next/server"
 
@@ -126,6 +138,7 @@ From the [Vite smoke app](https://github.com/Jbmanllr/themerCN/tree/main/apps/vi
 `VITE_THEMER=1`. In `src/main.tsx`, render the loader beside your app:
 
 <!-- recipe: apps/vite/src/main.tsx -->
+
 ```tsx
 const ThemerLoader = createThemerLoader(
   import.meta.env.VITE_THEMER === "1" ? () => import("themercn") : null
@@ -145,6 +158,7 @@ inlines the head script under the same condition
 (`import { getThemerHeadScript } from "themercn/head-script"`):
 
 <!-- recipe: apps/vite/vite.config.ts -->
+
 ```ts
 function themerHeadScript(): Plugin {
   return {
@@ -176,13 +190,13 @@ itself) beside your tree, and put `getThemerHeadScript()` in an inline
 
 ## Entry points
 
-| Import                 | Exports                                                                                    | Notes                                                                                     |
-| ---------------------- | ------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------- |
-| `themercn`             | `Themer`; types `ThemerProps`, `ThemePreset`, `ThemerExtraColorGroup`, `ThemerLayout`, `ThemerPreviewTab` | The Themer itself (client only). Usually loaded through the loader.                      |
-| `themercn/loader`      | `createThemerLoader`, type `ThemerModule`                                                  | About 1 kB. Reaches no Themer code; with `null` nothing of the Themer ships.              |
-| `themercn/head-script` | `getThemerHeadScript`, type `ThemerHeadScriptOptions`                                      | A string generator with no imports: safe in a build config or on a server.                |
-| `themercn/next`        | `ThemerHeadScript`, type `ThemerHeadScriptProps`                                           | Client component for the root layout's `<head>`.                                          |
-| `themercn/next/server` | `createFontCatalogRoute`, type `FontCatalogRouteOptions`                                   | Route handler for an App Router `route.ts`.                                               |
+| Import                 | Exports                                                                                                                                                                | Notes                                                                        |
+| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| `themercn`             | `Themer`; types `ThemerProps`, `ThemePreset`, `PartialThemeStyles`, `ThemerExtraColorGroup`, `ThemerExtraColor`, `ThemerLayout`, `ThemerColorMode`, `ThemerPreviewTab` | The Themer itself (client only). Usually loaded through the loader.          |
+| `themercn/loader`      | `createThemerLoader`, type `ThemerModule`                                                                                                                              | About 1 kB. Reaches no Themer code; with `null` nothing of the Themer ships. |
+| `themercn/head-script` | `getThemerHeadScript`, type `ThemerHeadScriptOptions`                                                                                                                  | A string generator with no imports: safe in a build config or on a server.   |
+| `themercn/next`        | `ThemerHeadScript`, type `ThemerHeadScriptProps`                                                                                                                       | Client component for the root layout's `<head>`.                             |
+| `themercn/next/server` | `createFontCatalogRoute`, type `FontCatalogRouteOptions`                                                                                                               | Route handler for an App Router `route.ts`.                                  |
 
 ESM only. Every export carries TSDoc, so your editor shows these docs on
 hover.
@@ -193,21 +207,21 @@ hover.
 Pass `presets`, `extraColors`, `previewTabs` and `previewWrapper` as stable,
 module-level values: a new identity re-registers or rebuilds them.
 
-| Prop                  | Type                                     | Default            | Description                                                                                                                                                                       |
-| --------------------- | ---------------------------------------- | ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `defaultPreset`       | `string`                                 | `"default"`        | The Preset a fresh Themer starts on (nothing saved yet). An unknown id falls back to `"default"`.                                                                                 |
-| `presets`             | `readonly ThemePreset[]`                 | none               | Your Presets, added to the built-in ones. On an id clash yours wins.                                                                                                              |
-| `extraColors`         | `readonly ThemerExtraColorGroup[]`       | none               | Colour tokens beyond shadcn's: `{ title, description?, colors: [{ key, label }] }`, `key` a kebab-case custom property name without `--`. Edited, exported and imported like the built-in ones. |
-| `previewTabs`         | `readonly ThemerPreviewTab[]`            | none               | Preview tabs of your own: `{ id, label, component, scroll?, order? }`. Use `React.lazy` components. A built-in id replaces that tab.                                               |
-| `previewWrapper`      | `ComponentType<{ children: ReactNode }>` | none               | Wraps your preview tabs (not the built-in ones) with the providers your components need: the Themer renders outside your tree.                                                    |
-| `shortcut`            | `string`                                 | `"ctrl+shift+e"`   | Toggles the Themer. Modifiers `ctrl`, `alt`, `shift`, `meta`, joined with `+`; `ctrl` also matches Cmd on macOS.                                                                  |
-| `layout`              | `"workspace" \| "overlay" \| "push" \| "toolbar"` | `"workspace"`      | The [Themer layout](#themer-layouts) the Themer opens in. The user's own choice, made in the Themer, wins over it.                                                                 |
-| `showTrigger`         | `boolean`                                | `true`             | Shows the floating button.                                                                                                                                                        |
-| `zIndex`              | `number`                                 | `9990` / `10000`   | Layer of the trigger and the Themer UI (by default 9990 and 10000). Popups sit one layer above the Themer UI.                                                                         |
-| `storageNamespace`    | `string`                                 | `"themercn"`       | Prefix of the localStorage keys `<ns>:editor`, `<ns>:preferences` and `<ns>:color-mode`. Give the head script the same value.                                                    |
-| `colorMode`           | `"light" \| "dark"`                      | none               | Controlled light/dark, for an app with its own mode state. Pass it with `onColorModeChange`; your app keeps the `.dark` class. Unset, the Themer toggles `.dark` on `<html>`, follows changes made by others, and the head script restores the mode on reload. |
-| `onColorModeChange`   | `(mode: "light" \| "dark") => void`      | none               | Called with the mode the user switched to, in controlled mode.                                                                                                                    |
-| `fontCatalogEndpoint` | `string`                                 | none               | URL of a [font catalog](#font-catalog). Unset, the font picker searches the bundled list in the browser.                                                                          |
+| Prop                  | Type                                              | Default          | Description                                                                                                                                                                                                                                                    |
+| --------------------- | ------------------------------------------------- | ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `defaultPreset`       | `string`                                          | `"default"`      | The Preset a fresh Themer starts on (nothing saved yet). An unknown id falls back to `"default"`.                                                                                                                                                              |
+| `presets`             | `readonly ThemePreset[]`                          | none             | Your Presets, added to the built-in ones. On an id clash yours wins.                                                                                                                                                                                           |
+| `extraColors`         | `readonly ThemerExtraColorGroup[]`                | none             | Colour tokens beyond shadcn's: `{ title, description?, colors: [{ key, label }] }`, `key` a kebab-case custom property name without `--`. Edited, exported and imported like the built-in ones.                                                                |
+| `previewTabs`         | `readonly ThemerPreviewTab[]`                     | none             | Preview tabs of your own: `{ id, label, component, scroll?, order? }`. Use `React.lazy` components. A built-in id replaces that tab.                                                                                                                           |
+| `previewWrapper`      | `ComponentType<{ children: ReactNode }>`          | none             | Wraps your preview tabs (not the built-in ones) with the providers your components need: the Themer renders outside your tree.                                                                                                                                 |
+| `shortcut`            | `string`                                          | `"ctrl+shift+e"` | Toggles the Themer. Modifiers `ctrl` (or `control`), `alt` (or `option`), `shift`, `meta` (or `cmd`, `command`), joined with `+`; `ctrl` also matches Cmd on macOS. An unrecognisable shortcut warns in development and keeps the default.                     |
+| `layout`              | `"workspace" \| "overlay" \| "push" \| "toolbar"` | `"workspace"`    | The [Themer layout](#themer-layouts) the Themer opens in. The user's own choice, made in the Themer, wins over it.                                                                                                                                             |
+| `showTrigger`         | `boolean`                                         | `true`           | Shows the floating button.                                                                                                                                                                                                                                     |
+| `zIndex`              | `number`                                          | `9990` / `10000` | Layer of the trigger and the Themer UI (by default 9990 and 10000). Popups sit one layer above the Themer UI.                                                                                                                                                  |
+| `storageNamespace`    | `string`                                          | `"themercn"`     | Prefix of the localStorage keys `<ns>:editor`, `<ns>:preferences` and `<ns>:color-mode`. Give the head script the same value.                                                                                                                                  |
+| `colorMode`           | `"light" \| "dark"`                               | none             | Controlled light/dark, for an app with its own mode state. Pass it with `onColorModeChange`; your app keeps the `.dark` class. Unset, the Themer toggles `.dark` on `<html>`, follows changes made by others, and the head script restores the mode on reload. |
+| `onColorModeChange`   | `(mode: "light" \| "dark") => void`               | none             | Called with the mode the user switched to, in controlled mode.                                                                                                                                                                                                 |
+| `fontCatalogEndpoint` | `string`                                          | none             | URL of a [font catalog](#font-catalog). Unset, the font picker searches the bundled list in the browser.                                                                                                                                                       |
 
 `<Themer>` takes no children and renders nothing on the server, during
 hydration and inside an iframe (its own Live preview frames your page).
@@ -226,6 +240,9 @@ localStorage under `<storageNamespace>:editor` and
 its mode under `<storageNamespace>:color-mode`); nothing is sent anywhere. The Themer never
 writes your source files: copy the Code dialog's CSS into your project to keep
 a Theme.
+
+Mount one `<Themer>` per page: two on different namespaces share one set of
+stores, so the first renders nothing (a development warning says so).
 
 Without the head script, a reload paints your own Theme first and switches to
 the saved edit once the Themer loads after hydration. The head script applies
@@ -259,8 +276,9 @@ GET <endpoint>?q=<search>&limit=<n>&offset=<n>[&category=<category>]
 ```
 
 `createFontCatalogRoute` implements it: with `googleFontsApiKey`, the Google
-Fonts Developer API list (cached a day); without one, Google's public catalog
-(held in memory a day); if Google fails, the bundled list. It clamps `limit` to
+Fonts Developer API list; without one, Google's public catalog. Either is held
+in memory a day. If Google fails or takes over 5 seconds, the bundled list
+answers, and keeps answering for 60 seconds before Google is asked again. It clamps `limit` to
 1–100 (default 50) and `offset` to 0 or more. Any endpoint that answers this
 contract works, in any framework.
 
@@ -268,12 +286,12 @@ contract works, in any framework.
 
 CSP is your app's job; the package adds no headers. With a CSP, allow:
 
-| Directive         | Source                                       | Why                                                                                     |
-| ----------------- | -------------------------------------------- | --------------------------------------------------------------------------------------- |
-| `style-src`       | `https://fonts.googleapis.com`               | Font stylesheets for the fonts a Theme picks (Themer and head script).                  |
-| `font-src`        | `https://fonts.gstatic.com`                  | The font files those stylesheets load.                                                  |
-| `style-src`       | `'unsafe-inline'`                            | The Themer injects its CSS as a `<style>` element.                                      |
-| `script-src`      | `'unsafe-inline'` or the head script's hash  | The head script is an inline `<script>`.                                                |
+| Directive         | Source                                       | Why                                                                                       |
+| ----------------- | -------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| `style-src`       | `https://fonts.googleapis.com`               | Font stylesheets for the fonts a Theme picks (Themer and head script).                    |
+| `font-src`        | `https://fonts.gstatic.com`                  | The font files those stylesheets load.                                                    |
+| `style-src`       | `'unsafe-inline'`                            | The Themer injects its CSS as a `<style>` element.                                        |
+| `script-src`      | `'unsafe-inline'` or the head script's hash  | The head script is an inline `<script>`.                                                  |
 | `frame-ancestors` | `'self'` (and `X-Frame-Options: SAMEORIGIN`) | The Live preview tab frames your own page; a page that refuses framing shows empty there. |
 
 The font catalog route calls Google from your server, not from the browser.
@@ -284,13 +302,13 @@ The font catalog route calls Google from your server, not from the browser.
 input, a textarea or a contenteditable element, and an extra modifier rejects a
 match.
 
-| Shortcut       | Action                  | When                                                  |
-| -------------- | ----------------------- | ----------------------------------------------------- |
-| `Ctrl+Shift+E` | Open or close the Themer | Always (change it with `shortcut`)                   |
-| `Ctrl+Z`       | Undo                    | Themer open                                           |
-| `Ctrl+Shift+Z` | Redo                    | Themer open                                           |
-| `Ctrl+I`       | Toggle the inspector    | Desktop; in Workspace, a Preview shown and a same-origin Live frame |
-| `Esc`          | Exit fullscreen preview | Fullscreen preview on                                 |
+| Shortcut       | Action                   | When                                                                |
+| -------------- | ------------------------ | ------------------------------------------------------------------- |
+| `Ctrl+Shift+E` | Open or close the Themer | Always (change it with `shortcut`)                                  |
+| `Ctrl+Z`       | Undo                     | Themer open                                                         |
+| `Ctrl+Shift+Z` | Redo                     | Themer open                                                         |
+| `Ctrl+I`       | Toggle the inspector     | Desktop; in Workspace, a Preview shown and a same-origin Live frame |
+| `Esc`          | Exit fullscreen preview  | Fullscreen preview on                                               |
 
 ## Styles and browser support
 
@@ -304,10 +322,21 @@ it shows the Theme being edited.
 
 `@scope` with a lower boundary needs Chrome 118, Safari 17.4 or Firefox 146.
 
-Known leak: your unlayered element rules (for example
-`button { border: 3px dashed red }`) still reach the Themer's elements on
-properties Preflight does not reset, because they win on specificity. Layered
-CSS, which is what Tailwind emits, does not leak.
+Its `@keyframes` are all named `themer-…`, so your own `spin`, `pulse`,
+`enter`, `exit` or `accordion-*` animations keep their keyframes while the
+Themer is mounted.
+
+Known leaks:
+
+- Your unlayered element rules (for example
+  `button { border: 3px dashed red }`) still reach the Themer's elements on
+  properties Preflight does not reset, because they win on specificity.
+  Layered CSS, which is what Tailwind emits, does not leak.
+- Tailwind v4's `@property` registrations (`--tw-shadow`, `--tw-ring-color`,
+  …) are document-wide: while the Themer is mounted, those properties are
+  registered on your page too, with Tailwind's own syntax and initial values.
+  A Tailwind v4 page registers the same ones; on another page, an unset
+  `--tw-*` property reads its initial value instead of nothing.
 
 ## Themer layouts
 
@@ -342,13 +371,19 @@ panel in a popup beside the rail, which behaves like the Toolbar's. Below
 ### Push and your page
 
 The Themer never wraps your app, so Push moves your page with
-`margin-inline-start` on `<html>`, set to the sidebar's width (320 px
+`margin-left` on `<html>`, set to the sidebar's width (320 px
 expanded, 48 px collapsed). Like the sidebar, it moves at once, with no
 animation. The same width is exposed as the CSS variable
-`--themer-inset-inline-start` on `<html>`. The margin and the variable are
+`--themer-inset-left` on `<html>`. The margin and the variable are
 inline styles on `<html>`. When the Themer closes, switches to another layout, opens as the
 drawer, or unmounts, any inline values your app had set for them come back
 as they were, and the rest are removed.
+
+The Themer UI is laid out left-to-right in every Host direction, with its
+sidebar pinned to the left. That is why the margin and the variable are
+physical (left), not logical: in a right-to-left page (`<html dir="rtl">`)
+Push still shifts the page on the left, the side the sidebar covers. Host
+preview tabs keep your page's `dir`.
 
 Two limits, by design:
 
@@ -358,11 +393,12 @@ Two limits, by design:
 
   ```css
   .my-fixed-sidebar {
-    left: var(--themer-inset-inline-start, 0px);
+    left: var(--themer-inset-left, 0px);
   }
   ```
 
-  In Tailwind: `left-[var(--themer-inset-inline-start,0px)]`.
+  In Tailwind: `left-[var(--themer-inset-left,0px)]`.
+
 - **The viewport does not shrink**, so your breakpoints, media queries and
   viewport units (`100vw`, `w-screen`) do not react to Push. To see the Theme
   at other widths, use the Workspace's Live preview.

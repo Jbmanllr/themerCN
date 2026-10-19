@@ -1,7 +1,9 @@
 import { expect, test, type Page } from "@playwright/test"
 
-// Resolves `var(--primary)` on the page to an rgb() string, whatever colour
-// syntax the Themer wrote the token in.
+// Reads `var(--primary)` as the computed colour string. Chrome serialises
+// hex and rgb() values as rgb(), so the hex the test types compares as
+// rgb(255, 0, 0); oklch() or lab() values keep their own syntax and are only
+// compared for inequality here.
 function pagePrimary(page: Page) {
   return page.evaluate(() => {
     const probe = document.createElement("div")
@@ -20,7 +22,7 @@ test("a token edited in the Themer restyles the page and survives a reload", asy
   await expect(page.getByRole("heading", { name: "Vite app" })).toBeVisible()
   expect(await pagePrimary(page)).not.toBe("rgb(255, 0, 0)")
 
-  await page.getByRole("button", { name: "Open Theme Editor" }).click()
+  await page.getByRole("button", { name: "Open Themer" }).click()
   await page.getByRole("button", { name: /^Primary & Secondary/ }).click()
   const primary = page.getByLabel("Primary", { exact: true })
   await primary.fill("#ff0000")
@@ -36,7 +38,7 @@ test("the mode the Themer switched to is the first paint of a reload, with the s
   page,
 }) => {
   await page.goto("/")
-  await page.getByRole("button", { name: "Open Theme Editor" }).click()
+  await page.getByRole("button", { name: "Open Themer" }).click()
   await page.getByRole("button", { name: /^Primary & Secondary/ }).click()
   const primary = page.getByLabel("Primary", { exact: true })
 

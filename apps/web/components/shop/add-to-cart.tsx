@@ -8,7 +8,11 @@ import type { Product } from "@/lib/mock/types"
 import { useCart } from "@/lib/stores/cart"
 import { Button } from "@workspace/ui/components/button"
 
-/** The product page's buy box: options as chips, a quantity, Add to cart. */
+/**
+ * The product page's buy box: options as chips, a quantity, Add to cart.
+ * `method="post"`, as every Playground form: a submit before hydration
+ * keeps the options out of the URL.
+ */
 export function AddToCart({ product }: { product: Product }) {
   const add = useCart((state) => state.add)
   const [option, setOption] = useState<Record<string, string>>(() =>
@@ -19,6 +23,7 @@ export function AddToCart({ product }: { product: Product }) {
 
   return (
     <form
+      method="post"
       className="flex flex-col gap-6"
       onSubmit={(event) => {
         event.preventDefault()

@@ -1,8 +1,12 @@
 // The theme data model: the CSS custom properties a theme sets (named as the
 // variables, without the `--`), one mode's styles, presets, saved themes, and
-// the key groups the editor UI is organised by.
+// the style-key families.
 //
 // Contract:
+// - Each style-key family (colours, fonts, spacing, shadow inputs) has one
+//   `as const` list here. Its union type and every derived list
+//   (THEME_STYLE_KEYS, COLOR_STYLE_KEYS, COMMON_STYLE_KEYS, ThemeStyleProps)
+//   are computed from it, so adding a token is one edit.
 // - ThemeStyleProps is every built-in key a mode stores: 32 colours, four
 //   fonts, six shadow parameters, radius, spacing and letter-spacing.
 //   ThemeModeStyles adds the host's extra colours on top.
@@ -15,157 +19,158 @@
 //   `styles` directly.
 
 /**
+ * The 32 shadcn/ui colour variable names: the colour family's one source.
+ * Every colour union and list derives from it.
+ */
+export const THEME_COLOR_KEYS = [
+  "background",
+  "foreground",
+  "card",
+  "card-foreground",
+  "popover",
+  "popover-foreground",
+  "primary",
+  "primary-foreground",
+  "secondary",
+  "secondary-foreground",
+  "muted",
+  "muted-foreground",
+  "accent",
+  "accent-foreground",
+  "destructive",
+  "destructive-foreground",
+  "border",
+  "input",
+  "ring",
+  "chart-1",
+  "chart-2",
+  "chart-3",
+  "chart-4",
+  "chart-5",
+  "sidebar",
+  "sidebar-foreground",
+  "sidebar-primary",
+  "sidebar-primary-foreground",
+  "sidebar-accent",
+  "sidebar-accent-foreground",
+  "sidebar-border",
+  "sidebar-ring",
+] as const
+
+/**
  * Theme color variable names used in shadcn/ui
  */
-export type ThemeColorKey =
-  | "background"
-  | "foreground"
-  | "card"
-  | "card-foreground"
-  | "popover"
-  | "popover-foreground"
-  | "primary"
-  | "primary-foreground"
-  | "secondary"
-  | "secondary-foreground"
-  | "muted"
-  | "muted-foreground"
-  | "accent"
-  | "accent-foreground"
-  | "destructive"
-  | "destructive-foreground"
-  | "border"
-  | "input"
-  | "ring"
-  | "chart-1"
-  | "chart-2"
-  | "chart-3"
-  | "chart-4"
-  | "chart-5"
-  | "sidebar"
-  | "sidebar-foreground"
-  | "sidebar-primary"
-  | "sidebar-primary-foreground"
-  | "sidebar-accent"
-  | "sidebar-accent-foreground"
-  | "sidebar-border"
-  | "sidebar-ring";
+export type ThemeColorKey = (typeof THEME_COLOR_KEYS)[number]
+
+/**
+ * Style keys that carry a font-family value: the font family's one source.
+ * `font-heading` is the host's display face for headings; presets from
+ * tweakcn have none and resolve it to their serif (resolvePresetStyles).
+ */
+export const THEME_FONT_KEYS = [
+  "font-sans",
+  "font-heading",
+  "font-serif",
+  "font-mono",
+] as const
 
 /**
  * Theme typography variable names
  */
-export type ThemeFontKey =
-  "font-sans" | "font-heading" | "font-serif" | "font-mono";
+export type ThemeFontKey = (typeof THEME_FONT_KEYS)[number]
+
+/**
+ * The six inputs tweakcn's shadow map is computed from: the shadow family's
+ * one source.
+ */
+export const SHADOW_INPUT_KEYS = [
+  "shadow-color",
+  "shadow-opacity",
+  "shadow-blur",
+  "shadow-spread",
+  "shadow-offset-x",
+  "shadow-offset-y",
+] as const
 
 /**
  * Theme shadow variable names
  */
-export type ThemeShadowKey =
-  | "shadow-color"
-  | "shadow-opacity"
-  | "shadow-blur"
-  | "shadow-spread"
-  | "shadow-offset-x"
-  | "shadow-offset-y";
+export type ThemeShadowKey = (typeof SHADOW_INPUT_KEYS)[number]
+
+/**
+ * Radius, spacing and letter spacing: the spacing family's one source.
+ * `spacing` is the only optional key of ThemeStyleProps.
+ */
+export const THEME_SPACING_KEYS = [
+  "radius",
+  "spacing",
+  "letter-spacing",
+] as const
 
 /**
  * Theme spacing variable names
  */
-export type ThemeSpacingKey = "radius" | "spacing" | "letter-spacing";
+export type ThemeSpacingKey = (typeof THEME_SPACING_KEYS)[number]
+
+/**
+ * Joins key lists. A call rather than array spreads, so the bundler can drop
+ * the derived lists from entries that use none of them (the head script and
+ * the Next.js entry need only THEME_FONT_KEYS).
+ */
+function joinKeys<const Lists extends readonly (readonly string[])[]>(
+  ...lists: Lists
+): readonly Lists[number][number][] {
+  return lists.flat()
+}
+
+/** Every built-in style key, family by family. */
+export const THEME_STYLE_KEYS = /* @__PURE__ */ joinKeys(
+  THEME_COLOR_KEYS,
+  THEME_FONT_KEYS,
+  THEME_SPACING_KEYS,
+  SHADOW_INPUT_KEYS
+)
 
 /**
  * All theme style property keys
  */
-export type ThemeStyleKey =
-  ThemeColorKey | ThemeFontKey | ThemeShadowKey | ThemeSpacingKey;
+export type ThemeStyleKey = (typeof THEME_STYLE_KEYS)[number]
 
 /**
- * Style properties for a single theme mode (light or dark). A type alias, not
- * an interface, so it stays assignable to ThemeModeStyles (an interface has
- * no implicit index signature).
+ * Style properties for a single theme mode (light or dark): every built-in
+ * key, `spacing` optional. A type alias, not an interface, so it stays
+ * assignable to ThemeModeStyles (an interface has no implicit index
+ * signature).
  */
 export type ThemeStyleProps = {
-  // Colors
-  background: string;
-  foreground: string;
-  card: string;
-  "card-foreground": string;
-  popover: string;
-  "popover-foreground": string;
-  primary: string;
-  "primary-foreground": string;
-  secondary: string;
-  "secondary-foreground": string;
-  muted: string;
-  "muted-foreground": string;
-  accent: string;
-  "accent-foreground": string;
-  destructive: string;
-  "destructive-foreground": string;
-  border: string;
-  input: string;
-  ring: string;
-  "chart-1": string;
-  "chart-2": string;
-  "chart-3": string;
-  "chart-4": string;
-  "chart-5": string;
-  sidebar: string;
-  "sidebar-foreground": string;
-  "sidebar-primary": string;
-  "sidebar-primary-foreground": string;
-  "sidebar-accent": string;
-  "sidebar-accent-foreground": string;
-  "sidebar-border": string;
-  "sidebar-ring": string;
-
-  // Typography. `font-heading` is the host's display face for headings;
-  // presets from tweakcn have none and resolve it to their serif
-  // (resolvePresetStyles).
-  "font-sans": string;
-  "font-heading": string;
-  "font-serif": string;
-  "font-mono": string;
-
-  // Shadows
-  "shadow-color": string;
-  "shadow-opacity": string;
-  "shadow-blur": string;
-  "shadow-spread": string;
-  "shadow-offset-x": string;
-  "shadow-offset-y": string;
-
-  // Spacing
-  radius: string;
-  spacing?: string;
-  "letter-spacing": string;
-};
+  [K in Exclude<ThemeStyleKey, "spacing">]: string
+} & { spacing?: string }
 
 /**
  * Values of Host extra colours (ThemerConfig.extraColors) by CSS custom
  * property name without `--`. Optional by nature: an extra a theme does not
  * set is absent, and the host's own CSS value shows.
  */
-export type ExtraColorValues = { [extraKey: string]: string | undefined };
+export type ExtraColorValues = { [extraKey: string]: string | undefined }
 
 /**
  * One mode's styles as the editor stores them: every built-in key (typed as
  * in ThemeStyleProps) plus any Host extra colours that have a value.
  */
-export type ThemeModeStyles = ThemeStyleProps & ExtraColorValues;
+export type ThemeModeStyles = ThemeStyleProps & ExtraColorValues
 
 /**
  * Complete theme styles containing both light and dark modes
  */
 export interface ThemeStyles {
-  light: ThemeModeStyles;
-  dark: ThemeModeStyles;
+  light: ThemeModeStyles
+  dark: ThemeModeStyles
 }
 
 /**
  * Theme mode type
  */
-export type ThemeMode = "light" | "dark";
+export type ThemeMode = "light" | "dark"
 
 /**
  * HSL adjustment values for color manipulation: `hueShift` in degrees, the
@@ -173,9 +178,9 @@ export type ThemeMode = "light" | "dark";
  * (defaultHSLAdjustments in config/defaults.ts).
  */
 export interface HSLAdjustments {
-  hueShift: number;
-  saturationScale: number;
-  lightnessScale: number;
+  hueShift: number
+  saturationScale: number
+  lightnessScale: number
 }
 
 /**
@@ -183,15 +188,23 @@ export interface HSLAdjustments {
  * override). Host extra colours may be included; a preset that leaves one
  * out leaves it unset.
  */
-export type PartialThemeStyleProps = Partial<ThemeStyleProps> &
-  ExtraColorValues;
+export type PartialThemeStyleProps = Partial<ThemeStyleProps> & ExtraColorValues
 
 /**
- * Partial theme styles for presets
+ * A Preset's styles (`ThemePreset.styles`): per mode, only the tokens the
+ * Preset changes. The Themer fills the rest from the built-in defaults.
  */
 export interface PartialThemeStyles {
-  light: PartialThemeStyleProps;
-  dark: PartialThemeStyleProps;
+  /**
+   * Light-mode tokens the Preset sets, keyed by token name without `--`
+   * (`primary`, `radius`, `font-sans`, or a Host extra colour key).
+   */
+  light: PartialThemeStyleProps
+  /**
+   * Dark-mode tokens the Preset sets. A token left out here takes its value
+   * from `light`, then from the built-in dark defaults.
+   */
+  dark: PartialThemeStyleProps
 }
 
 /**
@@ -204,135 +217,68 @@ export interface ThemePreset {
    * Unique id, persisted as the Theme's preset. A Host Preset with a
    * built-in id replaces that built-in Preset.
    */
-  id: string;
+  id: string
   /** Name shown in the preset picker, which sorts by it. */
-  label: string;
+  label: string
   /** Free-form description; the Themer UI does not show it. */
-  description?: string;
+  description?: string
   /** Free-form origin tag; the Themer UI does not read it. */
-  source?: string;
+  source?: string
   /**
    * Date string (ISO 8601). The picker shows a "New" badge for 5 days after
    * it.
    */
-  createdAt?: string;
+  createdAt?: string
   /**
    * Token values by mode, CSS custom property names without `--` (`primary`,
    * `font-sans`, `radius`, and any Host extra colour). Light is laid over the
    * defaults; dark is laid over the Preset's resolved light values.
    */
-  styles: PartialThemeStyles;
-}
-
-/**
- * A saved theme record. Nothing in the Themer UI saves or lists these.
- */
-export interface SavedTheme {
-  id: string;
-  name: string;
-  description?: string;
-  styles: ThemeStyles;
-  preset?: string;
-  hslAdjustments?: HSLAdjustments;
-  createdAt: string;
-  updatedAt: string;
-  createdBy?: string;
-  isPublic?: boolean;
-  previewImage?: string;
+  styles: PartialThemeStyles
 }
 
 /**
  * Color format for export
  */
-export type ColorFormat = "hex" | "rgb" | "hsl" | "oklch";
+export type ColorFormat = "hex" | "rgb" | "hsl" | "oklch"
 
 /**
  * Tailwind version for export
  */
-export type TailwindVersion = "3" | "4";
+export type TailwindVersion = "3" | "4"
 
 /**
- * Color groups for organizing the editor UI
+ * Style keys each mode holds its own value for: the 32 colours plus
+ * `shadow-color`, because a dark theme usually needs a different shadow
+ * colour. Host extra colours are not in it (config/extra-colors.ts).
  */
-export const COLOR_GROUPS = {
-  base: [
-    "background",
-    "foreground",
-    "card",
-    "card-foreground",
-    "popover",
-    "popover-foreground",
-  ],
-  semantic: [
-    "primary",
-    "primary-foreground",
-    "secondary",
-    "secondary-foreground",
-    "muted",
-    "muted-foreground",
-    "accent",
-    "accent-foreground",
-    "destructive",
-    "destructive-foreground",
-  ],
-  ui: ["border", "input", "ring"],
-  chart: ["chart-1", "chart-2", "chart-3", "chart-4", "chart-5"],
-  sidebar: [
-    "sidebar",
-    "sidebar-foreground",
-    "sidebar-primary",
-    "sidebar-primary-foreground",
-    "sidebar-accent",
-    "sidebar-accent-foreground",
-    "sidebar-border",
-    "sidebar-ring",
-  ],
-} as const;
+export const COLOR_STYLE_KEYS = /* @__PURE__ */ joinKeys(THEME_COLOR_KEYS, [
+  "shadow-color",
+] as const satisfies readonly ThemeShadowKey[])
 
-/**
- * Style keys shared by both modes: the editor writes them to light and dark
- * together (updateCommonStyle), as tweakcn does (config/theme.ts COMMON_STYLES)
- * plus the heading font. Shadow colour stays per mode, because a dark theme
- * usually needs a different shadow colour; every other shadow parameter is
- * common.
- */
-export const COMMON_STYLE_KEYS = [
-  "font-sans",
-  "font-heading",
-  "font-serif",
-  "font-mono",
-  "radius",
-  "shadow-opacity",
-  "shadow-blur",
-  "shadow-spread",
-  "shadow-offset-x",
-  "shadow-offset-y",
-  "letter-spacing",
-  "spacing",
-] as const satisfies readonly ThemeStyleKey[];
+/** A style key each mode holds its own value for. */
+export type ColorStyleKey = (typeof COLOR_STYLE_KEYS)[number]
 
 /** A style key that `updateCommonStyle` writes to both modes. */
-export type CommonStyleKey = (typeof COMMON_STYLE_KEYS)[number];
+export type CommonStyleKey = Exclude<ThemeStyleKey, ColorStyleKey>
+
+const COLOR_STYLE_KEY_SET: ReadonlySet<string> = /* @__PURE__ */ new Set(
+  COLOR_STYLE_KEYS
+)
 
 /** Narrow a style key to one shared by both modes. */
 export function isCommonStyleKey(key: string): key is CommonStyleKey {
-  return (COMMON_STYLE_KEYS as readonly string[]).includes(key);
+  return (
+    !COLOR_STYLE_KEY_SET.has(key) &&
+    (THEME_STYLE_KEYS as readonly string[]).includes(key)
+  )
 }
 
 /**
- * Style keys that are not colors
+ * Style keys shared by both modes (every key but the colours): fonts,
+ * radius, spacing, letter-spacing and every shadow parameter but
+ * shadow-color. The editor writes them to light and dark together
+ * (updateCommonStyle), as tweakcn does, plus the heading font.
  */
-export const NON_COLOR_KEYS: ThemeStyleKey[] = [
-  "font-sans",
-  "font-heading",
-  "font-serif",
-  "font-mono",
-  "radius",
-  "spacing",
-  "letter-spacing",
-  "shadow-opacity",
-  "shadow-blur",
-  "shadow-spread",
-  "shadow-offset-x",
-  "shadow-offset-y",
-];
+export const COMMON_STYLE_KEYS: readonly CommonStyleKey[] =
+  /* @__PURE__ */ THEME_STYLE_KEYS.filter(isCommonStyleKey)

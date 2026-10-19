@@ -1,5 +1,13 @@
 "use client"
 
+// Local change to the vendored shadcn sidebar: SidebarProvider takes
+// `persistCookie` and `keyboardShortcut` opt-outs (both default to the stock
+// behaviour). A library mounted inside a Host app (the Themer) turns both off,
+// so it never writes the Host's `sidebar_state` cookie or binds Ctrl/Cmd+B on
+// the window. They are destructured, never spread onto the DOM: re-apply both
+// after `shadcn add sidebar -o` (packages/themer's sidebar-opt-outs test fails
+// until you do).
+
 import * as React from "react"
 import { mergeProps } from "@base-ui/react/merge-props"
 import { useRender } from "@base-ui/react/use-render"
@@ -57,6 +65,8 @@ function SidebarProvider({
   defaultOpen = true,
   open: openProp,
   onOpenChange: setOpenProp,
+  persistCookie = true,
+  keyboardShortcut = true,
   className,
   style,
   children,
@@ -65,6 +75,10 @@ function SidebarProvider({
   defaultOpen?: boolean
   open?: boolean
   onOpenChange?: (open: boolean) => void
+  /** Write the `sidebar_state` cookie on every open change. */
+  persistCookie?: boolean
+  /** Toggle on Ctrl/Cmd+B anywhere in the window. */
+  keyboardShortcut?: boolean
 }) {
   const isMobile = useIsMobile()
   const [openMobile, setOpenMobile] = React.useState(false)
@@ -83,9 +97,11 @@ function SidebarProvider({
       }
 
       // This sets the cookie to keep the sidebar state.
-      document.cookie = `${SIDEBAR_COOKIE_NAME}=${openState}; path=/; max-age=${SIDEBAR_COOKIE_MAX_AGE}`
+      if (persistCookie) {
+        document.cookie = `${SIDEBAR_COOKIE_NAME}=${openState}; path=/; max-age=${SIDEBAR_COOKIE_MAX_AGE}`
+      }
     },
-    [setOpenProp, open]
+    [setOpenProp, open, persistCookie]
   )
 
   // Helper to toggle the sidebar.
@@ -95,6 +111,7 @@ function SidebarProvider({
 
   // Adds a keyboard shortcut to toggle the sidebar.
   React.useEffect(() => {
+    if (!keyboardShortcut) return
     const handleKeyDown = (event: KeyboardEvent) => {
       if (
         event.key === SIDEBAR_KEYBOARD_SHORTCUT &&
@@ -107,7 +124,7 @@ function SidebarProvider({
 
     window.addEventListener("keydown", handleKeyDown)
     return () => window.removeEventListener("keydown", handleKeyDown)
-  }, [toggleSidebar])
+  }, [toggleSidebar, keyboardShortcut])
 
   // We add a state so that we can do data-state="expanded" or "collapsed".
   // This makes it easier to style the sidebar with Tailwind classes.

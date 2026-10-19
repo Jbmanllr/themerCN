@@ -1,14 +1,12 @@
-// Proves the colour list's search and lookup: a blank query keeps every
+// Proves the colour list: it holds every built-in colour once; a blank query keeps every
 // group, a query matches a label, key or group title case-insensitively, a
 // token's group and section id are found, and host extra groups follow the
 // built-in ones without built-in keys, are searchable, and keep one identity
 // until the registration changes.
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest"
 
-import {
-  configureExtraColors,
-  getExtraColorKeys,
-} from "../config/extra-colors";
+import { configureExtraColors, getExtraColorKeys } from "../config/extra-colors"
+import { THEME_COLOR_KEYS } from "../types/theme"
 
 import {
   COLOR_LIST_GROUPS,
@@ -17,55 +15,63 @@ import {
   filterColorGroups,
   findColorGroup,
   getColorSectionId,
-} from "./color-groups";
+} from "./color-groups"
 
 const keys = (query: string) =>
   filterColorGroups(query).flatMap((group) =>
-    group.colors.map((color) => color.key),
-  );
+    group.colors.map((color) => color.key)
+  )
+
+describe("COLOR_LIST_GROUPS", () => {
+  it("lists every built-in colour exactly once, in the colour family's order", () => {
+    expect(
+      COLOR_LIST_GROUPS.flatMap((group) => group.colors.map((c) => c.key))
+    ).toEqual(THEME_COLOR_KEYS)
+  })
+})
 
 describe("filterColorGroups", () => {
   it("returns every group for an empty or blank query", () => {
-    expect(filterColorGroups("")).toBe(COLOR_LIST_GROUPS);
-    expect(filterColorGroups("   ")).toBe(COLOR_LIST_GROUPS);
-  });
+    expect(filterColorGroups("")).toBe(COLOR_LIST_GROUPS)
+    expect(filterColorGroups("   ")).toBe(COLOR_LIST_GROUPS)
+  })
 
   it("matches labels case-insensitively and drops empty groups", () => {
-    const groups = filterColorGroups("FOREGROUND");
-    expect(groups.every((group) => group.colors.length > 0)).toBe(true);
-    expect(keys("FOREGROUND")).toContain("card-foreground");
-    expect(keys("FOREGROUND")).not.toContain("card");
-  });
+    const groups = filterColorGroups("FOREGROUND")
+    expect(groups.every((group) => group.colors.length > 0)).toBe(true)
+    expect(keys("FOREGROUND")).toContain("card-foreground")
+    expect(keys("FOREGROUND")).not.toContain("card")
+  })
 
   it("matches token keys", () => {
-    expect(keys("chart-3")).toEqual(["chart-3"]);
-  });
+    expect(keys("chart-3")).toEqual(["chart-3"])
+  })
 
   it("keeps a whole group when its title matches", () => {
-    expect(keys("ui elements")).toEqual(["border", "input", "ring"]);
-  });
+    expect(keys("ui elements")).toEqual(["border", "input", "ring"])
+  })
 
   it("finds nothing for an unknown query", () => {
-    expect(filterColorGroups("zzz")).toEqual([]);
-  });
-});
+    expect(filterColorGroups("zzz")).toEqual([])
+  })
+})
 
 describe("colour section lookup", () => {
   it("finds the section of a token", () => {
-    const group = findColorGroup("sidebar-ring");
-    expect(group?.title).toBe("Sidebar");
-    expect(getColorSectionId(group!)).toBe("colors-sidebar");
+    const group = findColorGroup("sidebar-ring")
+    expect(group?.title).toBe("Sidebar")
+    expect(getColorSectionId(group!)).toBe("colors-sidebar")
     expect(getColorSectionId({ title: "Primary & Secondary" })).toBe(
-      "colors-primary-secondary",
-    );
-    expect(findColorGroup("font-sans")).toBeUndefined();
-  });
+      "colors-primary-secondary"
+    )
+    expect(findColorGroup("font-sans")).toBeUndefined()
+  })
 
   it("tells whether a search hides a token", () => {
-    expect(colorMatchesSearch("primary", "prim")).toBe(true);
-    expect(colorMatchesSearch("border", "chart")).toBe(false);
-  });
-});
+    expect(colorMatchesSearch("primary", "prim")).toBe(true)
+    expect(colorMatchesSearch("border", "chart")).toBe(false)
+  })
+})
 
 describe("host extra colour groups", () => {
   const HOST = [
@@ -81,34 +87,32 @@ describe("host extra colour groups", () => {
       ],
     },
     { title: "Empty", colors: [{ key: "ring", label: "Ring" }] },
-  ];
+  ]
 
-  afterEach(() => configureExtraColors());
+  afterEach(() => configureExtraColors())
 
   it("lists host groups after the built-in ones, without built-in keys", () => {
-    configureExtraColors(HOST);
-    const groups = getColorListGroups();
-    expect(groups.slice(0, COLOR_LIST_GROUPS.length)).toEqual(
-      COLOR_LIST_GROUPS,
-    );
-    expect(groups.map((group) => group.title).at(-1)).toBe("Status");
-    expect(getExtraColorKeys()).toEqual(["success", "success-foreground"]);
+    configureExtraColors(HOST)
+    const groups = getColorListGroups()
+    expect(groups.slice(0, COLOR_LIST_GROUPS.length)).toEqual(COLOR_LIST_GROUPS)
+    expect(groups.map((group) => group.title).at(-1)).toBe("Status")
+    expect(getExtraColorKeys()).toEqual(["success", "success-foreground"])
     // Stable until the registration changes.
-    expect(getColorListGroups()).toBe(groups);
-  });
+    expect(getColorListGroups()).toBe(groups)
+  })
 
   it("searches and finds extra colours", () => {
-    configureExtraColors(HOST);
-    expect(keys("success")).toEqual(["success", "success-foreground"]);
-    expect(keys("feedback")).toEqual([]);
-    expect(keys("status")).toEqual(["success", "success-foreground"]);
-    expect(findColorGroup("success-foreground")?.title).toBe("Status");
-    expect(colorMatchesSearch("success", "succ")).toBe(true);
-    expect(findColorGroup("primary")?.title).toBe("Primary & Secondary");
-  });
+    configureExtraColors(HOST)
+    expect(keys("success")).toEqual(["success", "success-foreground"])
+    expect(keys("feedback")).toEqual([])
+    expect(keys("status")).toEqual(["success", "success-foreground"])
+    expect(findColorGroup("success-foreground")?.title).toBe("Status")
+    expect(colorMatchesSearch("success", "succ")).toBe(true)
+    expect(findColorGroup("primary")?.title).toBe("Primary & Secondary")
+  })
 
   it("is the built-in list when the host has none", () => {
-    expect(getColorListGroups()).toBe(COLOR_LIST_GROUPS);
-    expect(findColorGroup("success")).toBeUndefined();
-  });
-});
+    expect(getColorListGroups()).toBe(COLOR_LIST_GROUPS)
+    expect(findColorGroup("success")).toBeUndefined()
+  })
+})

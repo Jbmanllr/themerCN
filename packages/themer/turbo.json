@@ -21,12 +21,22 @@
     "test": {
       "inputs": [
         "$TURBO_DEFAULT$",
+        "$TURBO_ROOT$/.github/workflows/*.yml",
         "$TURBO_ROOT$/apps/web/app/layout.tsx",
         "$TURBO_ROOT$/apps/web/app/api/themer/fonts/route.ts",
         "$TURBO_ROOT$/apps/web/components/themer/playground-themer.tsx",
+        "$TURBO_ROOT$/apps/web/lib/themer.ts",
         "$TURBO_ROOT$/apps/vite/src/main.tsx",
         "$TURBO_ROOT$/apps/vite/vite.config.ts"
       ]
+    },
+    "dev": {
+      "dependsOn": ["^build", "build:css"],
+      "with": ["dev:css"]
+    },
+    "dev:css": {
+      "cache": false,
+      "persistent": true
     }
   }
 }

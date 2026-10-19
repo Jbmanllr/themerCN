@@ -1,51 +1,42 @@
 // The editor's tunable constants: timings, layers, sizes, shortcut and storage
-// names, and the ranges and presets of the style controls.
-//
-// Contract: a constant is only as live as its readers. The notes below say
-// which ones code reads today; a constant marked "no reader" changes no
-// behavior when edited. A value mirrored in another file (SHORTCUTS.undo and
-// .redo in themerShortcuts) must be edited in both places.
+// names, and the ranges and presets of the style controls. Internal: no
+// package entry exports them.
 
 /**
  * Most undo entries editor-store keeps; the oldest is dropped first. History
  * lives in memory only (the store does not persist it).
  */
-export const MAX_HISTORY_COUNT = 30;
+export const MAX_HISTORY_COUNT = 30
 
 /**
  * An edit less than this long after the last undo entry was recorded joins
  * that entry instead of recording a new one (editor-store.ts). The window
  * runs from the entry, not from the latest edit.
  */
-export const HISTORY_DEBOUNCE_MS = 500;
+export const HISTORY_DEBOUNCE_MS = 500
 
 /**
  * Delay before a native or typed colour edit commits to the theme
  * (components/editor/color-picker.tsx).
  */
-export const COLOR_INPUT_DEBOUNCE_MS = 150;
+export const COLOR_INPUT_DEBOUNCE_MS = 150
 
 /**
  * How long the ring that marks a picker after focusColor stays on it
  * (hooks/use-color-focus.ts).
  */
-export const HIGHLIGHT_ANIMATION_MS = 1500;
+export const HIGHLIGHT_ANIMATION_MS = 1500
 
 /**
- * Layers of the editor chrome. Read today: `trigger` (the floating trigger)
- * and `sidebar` (the Themer UI, whatever its layout), each unless the Host
+ * Layers of the Themer's elements: `trigger` (the floating trigger) and
+ * `sidebar` (the Themer UI, whatever its layout), each unless the Host
  * sets ThemerConfig.zIndex. Popups take the layer one above the Themer UI's:
- * themer-root.tsx passes it to ThemerScope as `popupLayer`. `header`,
- * `popover`, `modal` and `inspector` have no reader.
+ * themer-root.tsx passes it to ThemerScope as `popupLayer`.
  */
 export const Z_INDEX = {
   trigger: 9990,
   sidebar: 10000,
-  header: 10001,
-  popover: 10002,
-  modal: 10003,
-  inspector: 10004,
-} as const;
+} as const
 
 /**
  * Editor sidebar widths, set as `--sidebar-width`/`--sidebar-width-icon` on
@@ -55,42 +46,25 @@ export const Z_INDEX = {
 export const SIDEBAR_WIDTHS = {
   expanded: "20rem", // --sidebar-width (320px) - wider for better control layout
   collapsed: "3rem", // --sidebar-width-icon (48px)
-} as const;
+} as const
 
 /**
- * Sidebar width in pixels. No reader.
- * @deprecated Use SIDEBAR_WIDTHS instead
- */
-export const SIDEBAR_WIDTH = 380;
-
-/**
- * Header height in pixels. No reader: the header, the sidebar header and the
- * action bar each set `h-12` (3rem, the same 48px) in their own classes.
- */
-export const HEADER_HEIGHT = 48;
-
-/**
- * Shortcut strings. `toggle` is the default of ThemerConfig.shortcut, read by
- * the provider (the binding), the floating trigger (its tooltip) and
- * `themerShortcuts.toggle`. It must stay out of the browsers' reserved set
- * (Cmd/Ctrl+Shift+T reopens a closed tab, +N and +W open and close windows,
- * +Q quits, +Tab switches tabs) and use no Option/Alt; `ctrl` also matches Cmd
- * on macOS. `undo` and `redo` are read for the action bar's tooltips only: their
- * bindings are `themerShortcuts` in hooks/use-keyboard-shortcut.ts, so a
- * changed undo or redo key must change there and here or the tooltip shows
- * the wrong key. `save` and `export` have no handler anywhere.
+ * The editor's shortcuts, defined once. Bindings read them parsed, as
+ * `themerShortcuts` (hooks/use-keyboard-shortcut.ts); tooltips format these
+ * strings. `toggle` is the default of ThemerConfig.shortcut. It must stay out
+ * of the browsers' reserved set (Cmd/Ctrl+Shift+T reopens a closed tab, +N
+ * and +W open and close windows, +Q quits, +Tab switches tabs) and use no
+ * Option/Alt; `ctrl` also matches Cmd on macOS.
  */
 export const SHORTCUTS = {
   toggle: "ctrl+shift+e",
   undo: "ctrl+z",
   redo: "ctrl+shift+z",
-  save: "ctrl+s",
-  export: "ctrl+e",
   inspector: "ctrl+i",
-} as const;
+} as const
 
 /** Default `storageNamespace` of `<Themer>`. */
-export const DEFAULT_STORAGE_NAMESPACE = "themercn";
+export const DEFAULT_STORAGE_NAMESPACE = "themercn"
 
 /**
  * localStorage keys of a storage namespace. `editor` and `preferences` are
@@ -104,14 +78,26 @@ export function getStorageKeys(namespace: string = DEFAULT_STORAGE_NAMESPACE) {
     editor: `${namespace}:editor`,
     preferences: `${namespace}:preferences`,
     colorMode: `${namespace}:color-mode`,
-  } as const;
+  } as const
 }
+
+/**
+ * Versions of the persisted stores' entries (zustand persist `version`):
+ * editor-store.ts and preferences-store.ts persist at them, and the
+ * pre-hydration script (utils/theme-script.ts) ignores an entry saved at
+ * another version. Bump one when its persisted shape changes; there are no
+ * migrations (pre-release), so an entry of another version is dropped.
+ * They live here, not in the stores, because the head-script entry must
+ * reach no store code (scripts/check-entries.mjs).
+ */
+export const EDITOR_STATE_VERSION = 0
+export const PREFERENCES_VERSION = 1
 
 /**
  * Id of the <style> the pre-hydration script writes the saved Theme into.
  * ThemerProvider removes it once it applies the Theme itself.
  */
-export const RESTORE_STYLE_ID = "themercn-restore";
+export const RESTORE_STYLE_ID = "themercn-restore"
 
 /**
  * WCAG contrast ratio thresholds that utils/contrast-checker.ts grades a
@@ -126,94 +112,7 @@ export const WCAG_CONTRAST = {
   AAA_LARGE: 4.5,
   /** Minimum for normal text (AAA) */
   AAA_NORMAL: 7,
-} as const;
-
-/**
- * Google Fonts URL and starter family names. No reader: the font picker's
- * lists and URLs come from utils/font-loader.ts (GOOGLE_FONTS_CSS_URL,
- * FALLBACK_FONTS) and the catalog route.
- */
-export const GOOGLE_FONTS = {
-  apiUrl: "https://fonts.googleapis.com/css2",
-  popularFonts: [
-    "Inter",
-    "Roboto",
-    "Open Sans",
-    "Lato",
-    "Montserrat",
-    "Poppins",
-    "Source Sans 3",
-    "Nunito",
-    "Raleway",
-    "Ubuntu",
-  ],
-  popularSerifFonts: [
-    "Merriweather",
-    "Playfair Display",
-    "Lora",
-    "PT Serif",
-    "Noto Serif",
-    "Source Serif Pro",
-    "Crimson Text",
-    "Libre Baskerville",
-    "EB Garamond",
-    "Bitter",
-  ],
-  popularMonoFonts: [
-    "JetBrains Mono",
-    "Fira Code",
-    "Source Code Pro",
-    "Roboto Mono",
-    "IBM Plex Mono",
-    "Ubuntu Mono",
-    "Inconsolata",
-    "Space Mono",
-    "Cousine",
-    "Anonymous Pro",
-  ],
-} as const;
-
-/**
- * Shadow presets by size name. No reader: the shadow control edits the
- * individual `shadow-*` styles directly.
- */
-export const SHADOW_PRESETS = {
-  none: {
-    blur: "0",
-    spread: "0",
-    offsetX: "0",
-    offsetY: "0",
-    opacity: "0",
-  },
-  sm: {
-    blur: "2px",
-    spread: "0",
-    offsetX: "0",
-    offsetY: "1px",
-    opacity: "0.05",
-  },
-  md: {
-    blur: "6px",
-    spread: "-1px",
-    offsetX: "0",
-    offsetY: "4px",
-    opacity: "0.1",
-  },
-  lg: {
-    blur: "15px",
-    spread: "-3px",
-    offsetX: "0",
-    offsetY: "10px",
-    opacity: "0.1",
-  },
-  xl: {
-    blur: "25px",
-    spread: "-5px",
-    offsetX: "0",
-    offsetY: "20px",
-    opacity: "0.1",
-  },
-} as const;
+} as const
 
 /**
  * Slider bounds for the numeric style controls. Ranges follow tweakcn's
@@ -234,9 +133,7 @@ export const CONTROL_RANGES = {
 } as const satisfies Record<
   string,
   { min: number; max: number; step: number; unit: "" | "px" | "rem" | "em" }
->;
-
-export type ControlRangeKey = keyof typeof CONTROL_RANGES;
+>
 
 /**
  * Radius presets in rem. `full` stays a pill value (9999px); the radius
@@ -250,7 +147,7 @@ export const RADIUS_PRESETS = {
   xl: "1rem",
   "2xl": "1.5rem",
   full: "9999px",
-} as const;
+} as const
 
 /**
  * Spacing presets in rem
@@ -259,7 +156,7 @@ export const SPACING_PRESETS = {
   tight: "0.15rem",
   normal: "0.25rem",
   relaxed: "0.35rem",
-} as const;
+} as const
 
 /**
  * Letter spacing presets in em
@@ -271,4 +168,4 @@ export const LETTER_SPACING_PRESETS = {
   wide: "0.025em",
   wider: "0.05em",
   widest: "0.1em",
-} as const;
+} as const

@@ -21,73 +21,73 @@
 // See: packages/themer/ARCHITECTURE.md ("Colour mode").
 
 // react-doctor-disable-next-line react-doctor/no-flush-sync -- flushSync runs only inside document.startViewTransition's update callback, from event handlers: it is what puts the committed mode in the browser's "new" snapshot (next-themes sets the class in an effect React's <ViewTransition> does not capture)
-import { flushSync } from "react-dom";
+import { flushSync } from "react-dom"
 
 export interface TransitionOrigin {
   /** Viewport x in CSS pixels (MouseEvent.clientX). */
-  x: number;
+  x: number
   /** Viewport y in CSS pixels (MouseEvent.clientY). */
-  y: number;
+  y: number
 }
 
 /** The parts of the browser the transition touches; injectable for tests. */
 export interface ThemeTransitionEnvironment {
   document: {
     documentElement: {
-      setAttribute(name: string, value: string): void;
-      removeAttribute(name: string): void;
+      setAttribute(name: string, value: string): void
+      removeAttribute(name: string): void
       style: {
-        setProperty(name: string, value: string): void;
-        removeProperty(name: string): string;
-      };
-    };
+        setProperty(name: string, value: string): void
+        removeProperty(name: string): string
+      }
+    }
     startViewTransition?: (callback: () => void) => {
-      finished: Promise<unknown>;
-    };
-  };
+      finished: Promise<unknown>
+    }
+  }
   window: {
-    innerWidth: number;
-    innerHeight: number;
-    matchMedia(query: string): { matches: boolean };
-  };
+    innerWidth: number
+    innerHeight: number
+    matchMedia(query: string): { matches: boolean }
+  }
   /** Commits a React update synchronously (react-dom flushSync). */
-  flush: (update: () => void) => void;
+  flush: (update: () => void) => void
 }
 
-export const THEME_TRANSITION_ATTRIBUTE = "data-themer-vt";
-export const THEME_TRANSITION_X = "--themer-vt-x";
-export const THEME_TRANSITION_Y = "--themer-vt-y";
+export const THEME_TRANSITION_ATTRIBUTE = "data-themer-vt"
+export const THEME_TRANSITION_X = "--themer-vt-x"
+export const THEME_TRANSITION_Y = "--themer-vt-y"
 
-const REDUCED_MOTION_QUERY = "(prefers-reduced-motion: reduce)";
+const REDUCED_MOTION_QUERY = "(prefers-reduced-motion: reduce)"
 
 // Each call bumps the token; only the latest transition clears the
 // attribute, so a quick second toggle keeps its own origin.
-let activeToken = 0;
+let activeToken = 0
 
 function browserEnvironment(): ThemeTransitionEnvironment | null {
   if (typeof document === "undefined" || typeof window === "undefined") {
-    return null;
+    return null
   }
   return {
     document: document as unknown as ThemeTransitionEnvironment["document"],
     window,
     flush: (update) => flushSync(update),
-  };
+  }
 }
 
 /** Origin as a percentage of the viewport; the centre when unknown. */
 export function transitionOriginPercent(
   origin: TransitionOrigin | undefined,
-  viewport: { innerWidth: number; innerHeight: number },
+  viewport: { innerWidth: number; innerHeight: number }
 ): { x: string; y: string } {
   if (!origin || viewport.innerWidth <= 0 || viewport.innerHeight <= 0) {
-    return { x: "50%", y: "50%" };
+    return { x: "50%", y: "50%" }
   }
-  const clamp = (value: number) => Math.min(100, Math.max(0, value));
+  const clamp = (value: number) => Math.min(100, Math.max(0, value))
   return {
     x: `${clamp((origin.x / viewport.innerWidth) * 100)}%`,
     y: `${clamp((origin.y / viewport.innerHeight) * 100)}%`,
-  };
+  }
 }
 
 /**
@@ -98,45 +98,45 @@ export function transitionOriginPercent(
 export function runThemeTransition(
   update: () => void,
   origin?: TransitionOrigin,
-  environment: ThemeTransitionEnvironment | null = browserEnvironment(),
+  environment: ThemeTransitionEnvironment | null = browserEnvironment()
 ): boolean {
-  const startViewTransition = environment?.document.startViewTransition;
+  const startViewTransition = environment?.document.startViewTransition
   if (
     !environment ||
     typeof startViewTransition !== "function" ||
     environment.window.matchMedia(REDUCED_MOTION_QUERY).matches
   ) {
-    update();
-    return false;
+    update()
+    return false
   }
 
-  const root = environment.document.documentElement;
-  const { x, y } = transitionOriginPercent(origin, environment.window);
-  const token = ++activeToken;
-  root.setAttribute(THEME_TRANSITION_ATTRIBUTE, "");
-  root.style.setProperty(THEME_TRANSITION_X, x);
-  root.style.setProperty(THEME_TRANSITION_Y, y);
+  const root = environment.document.documentElement
+  const { x, y } = transitionOriginPercent(origin, environment.window)
+  const token = ++activeToken
+  root.setAttribute(THEME_TRANSITION_ATTRIBUTE, "")
+  root.style.setProperty(THEME_TRANSITION_X, x)
+  root.style.setProperty(THEME_TRANSITION_Y, y)
 
   const clear = () => {
-    if (token !== activeToken) return;
-    root.removeAttribute(THEME_TRANSITION_ATTRIBUTE);
-    root.style.removeProperty(THEME_TRANSITION_X);
-    root.style.removeProperty(THEME_TRANSITION_Y);
-  };
+    if (token !== activeToken) return
+    root.removeAttribute(THEME_TRANSITION_ATTRIBUTE)
+    root.style.removeProperty(THEME_TRANSITION_X)
+    root.style.removeProperty(THEME_TRANSITION_Y)
+  }
 
   try {
     // Called as a method: the DOM API needs `document` as `this`.
     const transition = startViewTransition.call(environment.document, () =>
-      environment.flush(update),
-    );
+      environment.flush(update)
+    )
     // A skipped or failed transition still applied (or will apply) the
     // update; only the cleanup matters here.
-    transition.finished.then(clear, clear);
+    transition.finished.then(clear, clear)
   } catch {
     // startViewTransition threw before running the callback.
-    clear();
-    update();
-    return false;
+    clear()
+    update()
+    return false
   }
-  return true;
+  return true
 }

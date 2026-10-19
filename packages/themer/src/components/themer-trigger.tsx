@@ -1,4 +1,4 @@
-"use client";
+"use client"
 
 // The floating button that opens the editor; ThemerRoot mounts it.
 //
@@ -6,16 +6,16 @@
 // the caller's `className`, so a caller's display class (such as `flex`)
 // cannot show the trigger below `sm` (themer-trigger.test.tsx).
 
-import * as React from "react";
-import { Paintbrush } from "lucide-react";
-import { cn } from "@workspace/ui/lib/utils";
-import { useThemerUIStore } from "../stores/themer-ui-store";
-import { useThemerContext } from "./themer-provider";
-import { SHORTCUTS, Z_INDEX } from "../config/constants";
-import { ActionButton } from "./ui/action-button";
+import * as React from "react"
+import { Paintbrush } from "lucide-react"
+import { cn } from "@workspace/ui/lib/utils"
+import { useThemerUIStore } from "../stores/themer-ui-store"
+import { useThemerContext } from "../hooks/use-themer-context"
+import { SHORTCUTS, Z_INDEX } from "../config/constants"
+import { ActionButton } from "./ui/action-button"
 
 interface ThemerTriggerProps {
-  className?: string;
+  className?: string
 }
 
 /**
@@ -25,17 +25,17 @@ interface ThemerTriggerProps {
  * (apps/web/src/components/ai-dev-inspector.tsx).
  */
 export function ThemerTrigger({ className }: ThemerTriggerProps) {
-  const { config } = useThemerContext();
-  const isOpen = useThemerUIStore((state) => state.isOpen);
-  const toggle = useThemerUIStore((state) => state.toggle);
+  const { config } = useThemerContext()
+  const isOpen = useThemerUIStore((state) => state.isOpen)
+  const toggle = useThemerUIStore((state) => state.toggle)
 
   if (!config.showTrigger || isOpen) {
-    return null;
+    return null
   }
 
   return (
     <ActionButton
-      label="Open Theme Editor"
+      label="Open Themer"
       shortcut={config.shortcut ?? SHORTCUTS.toggle}
       variant="outline"
       size="icon"
@@ -51,11 +51,11 @@ export function ThemerTrigger({ className }: ThemerTriggerProps) {
         "bg-background/80 backdrop-blur-sm",
         "transition-transform hover:scale-105",
         className,
-        "hidden sm:inline-flex",
+        "hidden sm:inline-flex"
       )}
       style={{ zIndex: config.zIndex ?? Z_INDEX.trigger }}
     >
       <Paintbrush className="size-5" />
     </ActionButton>
-  );
+  )
 }

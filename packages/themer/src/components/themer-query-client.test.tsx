@@ -9,54 +9,54 @@ import {
   QueryClient,
   QueryClientProvider,
   useQueryClient,
-} from "@tanstack/react-query";
-import { act, type ReactNode } from "react";
-import { createRoot } from "react-dom/client";
-import { expect, it, vi } from "vitest";
+} from "@tanstack/react-query"
+import { act, type ReactNode } from "react"
+import { createRoot } from "react-dom/client"
+import { expect, it, vi } from "vitest"
 
-const seen = vi.hoisted(() => ({ editor: undefined as unknown }));
+const seen = vi.hoisted(() => ({ editor: undefined as unknown }))
 
 // The editor's provider and Themer UI touch the DOM; the client wiring is what
 // is tested here.
 vi.mock("./themer-provider", () => ({
   ThemerProvider: ({ children }: { children: ReactNode }) => children,
-}));
+}))
 vi.mock("./themer-root", async () => {
-  const { useQueryClient: editorClient } =
-    await import("@tanstack/react-query");
+  const { useQueryClient: editorClient } = await import("@tanstack/react-query")
   return {
     ThemerRoot: function Root() {
-      seen.editor = editorClient();
-      return null;
+      seen.editor = editorClient()
+      return null
     },
-  };
-});
+  }
+})
 
-import { Themer } from "./themer";
+import { Themer } from "./themer"
 
-(globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT =
-  true;
+;(
+  globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }
+).IS_REACT_ACT_ENVIRONMENT = true
 
 it("runs the Themer on its own client and leaves the Host's to the Host", async () => {
-  const host = new QueryClient();
-  let hostSeen: QueryClient | undefined;
+  const host = new QueryClient()
+  let hostSeen: QueryClient | undefined
   function HostQuery() {
-    hostSeen = useQueryClient();
-    return null;
+    hostSeen = useQueryClient()
+    return null
   }
 
-  const root = createRoot(document.createElement("div"));
+  const root = createRoot(document.createElement("div"))
   await act(async () =>
     root.render(
       <QueryClientProvider client={host}>
         <HostQuery />
         <Themer />
-      </QueryClientProvider>,
-    ),
-  );
-  await act(async () => root.unmount());
+      </QueryClientProvider>
+    )
+  )
+  await act(async () => root.unmount())
 
-  expect(hostSeen).toBe(host);
-  expect(seen.editor).toBeInstanceOf(QueryClient);
-  expect(seen.editor).not.toBe(host);
-});
+  expect(hostSeen).toBe(host)
+  expect(seen.editor).toBeInstanceOf(QueryClient)
+  expect(seen.editor).not.toBe(host)
+})

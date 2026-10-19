@@ -1,6 +1,6 @@
 // Adapted from tweakcn (Apache-2.0, github.com/jnsahaj/tweakcn @ a3b47b37); modified for themercn.
 
-import type { ThemePreset } from "../types";
+import type { ThemePreset } from "../types"
 
 /**
  * Built-in presets copied from Tweakcn's `utils/theme-presets.ts`
@@ -3604,4 +3604,4 @@ export const tweakcnThemePresets = {
       },
     },
   },
-} satisfies Record<string, Omit<ThemePreset, "id">>;
+} satisfies Record<string, Omit<ThemePreset, "id">>

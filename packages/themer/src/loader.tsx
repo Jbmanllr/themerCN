@@ -1,4 +1,4 @@
-"use client";
+"use client"
 
 // `themercn/loader`: how a Host app keeps the Themer out of builds where it
 // is off. The Host passes `() => import("themercn")` when it wants the
@@ -16,21 +16,26 @@
 //   server rendering Suspense streamed the page twice (a fallback copy plus
 //   the Themer's copy in a hidden segment).
 // - A load that resolves after the loader unmounted is dropped.
+// - A load that rejects (a chunk missing after a deploy, a network error) is
+//   logged once as a `[themercn]` console error; the Themer stays absent and
+//   nothing retries.
 
-import { useEffect, useState, type ComponentType } from "react";
+import { useEffect, useState, type ComponentType } from "react"
 
-import type { ThemerProps } from "./types";
+import type { ThemerProps } from "./types"
 
 /** What `load` resolves to: the `themercn` module, or anything with its `Themer`. */
 export interface ThemerModule {
   /** The `<Themer>` component the loader renders. */
-  Themer: ComponentType<ThemerProps>;
+  Themer: ComponentType<ThemerProps>
 }
 
 /**
  * Returns a component that renders `<Themer>` once `load` has resolved after
  * hydration, or nothing at all when `load` is `null`. Create it once, at
- * module level, and render it beside (never around) your app tree.
+ * module level, and render it beside (never around) your app tree. A load
+ * that rejects is logged once as a `[themercn]` console error and the Themer
+ * stays absent.
  *
  * @example
  * ```tsx
@@ -45,27 +50,36 @@ export interface ThemerModule {
  * ```
  */
 export function createThemerLoader(
-  load: (() => Promise<ThemerModule>) | null,
+  load: (() => Promise<ThemerModule>) | null
 ): ComponentType<ThemerProps> {
-  if (load === null) return function ThemerLoader() {
-    return null;
-  };
+  if (load === null)
+    return function ThemerLoader() {
+      return null
+    }
 
   return function ThemerLoader(props: ThemerProps) {
     const [Themer, setThemer] = useState<ComponentType<ThemerProps> | null>(
-      null,
-    );
+      null
+    )
 
     useEffect(() => {
-      let active = true;
-      void load().then((module) => {
-        if (active) setThemer(() => module.Themer);
-      });
+      let active = true
+      load().then(
+        (module) => {
+          if (active) setThemer(() => module.Themer)
+        },
+        (error: unknown) => {
+          // Only the live effect reports: StrictMode's discarded first
+          // mount loads too.
+          if (active)
+            console.error("[themercn] Failed to load the Themer:", error)
+        }
+      )
       return () => {
-        active = false;
-      };
-    }, []);
+        active = false
+      }
+    }, [])
 
-    return Themer ? <Themer {...props} /> : null;
-  };
+    return Themer ? <Themer {...props} /> : null
+  }
 }

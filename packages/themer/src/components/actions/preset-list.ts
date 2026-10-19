@@ -7,21 +7,21 @@
 // The "New" badge rule and the unsaved `*` are tweakcn's too.
 
 /** Days a preset counts as new after its `createdAt` (tweakcn: 5). */
-const NEW_PRESET_DAYS = 5;
+const NEW_PRESET_DAYS = 5
 
-const DAY_MS = 24 * 60 * 60 * 1000;
+const DAY_MS = 24 * 60 * 60 * 1000
 
 /** Preset ids whose id or label contains the search (case-insensitive). */
 export function filterPresetIds(
   presetIds: readonly string[],
   search: string,
-  getLabel: (presetId: string) => string,
+  getLabel: (presetId: string) => string
 ): string[] {
-  const query = search.trim().toLowerCase();
-  if (!query) return [...presetIds];
+  const query = search.trim().toLowerCase()
+  if (!query) return [...presetIds]
   return presetIds.filter((presetId) =>
-    `${presetId} ${getLabel(presetId)}`.toLowerCase().includes(query),
-  );
+    `${presetId} ${getLabel(presetId)}`.toLowerCase().includes(query)
+  )
 }
 
 /**
@@ -32,16 +32,16 @@ export function filterPresetIds(
 export function cyclePresetId(
   presetIds: readonly string[],
   current: string | undefined,
-  direction: "prev" | "next",
+  direction: "prev" | "next"
 ): string | undefined {
-  const count = presetIds.length;
-  if (count === 0) return undefined;
-  const index = current === undefined ? -1 : presetIds.indexOf(current);
+  const count = presetIds.length
+  if (count === 0) return undefined
+  const index = current === undefined ? -1 : presetIds.indexOf(current)
   if (index === -1) {
-    return direction === "next" ? presetIds[0] : presetIds[count - 1];
+    return direction === "next" ? presetIds[0] : presetIds[count - 1]
   }
-  const step = direction === "next" ? 1 : -1;
-  return presetIds[(index + step + count) % count];
+  const step = direction === "next" ? 1 : -1
+  return presetIds[(index + step + count) % count]
 }
 
 /**
@@ -51,30 +51,30 @@ export function cyclePresetId(
 export function pickRandomPresetId(
   presetIds: readonly string[],
   current: string | undefined,
-  random: () => number = Math.random,
+  random: () => number = Math.random
 ): string | undefined {
-  const others = presetIds.filter((presetId) => presetId !== current);
-  const pool = others.length > 0 ? others : presetIds;
-  if (pool.length === 0) return undefined;
-  const index = Math.min(pool.length - 1, Math.floor(random() * pool.length));
-  return pool[index];
+  const others = presetIds.filter((presetId) => presetId !== current)
+  const pool = others.length > 0 ? others : presetIds
+  if (pool.length === 0) return undefined
+  const index = Math.min(pool.length - 1, Math.floor(random() * pool.length))
+  return pool[index]
 }
 
 /** Whether a preset created at `createdAt` is within NEW_PRESET_DAYS. */
 export function isPresetNew(
   createdAt: string | undefined,
-  now: number = Date.now(),
+  now: number = Date.now()
 ): boolean {
-  if (!createdAt) return false;
-  const created = Date.parse(createdAt);
-  if (Number.isNaN(created)) return false;
-  return created > now - NEW_PRESET_DAYS * DAY_MS;
+  if (!createdAt) return false
+  const created = Date.parse(createdAt)
+  if (Number.isNaN(created)) return false
+  return created > now - NEW_PRESET_DAYS * DAY_MS
 }
 
 /** The trigger label: the preset's label, with `*` while edits are unsaved. */
 export function formatPresetTriggerLabel(
   label: string,
-  hasUnsavedChanges: boolean,
+  hasUnsavedChanges: boolean
 ): string {
-  return hasUnsavedChanges ? `${label}*` : label;
+  return hasUnsavedChanges ? `${label}*` : label
 }

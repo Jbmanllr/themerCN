@@ -15,55 +15,62 @@ import {
   expect,
   it,
   vi,
-} from "vitest";
+} from "vitest"
 
-import { getStorageKeys } from "../config/constants";
+import {
+  EDITOR_STATE_VERSION,
+  PREFERENCES_VERSION,
+  getStorageKeys,
+} from "../config/constants"
 
-const STORAGE_KEYS = getStorageKeys();
-import { generateThemeScript } from "./theme-script";
+const STORAGE_KEYS = getStorageKeys()
+import { generateThemeScript } from "./theme-script"
 
 function saveEditor(themeState: unknown) {
   localStorage.setItem(
     STORAGE_KEYS.editor,
-    JSON.stringify({ state: { themeState }, version: 0 }),
-  );
+    JSON.stringify({ state: { themeState }, version: EDITOR_STATE_VERSION })
+  )
 }
 
 function savePreferences(state: unknown) {
-  localStorage.setItem(STORAGE_KEYS.preferences, JSON.stringify({ state }));
+  localStorage.setItem(
+    STORAGE_KEYS.preferences,
+    JSON.stringify({ state, version: PREFERENCES_VERSION })
+  )
 }
 
 function saveColorMode(mode: string) {
-  localStorage.setItem(STORAGE_KEYS.colorMode, mode);
+  localStorage.setItem(STORAGE_KEYS.colorMode, mode)
 }
 
 /** A variable of the page, as the cascade resolves it on <html>. */
 function rootVar(name: string) {
   return getComputedStyle(document.documentElement)
     .getPropertyValue(name)
-    .trim();
+    .trim()
 }
 
-const primary = () => rootVar("--primary");
+const primary = () => rootVar("--primary")
 
 function setDark(dark: boolean) {
-  document.documentElement.classList.toggle("dark", dark);
+  document.documentElement.classList.toggle("dark", dark)
 }
 
 function runScript() {
-  new Function(generateThemeScript())();
+  new Function(generateThemeScript())()
 }
 
 function fontLinks() {
   return [...document.head.querySelectorAll("link")].map((link) =>
-    decodeURIComponent(link.getAttribute("href") ?? ""),
-  );
+    decodeURIComponent(link.getAttribute("href") ?? "")
+  )
 }
 
 const styles = {
   light: { primary: "#111111", "font-sans": "Inter, sans-serif" },
   dark: { primary: "#eeeeee", "font-sans": "Inter, sans-serif" },
-};
+}
 
 beforeAll(() => {
   // The test reads the <link> the script adds; it must not fetch Google.
@@ -71,119 +78,119 @@ beforeAll(() => {
     window as unknown as {
       happyDOM: {
         settings: {
-          disableCSSFileLoading: boolean;
-          handleDisabledFileLoadingAsSuccess: boolean;
-        };
-      };
+          disableCSSFileLoading: boolean
+          handleDisabledFileLoadingAsSuccess: boolean
+        }
+      }
     }
-  ).happyDOM;
-  settings.disableCSSFileLoading = true;
-  settings.handleDisabledFileLoadingAsSuccess = true;
-});
+  ).happyDOM
+  settings.disableCSSFileLoading = true
+  settings.handleDisabledFileLoadingAsSuccess = true
+})
 
 beforeEach(() => {
-  localStorage.clear();
-  document.documentElement.removeAttribute("style");
-  document.documentElement.className = "";
-  document.head.innerHTML = "";
-});
+  localStorage.clear()
+  document.documentElement.removeAttribute("style")
+  document.documentElement.className = ""
+  document.head.innerHTML = ""
+})
 
 afterEach(() => {
-  vi.restoreAllMocks();
-});
+  vi.restoreAllMocks()
+})
 
 describe("generateThemeScript", () => {
   it("paints the saved Theme in the mode the page is in, whatever mode was saved", () => {
-    saveEditor({ currentMode: "dark", styles });
-    runScript();
-    expect(primary()).toBe("#111111");
+    saveEditor({ currentMode: "dark", styles })
+    runScript()
+    expect(primary()).toBe("#111111")
 
     // A Host's theme switcher (next-themes) sets the class after this script.
-    setDark(true);
-    expect(primary()).toBe("#eeeeee");
+    setDark(true)
+    expect(primary()).toBe("#eeeeee")
 
-    setDark(false);
-    expect(primary()).toBe("#111111");
-  });
+    setDark(false)
+    expect(primary()).toBe("#111111")
+  })
 
   it("paints the dark tokens on a page that is already dark", () => {
-    setDark(true);
-    saveEditor({ currentMode: "light", styles });
-    runScript();
-    expect(primary()).toBe("#eeeeee");
-  });
+    setDark(true)
+    saveEditor({ currentMode: "light", styles })
+    runScript()
+    expect(primary()).toBe("#eeeeee")
+  })
 
   it("restores the mode an uncontrolled Themer saved", () => {
-    saveColorMode("dark");
-    runScript();
-    expect(document.documentElement.classList.contains("dark")).toBe(true);
+    saveColorMode("dark")
+    runScript()
+    expect(document.documentElement.classList.contains("dark")).toBe(true)
 
-    saveColorMode("light");
-    runScript();
-    expect(document.documentElement.classList.contains("dark")).toBe(false);
-  });
+    saveColorMode("light")
+    runScript()
+    expect(document.documentElement.classList.contains("dark")).toBe(false)
+  })
 
   it("restores the saved mode even without a saved Theme", () => {
-    saveColorMode("dark");
-    runScript();
-    expect(document.documentElement.classList.contains("dark")).toBe(true);
-    expect(primary()).toBe("");
-  });
+    saveColorMode("dark")
+    runScript()
+    expect(document.documentElement.classList.contains("dark")).toBe(true)
+    expect(primary()).toBe("")
+  })
 
   it("runs again without stacking a second restore", () => {
-    saveEditor({ currentMode: "light", styles });
-    runScript();
+    saveEditor({ currentMode: "light", styles })
+    runScript()
     saveEditor({
       currentMode: "light",
       styles: { light: { primary: "#222222" }, dark: {} },
-    });
-    runScript();
-    expect(primary()).toBe("#222222");
-    expect(document.head.querySelectorAll("style")).toHaveLength(1);
-  });
+    })
+    runScript()
+    expect(primary()).toBe("#222222")
+    expect(document.head.querySelectorAll("style")).toHaveLength(1)
+  })
 
   it("leaves the host's own CSS alone when nothing is saved", () => {
-    document.documentElement.style.setProperty("--primary", "hotpink");
-    runScript();
-    expect(primary()).toBe("hotpink");
-    expect(document.head.querySelector("style")).toBeNull();
-    expect(fontLinks()).toEqual([]);
-  });
+    document.documentElement.style.setProperty("--primary", "hotpink")
+    runScript()
+    expect(primary()).toBe("hotpink")
+    expect(document.head.querySelector("style")).toBeNull()
+    expect(fontLinks()).toEqual([])
+  })
 
   it("leaves the host's own CSS alone when the theme override is off", () => {
-    saveEditor({ currentMode: "light", styles });
-    savePreferences({ themeOverrideEnabled: false });
-    runScript();
-    expect(primary()).toBe("");
-    expect(fontLinks()).toEqual([]);
-  });
+    saveEditor({ currentMode: "light", styles })
+    savePreferences({ themeOverrideEnabled: false })
+    runScript()
+    expect(primary()).toBe("")
+    expect(fontLinks()).toEqual([])
+  })
 
   it("applies the edit when preferences say nothing about the override", () => {
-    saveEditor({ currentMode: "light", styles });
-    savePreferences({});
-    runScript();
-    expect(primary()).toBe("#111111");
-  });
+    saveEditor({ currentMode: "light", styles })
+    savePreferences({})
+    runScript()
+    expect(primary()).toBe("#111111")
+  })
 
   it("leaves the dark class alone when no mode is saved (a Host-controlled mode)", () => {
-    document.documentElement.classList.add("dark");
-    saveEditor({ currentMode: "light", styles });
-    runScript();
-    expect(document.documentElement.classList.contains("dark")).toBe(true);
+    document.documentElement.classList.add("dark")
+    saveEditor({ currentMode: "light", styles })
+    runScript()
+    expect(document.documentElement.classList.contains("dark")).toBe(true)
 
-    document.documentElement.classList.remove("dark");
-    saveEditor({ currentMode: "dark", styles });
-    runScript();
-    expect(document.documentElement.classList.contains("dark")).toBe(false);
-  });
+    document.documentElement.classList.remove("dark")
+    saveEditor({ currentMode: "dark", styles })
+    runScript()
+    expect(document.documentElement.classList.contains("dark")).toBe(false)
+  })
 
   it("survives unreadable storage content without touching the page", () => {
-    vi.spyOn(console, "warn").mockImplementation(() => undefined);
-    localStorage.setItem(STORAGE_KEYS.editor, "{not json");
-    expect(runScript).not.toThrow();
-    expect(primary()).toBe("");
-    expect(document.documentElement.className).toBe("");
-  });
+    vi.spyOn(console, "warn").mockImplementation(() => undefined)
+    localStorage.setItem(STORAGE_KEYS.editor, "{not json")
+    expect(runScript).not.toThrow()
+    expect(primary()).toBe("")
+    expect(document.documentElement.className).toBe("")
+  })
 
   it("loads only the families Google serves, once each", () => {
     saveEditor({
@@ -198,24 +205,24 @@ describe("generateThemeScript", () => {
         },
         dark: {},
       },
-    });
-    runScript();
-    runScript();
+    })
+    runScript()
+    runScript()
     expect(fontLinks()).toEqual([
       "https://fonts.googleapis.com/css2?family=DM Sans:wght@400;500;600;700&display=swap",
-    ]);
+    ])
 
-    document.head.innerHTML = "";
+    document.head.innerHTML = ""
     saveEditor({
       currentMode: "light",
       styles: {
         light: { "font-sans": "Georgia, serif", "font-mono": "ui-monospace" },
         dark: {},
       },
-    });
-    runScript();
-    expect(fontLinks()).toEqual([]);
-  });
+    })
+    runScript()
+    expect(fontLinks()).toEqual([])
+  })
 
   it("drops a saved value that would break out of its declaration", () => {
     saveEditor({
@@ -224,12 +231,12 @@ describe("generateThemeScript", () => {
         light: { primary: "red} body{display:none", accent: "#123456" },
         dark: {},
       },
-    });
-    runScript();
-    expect(primary()).toBe("");
-    expect(rootVar("--accent")).toBe("#123456");
-    expect(getComputedStyle(document.body).display).not.toBe("none");
-  });
+    })
+    runScript()
+    expect(primary()).toBe("")
+    expect(rootVar("--accent")).toBe("#123456")
+    expect(getComputedStyle(document.body).display).not.toBe("none")
+  })
 
   it("skips the generic and CSS-wide values the font loader skips", () => {
     saveEditor({
@@ -242,8 +249,8 @@ describe("generateThemeScript", () => {
         },
         dark: {},
       },
-    });
-    runScript();
-    expect(fontLinks()).toEqual([]);
-  });
-});
+    })
+    runScript()
+    expect(fontLinks()).toEqual([])
+  })
+})

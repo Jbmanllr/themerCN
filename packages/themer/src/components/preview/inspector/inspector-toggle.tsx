@@ -1,19 +1,20 @@
-"use client";
+"use client"
 
 // The inspector's on/off toggle, shared by the Preview tabs (Workspace) and
 // the in-place Themer layouts' headers (page-inspector.tsx). A disabled
 // toggle keeps a tooltip that says why.
 
-import { Inspect } from "lucide-react";
-import { Toggle } from "@workspace/ui/components/toggle";
+import { Inspect } from "lucide-react"
+import { Toggle } from "@workspace/ui/components/toggle"
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from "@workspace/ui/components/tooltip";
-import { formatShortcut } from "../../../hooks/use-keyboard-shortcut";
+} from "@workspace/ui/components/tooltip"
+import { SHORTCUTS } from "../../../config/constants"
+import { formatShortcut } from "../../../hooks/use-keyboard-shortcut"
 
-const INSPECTOR_SHORTCUT = formatShortcut("ctrl+i");
+const INSPECTOR_SHORTCUT = formatShortcut(SHORTCUTS.inspector)
 
 export function InspectorToggle({
   pressed,
@@ -23,14 +24,14 @@ export function InspectorToggle({
   size = "sm",
   "data-testid": testId,
 }: {
-  pressed: boolean;
-  available?: boolean;
+  pressed: boolean
+  available?: boolean
   /** Tooltip of a disabled toggle. */
-  blockedReason?: string;
-  onToggle: () => void;
+  blockedReason?: string
+  onToggle: () => void
   /** `default` matches icon Buttons, as in the Toolbar's ButtonGroup. */
-  size?: "sm" | "default";
-  "data-testid"?: string;
+  size?: "sm" | "default"
+  "data-testid"?: string
 }) {
   const toggle = (
     <Toggle
@@ -49,7 +50,7 @@ export function InspectorToggle({
         </span>
       )}
     </Toggle>
-  );
+  )
 
   return (
     <Tooltip>
@@ -62,5 +63,5 @@ export function InspectorToggle({
         {available ? `Inspector (${INSPECTOR_SHORTCUT})` : blockedReason}
       </TooltipContent>
     </Tooltip>
-  );
+  )
 }

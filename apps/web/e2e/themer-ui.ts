@@ -1,10 +1,13 @@
 import { expect, type Page } from "@playwright/test"
 
-// Shared by the Playground specs that drive or wait for the Themer UI.
+import { hydrated } from "./page"
+
+// The Themer UI's helpers, shared by the Themer specs. Hydration, colours and
+// accessible queries live in page.ts.
 
 /** The floating button that opens the Themer UI. */
 export const themerTrigger = (page: Page) =>
-  page.getByRole("button", { name: "Open Theme Editor" })
+  page.getByRole("button", { name: "Open Themer" })
 
 /**
  * Opens the Themer UI and switches it to the sidebar Themer layout named
@@ -22,7 +25,7 @@ export async function openLayout(page: Page, label: string) {
 
 /** The Toolbar layout's bar. */
 export const themerToolbar = (page: Page) =>
-  page.getByRole("toolbar", { name: "Theme Editor" })
+  page.getByRole("region", { name: "Themer toolbar" })
 
 /** The Toolbar's popup for the panel group `id` (colors, typography, other). */
 export const toolbarPanel = (page: Page, id: string) =>
@@ -56,15 +59,11 @@ async function switchFromWorkspace(page: Page, label: string) {
 }
 
 /**
- * Waits for the Themer UI (its trigger, or the open panel's close button:
- * the Themer loads lazily after hydration, slowly under parallel load) and
- * for web fonts, then parks the mouse, so nothing shifts or hovers while a
- * page is checked.
+ * Waits for hydration (and so the Themer UI) and for web fonts, then parks
+ * the mouse, so nothing shifts or hovers while a page is checked.
  */
 export async function settle(page: Page) {
-  await expect(
-    page.getByRole("button", { name: /^(Open|Close) theme editor$/i }).first()
-  ).toBeVisible({ timeout: 15_000 })
+  await hydrated(page)
   await page.evaluate(() => document.fonts.ready)
   await page.mouse.move(0, 0)
 }

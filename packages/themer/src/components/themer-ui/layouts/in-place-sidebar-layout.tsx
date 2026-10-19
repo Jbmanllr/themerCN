@@ -1,4 +1,4 @@
-"use client";
+"use client"
 
 // The sidebar Themer layouts that sit on the Host app's real page, Overlay
 // and Push: the sidebar on the left, the page usable beside it (ADR 0001: it
@@ -13,7 +13,9 @@
 //   switcher, Close. The actions Workspace shows above its preview
 //   (undo/redo, mode, Code, …) sit at the foot of the expanded sidebar. The
 //   collapsed rail hides that footer, so its header adds a "More actions"
-//   menu with the same actions (ThemerActionsMenu).
+//   menu with the same actions (ThemerActionsMenu). A dialog opened from it
+//   belongs to ThemerUI, so it stays open when the sidebar expands and the
+//   menu unmounts.
 // - The inspector works on the real page (PageInspector).
 // - Like Workspace, it must not clip overflow: popups position against the
 //   viewport.
@@ -22,14 +24,19 @@ import {
   SidebarFooter,
   SidebarTrigger,
   useSidebar,
-} from "@workspace/ui/components/sidebar";
-import { ActionBar } from "../../action-bar";
-import { ThemerActionsMenu } from "../../actions/themer-actions";
-import { ThemerSidebar } from "../../themer-sidebar";
-import { LayoutSwitcher } from "../layout-switcher";
-import { PageInspector, PageInspectorToggle } from "../page-inspector";
-import { ThemerSidebarProvider } from "../themer-sidebar-provider";
-import type { ThemerLayoutProps } from "./types";
+} from "@workspace/ui/components/sidebar"
+import { ActionBar } from "../../action-bar"
+import { DropdownMenuSeparator } from "@workspace/ui/components/dropdown-menu"
+import {
+  ThemerActionsMenu,
+  ThemerHistoryMenuGroup,
+  ThemerMenuActions,
+} from "../../actions/themer-actions"
+import { ThemerSidebar } from "../../themer-sidebar"
+import { LayoutSwitcher } from "../layout-switcher"
+import { PageInspector, PageInspectorToggle } from "../page-inspector"
+import { ThemerSidebarProvider } from "../themer-sidebar-provider"
+import type { ThemerLayoutProps } from "./types"
 
 export function InPlaceSidebarLayout({
   layout,
@@ -64,7 +71,7 @@ export function InPlaceSidebarLayout({
         />
       </ThemerSidebarProvider>
     </div>
-  );
+  )
 }
 
 /**
@@ -72,7 +79,13 @@ export function InPlaceSidebarLayout({
  * hidden there); it opens beside the rail.
  */
 function CollapsedRailActions() {
-  const { state } = useSidebar();
-  if (state !== "collapsed") return null;
-  return <ThemerActionsMenu withHistory side="right" align="start" />;
+  const { state } = useSidebar()
+  if (state !== "collapsed") return null
+  return (
+    <ThemerActionsMenu side="right" align="start">
+      <ThemerHistoryMenuGroup />
+      <DropdownMenuSeparator />
+      <ThemerMenuActions />
+    </ThemerActionsMenu>
+  )
 }

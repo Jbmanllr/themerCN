@@ -1,4 +1,4 @@
-"use client";
+"use client"
 
 // The Live tab: the host's own pages in a same-origin iframe, themed by the
 // editor, with a URL bar, refresh, open-in-new-tab, Desktop/Tablet/Mobile
@@ -23,58 +23,58 @@
 // See: packages/themer/ARCHITECTURE.md (Preview System, Applying a theme) and
 // packages/themer/README.md ("Content Security Policy")
 
-import * as React from "react";
+import * as React from "react"
 import {
   ExternalLink,
   Monitor,
   RotateCcw,
   Smartphone,
   Tablet,
-} from "lucide-react";
-import type { PanelImperativeHandle } from "react-resizable-panels";
-import { Input } from "@workspace/ui/components/input";
+} from "lucide-react"
+import type { PanelImperativeHandle } from "react-resizable-panels"
+import { Input } from "@workspace/ui/components/input"
 import {
   ResizableHandle,
   ResizablePanel,
   ResizablePanelGroup,
-} from "@workspace/ui/components/resizable";
+} from "@workspace/ui/components/resizable"
 import {
   ToggleGroup,
   ToggleGroupItem,
-} from "@workspace/ui/components/toggle-group";
-import { useEditorStore } from "../../stores/editor-store";
-import { usePreferencesStore } from "../../stores/preferences-store";
+} from "@workspace/ui/components/toggle-group"
+import { useEditorStore } from "../../stores/editor-store"
+import { usePreferencesStore } from "../../stores/preferences-store"
 import {
   applyThemeToDocument,
   removeThemeFromDocument,
-} from "../../utils/apply-theme";
-import { ActionButton } from "../ui/action-button";
-import { readFrameDocument } from "./inspector";
+} from "../../utils/apply-theme"
+import { ActionButton } from "../ui/action-button"
+import { readFrameDocument } from "./inspector"
 
-type PreviewViewportSize = "100" | "60" | "30";
+type PreviewViewportSize = "100" | "60" | "30"
 
 const LIVE_PREVIEW_VIEWPORTS = [
   { value: "100", label: "Desktop", icon: Monitor },
   { value: "60", label: "Tablet", icon: Tablet },
   { value: "30", label: "Mobile", icon: Smartphone },
 ] satisfies Array<{
-  value: PreviewViewportSize;
-  label: string;
-  icon: React.ComponentType<{ className?: string }>;
-}>;
+  value: PreviewViewportSize
+  label: string
+  icon: React.ComponentType<{ className?: string }>
+}>
 
 function currentPagePath(): string {
   return typeof window === "undefined"
     ? "/"
-    : `${window.location.pathname}${window.location.search}${window.location.hash}`;
+    : `${window.location.pathname}${window.location.search}${window.location.hash}`
 }
 
 /** Path + query + hash of a same-origin frame's location, else null. */
 function readFramePath(iframe: HTMLIFrameElement): string | null {
-  const doc = readFrameDocument(iframe);
-  if (!doc) return null;
-  const { pathname, search, hash } = doc.location;
-  return `${pathname}${search}${hash}`;
+  const doc = readFrameDocument(iframe)
+  if (!doc) return null
+  const { pathname, search, hash } = doc.location
+  return `${pathname}${search}${hash}`
 }
 
 /**
@@ -84,9 +84,9 @@ function readFramePath(iframe: HTMLIFrameElement): string | null {
  */
 function isScriptUrl(address: string): boolean {
   try {
-    return new URL(address, window.location.href).protocol === "javascript:";
+    return new URL(address, window.location.href).protocol === "javascript:"
   } catch {
-    return false;
+    return false
   }
 }
 
@@ -94,97 +94,105 @@ function isScriptUrl(address: string): boolean {
 type NavigationEvents = Pick<
   EventTarget,
   "addEventListener" | "removeEventListener"
->;
+>
 function readNavigation(
-  win: Window & { navigation?: NavigationEvents },
+  win: Window & { navigation?: NavigationEvents }
 ): NavigationEvents | undefined {
   // A frame has its own EventTarget constructor; an instanceof check against
   // the parent window rejects its native Navigation API.
-  return win.navigation;
+  return win.navigation
 }
 
-/** Theme the frame's document on load and on every theme change. */
+/**
+ * Theme the frame's document on load and on every theme change. The Theme is
+ * read from a store subscription, so an edit never re-renders the preview.
+ */
 function useThemeInjectedIframe(
-  iframeRef: React.RefObject<HTMLIFrameElement | null>,
+  iframeRef: React.RefObject<HTMLIFrameElement | null>
 ) {
-  const themeState = useEditorStore((state) => state.themeState);
   const themeOverrideEnabled = usePreferencesStore(
-    (state) => state.themeOverrideEnabled,
-  );
-  const themedDocRef = React.useRef<Document | null>(null);
+    (state) => state.themeOverrideEnabled
+  )
+  const themedDocRef = React.useRef<Document | null>(null)
 
   React.useEffect(() => {
-    const iframe = iframeRef.current;
-    if (!iframe || !themeOverrideEnabled) return undefined;
+    const iframe = iframeRef.current
+    if (!iframe || !themeOverrideEnabled) return undefined
 
     const inject = () => {
-      const doc = readFrameDocument(iframe);
-      const previous = themedDocRef.current;
+      const doc = readFrameDocument(iframe)
+      const previous = themedDocRef.current
       if (previous && previous !== doc) {
         // The frame navigated: the old document is gone, drop its records.
-        removeThemeFromDocument(previous);
-        themedDocRef.current = null;
+        removeThemeFromDocument(previous)
+        themedDocRef.current = null
       }
-      if (!doc) return;
+      if (!doc) return
       try {
-        applyThemeToDocument(doc, themeState, {
+        applyThemeToDocument(doc, useEditorStore.getState().themeState, {
           loadFonts: true,
           updateClass: false,
-        });
-        themedDocRef.current = doc;
+        })
+        themedDocRef.current = doc
       } catch {
         // The document went away mid-navigation; the next load re-applies.
       }
-    };
+    }
 
-    inject();
-    iframe.addEventListener("load", inject);
-    return () => iframe.removeEventListener("load", inject);
-  }, [iframeRef, themeOverrideEnabled, themeState]);
+    inject()
+    iframe.addEventListener("load", inject)
+    const unsubscribe = useEditorStore.subscribe((next, previous) => {
+      if (next.themeState !== previous.themeState) inject()
+    })
+    return () => {
+      iframe.removeEventListener("load", inject)
+      unsubscribe()
+    }
+  }, [iframeRef, themeOverrideEnabled])
 
   // Override off or tab unmounted: remove everything from the themed doc.
   React.useEffect(() => {
-    if (!themeOverrideEnabled) return undefined;
+    if (!themeOverrideEnabled) return undefined
     return () => {
-      const doc = themedDocRef.current;
-      themedDocRef.current = null;
-      if (!doc) return;
+      const doc = themedDocRef.current
+      themedDocRef.current = null
+      if (!doc) return
       try {
-        removeThemeFromDocument(doc);
+        removeThemeFromDocument(doc)
       } catch {
         // Detached document: nothing left to clean.
       }
-    };
-  }, [themeOverrideEnabled]);
+    }
+  }, [themeOverrideEnabled])
 }
 
 export function LivePreview() {
   // Only the first address goes through React: later ones set the frame's
   // src directly (handleNavigate), so the frame is never remounted.
-  const [initialSrc] = React.useState(currentPagePath);
-  const [inputValue, setInputValue] = React.useState(initialSrc);
+  const [initialSrc] = React.useState(currentPagePath)
+  const [inputValue, setInputValue] = React.useState(initialSrc)
   const [viewportSize, setViewportSize] =
-    React.useState<PreviewViewportSize>("100");
-  const iframeRef = React.useRef<HTMLIFrameElement>(null);
-  const resizablePanelRef = React.useRef<PanelImperativeHandle>(null);
+    React.useState<PreviewViewportSize>("100")
+  const iframeRef = React.useRef<HTMLIFrameElement>(null)
+  const resizablePanelRef = React.useRef<PanelImperativeHandle>(null)
 
-  useThemeInjectedIframe(iframeRef);
+  useThemeInjectedIframe(iframeRef)
 
   // Narrow screens have no room for device widths: stay at full width.
   React.useEffect(() => {
-    const mediaQuery = window.matchMedia("(max-width: 1023px)");
+    const mediaQuery = window.matchMedia("(max-width: 1023px)")
 
     const resizeToFullWidth = () => {
-      if (!mediaQuery.matches) return;
+      if (!mediaQuery.matches) return
 
-      resizablePanelRef.current?.resize("100%");
-      setViewportSize("100");
-    };
+      resizablePanelRef.current?.resize("100%")
+      setViewportSize("100")
+    }
 
-    resizeToFullWidth();
-    mediaQuery.addEventListener("change", resizeToFullWidth);
-    return () => mediaQuery.removeEventListener("change", resizeToFullWidth);
-  }, []);
+    resizeToFullWidth()
+    mediaQuery.addEventListener("change", resizeToFullWidth)
+    return () => mediaQuery.removeEventListener("change", resizeToFullWidth)
+  }, [])
 
   // Keep the URL bar on the page the frame is showing after in-frame links.
   // A full page load fires `load` on the iframe; a client-side navigation
@@ -192,122 +200,122 @@ export function LivePreview() {
   // are bound again on every load.
   // react-doctor-disable-next-line react-doctor/effect-needs-cleanup -- the cleanup removes the load listener and calls unbindWindow, which removes the navigation or popstate/hashchange listeners bindWindow added
   React.useEffect(() => {
-    const iframe = iframeRef.current;
-    if (!iframe) return undefined;
-    let boundWindow: Window | null = null;
+    const iframe = iframeRef.current
+    if (!iframe) return undefined
+    let boundWindow: Window | null = null
 
     const syncLocation = () => {
-      const path = readFramePath(iframe);
-      if (path) setInputValue(path);
-    };
+      const path = readFramePath(iframe)
+      if (path) setInputValue(path)
+    }
 
     const unbindWindow = () => {
-      const win = boundWindow;
-      boundWindow = null;
-      if (!win) return;
+      const win = boundWindow
+      boundWindow = null
+      if (!win) return
       try {
-        const navigation = readNavigation(win);
+        const navigation = readNavigation(win)
         if (navigation) {
-          navigation.removeEventListener("currententrychange", syncLocation);
+          navigation.removeEventListener("currententrychange", syncLocation)
         } else {
-          win.removeEventListener("popstate", syncLocation);
-          win.removeEventListener("hashchange", syncLocation);
+          win.removeEventListener("popstate", syncLocation)
+          win.removeEventListener("hashchange", syncLocation)
         }
       } catch {
         // The window went away with its document: nothing left to remove.
       }
-    };
+    }
 
     const bindWindow = () => {
-      unbindWindow();
+      unbindWindow()
       // Cross-origin frames yield no document: there is nothing to read.
-      const win = readFrameDocument(iframe)?.defaultView;
-      if (!win) return;
+      const win = readFrameDocument(iframe)?.defaultView
+      if (!win) return
       try {
-        const navigation = readNavigation(win);
+        const navigation = readNavigation(win)
         if (navigation) {
-          navigation.addEventListener("currententrychange", syncLocation);
+          navigation.addEventListener("currententrychange", syncLocation)
         } else {
-          win.addEventListener("popstate", syncLocation);
-          win.addEventListener("hashchange", syncLocation);
+          win.addEventListener("popstate", syncLocation)
+          win.addEventListener("hashchange", syncLocation)
         }
-        boundWindow = win;
+        boundWindow = win
       } catch {
         // The document went away mid-navigation; the next load binds again.
       }
-    };
+    }
 
     const handleLoad = () => {
-      bindWindow();
-      syncLocation();
-    };
+      bindWindow()
+      syncLocation()
+    }
 
-    bindWindow();
-    iframe.addEventListener("load", handleLoad);
+    bindWindow()
+    iframe.addEventListener("load", handleLoad)
     return () => {
-      iframe.removeEventListener("load", handleLoad);
-      unbindWindow();
-    };
-  }, []);
+      iframe.removeEventListener("load", handleLoad)
+      unbindWindow()
+    }
+  }, [])
 
   const handleNavigate = React.useCallback(() => {
-    const iframe = iframeRef.current;
-    if (!iframe) return;
-    const target = inputValue.trim() || "/";
-    if (isScriptUrl(target)) return;
+    const iframe = iframeRef.current
+    if (!iframe) return
+    const target = inputValue.trim() || "/"
+    if (isScriptUrl(target)) return
     // Setting src navigates even when the value is unchanged, so the frame's
     // first page can be reached again after the frame moved away from it.
-    iframe.src = target;
-  }, [inputValue]);
+    iframe.src = target
+  }, [inputValue])
 
   const handleRefresh = React.useCallback(() => {
-    const iframe = iframeRef.current;
-    if (!iframe) return;
-    const doc = readFrameDocument(iframe);
+    const iframe = iframeRef.current
+    if (!iframe) return
+    const doc = readFrameDocument(iframe)
     if (doc) {
-      doc.location.reload();
-      return;
+      doc.location.reload()
+      return
     }
     // Cross-origin: reload by resetting the source.
-    const currentSrc = iframe.src;
-    iframe.src = "about:blank";
-    iframe.src = currentSrc;
-  }, []);
+    const currentSrc = iframe.src
+    iframe.src = "about:blank"
+    iframe.src = currentSrc
+  }, [])
 
   const handleKeyDown = React.useCallback(
     (event: React.KeyboardEvent<HTMLInputElement>) => {
       if (event.key === "Enter") {
-        handleNavigate();
+        handleNavigate()
       }
     },
-    [handleNavigate],
-  );
+    [handleNavigate]
+  )
 
   const handleViewportChange = React.useCallback(
     (value: string[]) => {
       // Clicking the pressed preset sends an empty value: snap the panel back
       // to that preset, since a drag may have moved it.
       const nextValue =
-        (value[0] as PreviewViewportSize | undefined) ?? viewportSize;
+        (value[0] as PreviewViewportSize | undefined) ?? viewportSize
 
-      resizablePanelRef.current?.resize(`${nextValue}%`);
-      setViewportSize(nextValue);
+      resizablePanelRef.current?.resize(`${nextValue}%`)
+      setViewportSize(nextValue)
     },
-    [viewportSize],
-  );
+    [viewportSize]
+  )
 
   const handleOpenPreview = React.useCallback(() => {
-    const iframe = iframeRef.current;
-    if (!iframe) return;
+    const iframe = iframeRef.current
+    if (!iframe) return
     // Cross-origin: the address last sent to the frame.
-    const target = readFramePath(iframe) ?? iframe.src;
-    window.open(target, "_blank", "noopener,noreferrer");
-  }, []);
+    const target = readFramePath(iframe) ?? iframe.src
+    window.open(target, "_blank", "noopener,noreferrer")
+  }, [])
 
   return (
     <div
       data-slot="block-viewer"
-      className="group/block-viewer bg-background @container isolate flex size-full min-w-0 flex-col overflow-clip rounded-lg border"
+      className="group/block-viewer @container isolate flex size-full min-w-0 flex-col overflow-clip rounded-lg border bg-background"
     >
       <div
         data-slot="block-viewer-toolbar"
@@ -316,9 +324,9 @@ export function LivePreview() {
         <div className="flex size-full items-center justify-between gap-3">
           <div className="flex min-w-0 flex-1 items-center gap-2">
             <div aria-hidden className="hidden shrink-0 gap-1.5 sm:flex">
-              <div className="bg-destructive/50 size-3 rounded-full" />
-              <div className="bg-muted-foreground/40 size-3 rounded-full" />
-              <div className="bg-primary/50 size-3 rounded-full" />
+              <div className="size-3 rounded-full bg-destructive/50" />
+              <div className="size-3 rounded-full bg-muted-foreground/40" />
+              <div className="size-3 rounded-full bg-primary/50" />
             </div>
 
             <Input
@@ -327,7 +335,7 @@ export function LivePreview() {
               onKeyDown={handleKeyDown}
               placeholder="Enter URL..."
               aria-label="Preview URL"
-              className="bg-background h-7 min-w-0 flex-1 text-xs"
+              className="h-7 min-w-0 flex-1 bg-background text-xs"
             />
 
             <ActionButton
@@ -351,12 +359,12 @@ export function LivePreview() {
             <ToggleGroup
               aria-label="Preview width"
               size="sm"
-              className="bg-background flex gap-0.5 rounded-lg border p-0.5"
+              className="flex gap-0.5 rounded-lg border bg-background p-0.5"
               value={[viewportSize]}
               onValueChange={handleViewportChange}
             >
               {LIVE_PREVIEW_VIEWPORTS.map((preview) => {
-                const Icon = preview.icon;
+                const Icon = preview.icon
 
                 return (
                   <ToggleGroupItem
@@ -366,7 +374,7 @@ export function LivePreview() {
                   >
                     <Icon className="size-4" />
                   </ToggleGroupItem>
-                );
+                )
               })}
             </ToggleGroup>
           </div>
@@ -381,11 +389,11 @@ export function LivePreview() {
           orientation="horizontal"
           className="relative isolate z-10 size-full"
         >
-          <div className="bg-muted absolute inset-0 right-3 [background-image:radial-gradient(var(--muted-foreground),transparent_1px)] [background-size:1rem_1rem] opacity-60 dark:opacity-35" />
+          <div className="absolute inset-0 right-3 bg-muted [background-image:radial-gradient(var(--muted-foreground),transparent_1px)] [background-size:1rem_1rem] opacity-60 dark:opacity-35" />
 
           <ResizablePanel
             panelRef={resizablePanelRef}
-            className="bg-background relative min-w-[350px] lg:aspect-auto"
+            className="relative min-w-[350px] bg-background lg:aspect-auto"
             defaultSize="100%"
             minSize="30%"
           >
@@ -399,10 +407,10 @@ export function LivePreview() {
             />
           </ResizablePanel>
 
-          <ResizableHandle className="after:bg-border relative inset-x-0 mx-auto hidden w-3 border-l bg-transparent after:absolute after:top-1/2 after:h-8 after:w-[4px] after:-translate-y-1/2 after:rounded-full after:transition-all hover:after:h-12 active:after:h-12 lg:block" />
+          <ResizableHandle className="relative inset-x-0 mx-auto hidden w-3 border-l bg-transparent after:absolute after:top-1/2 after:h-8 after:w-[4px] after:-translate-y-1/2 after:rounded-full after:bg-border after:transition-all hover:after:h-12 active:after:h-12 lg:block" />
           <ResizablePanel defaultSize="0%" minSize="0%" />
         </ResizablePanelGroup>
       </div>
     </div>
-  );
+  )
 }

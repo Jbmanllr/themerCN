@@ -4,8 +4,6 @@ import { notFound } from "next/navigation"
 import { ChatView } from "@/components/app/chat-view"
 import { chatThreads, getChatThread } from "@/lib/mock"
 
-type Props = { params: Promise<{ id?: string[] }> }
-
 export const dynamicParams = false
 
 export function generateStaticParams() {
@@ -18,12 +16,16 @@ function threadFor(id: string[] | undefined) {
   return thread ? { thread } : notFound()
 }
 
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
+export async function generateMetadata({
+  params,
+}: PageProps<"/app/chat/[[...id]]">): Promise<Metadata> {
   const { thread } = threadFor((await params).id)
   return { title: thread ? thread.title : "Brew Assistant" }
 }
 
-export default async function Page({ params }: Props) {
+export default async function Page({
+  params,
+}: PageProps<"/app/chat/[[...id]]">) {
   const { thread } = threadFor((await params).id)
   // Keyed so switching threads starts from that thread's saved messages.
   return <ChatView key={thread?.id ?? "new"} thread={thread} />

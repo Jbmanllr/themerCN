@@ -1,4 +1,4 @@
-"use client";
+"use client"
 
 // Payments card of the Cards preview tab: a TanStack Table v9 demo (row
 // selection, pagination) over fixed sample rows, not Host data.
@@ -25,19 +25,19 @@ import {
   tableFeatures,
   useTable,
   ColumnVisibilityState,
-} from "@tanstack/react-table";
-import { MoreHorizontalIcon } from "lucide-react";
-import * as React from "react";
+} from "@tanstack/react-table"
+import { MoreHorizontalIcon } from "lucide-react"
+import * as React from "react"
 
-import { Button } from "@workspace/ui/components/button";
+import { Button } from "@workspace/ui/components/button"
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@workspace/ui/components/card";
-import { Checkbox } from "@workspace/ui/components/checkbox";
+} from "@workspace/ui/components/card"
+import { Checkbox } from "@workspace/ui/components/checkbox"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -46,7 +46,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@workspace/ui/components/dropdown-menu";
+} from "@workspace/ui/components/dropdown-menu"
 import {
   Table,
   TableBody,
@@ -54,7 +54,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@workspace/ui/components/table";
+} from "@workspace/ui/components/table"
 
 const data: Payment[] = [
   {
@@ -93,14 +93,14 @@ const data: Payment[] = [
     status: "success",
     email: "sarah23@example.com",
   },
-];
+]
 
 export type Payment = {
-  id: string;
-  amount: number;
-  status: "pending" | "processing" | "success" | "failed";
-  email: string;
-};
+  id: string
+  amount: number
+  status: "pending" | "processing" | "success" | "failed"
+  email: string
+}
 
 // TanStack Table v9 registers only the features a table uses; each feature
 // precedes its row model, and the full filter/sort registries keep the v8
@@ -116,13 +116,13 @@ const features = tableFeatures({
   paginatedRowModel: createPaginatedRowModel(),
   filterFns,
   sortFns,
-});
+})
 
 // Built once: every row's amount cell formats with it.
 const usdFormatter = new Intl.NumberFormat("en-US", {
   style: "currency",
   currency: "USD",
-});
+})
 
 const columns: ColumnDef<typeof features, Payment>[] = [
   {
@@ -163,18 +163,18 @@ const columns: ColumnDef<typeof features, Payment>[] = [
     accessorKey: "amount",
     header: () => <div className="text-right">Amount</div>,
     cell: ({ row }) => {
-      const amount = parseFloat(row.getValue("amount"));
+      const amount = parseFloat(row.getValue("amount"))
 
-      const formatted = usdFormatter.format(amount);
+      const formatted = usdFormatter.format(amount)
 
-      return <div className="text-right font-medium">{formatted}</div>;
+      return <div className="text-right font-medium">{formatted}</div>
     },
   },
   {
     id: "actions",
     enableHiding: false,
     cell: ({ row }) => {
-      const payment = row.original;
+      const payment = row.original
 
       return (
         <DropdownMenu>
@@ -200,19 +200,19 @@ const columns: ColumnDef<typeof features, Payment>[] = [
             <DropdownMenuItem>View payment details</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
-      );
+      )
     },
   },
-];
+]
 
 export function CardsPayments() {
-  const [sorting, setSorting] = React.useState<SortingState>([]);
+  const [sorting, setSorting] = React.useState<SortingState>([])
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
-    [],
-  );
+    []
+  )
   const [columnVisibility, setColumnVisibility] =
-    React.useState<ColumnVisibilityState>({});
-  const [rowSelection, setRowSelection] = React.useState({});
+    React.useState<ColumnVisibilityState>({})
+  const [rowSelection, setRowSelection] = React.useState({})
 
   const table = useTable({
     features,
@@ -228,7 +228,7 @@ export function CardsPayments() {
       columnVisibility,
       rowSelection,
     },
-  });
+  })
 
   return (
     <Card>
@@ -253,10 +253,10 @@ export function CardsPayments() {
                           ? null
                           : flexRender(
                               header.column.columnDef.header,
-                              header.getContext(),
+                              header.getContext()
                             )}
                       </TableHead>
-                    );
+                    )
                   })}
                 </TableRow>
               ))}
@@ -276,7 +276,7 @@ export function CardsPayments() {
                       >
                         {flexRender(
                           cell.column.columnDef.cell,
-                          cell.getContext(),
+                          cell.getContext()
                         )}
                       </TableCell>
                     ))}
@@ -296,7 +296,7 @@ export function CardsPayments() {
           </Table>
         </div>
         <div className="flex items-center justify-end gap-2">
-          <div className="text-muted-foreground flex-1 text-sm">
+          <div className="flex-1 text-sm text-muted-foreground">
             {table.getFilteredSelectedRowModel().rows.length} of{" "}
             {table.getFilteredRowModel().rows.length} row(s) selected.
           </div>
@@ -321,5 +321,5 @@ export function CardsPayments() {
         </div>
       </CardContent>
     </Card>
-  );
+  )
 }

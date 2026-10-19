@@ -12,7 +12,10 @@
 //   move the checkpoint; resetting to the preset clears history.
 // - Preset colours always come from resolvePresetStyles (config/presets.ts).
 // - Only themeState, themeCheckpoint and presetBaseline persist; history and
-//   future do not.
+//   future do not. The checkpoint and baseline are stored only when they
+//   differ from themeState (PersistedEditorState). Writes go through
+//   guardedLocalStorage (stores/persist-options.ts): a storage error never
+//   reaches an action, and an unchanged slice is not written.
 //   The persisted shape is versioned by EDITOR_STATE_VERSION
 //   (config/constants.ts) with no migrations (pre-release): a stored state of
 //   another version is dropped without an error and the key rewritten
@@ -63,12 +66,61 @@ import {
   getStorageKeys,
 } from "../config/constants"
 import { isDeepEqual } from "../utils/deep-equal"
-import { dropOtherVersion } from "./persist-options"
+import { dropOtherVersion, guardedLocalStorage } from "./persist-options"
 
-type PersistedEditorState = Pick<
+/**
+ * The stored editor entry. The checkpoint and the baseline are left out
+ * while they equal the Theme (the usual case: on a Preset, before any HSL
+ * adjustment), so the entry holds one copy of the styles instead of three;
+ * left out means "the Theme", while `null` means none.
+ */
+type PersistedEditorState = Pick<EditorStoreState, "themeState"> &
+  Partial<Pick<EditorStoreState, "themeCheckpoint" | "presetBaseline">>
+
+function isBaselineOf(
+  baseline: PresetBaseline | null,
+  themeState: ThemeEditorState
+): boolean {
+  return (
+    baseline !== null &&
+    baseline.preset === themeState.preset &&
+    isDeepEqual(baseline.styles, themeState.styles)
+  )
+}
+
+function toPersisted({
+  themeState,
+  themeCheckpoint,
+  presetBaseline,
+}: EditorStoreState): PersistedEditorState {
+  const persisted: PersistedEditorState = { themeState }
+  if (!isDeepEqual(themeCheckpoint, themeState)) {
+    persisted.themeCheckpoint = themeCheckpoint
+  }
+  if (!isBaselineOf(presetBaseline, themeState)) {
+    persisted.presetBaseline = presetBaseline
+  }
+  return persisted
+}
+
+function fromPersisted({
+  themeState,
+  themeCheckpoint,
+  presetBaseline,
+}: PersistedEditorState): Pick<
   EditorStoreState,
   "themeState" | "themeCheckpoint" | "presetBaseline"
->
+> {
+  return {
+    themeState,
+    themeCheckpoint:
+      themeCheckpoint === undefined ? themeState : themeCheckpoint,
+    presetBaseline:
+      presetBaseline === undefined && themeState.preset
+        ? { preset: themeState.preset, styles: themeState.styles }
+        : (presetBaseline ?? null),
+  }
+}
 
 function copyStyles(styles: ThemeStyles): ThemeStyles {
   const dark = { ...styles.dark }
@@ -409,24 +461,20 @@ export const useEditorStore = create<EditorStore>()(
       // history over from the previous namespace.
       merge: (persistedState): EditorStore => {
         const initialState = useEditorStore.getInitialState()
-        return (persistedState as Partial<PersistedEditorState> | undefined)
-          ?.themeState
+        const persisted = persistedState as PersistedEditorState | undefined
+        return persisted?.themeState
           ? {
               ...initialState,
-              ...(persistedState as PersistedEditorState),
-              presetBaseline:
-                (persistedState as PersistedEditorState).presetBaseline ?? null,
+              ...fromPersisted(persisted),
               restoredFromStorage: true,
             }
           : initialState
       },
-      partialize: (state): PersistedEditorState => ({
-        themeState: state.themeState,
-        themeCheckpoint: state.themeCheckpoint,
-        presetBaseline: state.presetBaseline,
-        // history and future stay out of localStorage (quota): undo and
-        // redo start empty after a reload.
-      }),
+      // history and future stay out of localStorage (quota): undo and redo
+      // start empty after a reload. A change to them alone writes nothing
+      // (guardedLocalStorage skips a slice equal to the last write).
+      partialize: (state: EditorStore) => toPersisted(state),
+      storage: guardedLocalStorage(),
     }
   )
 )

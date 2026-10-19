@@ -308,6 +308,132 @@ describe("Themer", () => {
         )
       })
     })
+
+    describe("writes", () => {
+      // Stands in for localStorage, recording each write's key; `write` runs
+      // before the real write (and can throw instead). A spy on the
+      // localStorage instance itself would be stored as an item.
+      function stubLocalStorage(write: (key: string) => void = () => {}) {
+        const real = localStorage
+        const writes: string[] = []
+        vi.stubGlobal("localStorage", {
+          getItem: (key: string) => real.getItem(key),
+          setItem: (key: string, value: string) => {
+            writes.push(key)
+            write(key)
+            real.setItem(key, value)
+          },
+          removeItem: (key: string) => real.removeItem(key),
+        })
+        return writes
+      }
+
+      afterEach(() => {
+        vi.unstubAllGlobals()
+      })
+
+      it("leave editing working when storage throws on write, with one warning", async () => {
+        const writes = stubLocalStorage(() => {
+          throw new DOMException("full", "QuotaExceededError")
+        })
+        const warn = vi.spyOn(console, "warn").mockImplementation(() => {})
+        await mount({ storageNamespace: "full" })
+
+        await act(async () =>
+          useEditorStore.getState().updateCommonStyle("radius", "1.25rem")
+        )
+        await act(async () =>
+          useEditorStore.getState().updateCommonStyle("radius", "0.25rem")
+        )
+
+        expect(writes).toContain("full:editor")
+        expect(useEditorStore.getState().themeState.styles.light.radius).toBe(
+          "0.25rem"
+        )
+        expect(rootVar("--radius")).toBe("0.25rem")
+        expect(warn).toHaveBeenCalledTimes(1)
+      })
+
+      it("skip a change that leaves the persisted slice as it was", async () => {
+        await mount({ storageNamespace: "history-only" })
+        await act(async () =>
+          useEditorStore.getState().applyThemePreset("violet-bloom")
+        )
+        const writes = stubLocalStorage()
+
+        // Clears the undo history only: the Theme, its checkpoint and its
+        // baseline are untouched.
+        await act(async () => useEditorStore.setState({ history: [] }))
+
+        expect(useEditorStore.getState().canUndo()).toBe(false)
+        expect(writes).toEqual([])
+
+        // A Theme change still writes.
+        await act(async () =>
+          useEditorStore.getState().updateCommonStyle("radius", "1.25rem")
+        )
+        expect(writes).toEqual(["history-only:editor"])
+      })
+
+      it("store the checkpoint and baseline only when they differ from the Theme", async () => {
+        await mount({ storageNamespace: "slice" })
+        await act(async () =>
+          useEditorStore.getState().applyThemePreset("violet-bloom")
+        )
+        const onPreset = JSON.parse(localStorage.getItem("slice:editor")!).state
+
+        expect(Object.keys(onPreset)).toEqual(["themeState"])
+
+        await act(async () =>
+          useEditorStore.getState().updateCommonStyle("radius", "1.25rem")
+        )
+        const edited = JSON.parse(localStorage.getItem("slice:editor")!).state
+
+        expect(edited.themeState.styles.light.radius).toBe("1.25rem")
+        expect(edited.themeCheckpoint.preset).toBe("violet-bloom")
+        expect(edited.themeCheckpoint.styles.light.radius).not.toBe("1.25rem")
+        expect(edited.presetBaseline.preset).toBe("violet-bloom")
+      })
+
+      function seedThemeOnly(key: string, radius: string) {
+        const themeState = {
+          ...defaultThemeState,
+          styles: {
+            ...defaultThemeState.styles,
+            light: { ...defaultThemeState.styles.light, radius },
+          },
+        }
+        localStorage.setItem(
+          key,
+          JSON.stringify({
+            state: { themeState },
+            version: EDITOR_STATE_VERSION,
+          })
+        )
+        return themeState
+      }
+
+      it("restore a checkpoint left out as the Theme", async () => {
+        const themeState = seedThemeOnly(
+          "checkpoint-restore:editor",
+          defaultThemeState.styles.light.radius
+        )
+
+        await mount({ storageNamespace: "checkpoint-restore" })
+
+        expect(useEditorStore.getState().themeCheckpoint).toEqual(themeState)
+      })
+
+      // A baseline equal to the Theme marks an untouched Preset, which
+      // follows the Preset's current source.
+      it("restore a baseline left out as the Theme", async () => {
+        seedThemeOnly("baseline-restore:editor", "0.75rem")
+
+        await mount({ storageNamespace: "baseline-restore" })
+
+        expect(rootVar("--radius")).toBe(defaultThemeState.styles.light.radius)
+      })
+    })
   })
 
   describe("colour mode, uncontrolled", () => {

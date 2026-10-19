@@ -5,6 +5,7 @@ import {
   openToolbarPanel,
   themerToolbar,
   toolbarPanel,
+  hydrated,
 } from "./themer-ui"
 
 // The Playground sets no `layout`, so it opens the Workspace; the user
@@ -14,6 +15,7 @@ test("the Overlay floats the sidebar over the real page, which stays usable", as
   page,
 }) => {
   await page.goto("/")
+  await hydrated(page)
   await openLayout(page, "Overlay")
 
   await expect(page.getByTestId("themer-preview")).toHaveCount(0)
@@ -38,9 +40,11 @@ test("the Overlay floats the sidebar over the real page, which stays usable", as
 
 test("the user's layout survives a reload", async ({ page }) => {
   await page.goto("/")
+  await hydrated(page)
   await openLayout(page, "Overlay")
 
   await page.reload()
+  await hydrated(page)
   await page.getByRole("button", { name: "Open Theme Editor" }).click()
 
   await expect(
@@ -54,6 +58,7 @@ test.describe("the Toolbar", () => {
     page,
   }) => {
     await page.goto("/")
+    await hydrated(page)
     const colors = await openToolbarPanel(page, "Colors")
 
     await expect(
@@ -87,6 +92,7 @@ test.describe("the Toolbar", () => {
     page,
   }) => {
     await page.goto("/")
+    await hydrated(page)
     const colors = await openToolbarPanel(page, "Colors")
 
     /** Whether the element is what the browser paints at its own centre. */
@@ -127,6 +133,7 @@ test("the inspector works on the real page beside the Overlay, never on the Them
   page,
 }) => {
   await page.goto("/")
+  await hydrated(page)
   await openLayout(page, "Overlay")
   await page.getByRole("tab", { name: "Typography" }).click()
   await page.getByRole("button", { name: "Inspector" }).click()
@@ -165,6 +172,7 @@ test.describe("the sidebar", () => {
       page,
     }) => {
       await page.goto("/")
+      await hydrated(page)
       await openLayout(page, layout)
       const sidebar = page.locator(
         '[data-themer-ui] [data-slot="sidebar-container"]'
@@ -205,6 +213,7 @@ test.describe("the sidebar", () => {
     page,
   }) => {
     await page.goto("/")
+    await hydrated(page)
     await openLayout(page, "Overlay")
     await page.locator('[data-themer-ui] [data-slot="sidebar-trigger"]').click()
 

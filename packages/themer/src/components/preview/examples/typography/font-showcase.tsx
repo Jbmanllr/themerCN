@@ -11,7 +11,7 @@ import {
 } from "@workspace/ui/components/card"
 import { ScrollArea } from "@workspace/ui/components/scroll-area"
 
-export function DemoFontShowcase() {
+export function FontShowcase() {
   return (
     <Card className="flex flex-1 flex-col">
       <CardHeader>

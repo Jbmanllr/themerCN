@@ -9,7 +9,12 @@
 // component each time; wrap such a selector in useShallow (as
 // hooks/use-themer.ts does) or derive the value in the component.
 
-import type { EditorStore, ThemeEditorState, ThemeStyleProps } from "../types"
+import type {
+  EditorStore,
+  ThemeEditorState,
+  ThemeStyleProps,
+  ThemeStyles,
+} from "../types"
 import { resolvePresetStyles } from "../config/presets"
 import { defaultHSLAdjustments } from "../config/defaults"
 import { isDeepEqual } from "../utils/deep-equal"
@@ -52,6 +57,21 @@ export const selectStyles = (state: EditorStore) => state.themeState.styles
 export const selectHSLAdjustments = (state: EditorStore) =>
   state.themeState.hslAdjustments
 
+// The Sidebar-Synced form of each resolved Preset. resolvePresetStyles
+// caches one object per Preset id (and drops them when Host Presets change),
+// so this is a per-Preset cache: the "on Preset" check runs on every store
+// update in each subscriber and would otherwise rebuild it every time.
+const syncedPresetStyles = new WeakMap<ThemeStyles, ThemeStyles>()
+
+function sidebarSyncedPresetStyles(presetStyles: ThemeStyles): ThemeStyles {
+  let synced = syncedPresetStyles.get(presetStyles)
+  if (!synced) {
+    synced = applySidebarSync(presetStyles)
+    syncedPresetStyles.set(presetStyles, synced)
+  }
+  return synced
+}
+
 /**
  * The one "on Preset" rule: the Theme's styles are its Preset's (resolved as
  * when applied, and aligned by Sidebar Sync while `sidebarSync` is on, as the
@@ -66,7 +86,7 @@ export function isOnPreset(
   return (
     isDeepEqual(
       themeState.styles,
-      sidebarSync ? applySidebarSync(presetStyles) : presetStyles
+      sidebarSync ? sidebarSyncedPresetStyles(presetStyles) : presetStyles
     ) &&
     isIdentityHslAdjustment(themeState.hslAdjustments ?? defaultHSLAdjustments)
   )

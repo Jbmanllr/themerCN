@@ -4,12 +4,19 @@
 // Contract: the string runs raw in the browser before React and cannot see
 // this module's scope, so values from here (storage keys, font lists) are
 // embedded with JSON.stringify. It reads what the editor persists
-// (getStorageKeys), so a change to that persisted shape changes the script.
+// (getStorageKeys), so a change to that persisted shape changes the script,
+// and it ignores an entry saved at another version than the stores persist
+// (EDITOR_STATE_VERSION, PREFERENCES_VERSION), as the stores drop it.
 // Its imports are constants only, so the head-script entry stays small and
 // reaches no Themer code (scripts/check-entries.mjs).
 
 import { COMMON_STYLE_KEYS } from "../types/theme"
-import { RESTORE_STYLE_ID, getStorageKeys } from "../config/constants"
+import {
+  EDITOR_STATE_VERSION,
+  PREFERENCES_VERSION,
+  RESTORE_STYLE_ID,
+  getStorageKeys,
+} from "../config/constants"
 import { GENERIC_FONT_FAMILIES, LOCAL_FONT_FAMILY_NAMES } from "./font-loader"
 
 /**
@@ -19,7 +26,8 @@ import { GENERIC_FONT_FAMILIES, LOCAL_FONT_FAMILY_NAMES } from "./font-loader"
  *   class on <html> to match. Otherwise the Host app owns the class (next-themes or its
  *   own script, which may run after this one) and the class is left alone.
  * - Theme: with nothing saved (or the Theme override off) it writes nothing and the Host's
- *   CSS shows. Otherwise it writes both modes of the saved Theme into one
+ *   CSS shows. A stored entry saved at another version counts as nothing saved, and
+ *   stored preferences of another version leave the override on. Otherwise it writes both modes of the saved Theme into one
  *   `<style id="themercn-restore">`, keyed on whether <html> has `.dark`, so the page shows
  *   the tokens of whichever mode it is in, whenever the class is set. The rules outrank the
  *   Host's `:root` and `.dark` rules; ThemerProvider removes the sheet once it applies the
@@ -66,6 +74,8 @@ export function generateThemeScript({
       var storageKey = ${JSON.stringify(storageKeys.editor)};
       var preferencesStorageKey = ${JSON.stringify(storageKeys.preferences)};
       var colorModeStorageKey = ${JSON.stringify(storageKeys.colorMode)};
+      var editorVersion = ${JSON.stringify(EDITOR_STATE_VERSION)};
+      var preferencesVersion = ${JSON.stringify(PREFERENCES_VERSION)};
       var styleId = ${JSON.stringify(RESTORE_STYLE_ID)};
       var root = document.documentElement;
 
@@ -73,14 +83,15 @@ export function generateThemeScript({
       var themeOverrideEnabled = true;
       var colorMode = null;
       try {
-        var persisted = localStorage.getItem(storageKey);
-        if (persisted) {
-          themeState = JSON.parse(persisted)?.state?.themeState;
+        // An entry saved at another version is ignored: the store drops it.
+        var persisted = JSON.parse(localStorage.getItem(storageKey));
+        if (persisted && persisted.version === editorVersion) {
+          themeState = persisted.state && persisted.state.themeState;
         }
 
-        var persistedPreferences = localStorage.getItem(preferencesStorageKey);
-        if (persistedPreferences) {
-          themeOverrideEnabled = JSON.parse(persistedPreferences)?.state?.themeOverrideEnabled !== false;
+        var persistedPreferences = JSON.parse(localStorage.getItem(preferencesStorageKey));
+        if (persistedPreferences && persistedPreferences.version === preferencesVersion) {
+          themeOverrideEnabled = !persistedPreferences.state || persistedPreferences.state.themeOverrideEnabled !== false;
         }
 
         colorMode = localStorage.getItem(colorModeStorageKey);

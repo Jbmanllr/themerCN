@@ -8,8 +8,10 @@
 //
 // Contract:
 // - The whole state persists (no partialize), versioned by
-//   PREFERENCES_VERSION with no migrations (pre-release): stored preferences
-//   of another version are dropped.
+//   PREFERENCES_VERSION (config/constants.ts) with no migrations
+//   (pre-release): stored preferences of another version are dropped without
+//   an error and the key rewritten (dropOtherVersion), and the head script
+//   ignores them.
 // - utils/theme-script.ts reads `state.themeOverrideEnabled` from this entry
 //   before hydration (absent means on): keep that path and the storage key.
 // - colorFormat is always one of getAvailableColorFormats(): Tailwind 3 has
@@ -21,10 +23,8 @@
 import { create } from "zustand"
 import { persist } from "zustand/middleware"
 import type { PreferencesStore } from "../types"
-import { getStorageKeys } from "../config/constants"
-
-/** Version of the persisted preferences (zustand persist `version`). */
-export const PREFERENCES_VERSION = 1
+import { PREFERENCES_VERSION, getStorageKeys } from "../config/constants"
+import { dropOtherVersion } from "./persist-options"
 
 const colorFormatsByVersion = {
   "3": ["hex", "rgb", "hsl"],
@@ -88,6 +88,7 @@ export const usePreferencesStore = create<PreferencesStore>()(
       // <Themer> names the namespace and hydrates (stores/hydrate.ts).
       skipHydration: true,
       version: PREFERENCES_VERSION,
+      migrate: dropOtherVersion,
     }
   )
 )

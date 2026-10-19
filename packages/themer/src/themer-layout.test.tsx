@@ -6,13 +6,11 @@ import { act } from "react"
 import { createRoot, type Root } from "react-dom/client"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
+import { PREFERENCES_VERSION } from "./config/constants"
 import { useEditorStore } from "./stores/editor-store"
 import { useColorFocusStore } from "./stores/color-focus-store"
 import { useThemerUIStore } from "./stores/themer-ui-store"
-import {
-  PREFERENCES_VERSION,
-  usePreferencesStore,
-} from "./stores/preferences-store"
+import { usePreferencesStore } from "./stores/preferences-store"
 import { Themer, type ThemerProps } from "./index"
 
 // See themer.test.tsx: happy-dom overflows on the real sheet.

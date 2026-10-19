@@ -17,7 +17,11 @@ import {
   vi,
 } from "vitest"
 
-import { getStorageKeys } from "../config/constants"
+import {
+  EDITOR_STATE_VERSION,
+  PREFERENCES_VERSION,
+  getStorageKeys,
+} from "../config/constants"
 
 const STORAGE_KEYS = getStorageKeys()
 import { generateThemeScript } from "./theme-script"
@@ -25,12 +29,15 @@ import { generateThemeScript } from "./theme-script"
 function saveEditor(themeState: unknown) {
   localStorage.setItem(
     STORAGE_KEYS.editor,
-    JSON.stringify({ state: { themeState }, version: 0 })
+    JSON.stringify({ state: { themeState }, version: EDITOR_STATE_VERSION })
   )
 }
 
 function savePreferences(state: unknown) {
-  localStorage.setItem(STORAGE_KEYS.preferences, JSON.stringify({ state }))
+  localStorage.setItem(
+    STORAGE_KEYS.preferences,
+    JSON.stringify({ state, version: PREFERENCES_VERSION })
+  )
 }
 
 function saveColorMode(mode: string) {

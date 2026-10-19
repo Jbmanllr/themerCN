@@ -41,7 +41,7 @@ import {
   resolvePresetStyles,
 } from "../../config/presets"
 import { useEditorStore } from "../../stores/editor-store"
-import { selectCurrentMode } from "../../selectors"
+import { useColorMode } from "../../hooks/use-color-mode"
 import { useIsOnPreset } from "../../hooks/use-editor-selectors"
 import type { ThemeMode } from "../../types"
 import {
@@ -123,11 +123,13 @@ export function PresetSelect({ value, onChange }: PresetSelectProps) {
   // Host presets are registered before the first render (ThemerProvider) and
   // do not change while mounted.
   const presetIds = React.useMemo(() => getPresetIds(), [])
-  const currentMode = useEditorStore(selectCurrentMode)
+  // The colour mode itself, as the mode controls read it: the store's mode
+  // follows it one commit later (ThemerProvider).
+  const currentMode = useColorMode().mode
   const hasUnsavedChanges = !useIsOnPreset()
   const selectedSwatchColors = useEditorStore(
     useShallow((state) => {
-      const styles = state.themeState.styles[state.themeState.currentMode]
+      const styles = state.themeState.styles[currentMode]
       return PRESET_SWATCH_KEYS.map((key) => styles[key] ?? "transparent")
     })
   )

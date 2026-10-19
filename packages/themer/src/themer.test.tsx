@@ -553,6 +553,54 @@ describe("Themer", () => {
       expect(changes[0]).toBe("Switch to light mode")
       expect(changes).toContain("page themed")
     })
+
+    it("shows the new mode's colours on the Preset picker before the page is themed for it", async () => {
+      // Hex colours: happy-dom drops an oklch() inline style.
+      await mount({
+        presets: [
+          {
+            id: "brand",
+            label: "Brand",
+            styles: {
+              light: { primary: "#111111" },
+              dark: { primary: "#eeeeee" },
+            },
+          },
+        ],
+        defaultPreset: "brand",
+      })
+      await openThemer()
+      const swatches = () =>
+        document.querySelector(
+          '[data-testid="themer-preset-trigger"] [data-testid="theme-colors"]'
+        )?.innerHTML
+      const before = swatches()
+      // Records arrive in the order the DOM changed: the swatches must change
+      // no later than the commit that themes the Host page.
+      const records: MutationRecord[] = []
+      const observer = new MutationObserver((batch) => records.push(...batch))
+      observer.observe(document.documentElement, {
+        attributes: true,
+        attributeFilter: ["style"],
+        childList: true,
+        subtree: true,
+      })
+
+      await act(async () => document.documentElement.classList.add("dark"))
+
+      records.push(...observer.takeRecords())
+      observer.disconnect()
+      const changes = records.flatMap((record) => {
+        if (record.target === document.documentElement) return ["page"]
+        const target = record.target as Element
+        return target.closest?.('[data-testid="theme-colors"]') &&
+          target.closest('[data-testid="themer-preset-trigger"]')
+          ? ["swatch"]
+          : []
+      })
+      expect(swatches()).not.toBe(before)
+      expect(changes[0]).toBe("swatch")
+    })
   })
 
   describe("colour mode, controlled", () => {

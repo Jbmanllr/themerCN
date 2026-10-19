@@ -54,7 +54,7 @@ function hostStyles(page: Page) {
   return page.evaluate(async () => {
     await document.fonts.ready
     const styles: Record<string, Record<string, string>> = {}
-    document.querySelectorAll("#host *").forEach((element, index) => {
+    document.querySelectorAll("#host *").forEach((element) => {
       const computed = getComputedStyle(element)
       const own: Record<string, string> = {}
       // `@property` registrations stay global (README, known leaks), so the

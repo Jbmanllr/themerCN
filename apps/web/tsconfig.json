@@ -20,5 +20,9 @@
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts"
   ],
-  "exclude": ["node_modules"]
+  "exclude": [
+    "node_modules",
+    "hooks/use-highlighted-code.ts",
+    "lib/highlighter.tsx"
+  ]
 }

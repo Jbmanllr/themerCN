@@ -2,7 +2,7 @@ import { expect, test, type Page } from "@playwright/test"
 
 import { nightjarPreset } from "../lib/brand/nightjar"
 import { uiComponents } from "../lib/design-system"
-import { resolveColor } from "./themer-ui"
+import { hydrated, resolveColor } from "./themer-ui"
 
 const panel = (page: Page, mode: "Light" | "Dark") =>
   page.getByRole("region", { name: mode, exact: true })
@@ -128,4 +128,19 @@ test("the tokens page shows every token in both modes", async ({ page }) => {
       )
     }
   }
+})
+
+test("token values follow a Theme edit on <html>", async ({ page }) => {
+  await page.goto("/design-system/tokens")
+  await hydrated(page)
+  const radius = page
+    .getByRole("table", { name: "Radius" })
+    .getByRole("row", { name: /^--radius / })
+    .locator('[data-mode="light"]')
+  await expect(radius).toHaveText("0.75rem")
+
+  await page.evaluate(() =>
+    document.documentElement.style.setProperty("--radius", "1.25rem")
+  )
+  await expect(radius).toHaveText("1.25rem")
 })

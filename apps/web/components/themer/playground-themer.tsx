@@ -10,13 +10,11 @@ import { useTheme } from "next-themes"
 import { createThemerLoader } from "themercn/loader"
 
 import { NIGHTJAR_PRESET_ID, playgroundPresets } from "@/lib/brand/nightjar"
+import { FONT_CATALOG_ENDPOINT } from "@/lib/themer"
 
 // Unconditional: the Playground always ships the Themer. A Host app that
 // wants it off in some builds passes `null` here instead.
 const ThemerLoader = createThemerLoader(() => import("themercn"))
-
-/** The route `createFontCatalogRoute` answers on. */
-export const FONT_CATALOG_ENDPOINT = "/api/themer/fonts"
 
 export function PlaygroundThemer() {
   const { resolvedTheme, setTheme } = useTheme()

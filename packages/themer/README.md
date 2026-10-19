@@ -55,13 +55,11 @@ import { useTheme } from "next-themes"
 import { createThemerLoader } from "themercn/loader"
 
 import { NIGHTJAR_PRESET_ID, playgroundPresets } from "@/lib/brand/nightjar"
+import { FONT_CATALOG_ENDPOINT } from "@/lib/themer"
 
 // Unconditional: the Playground always ships the Themer. A Host app that
 // wants it off in some builds passes `null` here instead.
 const ThemerLoader = createThemerLoader(() => import("themercn"))
-
-/** The route `createFontCatalogRoute` answers on. */
-export const FONT_CATALOG_ENDPOINT = "/api/themer/fonts"
 
 export function PlaygroundThemer() {
   const { resolvedTheme, setTheme } = useTheme()
@@ -81,6 +79,17 @@ export function PlaygroundThemer() {
 The file starts with `"use client"`. Without a theme library, render
 `<ThemerLoader />` with no props: the Themer toggles `.dark` on `<html>`
 itself.
+
+The font route's path lives in a plain module (`lib/themer.ts`, no
+`"use client"`), so a Server Component that imports it gets the string rather
+than a client reference:
+
+<!-- recipe: apps/web/lib/themer.ts -->
+
+```ts
+/** The route `createFontCatalogRoute` answers on (app/api/themer/fonts/route.ts). */
+export const FONT_CATALOG_ENDPOINT = "/api/themer/fonts"
+```
 
 **2. The root layout.** `<ThemerHeadScript>` (from `themercn/next`) goes in
 `<head>`; the loader goes beside the page, never around it:

@@ -103,11 +103,13 @@ function readNavigation(
   return win.navigation
 }
 
-/** Theme the frame's document on load and on every theme change. */
+/**
+ * Theme the frame's document on load and on every theme change. The Theme is
+ * read from a store subscription, so an edit never re-renders the preview.
+ */
 function useThemeInjectedIframe(
   iframeRef: React.RefObject<HTMLIFrameElement | null>
 ) {
-  const themeState = useEditorStore((state) => state.themeState)
   const themeOverrideEnabled = usePreferencesStore(
     (state) => state.themeOverrideEnabled
   )
@@ -127,7 +129,7 @@ function useThemeInjectedIframe(
       }
       if (!doc) return
       try {
-        applyThemeToDocument(doc, themeState, {
+        applyThemeToDocument(doc, useEditorStore.getState().themeState, {
           loadFonts: true,
           updateClass: false,
         })
@@ -139,8 +141,14 @@ function useThemeInjectedIframe(
 
     inject()
     iframe.addEventListener("load", inject)
-    return () => iframe.removeEventListener("load", inject)
-  }, [iframeRef, themeOverrideEnabled, themeState])
+    const unsubscribe = useEditorStore.subscribe((next, previous) => {
+      if (next.themeState !== previous.themeState) inject()
+    })
+    return () => {
+      iframe.removeEventListener("load", inject)
+      unsubscribe()
+    }
+  }, [iframeRef, themeOverrideEnabled])
 
   // Override off or tab unmounted: remove everything from the themed doc.
   React.useEffect(() => {

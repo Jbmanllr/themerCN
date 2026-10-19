@@ -2,7 +2,7 @@
 // @vitest-environment-options { "settings": { "handleDisabledFileLoadingAsSuccess": true } }
 // The public <Themer> as a Host app mounts it: one component beside the
 // Host's tree, configured by flat props.
-import { act } from "react"
+import { act, Profiler } from "react"
 import { createRoot, type Root } from "react-dom/client"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
@@ -432,6 +432,34 @@ describe("Themer", () => {
         expect(rootVar("--radius")).toBe(defaultThemeState.styles.light.radius)
       })
     })
+  })
+
+  it("themes the page on an edit without re-rendering while closed", async () => {
+    const commits: string[] = []
+    container = document.createElement("div")
+    document.body.append(container)
+    root = createRoot(container)
+    await act(async () =>
+      root?.render(
+        <Profiler id="themer" onRender={(_id, phase) => commits.push(phase)}>
+          <Themer />
+        </Profiler>
+      )
+    )
+    commits.length = 0
+
+    await act(async () =>
+      useEditorStore.getState().setThemeState((prev) => ({
+        ...prev,
+        styles: {
+          ...prev.styles,
+          light: { ...prev.styles.light, primary: "rgb(1, 2, 3)" },
+        },
+      }))
+    )
+
+    expect(rootVar("--primary")).toBe("rgb(1, 2, 3)")
+    expect(commits).toEqual([])
   })
 
   describe("colour mode, uncontrolled", () => {

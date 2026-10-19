@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test"
 
-import { cartLink, definitionOf, hydrated } from "./themer-ui"
+import { cartLink, definitionOf, hydrated } from "./page"
 
 test("a visitor browses to a product and adds it to the cart", async ({
   page,
@@ -153,3 +153,22 @@ for (const colorScheme of ["light", "dark"] as const) {
     expect(errors).toEqual([])
   })
 }
+
+test.describe("before hydration", () => {
+  // No JavaScript: the server HTML, as a visitor on a slow connection submits
+  // it before React attaches its handlers.
+  test.use({ javaScriptEnabled: false })
+
+  test("an add-to-cart submit never puts the options in the URL", async ({
+    page,
+  }) => {
+    await page.goto("/shop/p/night-owl-blend")
+    const submitted = page.waitForRequest(
+      (request) =>
+        request.isNavigationRequest() && request.frame() === page.mainFrame()
+    )
+    await page.getByRole("button", { name: "Add to cart" }).click()
+
+    expect(new URL((await submitted).url()).search).toBe("")
+  })
+})

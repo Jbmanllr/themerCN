@@ -5,8 +5,8 @@ import {
   openToolbarPanel,
   themerToolbar,
   toolbarPanel,
-  hydrated,
 } from "./themer-ui"
+import { hydrated } from "./page"
 
 // The Playground sets no `layout`, so it opens the Workspace; the user
 // switches to Overlay from the Themer UI's header.

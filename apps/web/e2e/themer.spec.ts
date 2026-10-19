@@ -1,7 +1,8 @@
 import { expect, test, type Page } from "@playwright/test"
 
 import { nightjarPreset } from "../lib/brand/nightjar"
-import { hydrated, resolveColor, themerTrigger } from "./themer-ui"
+import { hydrated, resolveColor } from "./page"
+import { themerTrigger } from "./themer-ui"
 
 const pagePrimary = (page: Page) => resolveColor(page, "var(--primary)")
 const home = (page: Page) =>

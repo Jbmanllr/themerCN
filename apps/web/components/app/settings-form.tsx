@@ -6,6 +6,7 @@ import { Controller, useForm } from "react-hook-form"
 import * as z from "zod"
 
 import { formatPrice } from "@/lib/format"
+import { TextField } from "@/components/forms/text-field"
 import { emailAddress, focusOnMount } from "@/lib/forms"
 import { plans } from "@/lib/mock"
 import { Button } from "@workspace/ui/components/button"
@@ -13,7 +14,6 @@ import {
   Field,
   FieldContent,
   FieldDescription,
-  FieldError,
   FieldGroup,
   FieldLabel,
   FieldLegend,
@@ -21,7 +21,6 @@ import {
   FieldSet,
   FieldTitle,
 } from "@workspace/ui/components/field"
-import { Input } from "@workspace/ui/components/input"
 import {
   NativeSelect,
   NativeSelectOption,
@@ -31,7 +30,6 @@ import {
   RadioGroupItem,
 } from "@workspace/ui/components/radio-group"
 import { Switch } from "@workspace/ui/components/switch"
-import { Textarea } from "@workspace/ui/components/textarea"
 
 const GRINDS = ["Whole bean", "Espresso", "Filter", "French press"]
 
@@ -55,7 +53,7 @@ const NOTIFICATIONS = [
 
 const settingsSchema = z.object({
   name: z.string().trim().min(1, "Enter your name."),
-  email: emailAddress,
+  email: emailAddress(),
   address: z.string(),
   plan: z.string(),
   grind: z.string(),
@@ -109,71 +107,30 @@ export function SettingsForm() {
             How we address your box and your receipts.
           </FieldDescription>
           <FieldGroup className="grid gap-6 md:grid-cols-2">
-            <Controller
+            <TextField
+              control={form.control}
               name="name"
-              control={form.control}
-              render={({ field, fieldState }) => (
-                <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor="settings-name">Name</FieldLabel>
-                  <Input
-                    {...field}
-                    id="settings-name"
-                    autoComplete="name"
-                    aria-invalid={fieldState.invalid}
-                    aria-describedby={
-                      fieldState.invalid ? "settings-name-error" : undefined
-                    }
-                  />
-                  {fieldState.invalid && (
-                    <FieldError
-                      id="settings-name-error"
-                      errors={[fieldState.error]}
-                    />
-                  )}
-                </Field>
-              )}
+              id="settings-name"
+              label="Name"
+              autoComplete="name"
             />
-            <Controller
+            <TextField
+              control={form.control}
               name="email"
-              control={form.control}
-              render={({ field, fieldState }) => (
-                <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor="settings-email">Email</FieldLabel>
-                  <Input
-                    {...field}
-                    id="settings-email"
-                    type="email"
-                    autoComplete="email"
-                    aria-invalid={fieldState.invalid}
-                    aria-describedby={
-                      fieldState.invalid ? "settings-email-error" : undefined
-                    }
-                  />
-                  {fieldState.invalid && (
-                    <FieldError
-                      id="settings-email-error"
-                      errors={[fieldState.error]}
-                    />
-                  )}
-                </Field>
-              )}
+              id="settings-email"
+              label="Email"
+              type="email"
+              autoComplete="email"
             />
-            <Controller
-              name="address"
+            <TextField
               control={form.control}
-              render={({ field }) => (
-                <Field className="md:col-span-2">
-                  <FieldLabel htmlFor="settings-address">
-                    Delivery address
-                  </FieldLabel>
-                  <Textarea
-                    {...field}
-                    id="settings-address"
-                    autoComplete="street-address"
-                    rows={3}
-                  />
-                </Field>
-              )}
+              name="address"
+              id="settings-address"
+              label="Delivery address"
+              multiline
+              rows={3}
+              autoComplete="street-address"
+              className="md:col-span-2"
             />
           </FieldGroup>
         </FieldSet>

@@ -1,6 +1,7 @@
 import { expect, test, type Page } from "@playwright/test"
 
-import { openLayout, hydrated } from "./themer-ui"
+import { hydrated } from "./page"
+import { openLayout } from "./themer-ui"
 
 // Push: the Themer sidebar beside the real page, which it shifts aside by
 // the sidebar's width (expanded 320px, collapsed 48px). The Playground sets
@@ -90,6 +91,7 @@ test("Push shifts a right-to-left page on the left, where the sidebar is", async
   page,
 }) => {
   await page.goto("/")
+  await hydrated(page)
   await page.evaluate(() => {
     document.documentElement.dir = "rtl"
   })

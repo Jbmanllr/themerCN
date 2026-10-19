@@ -1,11 +1,7 @@
 import { expect, test, type Page } from "@playwright/test"
 
-import {
-  hydrated,
-  openToolbar,
-  themerToolbar,
-  themerTrigger,
-} from "./themer-ui"
+import { hydrated } from "./page"
+import { openToolbar, themerToolbar, themerTrigger } from "./themer-ui"
 
 // A contrast row's token button closes the Contrast checker and moves focus
 // to that token's colour control. The dialog animates out after the store
@@ -26,8 +22,18 @@ async function jumpToPrimary(page: Page) {
   const primary = page.getByLabel("Primary", { exact: true })
   await expect(contrastDialog(page)).toBeHidden()
   await expect(primary).toBeFocused()
-  // Past the exit animation: nothing pulled focus back afterwards.
-  await page.waitForTimeout(1_000)
+  // Once the dialog has unmounted and every finite animation (its exit, the
+  // highlight) has ended, nothing pulled focus back.
+  await expect(contrastDialog(page)).toHaveCount(0)
+  await page.waitForFunction(() =>
+    document
+      .getAnimations()
+      .every(
+        (animation) =>
+          animation.playState !== "running" ||
+          animation.effect?.getTiming().iterations === Infinity
+      )
+  )
   await expect(primary).toBeFocused()
 }
 

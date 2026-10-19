@@ -3,6 +3,8 @@ import { fileURLToPath } from "node:url"
 
 import { expect, test } from "@playwright/test"
 
+import { hydrated } from "./themer-ui"
+
 import { postCategories, posts } from "../lib/mock/blog"
 
 // The marketing and blog screens (#24): every route renders under the site
@@ -42,6 +44,7 @@ test("pricing switches the plans between monthly and yearly billing", async ({
   page,
 }) => {
   await page.goto("/pricing")
+  await hydrated(page)
   const nightShift = page.getByRole("article", { name: "Night Shift" })
   await expect(nightShift).toContainText("$32")
 
@@ -52,6 +55,7 @@ test("pricing switches the plans between monthly and yearly billing", async ({
 
 test("the contact form ends on a confirmation", async ({ page }) => {
   await page.goto("/contact")
+  await hydrated(page)
   await page.getByRole("button", { name: "Send message" }).click()
   await expect(page.getByLabel("Name")).toHaveAttribute("aria-invalid", "true")
 
@@ -73,6 +77,7 @@ test("a journal post opens from the index with its author and block body", async
   page,
 }) => {
   await page.goto("/blog")
+  await hydrated(page)
   await page
     .getByRole("link", { name: "How to dial in espresso" })
     .first()
@@ -99,6 +104,7 @@ test("a journal post opens from the index with its author and block body", async
 
 test("a journal category lists only its posts", async ({ page }) => {
   await page.goto("/blog")
+  await hydrated(page)
   await page
     .getByRole("navigation", { name: "Journal categories" })
     .getByRole("link", { name: "Origins" })

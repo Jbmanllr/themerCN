@@ -1,7 +1,9 @@
 import { expect, test, type Page } from "@playwright/test"
 
-// Resolves `var(--primary)` on the page to an rgb() string, whatever colour
-// syntax the Themer wrote the token in.
+// Reads `var(--primary)` as the computed colour string. Chrome serialises
+// hex and rgb() values as rgb(), so the hex the test types compares as
+// rgb(255, 0, 0); oklch() or lab() values keep their own syntax and are only
+// compared for inequality here.
 function pagePrimary(page: Page) {
   return page.evaluate(() => {
     const probe = document.createElement("div")

@@ -163,6 +163,12 @@ export interface EditorStoreActions {
    * after the Host Presets are registered.
    */
   refreshUntouchedPreset: () => void
+  /**
+   * Turn the Sidebar Sync preference (preferences store) on or off. Turning
+   * it on aligns the Theme in one undo entry, so the Theme is in sync
+   * whichever caller flips it; turning it off leaves the Theme as it is.
+   */
+  setSidebarColorSync: (enabled: boolean) => void
 }
 
 /**
@@ -203,7 +209,8 @@ export interface PreferencesState {
   themeOverrideEnabled: boolean
   /**
    * Sidebar colours follow their base twins (sidebar -> background, ...) in
-   * both modes while on; the sidebar inputs are disabled.
+   * both modes while on; the sidebar inputs are disabled. Set through the
+   * editor store's setSidebarColorSync, which aligns the Theme.
    */
   sidebarColorSync: boolean
   /** Last view of the Tailwind colour selector popover. */
@@ -224,7 +231,6 @@ export interface PreferencesActions {
   setSidebarCollapsed: (collapsed: boolean) => void
   setLayout: (layout: ThemerLayout) => void
   setThemeOverrideEnabled: (enabled: boolean) => void
-  setSidebarColorSync: (enabled: boolean) => void
   setColorSelectorTab: (tab: PreferencesState["colorSelectorTab"]) => void
   setSectionOpen: (id: string, open: boolean) => void
   getAvailableColorFormats: () => readonly PreferencesState["colorFormat"][]

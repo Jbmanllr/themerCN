@@ -8,6 +8,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import { EDITOR_STATE_VERSION, PREFERENCES_VERSION } from "./config/constants"
 import { defaultThemeState } from "./config/defaults"
+import { resolvePresetStyles } from "./config/presets"
 import type { ThemeStyles } from "./types"
 import { useEditorStore } from "./stores/editor-store"
 import { useThemerUIStore } from "./stores/themer-ui-store"
@@ -908,6 +909,51 @@ describe("Themer", () => {
       )
       expect(presetTriggerLabel()).toBe("Violet Bloom")
       expect(resetButton().disabled).toBe(true)
+    })
+
+    it("starts a fresh Theme in sync when the preference was saved on", async () => {
+      saveSidebarSync("sync-fresh")
+      await mount({ storageNamespace: "sync-fresh" })
+      await openThemer()
+
+      expect(sidebarsOnBase(useEditorStore.getState().themeState.styles)).toBe(
+        true
+      )
+      expect(rootVar("--sidebar")).toBe(rootVar("--background"))
+      expect(resetButton().disabled).toBe(true)
+    })
+
+    it("restores an edited Theme saved out of sync in sync", async () => {
+      saveSidebarSync("sync-restore")
+      // Saved by another tab with Sync off: the Preset, then an edit.
+      const presetStyles = resolvePresetStyles(UNSYNCED_PRESET)
+      const themeState = {
+        ...defaultThemeState,
+        preset: UNSYNCED_PRESET,
+        styles: {
+          light: { ...presetStyles.light, radius: "1.5rem" },
+          dark: { ...presetStyles.dark, radius: "1.5rem" },
+        },
+      }
+      localStorage.setItem(
+        "sync-restore:editor",
+        JSON.stringify({
+          state: {
+            themeState,
+            presetBaseline: { preset: UNSYNCED_PRESET, styles: presetStyles },
+          },
+          version: EDITOR_STATE_VERSION,
+        })
+      )
+      await mount({ storageNamespace: "sync-restore" })
+
+      expect(sidebarsOnBase(useEditorStore.getState().themeState.styles)).toBe(
+        true
+      )
+      expect(rootVar("--sidebar")).toBe(rootVar("--background"))
+      expect(useEditorStore.getState().themeState.styles.light.radius).toBe(
+        "1.5rem"
+      )
     })
 
     it("saves a Preset put on in sync with one storage write", async () => {

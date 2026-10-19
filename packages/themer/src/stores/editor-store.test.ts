@@ -261,6 +261,32 @@ describe("Sidebar Sync", () => {
     expect(themeState.styles.light["sidebar-primary"]).toBe("#222222")
   })
 
+  it("turns the preference on with the Theme aligned in one undo entry", () => {
+    usePreferencesStore.setState({ sidebarColorSync: false })
+    store.getState().applyThemePreset(PRESET)
+    vi.advanceTimersByTime(HISTORY_DEBOUNCE_MS)
+    const entries = store.getState().history.length
+
+    store.getState().setSidebarColorSync(true)
+
+    expect(usePreferencesStore.getState().sidebarColorSync).toBe(true)
+    expect(synced(store.getState().themeState)).toBe(true)
+    expect(store.getState().history).toHaveLength(entries + 1)
+    store.getState().undo()
+    expect(synced(store.getState().themeState)).toBe(true)
+  })
+
+  it("turns the preference off without touching the Theme", () => {
+    store.getState().applyThemePreset(PRESET)
+    const { themeState, history } = store.getState()
+
+    store.getState().setSidebarColorSync(false)
+
+    expect(usePreferencesStore.getState().sidebarColorSync).toBe(false)
+    expect(store.getState().themeState).toBe(themeState)
+    expect(store.getState().history).toBe(history)
+  })
+
   it("leaves the sidebar colours alone while the preference is off", () => {
     usePreferencesStore.setState({ sidebarColorSync: false })
     store.getState().applyThemePreset(PRESET)

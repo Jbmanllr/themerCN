@@ -587,12 +587,15 @@ recomputed from `themeCheckpoint`
 
 While `sidebarColorSync` is on, each sidebar colour equals its base twin in
 both modes: `applySidebarSync` ([sidebar-sync.ts](src/utils/sidebar-sync.ts))
-is pure; turning it on is one undo entry; editing a base colour writes its
-twin. The editor store holds the rule itself: every action that sets the
-Theme (set, apply/reset/adopt Preset, import, undo, redo,
-refresh-untouched-Preset) syncs it in the same commit, reading the preference
-from the preferences store, so each action applies and saves the Theme once,
-whatever is mounted. Undo and redo set the checkpoint to the synced Theme.
+is pure. The editor store holds the rule itself, whatever is mounted: every
+action that sets the Theme (set, apply/reset/adopt Preset, import, undo,
+redo, refresh-untouched-Preset) syncs it in the same commit, reading the
+preference from the preferences store, so each action applies and saves the
+Theme once; editing a base colour therefore writes its twin. The preference
+is set only through the editor store's `setSidebarColorSync`, which aligns
+the Theme in one undo entry when it turns on, and hydration restores the
+preferences first so the editor's `merge` syncs a restored (or fresh) Theme.
+Undo and redo set the checkpoint to the synced Theme.
 
 ### Contrast Checker
 

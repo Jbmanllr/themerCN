@@ -253,7 +253,7 @@ const sidebarLinks = [
 export function SidebarDemo() {
   return (
     <State label="Expanded, one item active" className="grid">
-      <SidebarProvider className="min-h-0">
+      <SidebarProvider className="min-h-0" keyboardShortcut={false}>
         <Sidebar collapsible="none" className="h-72 w-full rounded-2xl border">
           <SidebarContent>
             <SidebarGroup>

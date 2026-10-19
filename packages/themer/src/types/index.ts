@@ -195,7 +195,7 @@ export interface ThemerExtraColorGroup {
  * - `"overlay"`: the sidebar floats over the Host app's real page, which
  *   stays usable beside it.
  * - `"push"`: the sidebar sits beside the Host app's real page and shifts it
- *   aside (`margin-inline-start` on `<html>`, `--themer-inset-inline-start`).
+ *   aside (`margin-left` on `<html>`, `--themer-inset-left`).
  * - `"toolbar"`: no sidebar; every control sits in a bar at the top of the
  *   Host app's real page, each group of controls in its own popup.
  */

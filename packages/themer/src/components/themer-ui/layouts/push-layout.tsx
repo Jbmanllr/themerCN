@@ -7,17 +7,20 @@
 // by a margin on <html>.
 //
 // Contract:
-// - While open on desktop, <html> gets `margin-inline-start` and
-//   `--themer-inset-inline-start` set to the sidebar's width (expanded or
+// - While open on desktop, <html> gets `margin-left` and
+//   `--themer-inset-left` set to the sidebar's width (expanded or
 //   collapsed, from useThemerSidebarWidth) as inline styles. Like the
 //   sidebar, the page moves at once, without a transition. When the layout
 //   unmounts (close, a switch to another layout, the drawer below 1280 px,
 //   the Themer unmounted) the Host's own inline values of those two
 //   properties are put back as they were, priority included, and absent
 //   ones removed.
+// - The properties are physical, not logical: the sidebar is pinned to the
+//   left in every document direction, so the page shifts on the left in a
+//   right-to-left Host too.
 // - Accepted limits: the Host's `position: fixed` elements stay on the
 //   viewport unless they opt in with
-//   `left: var(--themer-inset-inline-start, 0)`; the viewport does not
+//   `left: var(--themer-inset-left, 0)`; the viewport does not
 //   shrink, so breakpoints and viewport units do not react.
 
 import * as React from "react"
@@ -26,10 +29,10 @@ import { InPlaceSidebarLayout } from "./in-place-sidebar-layout"
 import type { ThemerLayoutProps } from "./types"
 
 /** The variable fixed Host elements opt in with (README, "Push"). */
-const INSET_VARIABLE = "--themer-inset-inline-start"
+const INSET_VARIABLE = "--themer-inset-left"
 
 /**
- * Shifts the Host page aside by `width` (margin-inline-start on <html>) and
+ * Shifts the Host page aside by `width` (margin-left on <html>) and
  * exposes `width` as
  * INSET_VARIABLE, until the layout unmounts; then the Host's previous inline
  * values come back.
@@ -39,7 +42,7 @@ function usePageInset(width: string) {
     const style = document.documentElement.style
     const inset: Record<string, string> = {
       [INSET_VARIABLE]: width,
-      "margin-inline-start": width,
+      "margin-left": width,
     }
     const previous = Object.keys(inset).map((property) => ({
       property,

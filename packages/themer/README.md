@@ -347,13 +347,19 @@ panel in a popup beside the rail, which behaves like the Toolbar's. Below
 ### Push and your page
 
 The Themer never wraps your app, so Push moves your page with
-`margin-inline-start` on `<html>`, set to the sidebar's width (320 px
+`margin-left` on `<html>`, set to the sidebar's width (320 px
 expanded, 48 px collapsed). Like the sidebar, it moves at once, with no
 animation. The same width is exposed as the CSS variable
-`--themer-inset-inline-start` on `<html>`. The margin and the variable are
+`--themer-inset-left` on `<html>`. The margin and the variable are
 inline styles on `<html>`. When the Themer closes, switches to another layout, opens as the
 drawer, or unmounts, any inline values your app had set for them come back
 as they were, and the rest are removed.
+
+The Themer UI is laid out left-to-right in every Host direction, with its
+sidebar pinned to the left. That is why the margin and the variable are
+physical (left), not logical: in a right-to-left page (`<html dir="rtl">`)
+Push still shifts the page on the left, the side the sidebar covers. Host
+preview tabs keep your page's `dir`.
 
 Two limits, by design:
 
@@ -363,11 +369,11 @@ Two limits, by design:
 
   ```css
   .my-fixed-sidebar {
-    left: var(--themer-inset-inline-start, 0px);
+    left: var(--themer-inset-left, 0px);
   }
   ```
 
-  In Tailwind: `left-[var(--themer-inset-inline-start,0px)]`.
+  In Tailwind: `left-[var(--themer-inset-left,0px)]`.
 
 - **The viewport does not shrink**, so your breakpoints, media queries and
   viewport units (`100vw`, `w-screen`) do not react to Push. To see the Theme

@@ -1,4 +1,4 @@
-// The package's built-in default theme and the key lists derived for it. This
+// The package's built-in default theme and neutral HSL adjustment. This
 // is tweakcn's default; a Host's own brand reaches the editor as a Host
 // Preset (`<Themer presets>`, README "`<Themer>` props").
 //
@@ -6,10 +6,7 @@
 // resolvePresetStyles (presets.ts) merges every preset over, so each style
 // key is defined here and a preset may list only the keys it changes. A key
 // added to ThemeStyleProps needs a value in both objects.
-// COLOR_STYLE_KEYS lists the 32 shadcn colours and `shadow-color`; host extra
-// colours are not in it (extra-colors.ts).
 
-import { COMMON_STYLE_KEYS } from "../types/theme"
 import type {
   ThemeStyleProps,
   ThemeStyles,
@@ -180,49 +177,3 @@ export const defaultThemeState: ThemeEditorState = {
   preset: "default",
   hslAdjustments: defaultHSLAdjustments,
 }
-
-/**
- * Style keys shared by both modes (see COMMON_STYLE_KEYS in types/theme.ts,
- * the typed source). Kept as a plain string list because callers test
- * arbitrary keys with `includes`.
- */
-export const COMMON_STYLES: readonly string[] = COMMON_STYLE_KEYS
-
-/**
- * Color-only style keys (excludes non-color values)
- */
-export const COLOR_STYLE_KEYS = [
-  "background",
-  "foreground",
-  "card",
-  "card-foreground",
-  "popover",
-  "popover-foreground",
-  "primary",
-  "primary-foreground",
-  "secondary",
-  "secondary-foreground",
-  "muted",
-  "muted-foreground",
-  "accent",
-  "accent-foreground",
-  "destructive",
-  "destructive-foreground",
-  "border",
-  "input",
-  "ring",
-  "chart-1",
-  "chart-2",
-  "chart-3",
-  "chart-4",
-  "chart-5",
-  "sidebar",
-  "sidebar-foreground",
-  "sidebar-primary",
-  "sidebar-primary-foreground",
-  "sidebar-accent",
-  "sidebar-accent-foreground",
-  "sidebar-border",
-  "sidebar-ring",
-  "shadow-color",
-] as const

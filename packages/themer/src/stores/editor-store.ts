@@ -55,7 +55,7 @@ import type {
   ThemeStyles,
   ThemeStyleProps,
 } from "../types"
-import { COMMON_STYLE_KEYS } from "../types/theme"
+import { COMMON_STYLE_KEYS, THEME_FONT_KEYS } from "../types/theme"
 import { defaultThemeState, defaultHSLAdjustments } from "../config/defaults"
 import {
   getDefaultPresetId,
@@ -131,9 +131,9 @@ function fromPersisted({
 function copyStyles(styles: ThemeStyles): ThemeStyles {
   const dark = { ...styles.dark }
   // Typography is shared: old imports/presets may carry a different dark font.
-  for (const key of COMMON_STYLE_KEYS) {
+  for (const key of THEME_FONT_KEYS) {
     const value = styles.light[key]
-    if (key.startsWith("font-") && value !== undefined) dark[key] = value
+    if (value !== undefined) dark[key] = value
   }
   return { light: { ...styles.light }, dark }
 }

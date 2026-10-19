@@ -36,6 +36,11 @@ import { RESTORE_STYLE_ID } from "../config/constants"
 import { defaultLightStyles } from "../config/defaults"
 import { getExtraColorKeys } from "../config/extra-colors"
 import type { ThemeEditorState, ThemeMode } from "../types"
+import {
+  SHADOW_INPUT_KEYS,
+  THEME_FONT_KEYS,
+  THEME_SPACING_KEYS,
+} from "../types/theme"
 import { clearThemeFonts, setThemeFonts } from "./font-links"
 import { getThemeFontFamilies } from "./font-names"
 import { SHADOW_SCALE_KEYS, getShadowVariables } from "./shadows"
@@ -61,15 +66,7 @@ type ApplyThemeToDocumentOptions = ApplyThemeOptions & {
  * letter spacing). Read only by the fallback cleanup list; applying writes
  * every non-shadow key the theme holds.
  */
-const VARIABLE_KEYS = [
-  "font-sans",
-  "font-heading",
-  "font-serif",
-  "font-mono",
-  "radius",
-  "spacing",
-  "letter-spacing",
-] as const
+const VARIABLE_KEYS = [...THEME_FONT_KEYS, ...THEME_SPACING_KEYS] as const
 
 /** Tailwind shadow utilities the override sheet rewires, by variable name. */
 const SHADOW_VARIABLE_SET: ReadonlySet<string> = new Set(SHADOW_SCALE_KEYS)
@@ -85,16 +82,6 @@ const TRACKING_OFFSETS = [
 ] as const
 
 export const THEMER_OVERRIDES_ATTRIBUTE = "data-themer-overrides"
-
-/** The six inputs tweakcn's shadow map is computed from. */
-const SHADOW_INPUT_KEYS = [
-  "shadow-color",
-  "shadow-opacity",
-  "shadow-blur",
-  "shadow-spread",
-  "shadow-offset-x",
-  "shadow-offset-y",
-] as const
 
 /**
  * Variant classes the sheet always covers. The sheet's `!important` would

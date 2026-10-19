@@ -1,4 +1,4 @@
-// Proves the colour list's search and lookup: a blank query keeps every
+// Proves the colour list: it holds every built-in colour once; a blank query keeps every
 // group, a query matches a label, key or group title case-insensitively, a
 // token's group and section id are found, and host extra groups follow the
 // built-in ones without built-in keys, are searchable, and keep one identity
@@ -6,6 +6,7 @@
 import { afterEach, describe, expect, it } from "vitest"
 
 import { configureExtraColors, getExtraColorKeys } from "../config/extra-colors"
+import { THEME_COLOR_KEYS } from "../types/theme"
 
 import {
   COLOR_LIST_GROUPS,
@@ -20,6 +21,14 @@ const keys = (query: string) =>
   filterColorGroups(query).flatMap((group) =>
     group.colors.map((color) => color.key)
   )
+
+describe("COLOR_LIST_GROUPS", () => {
+  it("lists every built-in colour exactly once, in the colour family's order", () => {
+    expect(
+      COLOR_LIST_GROUPS.flatMap((group) => group.colors.map((c) => c.key))
+    ).toEqual(THEME_COLOR_KEYS)
+  })
+})
 
 describe("filterColorGroups", () => {
   it("returns every group for an empty or blank query", () => {

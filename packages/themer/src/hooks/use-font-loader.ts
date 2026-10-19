@@ -3,7 +3,7 @@
 // Hooks that hold Google font families in the Host app's document while a component
 // shows them, and report whether each arrived. A hold goes through
 // acquireGoogleFont (the reference-counted link registry in
-// utils/font-loader.ts); arrival is judged by the 400 weight within
+// utils/font-links.ts); arrival is judged by the 400 weight within
 // LOAD_TIMEOUT_MS.
 //
 // Contract: a failed or timed-out family is reported once and never retried
@@ -17,11 +17,8 @@
 // families. They are exported through the package root.
 
 import { useState, useEffect, useCallback } from "react"
-import {
-  acquireGoogleFont,
-  extractGoogleFontFamily,
-  waitForFont,
-} from "../utils/font-loader"
+import { acquireGoogleFont, waitForFont } from "../utils/font-links"
+import { extractGoogleFontFamily } from "../utils/font-names"
 
 // Hoisted constant to avoid recreation on each render
 const DEFAULT_WEIGHTS = [400, 500, 600, 700]

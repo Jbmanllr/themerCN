@@ -186,10 +186,19 @@ export interface HSLAdjustments {
 export type PartialThemeStyleProps = Partial<ThemeStyleProps> & ExtraColorValues
 
 /**
- * Partial theme styles for presets
+ * A Preset's styles (`ThemePreset.styles`): per mode, only the tokens the
+ * Preset changes. The Themer fills the rest from the built-in defaults.
  */
 export interface PartialThemeStyles {
+  /**
+   * Light-mode tokens the Preset sets, keyed by token name without `--`
+   * (`primary`, `radius`, `font-sans`, or a Host extra colour key).
+   */
   light: PartialThemeStyleProps
+  /**
+   * Dark-mode tokens the Preset sets. A token left out here takes its value
+   * from `light`, then from the built-in dark defaults.
+   */
   dark: PartialThemeStyleProps
 }
 

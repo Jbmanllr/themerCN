@@ -152,13 +152,84 @@ for (const colorScheme of ["light", "dark"] as const) {
   })
 }
 
-test("the login form asks for the missing fields instead of submitting", async ({
+// Each auth form, submitted empty: every field shows its error, is marked
+// invalid with the error as its description, and focus moves to the first.
+for (const { path, submit, fields } of [
+  {
+    path: "/login",
+    submit: "Log in",
+    fields: [
+      { label: "Email", error: "Enter your email address." },
+      { label: "Password", error: "Enter your password." },
+    ],
+  },
+  {
+    path: "/signup",
+    submit: "Create account",
+    fields: [
+      { label: "Name", error: "Enter your name." },
+      { label: "Email", error: "Enter your email address." },
+      { label: "Password", error: "Choose a password." },
+    ],
+  },
+]) {
+  test(`the ${path} form flags every empty field and focuses the first`, async ({
+    page,
+  }) => {
+    await page.goto(path)
+    await hydrated(page)
+    await page.getByRole("button", { name: submit }).click()
+
+    await expect(page).toHaveURL(path)
+    for (const { label, error } of fields) {
+      const input = page.getByLabel(label, { exact: true })
+      await expect(input).toHaveAttribute("aria-invalid", "true")
+      await expect(input).toHaveAccessibleDescription(error)
+      await expect(
+        page.getByRole("alert").filter({ hasText: error })
+      ).toBeVisible()
+    }
+    await expect(
+      page.getByLabel(fields[0]!.label, { exact: true })
+    ).toBeFocused()
+  })
+}
+
+test("the login form rejects an email address without an @", async ({
   page,
 }) => {
   await page.goto("/login")
   await hydrated(page)
+  await page.getByLabel("Email").fill("ada")
+  await page.getByLabel("Password").fill("whatever")
   await page.getByRole("button", { name: "Log in" }).click()
 
   await expect(page).toHaveURL("/login")
-  await expect(page.getByText("Enter your email address.")).toBeVisible()
+  await expect(page.getByLabel("Email")).toHaveAccessibleDescription(
+    "Enter a valid email address."
+  )
+  await expect(page.getByLabel("Email")).toBeFocused()
+})
+
+test.describe("before hydration", () => {
+  // No JavaScript: the server HTML, as a visitor on a slow connection submits
+  // it before React attaches its handlers.
+  test.use({ javaScriptEnabled: false })
+
+  test("a login submit never puts the credentials in the URL", async ({
+    page,
+  }) => {
+    await page.goto("/login")
+    await page.getByLabel("Email").fill("ada@example.com")
+    await page.getByLabel("Password").fill("whatever")
+    const submitted = page.waitForRequest(
+      (request) =>
+        request.isNavigationRequest() && request.frame() === page.mainFrame()
+    )
+    await page.getByRole("button", { name: "Log in" }).click()
+
+    expect(new URL((await submitted).url()).search).toBe("")
+    await page.waitForLoadState()
+    expect(new URL(page.url()).search).toBe("")
+  })
 })

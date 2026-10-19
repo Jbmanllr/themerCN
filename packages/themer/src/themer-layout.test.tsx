@@ -652,9 +652,8 @@ describe("Themer layout", () => {
 
   describe("Push", () => {
     const html = () => document.documentElement
-    const inset = () =>
-      html().style.getPropertyValue("--themer-inset-inline-start")
-    const margin = () => html().style.getPropertyValue("margin-inline-start")
+    const inset = () => html().style.getPropertyValue("--themer-inset-left")
+    const margin = () => html().style.getPropertyValue("margin-left")
 
     it("shifts the Host page aside by the expanded sidebar's width", async () => {
       await mount({ layout: "push" })
@@ -716,7 +715,7 @@ describe("Themer layout", () => {
 
     it("puts back the Host's own inline styles on <html> when it gives the place back", async () => {
       html().style.setProperty("transition", "opacity 300ms ease")
-      html().style.setProperty("margin-inline-start", "4px", "important")
+      html().style.setProperty("margin-left", "4px", "important")
       await mount({ layout: "push" })
       await open()
       const toggle = () => query('[data-slot="sidebar-trigger"]')
@@ -730,9 +729,7 @@ describe("Themer layout", () => {
         "opacity 300ms ease"
       )
       expect(margin()).toBe("4px")
-      expect(html().style.getPropertyPriority("margin-inline-start")).toBe(
-        "important"
-      )
+      expect(html().style.getPropertyPriority("margin-left")).toBe("important")
       expect(inset()).toBe("")
     })
 

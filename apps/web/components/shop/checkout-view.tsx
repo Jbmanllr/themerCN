@@ -207,11 +207,7 @@ export function CheckoutView() {
               />
             ))}
           </ul>
-          <OrderSummary
-            summary={summary}
-            shippingLabel={shippingLabel}
-            testIdPrefix="checkout"
-          >
+          <OrderSummary summary={summary} shippingLabel={shippingLabel}>
             <Button type="submit" size="lg" className="w-full">
               Place order
             </Button>
@@ -258,11 +254,7 @@ function Confirmation({ order }: { order: PlacedOrder }) {
             />
           ))}
         </ul>
-        <OrderSummary
-          summary={order.summary}
-          shippingLabel={shippingLabel}
-          testIdPrefix="order"
-        />
+        <OrderSummary summary={order.summary} shippingLabel={shippingLabel} />
       </div>
       <div className="flex flex-wrap justify-center gap-3">
         <Link href="/shop" className={buttonVariants()}>

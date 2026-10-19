@@ -1,10 +1,13 @@
 import { expect, test } from "@playwright/test"
 
+import { hydrated } from "./themer-ui"
+
 // The auth screens and the subscriber app (#26). Everything is mock data, so
 // the assertions name the fixed values from lib/mock.
 
 test("logging in (fake) opens the dashboard", async ({ page }) => {
   await page.goto("/login")
+  await hydrated(page)
   await page.getByLabel("Email").fill("ada@example.com")
   await page.getByLabel("Password").fill("whatever")
   await page.getByRole("button", { name: "Log in" }).click()
@@ -17,6 +20,7 @@ test("logging in (fake) opens the dashboard", async ({ page }) => {
 
 test("signing up (fake) opens the dashboard", async ({ page }) => {
   await page.goto("/signup")
+  await hydrated(page)
   await page.getByLabel("Name").fill("Ada Brennan")
   await page.getByLabel("Email").fill("ada@example.com")
   await page.getByLabel("Password").fill("whatever")
@@ -50,6 +54,7 @@ test("a saved chat thread opens from the sidebar with its messages", async ({
   page,
 }) => {
   await page.goto("/app")
+  await hydrated(page)
   await page.getByRole("link", { name: "Espresso too sour" }).click()
 
   await expect(page).toHaveURL("/app/chat/espresso-too-sour")
@@ -63,6 +68,7 @@ test("the Brew Assistant streams the scripted reply that matches", async ({
   page,
 }) => {
   await page.goto("/app/chat")
+  await hydrated(page)
   const log = page.getByRole("log", { name: "New chat" })
   const composer = page.getByLabel("Message the Brew Assistant")
   await composer.fill("What ratio should I use for my V60?")
@@ -80,6 +86,7 @@ test("the Brew Assistant streams the scripted reply that matches", async ({
 
 test("the Brew Assistant falls back when nothing matches", async ({ page }) => {
   await page.goto("/app/chat/v60-ratios")
+  await hydrated(page)
   const composer = page.getByLabel("Message the Brew Assistant")
   await composer.fill("Tell me a joke")
   await page.getByRole("button", { name: "Send" }).click()
@@ -96,6 +103,7 @@ test("an unknown chat thread is a 404", async ({ page }) => {
 
 test("settings save (fake) and confirm what changed", async ({ page }) => {
   await page.goto("/app/settings")
+  await hydrated(page)
   await expect(page.getByLabel("Name")).toHaveValue("Ada Brennan")
   await expect(page.getByRole("radio", { name: /Night Shift/ })).toBeChecked()
 
@@ -112,6 +120,7 @@ test("settings ask for a name instead of saving an empty one", async ({
   page,
 }) => {
   await page.goto("/app/settings")
+  await hydrated(page)
   await page.getByLabel("Name").fill("")
   await page.getByRole("button", { name: "Save changes" }).click()
 
@@ -147,6 +156,7 @@ test("the login form asks for the missing fields instead of submitting", async (
   page,
 }) => {
   await page.goto("/login")
+  await hydrated(page)
   await page.getByRole("button", { name: "Log in" }).click()
 
   await expect(page).toHaveURL("/login")

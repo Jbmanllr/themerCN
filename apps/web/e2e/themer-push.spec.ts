@@ -1,6 +1,6 @@
 import { expect, test, type Page } from "@playwright/test"
 
-import { openLayout } from "./themer-ui"
+import { openLayout, hydrated } from "./themer-ui"
 
 // Push: the Themer sidebar beside the real page, which it shifts aside by
 // the sidebar's width (expanded 320px, collapsed 48px). The Playground sets
@@ -31,6 +31,7 @@ test("Push shifts the page aside and follows the sidebar as it collapses", async
   page,
 }) => {
   await page.goto("/")
+  await hydrated(page)
   await openLayout(page, "Push")
 
   await expect(page.getByTestId("themer-preview")).toHaveCount(0)
@@ -50,6 +51,7 @@ test("Push gives the page its place back on close and on a layout switch", async
   page,
 }) => {
   await page.goto("/")
+  await hydrated(page)
   await openLayout(page, "Push")
   await expect.poll(() => hostLeft(page, "main")).toBe(320)
 
@@ -73,6 +75,7 @@ test("a fixed Host element that opts in follows the sidebar", async ({
   // The /app shell's sidebar is `position: fixed`; it reads
   // --themer-inset-inline-start for its left edge.
   await page.goto("/app")
+  await hydrated(page)
   await openLayout(page, "Push")
 
   await expect

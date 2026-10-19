@@ -18,9 +18,7 @@ export function CartButton() {
       className={cn(buttonVariants({ variant: "outline" }), "gap-2")}
     >
       <ShoppingBagIcon aria-hidden />
-      <span className="tabular-nums" data-testid="cart-count">
-        {count}
-      </span>
+      <span className="tabular-nums">{count}</span>
     </Link>
   )
 }

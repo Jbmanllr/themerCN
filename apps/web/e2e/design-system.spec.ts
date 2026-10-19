@@ -2,25 +2,7 @@ import { expect, test, type Page } from "@playwright/test"
 
 import { nightjarPreset } from "../lib/brand/nightjar"
 import { uiComponents } from "../lib/design-system"
-
-// Resolves a colour to sRGB `rgb(r, g, b)` through a canvas pixel, so values
-// compare whatever syntax the CSS build wrote them in (see themer.spec.ts).
-function resolveColor(page: Page, color: string) {
-  return page.evaluate((value) => {
-    const probe = document.createElement("div")
-    probe.style.color = value
-    document.body.append(probe)
-    const computed = getComputedStyle(probe).color
-    probe.remove()
-    const canvas = document.createElement("canvas")
-    canvas.width = canvas.height = 1
-    const context = canvas.getContext("2d")!
-    context.fillStyle = computed
-    context.fillRect(0, 0, 1, 1)
-    const [r, g, b] = context.getImageData(0, 0, 1, 1).data
-    return `rgb(${r}, ${g}, ${b})`
-  }, color)
-}
+import { resolveColor } from "./themer-ui"
 
 const panel = (page: Page, mode: "Light" | "Dark") =>
   page.getByRole("region", { name: mode, exact: true })

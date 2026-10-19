@@ -130,8 +130,8 @@ export const WCAG_CONTRAST = {
 
 /**
  * Google Fonts URL and starter family names. No reader: the font picker's
- * lists and URLs come from utils/font-loader.ts (GOOGLE_FONTS_CSS_URL,
- * FALLBACK_FONTS) and the catalog route.
+ * lists and URLs come from utils/font-links.ts (GOOGLE_FONTS_CSS_URL),
+ * utils/font-catalog-data.ts (FALLBACK_FONTS) and the catalog route.
  */
 export const GOOGLE_FONTS = {
   apiUrl: "https://fonts.googleapis.com/css2",

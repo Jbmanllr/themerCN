@@ -31,7 +31,7 @@ import type {
 import { colorFormatter } from "./color-converter"
 import { SHADOW_SCALE_KEYS, getShadowMap } from "./shadows"
 import { COLOR_STYLE_KEYS, defaultThemeState } from "../config/defaults"
-import { extractFontFamily, isLocalFontFamily } from "./font-loader"
+import { extractFontFamily, isLocalFontFamily } from "./font-names"
 
 /** The theme colours a mode block and `@theme inline` export, in order. */
 const EXPORT_COLOR_KEYS = COLOR_STYLE_KEYS.filter(

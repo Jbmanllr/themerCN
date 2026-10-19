@@ -264,8 +264,9 @@ GET <endpoint>?q=<search>&limit=<n>&offset=<n>[&category=<category>]
 ```
 
 `createFontCatalogRoute` implements it: with `googleFontsApiKey`, the Google
-Fonts Developer API list (cached a day); without one, Google's public catalog
-(held in memory a day); if Google fails, the bundled list. It clamps `limit` to
+Fonts Developer API list; without one, Google's public catalog. Either is held
+in memory a day. If Google fails or takes over 5 seconds, the bundled list
+answers, and keeps answering for 60 seconds before Google is asked again. It clamps `limit` to
 1–100 (default 50) and `offset` to 0 or more. Any endpoint that answers this
 contract works, in any framework.
 

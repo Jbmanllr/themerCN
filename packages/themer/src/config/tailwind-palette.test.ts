@@ -7,12 +7,15 @@ import * as culori from "culori"
 import { describe, expect, it } from "vitest"
 
 import {
-  colorFamilies,
   filterTailwindPaletteEntries,
   getTailwindPaletteEntries,
-  shades,
   tailwindColors,
 } from "./tailwind-palette"
+
+const colorFamilies = Object.keys(tailwindColors) as Array<
+  keyof typeof tailwindColors
+>
+const shades = [50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 950] as const
 
 describe("tailwind palette values", () => {
   it("holds v4's red-500 (oklch, #fb2c36), not v3's #ef4444", () => {

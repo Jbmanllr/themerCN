@@ -305,20 +305,6 @@ export const tailwindColors = {
   },
 } as const
 
-/**
- * Color family names
- */
-export const colorFamilies = Object.keys(
-  tailwindColors
-) as (keyof typeof tailwindColors)[]
-
-/**
- * Shade values
- */
-export const shades = [
-  50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 950,
-] as const
-
 export const tailwindSpecialColors = {
   white: {
     DEFAULT: "#ffffff",

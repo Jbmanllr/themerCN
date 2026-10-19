@@ -60,11 +60,7 @@ export function CartView() {
           })}
         </ul>
 
-        <OrderSummary
-          summary={summary}
-          shippingLabel="Standard shipping"
-          testIdPrefix="cart"
-        >
+        <OrderSummary summary={summary} shippingLabel="Standard shipping">
           <div className="flex flex-col gap-2">
             <Progress
               value={Math.min(

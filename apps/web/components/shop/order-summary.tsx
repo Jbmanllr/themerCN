@@ -8,13 +8,10 @@ import { Separator } from "@workspace/ui/components/separator"
 export function OrderSummary({
   summary,
   shippingLabel,
-  testIdPrefix,
   children,
 }: {
   summary: CartSummary
   shippingLabel: string
-  /** `cart` → `cart-subtotal`, `cart-total`, for the e2e journey. */
-  testIdPrefix: string
   children?: ReactNode
 }) {
   return (
@@ -24,9 +21,7 @@ export function OrderSummary({
           <dt className="text-muted-foreground">
             Subtotal ({summary.items} {summary.items === 1 ? "item" : "items"})
           </dt>
-          <dd className="tabular-nums" data-testid={`${testIdPrefix}-subtotal`}>
-            {formatPrice(summary.subtotal)}
-          </dd>
+          <dd className="tabular-nums">{formatPrice(summary.subtotal)}</dd>
         </div>
         <div className="flex justify-between gap-4">
           <dt className="text-muted-foreground">{shippingLabel}</dt>
@@ -37,10 +32,7 @@ export function OrderSummary({
         <Separator />
         <div className="flex items-baseline justify-between gap-4">
           <dt className="font-medium">Total</dt>
-          <dd
-            className="font-heading text-2xl tabular-nums"
-            data-testid={`${testIdPrefix}-total`}
-          >
+          <dd className="font-heading text-2xl tabular-nums">
             {formatPrice(summary.total)}
           </dd>
         </div>

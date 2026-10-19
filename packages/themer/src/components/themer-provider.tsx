@@ -53,7 +53,7 @@ import { isProduction } from "../utils/is-production"
 const ThemerContext = React.createContext<ThemerContextValue | null>(null)
 
 export function useThemerContext() {
-  const context = React.useContext(ThemerContext)
+  const context = React.use(ThemerContext)
   if (!context) {
     throw new Error("useThemerContext must be used within a ThemerProvider")
   }
@@ -61,7 +61,7 @@ export function useThemerContext() {
 }
 
 export function useOptionalThemerContext() {
-  return React.useContext(ThemerContext)
+  return React.use(ThemerContext)
 }
 
 interface ThemerProviderProps {
@@ -231,9 +231,9 @@ export function ThemerProvider({
   )
 
   return (
-    <ThemerContext.Provider value={contextValue}>
+    <ThemerContext value={contextValue}>
       <DynamicFontLoader />
       {children}
-    </ThemerContext.Provider>
+    </ThemerContext>
   )
 }

@@ -74,7 +74,7 @@ export function ControlSection({
   )
 
   return (
-    <SectionContext.Provider value={contextValue}>
+    <SectionContext value={contextValue}>
       <Collapsible
         open={isOpen}
         onOpenChange={setIsExpanded}
@@ -109,6 +109,6 @@ export function ControlSection({
           <div className="border-t bg-background p-3">{children}</div>
         </CollapsibleContent>
       </Collapsible>
-    </SectionContext.Provider>
+    </SectionContext>
   )
 }

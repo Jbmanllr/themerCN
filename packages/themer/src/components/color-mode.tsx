@@ -87,15 +87,15 @@ export function ColorModeProvider({
   const value = React.useMemo(() => ({ mode, setMode }), [mode, setMode])
 
   return (
-    <ColorModeContext.Provider value={value}>
+    <ColorModeContext value={value}>
       {children}
-    </ColorModeContext.Provider>
+    </ColorModeContext>
   )
 }
 
 /** The current light/dark mode and the function that switches it. */
 export function useColorMode(): ColorModeValue {
-  const context = React.useContext(ColorModeContext)
+  const context = React.use(ColorModeContext)
   const rootClassMode = useRootClassMode()
   return context ?? { mode: rootClassMode, setMode: setRootClassMode }
 }

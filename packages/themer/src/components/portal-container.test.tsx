@@ -214,9 +214,9 @@ describe("portalled @workspace/ui components", () => {
       document.body.append(container)
 
       await render(
-        <PortalContainerContext.Provider value={container}>
+        <PortalContainerContext value={container}>
           <Popup />
-        </PortalContainerContext.Provider>
+        </PortalContainerContext>
       )
 
       expect(container.contains(popup())).toBe(true)

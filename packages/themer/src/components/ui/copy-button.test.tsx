@@ -1,15 +1,13 @@
 // @vitest-environment happy-dom
 
 // A copy button names itself for assistive technology, tells it when the copy
-// happened, and never acts on a copy that did not reach the clipboard. A
+// happened (its label, and a "Copied!" tooltip for sighted users), and never
+// acts on a copy that did not reach the clipboard. A
 // caller's own name ("Copy Primary") labels the idle button; the copied state
 // still replaces it, which a name set before the spread used to lose.
 import { act } from "react"
 import { createRoot, type Root } from "react-dom/client"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
-
-const toast = vi.hoisted(() => ({ success: vi.fn(), error: vi.fn() }))
-vi.mock("sonner", () => ({ toast }))
 
 import { CopyButton, type CopyButtonProps } from "./copy-button"
 
@@ -39,6 +37,7 @@ async function mount(
 }
 
 const button = () => container.querySelector("button")!
+const tooltip = () => document.querySelector('[data-slot="tooltip-content"]')
 
 async function press() {
   await act(async () => {
@@ -52,8 +51,6 @@ beforeEach(() => {
     configurable: true,
     value: { writeText },
   })
-  toast.success.mockReset()
-  toast.error.mockReset()
 })
 
 afterEach(async () => {
@@ -64,7 +61,7 @@ afterEach(async () => {
 
 describe("CopyButton", () => {
   it("copies its text, says so, and does not trigger the row around it", async () => {
-    const parentClick = await mount({ showFeedbackTooltip: false })
+    const parentClick = await mount({})
     expect(button().getAttribute("aria-label")).toBe("Copy to clipboard")
 
     await press()
@@ -75,7 +72,7 @@ describe("CopyButton", () => {
   })
 
   it("lets a caller's label name the idle button, then reports the copy over it", async () => {
-    await mount({ "aria-label": "Copy Primary", showFeedbackTooltip: false })
+    await mount({ "aria-label": "Copy Primary" })
     expect(button().getAttribute("aria-label")).toBe("Copy Primary")
 
     await press()
@@ -84,7 +81,7 @@ describe("CopyButton", () => {
 
   it("runs the caller's click only after a successful copy", async () => {
     const onClick = vi.fn()
-    await mount({ onClick, showFeedbackTooltip: false })
+    await mount({ onClick })
     await press()
     expect(onClick).toHaveBeenCalledOnce()
 
@@ -94,31 +91,18 @@ describe("CopyButton", () => {
     expect(onClick).not.toHaveBeenCalled()
   })
 
-  it("toasts the outcome only when asked to", async () => {
-    await mount({ showFeedbackTooltip: false })
-    await press()
-    expect(toast.success).not.toHaveBeenCalled()
-    await act(async () => root?.unmount())
-    container.remove()
+  it("reports a copy in a tooltip, and shows none before", async () => {
+    await mount({})
+    expect(tooltip()).toBeNull()
 
-    await mount({
-      showFeedbackTooltip: false,
-      showFeedbackToast: true,
-      toastMessage: "Colour copied",
-    })
     await press()
-    expect(toast.success).toHaveBeenCalledExactlyOnceWith("Colour copied")
 
-    writeText.mockRejectedValue(new DOMException("denied", "NotAllowedError"))
-    await press()
-    expect(toast.error).toHaveBeenCalledExactlyOnceWith(
-      "Failed to copy to clipboard"
-    )
+    await vi.waitFor(() => expect(tooltip()?.textContent).toBe("Copied!"))
   })
 
   it("stays idle when the clipboard refuses", async () => {
     writeText.mockRejectedValue(new DOMException("denied", "NotAllowedError"))
-    await mount({ showFeedbackTooltip: false })
+    await mount({})
     await press()
     expect(button().getAttribute("aria-label")).toBe("Copy to clipboard")
     expect(button().textContent).toBe("Copy")

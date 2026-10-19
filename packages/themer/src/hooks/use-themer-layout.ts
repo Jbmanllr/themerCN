@@ -7,7 +7,9 @@
 // the inspector belongs to the layout it was turned on in:
 // - useSetThemerLayout, the user's switch, turns it off in the same action;
 // - useInspectorMode derives "active" during render, so a Host-driven switch
-//   (a new `layout` prop) leaves it inactive without binding its listeners.
+//   (a new `layout` prop) leaves it inactive without binding its listeners;
+//   ThemerUI clears it as the old layout unmounts, so a switch back keeps it
+//   off.
 
 import { useCallback } from "react"
 import { usePreferencesStore } from "../stores/preferences-store"

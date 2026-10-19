@@ -840,6 +840,25 @@ describe("Themer layout", () => {
       expect(card()).toBeNull()
     })
 
+    it("stays off when the Host switches layout away and back", async () => {
+      await mount({ layout: "overlay" })
+      await open()
+      await click(inspectorToggle())
+      await act(async () =>
+        root?.render(<Themer storageNamespace={namespace} layout="push" />)
+      )
+      const bound = watchCaptureListeners()
+
+      await act(async () =>
+        root?.render(<Themer storageNamespace={namespace} layout="overlay" />)
+      )
+
+      expect(pressed(inspectorToggle())).toBe("false")
+      expect(bound).toEqual([])
+      await pointer("mousemove", pageButton)
+      expect(card()).toBeNull()
+    })
+
     it("turns off when the Themer UI closes", async () => {
       await mount({ layout: "overlay" })
       await open()

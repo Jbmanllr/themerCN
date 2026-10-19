@@ -181,7 +181,8 @@ the Themer's portal beside the Host tree and never wrap it.
   `useInspectorMode` (hooks/use-themer-layout.ts) derives "active" from it
   during render. The user's switch (`useSetThemerLayout`) turns it off in
   the same action, and a Host-driven switch leaves it inactive, so no
-  listener binds in between.
+  listener binds in between; `ThemerUI` then clears it as the old layout
+  unmounts, so switching back does not turn it on again.
 
 ### Decision: a usable collapsed rail, and instant collapse
 

@@ -9,7 +9,7 @@
 //   dialog. The inspector is kept with the Themer layout it was turned on in
 //   (useInspectorMode derives whether it is active): a switch made in the UI
 //   turns it off (useSetThemerLayout), and a Host-driven switch leaves it
-//   inactive. The colour focus store watches `isOpen` to reset its own state.
+//   inactive, then ThemerUI clears it as the old layout unmounts. The colour focus store watches `isOpen` to reset its own state.
 // - `dialog` is the only open-dialog state. Menus and the action bar call
 //   openDialog; ThemerUI renders the dialogs once (actions/
 //   themer-dialogs.tsx), so a dialog outlives the surface that opened it.

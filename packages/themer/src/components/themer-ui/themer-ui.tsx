@@ -15,13 +15,13 @@
 //   exception: each layout inspects its own surface (Preview tabs or the
 //   Host page), so a switch turns it off, as closing does: the switch action
 //   clears it, and a Host-driven switch leaves it inactive
-//   (hooks/use-themer-layout.ts).
+//   (hooks/use-themer-layout.ts), then clears it as the old layout leaves.
 // - The action dialogs render here, once, beside the layout (ThemerDialogs):
 //   a dialog survives the surface that opened it, and a layout switch.
 //
 // See: packages/themer/ARCHITECTURE.md ("Themer layouts").
 
-import type { ComponentType } from "react"
+import { useLayoutEffect, type ComponentType } from "react"
 import { useThemerUIStore } from "../../stores/themer-ui-store"
 import { useThemerContext } from "../../hooks/use-themer-context"
 import { useIsMobile } from "../../hooks/use-is-mobile"
@@ -68,6 +68,18 @@ export function ThemerUI() {
     getActive: getFullscreen,
     setActive: setFullscreen,
   })
+
+  // A Host-driven switch has no event to turn the inspector off in, and the
+  // derived check alone would turn it back on when the Host switches back.
+  // So the layout that leaves (unmounts) drops an inspector it owned; it is
+  // already inactive by then, so no listener binds in between.
+  useLayoutEffect(() => {
+    if (!isOpen || isMobile) return undefined
+    return () => {
+      const { inspectorLayout, turnOffInspector } = useThemerUIStore.getState()
+      if (inspectorLayout === layout) turnOffInspector()
+    }
+  }, [isOpen, isMobile, layout])
 
   if (!isOpen) {
     return null

@@ -96,6 +96,36 @@ test("the Brew Assistant falls back when nothing matches", async ({ page }) => {
   )
 })
 
+test("the top bar names the current screen and the sidebar marks it", async ({
+  page,
+}) => {
+  const sections = ["Dashboard", "Brew Assistant", "Settings"]
+  for (const [path, title, active] of <[string, string, string[]][]>[
+    ["/app", "Dashboard", ["Dashboard"]],
+    ["/app/chat", "Brew Assistant", ["Brew Assistant"]],
+    [
+      "/app/chat/espresso-too-sour",
+      "Brew Assistant",
+      ["Brew Assistant", "Espresso too sour"],
+    ],
+    ["/app/settings", "Settings", ["Settings"]],
+  ]) {
+    await page.goto(path)
+    await hydrated(page)
+    await expect(
+      page.getByRole("heading", { level: 1, name: title, exact: true })
+    ).toBeVisible()
+    for (const name of [...sections, "Espresso too sour"]) {
+      const link = page.getByRole("link", { name, exact: true })
+      if (active.includes(name)) {
+        await expect(link).toHaveAttribute("data-active")
+      } else {
+        await expect(link).not.toHaveAttribute("data-active")
+      }
+    }
+  }
+})
+
 test("an unknown chat thread is a 404", async ({ page }) => {
   const response = await page.goto("/app/chat/no-such-thread")
   expect(response?.status()).toBe(404)

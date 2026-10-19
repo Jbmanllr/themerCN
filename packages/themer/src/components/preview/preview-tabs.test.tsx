@@ -34,7 +34,7 @@ vi.mock("./builtin-tabs", () => ({
     },
   ],
 }))
-vi.mock("../themer-provider", () => ({
+vi.mock("../../hooks/use-themer-context", () => ({
   useThemerContext: () => ({ config: {} }),
 }))
 

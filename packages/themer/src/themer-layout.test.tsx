@@ -155,6 +155,22 @@ describe("Themer layout", () => {
     expect(preview()).toBeNull()
   })
 
+  it("names itself Themer and its switcher Themer layout, as the glossary does", async () => {
+    await mount()
+    expect(
+      query('[data-testid="themer-trigger"]')?.getAttribute("aria-label")
+    ).toBe("Open Themer")
+    await open()
+
+    expect(sidebar()?.textContent).toContain("Themer")
+    expect(sidebar()?.textContent).not.toContain("Theme Editor")
+    expect(query('button[aria-label="Close Themer"]')).not.toBeNull()
+    await click(layoutSwitcher())
+    expect(
+      query('[data-slot="dropdown-menu-label"]')?.textContent?.trim()
+    ).toBe("Themer layout")
+  })
+
   describe("the Toolbar's controls", () => {
     const inBar = (label: string) => query(`${TOOLBAR} [aria-label="${label}"]`)
 
@@ -177,12 +193,12 @@ describe("Themer layout", () => {
         "Undo",
         "Redo",
         "Switch to dark mode",
-        "Close theme editor",
+        "Close Themer",
       ]) {
         expect(inBar(label), label).not.toBeNull()
       }
 
-      await click(inBar("Close theme editor"))
+      await click(inBar("Close Themer"))
       expect(toolbar()).toBeNull()
     })
 
@@ -198,7 +214,7 @@ describe("Themer layout", () => {
         "Contrast checker",
         "Reset to preset",
         "Theme override",
-        "Layout: Toolbar",
+        "Themer layout: Toolbar",
       ])
 
       const override = items.find((item) =>
@@ -829,7 +845,7 @@ describe("Themer layout", () => {
       await open()
       await click(inspectorToggle())
 
-      await click(query('[aria-label="Close theme editor"]'))
+      await click(query('[aria-label="Close Themer"]'))
       await pointer("mousemove", pageButton)
       expect(card()).toBeNull()
       await open()
@@ -872,7 +888,7 @@ describe("Themer layout", () => {
         await mount({ layout: "push" })
         await open()
 
-        await click(query('button[aria-label="Close theme editor"]'))
+        await click(query('button[aria-label="Close Themer"]'))
 
         expect(inset()).toBe("")
         expect(margin()).toBe("")
@@ -911,7 +927,7 @@ describe("Themer layout", () => {
       expect(margin()).toBe("20rem")
       await click(toggle())
       expect(margin()).toBe("3rem")
-      await click(query('button[aria-label="Close theme editor"]'))
+      await click(query('button[aria-label="Close Themer"]'))
 
       expect(html().style.getPropertyValue("transition")).toBe(
         "opacity 300ms ease"
@@ -980,7 +996,7 @@ describe("Themer layout", () => {
       await click(query(`${TOOLBAR} [aria-label="More actions"]`))
       await click(
         [...document.querySelectorAll('[role="menuitem"]')].find((item) =>
-          item.textContent?.startsWith("Layout")
+          item.textContent?.startsWith("Themer layout")
         )
       )
       await click(

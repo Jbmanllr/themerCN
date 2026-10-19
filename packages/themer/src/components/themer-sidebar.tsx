@@ -36,7 +36,7 @@ interface ThemerSidebarProps {
  * - Collapsed: a vertical icon menu (CollapsedNavigation)
  *
  * The Close button is a plain Button with its own Tooltip, not ActionButton:
- * the tooltip shows only beside the collapsed rail, where the "Theme Editor"
+ * the tooltip shows only beside the collapsed rail, where the "Themer"
  * title is hidden (themer-sidebar.test.tsx).
  */
 export function ThemerSidebar({
@@ -65,7 +65,7 @@ export function ThemerSidebar({
           )}
         >
           <span className="truncate text-sm font-semibold group-data-[collapsible=icon]:hidden">
-            Theme Editor
+            Themer
           </span>
           {headerActions && (
             <div className="ms-auto flex items-center gap-1 group-data-[collapsible=icon]:ms-0 group-data-[collapsible=icon]:flex-col">
@@ -79,7 +79,7 @@ export function ThemerSidebar({
                   variant="ghost"
                   size="icon"
                   onClick={onClose}
-                  aria-label="Close theme editor"
+                  aria-label="Close Themer"
                 >
                   <X />
                 </Button>
@@ -89,7 +89,7 @@ export function ThemerSidebar({
               side="right"
               hidden={state !== "collapsed" || isMobile}
             >
-              Close Theme Editor
+              Close Themer
             </TooltipContent>
           </Tooltip>
         </div>

@@ -4,7 +4,7 @@
 // `group`, so a group-data selector can never match there. Whether it shows is
 // therefore decided from the sidebar's state: shown beside the collapsed icon
 // rail (where the label is not written out), hidden while the sidebar is open
-// because it then says "Theme Editor" itself.
+// because it then says "Themer" itself.
 import { act } from "react"
 import { createRoot, type Root } from "react-dom/client"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
@@ -40,7 +40,7 @@ async function mount(defaultOpen: boolean) {
 
 const closeButton = () =>
   container.querySelector<HTMLButtonElement>(
-    'button[aria-label="Close theme editor"]'
+    'button[aria-label="Close Themer"]'
   )!
 
 /** The tooltip popup, once opened by keyboard focus. */
@@ -54,14 +54,14 @@ async function openTooltip() {
     () =>
       expect(
         [...document.querySelectorAll('[data-slot="tooltip-content"]')].some(
-          (popup) => popup.textContent?.includes("Close Theme Editor")
+          (popup) => popup.textContent?.includes("Close Themer")
         )
       ).toBe(true),
     { timeout: 3000 }
   )
   return [
     ...document.querySelectorAll<HTMLElement>('[data-slot="tooltip-content"]'),
-  ].find((popup) => popup.textContent?.includes("Close Theme Editor"))!
+  ].find((popup) => popup.textContent?.includes("Close Themer"))!
 }
 
 beforeEach(() => {

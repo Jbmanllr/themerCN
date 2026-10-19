@@ -10,7 +10,7 @@ import * as React from "react"
 import { Paintbrush } from "lucide-react"
 import { cn } from "@workspace/ui/lib/utils"
 import { useThemerUIStore } from "../stores/themer-ui-store"
-import { useThemerContext } from "./themer-provider"
+import { useThemerContext } from "../hooks/use-themer-context"
 import { SHORTCUTS, Z_INDEX } from "../config/constants"
 import { ActionButton } from "./ui/action-button"
 
@@ -35,7 +35,7 @@ export function ThemerTrigger({ className }: ThemerTriggerProps) {
 
   return (
     <ActionButton
-      label="Open Theme Editor"
+      label="Open Themer"
       shortcut={config.shortcut ?? SHORTCUTS.toggle}
       variant="outline"
       size="icon"

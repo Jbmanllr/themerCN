@@ -1,3 +1,7 @@
+// RETIRED: nothing imports this file. It moved to config/themer-layouts.ts
+// (layering: hooks read it, and hooks import no component); change that one.
+// It stays only until the owner removes it from the repo.
+//
 // What the Themer knows about each Themer layout, apart from its component
 // (../themer-ui.tsx maps a layout to its component): its name and icon in the
 // layout switcher, whether it covers the Host page, and which layout is in

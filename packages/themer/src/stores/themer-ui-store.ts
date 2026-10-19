@@ -15,7 +15,7 @@
 //   themer-dialogs.tsx), so a dialog outlives the surface that opened it.
 // - `fullscreenPreview` means the preview covers the editor (a CSS layout),
 //   not that the browser is in native fullscreen: enterFullscreen
-//   (hooks/use-fullscreen.ts) sets it before asking for native fullscreen,
+//   (utils/fullscreen.ts) sets it before asking for native fullscreen,
 //   and a refused request leaves it on. That module also keeps it in step
 //   with the Fullscreen API (ThemerUI mounts that sync).
 // - toggleFullscreen must run inside the user's click handler, because
@@ -25,7 +25,7 @@
 
 import { create } from "zustand"
 import type { ThemerUIStore } from "../types"
-import { enterFullscreen, exitFullscreen } from "../hooks/use-fullscreen"
+import { enterFullscreen, exitFullscreen } from "../utils/fullscreen"
 
 export const useThemerUIStore = create<ThemerUIStore>()((set, get) => {
   const setFullscreen = (fullscreenPreview: boolean) =>

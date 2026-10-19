@@ -33,9 +33,7 @@ test("the Overlay floats the sidebar over the real page, which stays usable", as
     .getByRole("link", { name: "Pricing", exact: true })
     .click()
   await expect(page).toHaveURL(/\/pricing$/)
-  await expect(
-    page.getByRole("button", { name: "Close theme editor" })
-  ).toBeVisible()
+  await expect(page.getByRole("button", { name: "Close Themer" })).toBeVisible()
 })
 
 test("the user's layout survives a reload", async ({ page }) => {
@@ -45,7 +43,7 @@ test("the user's layout survives a reload", async ({ page }) => {
 
   await page.reload()
   await hydrated(page)
-  await page.getByRole("button", { name: "Open Theme Editor" }).click()
+  await page.getByRole("button", { name: "Open Themer" }).click()
 
   await expect(
     page.getByRole("button", { name: "Themer layout: Overlay" })
@@ -139,7 +137,7 @@ test("the inspector works on the real page beside the Overlay, never on the Them
   await page.getByRole("button", { name: "Inspector" }).click()
   const card = page.getByTestId("themer-inspector-overlay")
 
-  await page.getByRole("button", { name: "Close theme editor" }).hover()
+  await page.getByRole("button", { name: "Close Themer" }).hover()
   await expect(card).toHaveCount(0)
 
   const link = page

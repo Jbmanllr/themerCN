@@ -16,5 +16,5 @@ export const SectionContext = React.createContext<SectionContextValue | null>(
 
 /** The enclosing ControlSection's open state; `null` outside any section. */
 export function useSectionContext() {
-  return React.useContext(SectionContext)
+  return React.use(SectionContext)
 }

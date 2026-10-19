@@ -53,12 +53,12 @@ test("Push gives the page its place back on close and on a layout switch", async
   await openLayout(page, "Push")
   await expect.poll(() => hostLeft(page, "main")).toBe(320)
 
-  await page.getByRole("button", { name: "Close theme editor" }).click()
+  await page.getByRole("button", { name: "Close Themer" }).click()
   await expect.poll(() => hostLeft(page, "main")).toBe(0)
   expect(await inset(page)).toBe("")
 
   // The choice is remembered: the Themer reopens in Push.
-  await page.getByRole("button", { name: "Open Theme Editor" }).click()
+  await page.getByRole("button", { name: "Open Themer" }).click()
   await expect.poll(() => hostLeft(page, "main")).toBe(320)
 
   await page.getByRole("button", { name: "Themer layout: Push" }).click()

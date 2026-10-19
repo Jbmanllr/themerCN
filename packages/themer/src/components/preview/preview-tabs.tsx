@@ -41,7 +41,7 @@ import {
 import { useThemerUIStore } from "../../stores/themer-ui-store"
 import { usePreferencesStore } from "../../stores/preferences-store"
 import type { ThemerConfig } from "../../types"
-import { useThemerContext } from "../themer-provider"
+import { useThemerContext } from "../../hooks/use-themer-context"
 import { ActionButton } from "../ui/action-button"
 import { ModeToggle } from "../ui/mode-toggle"
 import { BUILTIN_TABS } from "./builtin-tabs"

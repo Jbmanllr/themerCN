@@ -109,9 +109,7 @@ test("mounting the Themer leaves the Host's computed styles and animations uncha
   releaseScripts()
   await expect(page.locator("style[data-themer-style]")).toHaveCount(1)
   await expect(page.locator("[data-themer]")).toHaveCount(1)
-  await expect(
-    page.getByRole("button", { name: "Open Theme Editor" })
-  ).toBeVisible()
+  await expect(page.getByRole("button", { name: "Open Themer" })).toBeVisible()
 
   expect(await hostStyles(page)).toEqual(before)
 })
@@ -120,7 +118,7 @@ test("a Themer control and a portalled popup restyle after a token edit", async 
   page,
 }) => {
   await page.goto("/")
-  await page.getByRole("button", { name: "Open Theme Editor" }).click()
+  await page.getByRole("button", { name: "Open Themer" }).click()
   const control = page.getByRole("button", { name: "Switch to dark mode" })
   await expect(control).toBeVisible()
   expect(

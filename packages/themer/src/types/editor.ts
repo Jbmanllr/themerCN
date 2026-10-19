@@ -288,7 +288,7 @@ export interface ThemerUIState {
    * layout inspects its own surface.
    */
   inspectorLayout: ThemerLayout | null
-  /** Fullscreen preview layout flag (see hooks/use-fullscreen.ts) */
+  /** Fullscreen preview layout flag (see utils/fullscreen.ts) */
   fullscreenPreview: boolean
   /** The open action dialog, whichever surface opened it. */
   dialog: ThemerDialog | null

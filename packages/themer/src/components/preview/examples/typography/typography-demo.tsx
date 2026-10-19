@@ -1,3 +1,6 @@
+// RETIRED: nothing imports this file. It was renamed to
+// typography-preview.tsx (the glossary's Preview); change that one. Excluded
+// from tsconfig.json and eslint.config.js until the owner removes it.
 import { BlogPost } from "./blog-post"
 import { DemoFontShowcase } from "./font-showcase"
 

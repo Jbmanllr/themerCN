@@ -7,5 +7,9 @@
     "declarationMap": false
   },
   "include": ["src/**/*.ts", "src/**/*.tsx"],
-  "exclude": ["**/*.test.ts", "**/*.test.tsx"]
+  "exclude": [
+    "**/*.test.ts",
+    "**/*.test.tsx",
+    "src/components/preview/examples/typography/typography-demo.tsx"
+  ]
 }

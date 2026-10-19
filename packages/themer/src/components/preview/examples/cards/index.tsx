@@ -19,7 +19,7 @@ import { CardsTeamMembers } from "./team-members"
 import { DatePickerWithRange } from "./date-picker-with-range"
 import { GithubCard } from "./github-card"
 
-export default function CardsDemo() {
+export default function CardsPreview() {
   return (
     <div className="grid p-2 **:data-[slot=card]:shadow-none md:p-4 md:pt-1 @3xl:gap-4 @5xl:grid-cols-10 @7xl:grid-cols-11">
       <div className="grid gap-4 @5xl:col-span-4 @7xl:col-span-6">

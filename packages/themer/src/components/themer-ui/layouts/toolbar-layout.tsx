@@ -48,7 +48,7 @@ import {
 } from "../../actions/themer-actions"
 import { LayoutRadioGroup } from "../layout-switcher"
 import { PageInspector, PageInspectorToggle } from "../page-inspector"
-import { THEMER_LAYOUTS } from "./registry"
+import { THEMER_LAYOUTS } from "../../../config/themer-layouts"
 import { PanelPopover, usePanelPopovers } from "../../sidebar/panel-popover"
 import { ActionButton } from "../../ui/action-button"
 import { ModeToggle } from "../../ui/mode-toggle"
@@ -91,7 +91,7 @@ export function ToolbarLayout({ onClose, zIndex }: ThemerLayoutProps) {
           <ThemerActionButton action={actions.redo} />
           <PageInspectorToggle size="default" />
           <ModeToggle data-testid="themer-mode-toggle" />
-          <ActionButton label="Close theme editor" onClick={onClose}>
+          <ActionButton label="Close Themer" onClick={onClose}>
             <X />
           </ActionButton>
         </ButtonGroup>
@@ -114,7 +114,7 @@ function LayoutSubmenu() {
     <DropdownMenuSub>
       <DropdownMenuSubTrigger>
         <layout.icon />
-        Layout: {layout.label}
+        Themer layout: {layout.label}
       </DropdownMenuSubTrigger>
       <DropdownMenuSubContent>
         <LayoutRadioGroup />

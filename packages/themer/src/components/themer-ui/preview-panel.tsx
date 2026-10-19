@@ -18,7 +18,7 @@ import {
   mergePreviewTabs,
   resolveActiveTabId,
 } from "../preview/preview-tab-registry"
-import { useThemerContext } from "../themer-provider"
+import { useThemerContext } from "../../hooks/use-themer-context"
 import { usePreferencesStore } from "../../stores/preferences-store"
 import { useThemerUIStore } from "../../stores/themer-ui-store"
 

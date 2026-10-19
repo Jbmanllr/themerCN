@@ -4,7 +4,7 @@
 import { renderToStaticMarkup } from "react-dom/server"
 import { expect, it, vi } from "vitest"
 
-vi.mock("./themer-provider", () => ({
+vi.mock("../hooks/use-themer-context", () => ({
   useThemerContext: () => ({
     config: { showTrigger: true },
   }),
@@ -17,7 +17,7 @@ vi.mock("../stores/themer-ui-store", () => ({
 
 import { ThemerTrigger } from "./themer-trigger"
 
-it("hides the theme editor trigger below sm", () => {
+it("hides the Themer trigger below sm", () => {
   const html = renderToStaticMarkup(<ThemerTrigger className="flex" />)
   const trigger = html.match(
     /<button(?=[^>]*data-testid="themer-trigger")[^>]*>/u

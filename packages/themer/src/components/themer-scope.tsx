@@ -46,9 +46,9 @@ export function ThemerScope({ children, popupLayer }: ThemerScopeProps) {
 
   return (
     <div data-themer="" dir="ltr">
-      <PortalContainerContext.Provider value={container}>
+      <PortalContainerContext value={container}>
         {children}
-      </PortalContainerContext.Provider>
+      </PortalContainerContext>
       <div
         ref={setContainer}
         data-themer-portals=""

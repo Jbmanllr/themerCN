@@ -12,8 +12,8 @@
 import { useCallback } from "react"
 import { usePreferencesStore } from "../stores/preferences-store"
 import { useThemerUIStore } from "../stores/themer-ui-store"
-import { useThemerContext } from "../components/themer-provider"
-import { resolveThemerLayout } from "../components/themer-ui/layouts/registry"
+import { useThemerContext } from "./use-themer-context"
+import { resolveThemerLayout } from "../config/themer-layouts"
 import type { ThemerLayout } from "../types"
 
 export function useThemerLayout(): ThemerLayout {

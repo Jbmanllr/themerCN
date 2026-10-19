@@ -11,7 +11,7 @@ import { expect, type Locator, type Page } from "@playwright/test"
  */
 export async function hydrated(page: Page) {
   await expect(
-    page.getByRole("button", { name: /^(Open|Close) theme editor$/i }).first()
+    page.getByRole("button", { name: /^(Open|Close) Themer$/ }).first()
   ).toBeVisible({ timeout: 15_000 })
 }
 
@@ -53,7 +53,7 @@ export const cartLink = (page: Page) =>
 
 /** The floating button that opens the Themer UI. */
 export const themerTrigger = (page: Page) =>
-  page.getByRole("button", { name: "Open Theme Editor" })
+  page.getByRole("button", { name: "Open Themer" })
 
 /**
  * Opens the Themer UI and switches it to the sidebar Themer layout named

@@ -3,7 +3,8 @@
 // types. Not listed here: Themer, ThemerRoot and LenisPause.
 
 // Main components
-export { ThemerProvider, useThemerContext } from "./themer-provider"
+export { ThemerProvider } from "./themer-provider"
+export { useThemerContext } from "../hooks/use-themer-context"
 export { ThemerTrigger } from "./themer-trigger"
 export { ThemerUI } from "./themer-ui"
 export { ThemerSidebar } from "./themer-sidebar"

@@ -36,11 +36,8 @@ import { RESTORE_STYLE_ID } from "../config/constants"
 import { defaultLightStyles } from "../config/defaults"
 import { getExtraColorKeys } from "../config/extra-colors"
 import type { ThemeEditorState, ThemeMode } from "../types"
-import {
-  clearThemeFonts,
-  getThemeFontFamilies,
-  setThemeFonts,
-} from "./font-loader"
+import { clearThemeFonts, setThemeFonts } from "./font-links"
+import { getThemeFontFamilies } from "./font-names"
 import { SHADOW_SCALE_KEYS, getShadowVariables } from "./shadows"
 
 type ApplyThemeOptions = {

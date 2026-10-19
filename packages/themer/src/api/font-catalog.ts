@@ -14,19 +14,21 @@
 //   first page.
 // - GET ?q=&category=&limit=&offset= returns
 //   { fonts, total, offset, limit, hasMore }. Paging is clamped by
-//   filterAndPaginateFonts (utils/font-loader.ts): limit 1-100 (default 50),
+//   filterAndPaginateFonts (utils/font-catalog-data.ts): limit 1-100 (default 50),
 //   offset >= 0, both truncated; a non-finite value falls back to the
 //   default.
 //
 // See: packages/themer/README.md ("Font catalog").
 
+import type { FontInfo } from "../types/fonts"
 import {
   FALLBACK_FONTS,
+  filterAndPaginateFonts,
+} from "../utils/font-catalog-data"
+import {
   fetchGoogleFontsCatalog,
   fetchGoogleFontsMetadataCatalog,
-  filterAndPaginateFonts,
-  type FontInfo,
-} from "../utils/font-loader"
+} from "./google-fonts"
 
 const METADATA_TTL_MS = 24 * 60 * 60 * 1000
 // The metadata response (~2.7 MB) is over Next's 2 MB fetch-cache limit, so

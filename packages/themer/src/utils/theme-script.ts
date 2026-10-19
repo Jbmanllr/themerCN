@@ -10,7 +10,7 @@
 
 import { COMMON_STYLE_KEYS } from "../types/theme"
 import { RESTORE_STYLE_ID, getStorageKeys } from "../config/constants"
-import { GENERIC_FONT_FAMILIES, LOCAL_FONT_FAMILY_NAMES } from "./font-loader"
+import { GENERIC_FONT_FAMILIES, LOCAL_FONT_FAMILY_NAMES } from "./font-names"
 
 /**
  * The script that runs before hydration so the first paint already shows the saved Theme
@@ -36,7 +36,7 @@ export function generateThemeScript({
     // ----- FONT LOADING UTILITIES -----
     // The Google family a font value starts with; null for a host font
     // (var(--font-x), already loaded by the host), a generic family, or a
-    // family the OS ships (Google would answer 400). Mirrors font-loader's
+    // family the OS ships (Google would answer 400). Mirrors font-names'
     // extractFontFamily and isLocalFontFamily, with the same generic and
     // local lists embedded below.
     function extractFontFamily(fontFamilyValue) {

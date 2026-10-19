@@ -38,9 +38,9 @@ and the entries a Host imports where the Themer is off:
   [scripts/check-entries.mjs](scripts/check-entries.mjs) (`loader`,
   `head-script` and `next` are single files with allowed imports and under a
   byte budget).
-- `FALLBACK_FONTS` (the bundled 130-family list in `utils/font-loader.ts`) is
-  `/* @__PURE__ */`, so the head script, which imports font constants from
-  that file, does not carry the list.
+- The head script imports only the pure family-name helpers
+  (`utils/font-names.ts`), so it carries neither the bundled 130-family list
+  (`FALLBACK_FONTS`, `utils/font-catalog-data.ts`) nor the link registry.
 
 ## Mounting
 
@@ -362,7 +362,7 @@ document (the Host's `<html>` and the Live frame's, through the same code).
   was set, so a re-apply drops keys the new Theme lost and removal takes away
   exactly those.
 - **Fonts.** `setThemeFonts` loads the Theme's Google families (see
-  [Font link registry](#font-link-registry-utilsfont-loaderts));
+  [Font link registry](#font-link-registry-utilsfont-linksts));
   `DynamicFontLoader` does it for the Host page.
 
 ### Export and import
@@ -398,7 +398,7 @@ by `filterAndPaginateFonts` (limit 1–100, default 50). The package reads no
 environment. The picker also asks the catalog whether a Theme's family is a
 Google font (its "Custom font" badge).
 
-#### Font link registry (`utils/font-loader.ts`)
+#### Font link registry (`utils/font-links.ts`)
 
 Fonts are per document (Host page, Live frame) and several holders ask for
 the same family. Each document has a reference-counted entry per family and
@@ -512,6 +512,7 @@ packages/themer/
 │   ├── stores/                    # editor, preferences, themer-ui, color-focus; hydrate.ts
 │   ├── selectors/ hooks/ utils/ config/ types/
 │   ├── api/font-catalog.ts        # catalog response (no gating)
+│   ├── api/google-fonts.ts        # Google catalog fetch and transform (server)
 │   ├── styles/                    # themer.css, view-transition.css (CSS build input)
 │   └── generated/                 # themer-css.ts (gitignored build output)
 ├── scripts/                       # build-css, check-pack, check-entries, publish-packed, doc tests

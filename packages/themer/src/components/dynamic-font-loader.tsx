@@ -2,22 +2,19 @@
 
 // Renders nothing; ThemerProvider mounts it so a host gets the edited theme's
 // Google fonts without mounting anything else. The link bookkeeping lives in
-// utils/font-loader.ts, not here.
+// utils/font-links.ts, not here.
 
 import { useEffect } from "react"
 import { useEditorStore } from "../stores/editor-store"
 import { usePreferencesStore } from "../stores/preferences-store"
-import {
-  clearThemeFonts,
-  getThemeFontFamilies,
-  setThemeFonts,
-} from "../utils/font-loader"
+import { clearThemeFonts, setThemeFonts } from "../utils/font-links"
+import { getThemeFontFamilies } from "../utils/font-names"
 
 /**
  * Loads the active theme's Google fonts into the Host app's document after
  * hydration and keeps them in step with the editor.
  *
- * The document's theme-font slot (utils/font-loader.ts) holds one reference
+ * The document's theme-font slot (utils/font-links.ts) holds one reference
  * per family: a replaced family is released (its link goes once nothing else
  * holds it), and turning the override off or unmounting releases them all.
  * Host stacks such as `var(--font-dm-sans), sans-serif` load nothing; the

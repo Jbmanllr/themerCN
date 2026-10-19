@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest"
 
-import { FALLBACK_FONTS } from "../utils/font-loader"
+import { FALLBACK_FONTS } from "../utils/font-catalog-data"
 import { fontCatalogResponse, resetFontCatalogCache } from "./font-catalog"
 
 // The font picker must stay usable offline and when Google misbehaves: the

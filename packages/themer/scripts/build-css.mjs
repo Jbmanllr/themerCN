@@ -3,7 +3,7 @@
 // injects at mount. Run by the `build:css` script before typecheck, test
 // and build (turbo.json); the output is not checked in.
 //
-// After Tailwind, three rewrites (the scoping decision of #11, see
+// After Tailwind, four rewrites (the scoping decision of #11, see
 // src/styles/themer.css):
 // 1. Strip every custom property declared as a reference to itself
 //    (`--spacing: var(--spacing, …)`): `@theme inline` keys named like the
@@ -12,8 +12,14 @@
 // 2. Unwrap every `@layer`; Preflight, the base rules and the utilities go
 //    into one `@scope ([data-themer]) to ([data-themer-host])`, with `html`,
 //    `:root` and `:host` selectors rewritten to `:scope`.
-// 3. `@property`, `@keyframes` and `@font-face` stay at the top level
+// 3. Prefix every `@keyframes` name with `themer-` and rewrite each
+//    `animation`/`animation-name` reference to match: keyframes are
+//    document-wide, so an unprefixed `spin` or `enter` would replace the
+//    Host's own animation of that name.
+// 4. `@property`, `@keyframes` and `@font-face` stay at the top level
 //    (document-wide by nature), and view-transition.css is appended as is.
+//    The `@property` registrations (Tailwind's `--tw-*`) are the one
+//    remaining leak, listed in the README.
 import fs from "node:fs"
 import path from "node:path"
 import { fileURLToPath } from "node:url"
@@ -28,6 +34,7 @@ const outFile = path.join(pkg, "src/generated/themer-css.ts")
 export const SCOPE_PRELUDE = "([data-themer]) to ([data-themer-host])"
 const TOP_LEVEL_AT_RULES = new Set(["property", "keyframes", "font-face"])
 const ROOT_SELECTOR = /^(html|:root|:host)$/
+export const KEYFRAMES_PREFIX = "themer-"
 
 const escapeRegExp = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
 
@@ -73,6 +80,30 @@ function unlayer(nodes) {
   })
 }
 
+/**
+ * Renames every `@keyframes` to `themer-<name>` (names already prefixed are
+ * kept) and rewrites the `animation`/`animation-name` declarations that use
+ * them.
+ */
+export function prefixKeyframes(root) {
+  const renamed = new Map()
+  root.walkAtRules("keyframes", (rule) => {
+    const name = rule.params.trim()
+    if (name.startsWith(KEYFRAMES_PREFIX)) return
+    renamed.set(name, `${KEYFRAMES_PREFIX}${name}`)
+    rule.params = renamed.get(name)
+  })
+  if (!renamed.size) return
+  // A name is a whole identifier: `enter` but not `--tw-enter-opacity`.
+  const names = new RegExp(
+    `(?<![\\w-])(${[...renamed.keys()].map(escapeRegExp).join("|")})(?![\\w-])`,
+    "g"
+  )
+  root.walkDecls(/^animation(-name)?$/, (decl) => {
+    decl.value = decl.value.replace(names, (name) => renamed.get(name))
+  })
+}
+
 /** Tailwind's output → the Themer's scoped, unlayered sheet. */
 export function scopeThemerCss(css) {
   const root = postcss.parse(css)
@@ -81,6 +112,7 @@ export function scopeThemerCss(css) {
     if (isSelfReference(decl)) decl.remove()
   })
   removeEmpty(root)
+  prefixKeyframes(root)
 
   const scope = postcss.atRule({ name: "scope", params: SCOPE_PRELUDE })
   const top = []

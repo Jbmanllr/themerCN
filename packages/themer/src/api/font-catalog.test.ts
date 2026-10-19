@@ -38,8 +38,98 @@ const googleMetadata = {
 
 afterEach(() => {
   resetFontCatalogCache()
+  vi.useRealTimers()
   vi.unstubAllGlobals()
   vi.restoreAllMocks()
+})
+
+const familiesOf = async (response: Response) =>
+  ((await response.json()).fonts as { family: string }[]).map(
+    (font) => font.family
+  )
+
+// What Google answers for each mode, as the fetch stub returns it.
+const googleAnswer = (key: string | undefined) =>
+  key
+    ? Response.json(googleCatalog)
+    : new Response(`)]}'\n${JSON.stringify(googleMetadata)}`)
+const googleFamily = (key: string | undefined) =>
+  key ? "Only On Google" : "Public Catalog Sans"
+
+// A Google that never answers: like the real fetch, it rejects only when
+// its request is aborted.
+const hangingFetch = () =>
+  vi.fn(
+    (_input: RequestInfo | URL, init?: RequestInit) =>
+      new Promise<Response>((_resolve, reject) => {
+        init?.signal?.addEventListener("abort", () =>
+          reject(init.signal?.reason)
+        )
+      })
+  )
+
+const DAY_MS = 24 * 60 * 60 * 1000
+
+describe.each([
+  ["without a key", undefined],
+  ["with a key", "key"],
+])("fontCatalogResponse resilience %s", (_mode, key) => {
+  it("gives up on a hanging Google after 5 seconds and serves the bundled list", async () => {
+    vi.useFakeTimers()
+    vi.spyOn(console, "warn").mockImplementation(() => undefined)
+    vi.stubGlobal("fetch", hangingFetch())
+
+    let settled = false
+    const pending = fontCatalogResponse(url("q=inter"), key).finally(() => {
+      settled = true
+    })
+
+    await vi.advanceTimersByTimeAsync(4_999)
+    expect(settled).toBe(false)
+    await vi.advanceTimersByTimeAsync(1)
+
+    const response = await pending
+    expect(response.status).toBe(200)
+    expect(await familiesOf(response)).toContain("Inter")
+  })
+
+  it("holds Google's catalog in memory for a day", async () => {
+    vi.useFakeTimers()
+    const fetch = vi.fn(async () => googleAnswer(key))
+    vi.stubGlobal("fetch", fetch)
+
+    await fontCatalogResponse(url(""), key)
+    await vi.advanceTimersByTimeAsync(DAY_MS - 1_000)
+    const cached = await fontCatalogResponse(url(""), key)
+
+    expect(fetch).toHaveBeenCalledTimes(1)
+    expect(await familiesOf(cached)).toEqual([googleFamily(key)])
+
+    await vi.advanceTimersByTimeAsync(2_000)
+    await fontCatalogResponse(url(""), key)
+    expect(fetch).toHaveBeenCalledTimes(2)
+  })
+
+  it("serves the bundled list for 60 seconds after a failure without calling Google", async () => {
+    vi.useFakeTimers()
+    vi.spyOn(console, "warn").mockImplementation(() => undefined)
+    const fetch = vi.fn().mockRejectedValue(new TypeError("offline"))
+    vi.stubGlobal("fetch", fetch)
+
+    await fontCatalogResponse(url("q=inter"), key)
+    expect(fetch).toHaveBeenCalledTimes(1)
+
+    fetch.mockImplementation(async () => googleAnswer(key))
+    await vi.advanceTimersByTimeAsync(59_000)
+    const backedOff = await fontCatalogResponse(url("q=inter"), key)
+    expect(fetch).toHaveBeenCalledTimes(1)
+    expect(await familiesOf(backedOff)).toContain("Inter")
+
+    await vi.advanceTimersByTimeAsync(1_000)
+    const retried = await fontCatalogResponse(url(""), key)
+    expect(fetch).toHaveBeenCalledTimes(2)
+    expect(await familiesOf(retried)).toEqual([googleFamily(key)])
+  })
 })
 
 describe("fontCatalogResponse", () => {

@@ -386,9 +386,9 @@ FontPicker opens ─► useFontSearch (TanStack infinite query, own QueryClient)
    │     └─ Host route, e.g. createFontCatalogRoute (src/next/server.ts)
    │          ├─ enabled: false → 404, no catalog code loaded
    │          └─ fontCatalogResponse (src/api/font-catalog.ts)
-   │               ├─ googleFontsApiKey: Fonts Developer API (fetch cache, 1 day)
+   │               ├─ googleFontsApiKey: Fonts Developer API (memory, 1 day)
    │               ├─ no key: fonts.google.com/metadata/fonts (memory, 1 day)
-   │               └─ Google fails: FALLBACK_FONTS
+   │               └─ Google fails or takes > 5 s: FALLBACK_FONTS (60 s back-off)
    └─ no endpoint: filterAndPaginateFonts(FALLBACK_FONTS) in the browser
 User picks a family ─► acquireGoogleFont + waitForFont ─► font-* written as a full stack
 ```

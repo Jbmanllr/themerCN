@@ -30,6 +30,8 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
+      - run: pnpm format:check
+
       - run: pnpm turbo lint typecheck test build
 
       # publint, attw and the packed-file check, against the built package;

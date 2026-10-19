@@ -14,11 +14,9 @@
       "dependsOn": ["build"],
       "outputs": []
     },
-    "lint": {
-      "dependsOn": ["^lint"]
-    },
+    "lint": {},
     "format": {
-      "dependsOn": ["^format"]
+      "cache": false
     },
     "typecheck": {
       "dependsOn": ["^typecheck", "build:css"]

@@ -9,6 +9,8 @@
       "inputs": [
         "$TURBO_DEFAULT$",
         "$TURBO_ROOT$/.github/workflows/ci.yml",
+        "$TURBO_ROOT$/package.json",
+        "$TURBO_ROOT$/turbo.json",
         "$TURBO_ROOT$/apps/vite/package.json"
       ]
     }

@@ -46,6 +46,7 @@
     "build:css": "node scripts/build-css.mjs",
     "build": "tsdown",
     "check:package": "publint --strict && attw --pack . --profile esm-only && node scripts/check-pack.mjs && node scripts/check-entries.mjs",
+    "format": "prettier --write \"**/*.{ts,tsx}\"",
     "typecheck": "tsc --noEmit",
     "test": "vitest run"
   },

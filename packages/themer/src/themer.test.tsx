@@ -462,6 +462,32 @@ describe("Themer", () => {
     expect(commits).toEqual([])
   })
 
+  it("names the Host's current font in a picker set through a Host variable", async () => {
+    document.documentElement.style.setProperty("--font-host", "Inter")
+    await mount()
+    await act(async () =>
+      useEditorStore
+        .getState()
+        .updateCommonStyle("font-sans", "var(--font-host), sans-serif")
+    )
+    await openThemer()
+    const typography = document.querySelector<HTMLElement>(
+      '[role="tab"][aria-label="Typography"]'
+    )
+    await act(async () => typography?.click())
+    const sansPicker = () =>
+      [...document.querySelectorAll('[role="combobox"]')].find((trigger) =>
+        trigger.textContent?.includes("Custom font")
+      )?.textContent
+    expect(sansPicker()).toContain("Inter")
+
+    await act(async () =>
+      document.documentElement.style.setProperty("--font-host", "Lora")
+    )
+
+    expect(sansPicker()).toContain("Lora")
+  })
+
   describe("colour mode, uncontrolled", () => {
     it("toggles .dark on <html> when the user switches mode", async () => {
       await mount()

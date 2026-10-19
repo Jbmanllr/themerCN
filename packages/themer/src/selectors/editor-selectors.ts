@@ -9,11 +9,12 @@
 // component each time; wrap such a selector in useShallow (as
 // hooks/use-themer.ts does) or derive the value in the component.
 
-import type { EditorStore, ThemeStyleProps } from "../types"
+import type { EditorStore, ThemeEditorState, ThemeStyleProps } from "../types"
 import { resolvePresetStyles } from "../config/presets"
 import { defaultHSLAdjustments } from "../config/defaults"
 import { isDeepEqual } from "../utils/deep-equal"
 import { applySidebarSync } from "../utils/sidebar-sync"
+import { isIdentityHslAdjustment } from "../utils/hsl-adjust"
 
 /** Whether there is an undo entry. */
 export const selectCanUndo = (state: EditorStore): boolean =>
@@ -52,37 +53,33 @@ export const selectHSLAdjustments = (state: EditorStore) =>
   state.themeState.hslAdjustments
 
 /**
- * Whether the theme differs from its preset (resolved as when applied) or
- * has HSL adjustments. Drives the "unsaved" indicator.
+ * The one "on Preset" rule: the Theme's styles are its Preset's (resolved as
+ * when applied, and aligned by Sidebar Sync while `sidebarSync` is on, as the
+ * editor store puts it on) and its HSL adjustment is neutral (missing or the
+ * identity). Both the unsaved mark and Reset read it.
  */
-export const selectHasUnsavedChanges = (state: EditorStore): boolean => {
-  const { themeState } = state
+export function isOnPreset(
+  themeState: ThemeEditorState,
+  sidebarSync: boolean
+): boolean {
   const presetStyles = resolvePresetStyles(themeState.preset ?? "default")
   return (
-    !isDeepEqual(themeState.styles, presetStyles) ||
-    !isDeepEqual(themeState.hslAdjustments, defaultHSLAdjustments)
+    isDeepEqual(
+      themeState.styles,
+      sidebarSync ? applySidebarSync(presetStyles) : presetStyles
+    ) &&
+    isIdentityHslAdjustment(themeState.hslAdjustments ?? defaultHSLAdjustments)
   )
 }
 
 /**
- * Selector factory for the Reset button: whether resetting would change the
- * theme. Like selectHasUnsavedChanges, but with Sidebar Sync on the preset
- * counts as the sync aligns it (the sidebar colours on their base twins), so a
- * freshly applied preset leaves Reset disabled instead of offering to wipe the
- * undo history for the same theme. HSL adjustments always count.
+ * Selector factory over isOnPreset, given the Sidebar Sync preference
+ * (preferences store). False drives the unsaved mark and enables Reset.
  */
-export const selectCanResetToPreset =
+export const selectIsOnPreset =
   (sidebarSync: boolean) =>
-  (state: EditorStore): boolean => {
-    const { themeState } = state
-    const presetStyles = resolvePresetStyles(themeState.preset ?? "default")
-    return (
-      !isDeepEqual(
-        themeState.styles,
-        sidebarSync ? applySidebarSync(presetStyles) : presetStyles
-      ) || !isDeepEqual(themeState.hslAdjustments, defaultHSLAdjustments)
-    )
-  }
+  (state: EditorStore): boolean =>
+    isOnPreset(state.themeState, sidebarSync)
 
 /**
  * Selector factory: `selectStyleProperty(key)` reads one style value of the

@@ -18,11 +18,8 @@ import { getExtraColorKeys } from "../config/extra-colors"
 import { useEditorStore } from "../stores/editor-store"
 import { useThemerUIStore } from "../stores/themer-ui-store"
 import { usePreferencesStore } from "../stores/preferences-store"
-import {
-  selectCanUndo,
-  selectCanRedo,
-  selectHasUnsavedChanges,
-} from "../selectors"
+import { selectCanUndo, selectCanRedo } from "../selectors"
+import { useIsOnPreset } from "./use-editor-selectors"
 import {
   generateThemeCode,
   generateTailwindConfigCode,
@@ -110,7 +107,7 @@ export function useThemer() {
 
   const canUndo = useEditorStore(selectCanUndo)
   const canRedo = useEditorStore(selectCanRedo)
-  const hasUnsavedChanges = useEditorStore(selectHasUnsavedChanges)
+  const hasUnsavedChanges = !useIsOnPreset()
 
   const {
     isOpen,

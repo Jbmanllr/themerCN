@@ -36,7 +36,7 @@ import { useShallow } from "zustand/react/shallow"
 import { isTweakcnPreset } from "../../config/presets"
 import { useEditorStore } from "../../stores/editor-store"
 import { usePreferencesStore } from "../../stores/preferences-store"
-import { selectHasUnsavedChanges } from "../../selectors"
+import { useIsOnPreset } from "../../hooks/use-editor-selectors"
 import {
   generateLayoutCode,
   generateTailwindConfigCode,
@@ -100,7 +100,7 @@ function getActiveCode(
 
 export function CodePanelDialog({ open, onOpenChange }: CodePanelDialogProps) {
   const themeState = useEditorStore((state) => state.themeState)
-  const hasUnsavedChanges = useEditorStore(selectHasUnsavedChanges)
+  const hasUnsavedChanges = !useIsOnPreset()
   const {
     colorFormat,
     tailwindVersion,

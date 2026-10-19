@@ -8,6 +8,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import { EDITOR_STATE_VERSION, PREFERENCES_VERSION } from "./config/constants"
 import { defaultThemeState } from "./config/defaults"
+import type { ThemeStyles } from "./types"
 import { useEditorStore } from "./stores/editor-store"
 import { useThemerUIStore } from "./stores/themer-ui-store"
 import { usePreferencesStore } from "./stores/preferences-store"
@@ -68,6 +69,24 @@ async function clickModeToggle() {
   await act(async () => toggle.click())
 }
 
+// Stands in for localStorage, recording each write's key; `write` runs
+// before the real write (and can throw instead). A spy on the localStorage
+// instance itself would be stored as an item.
+function stubLocalStorage(write: (key: string) => void = () => {}) {
+  const real = localStorage
+  const writes: string[] = []
+  vi.stubGlobal("localStorage", {
+    getItem: (key: string) => real.getItem(key),
+    setItem: (key: string, value: string) => {
+      writes.push(key)
+      write(key)
+      real.setItem(key, value)
+    },
+    removeItem: (key: string) => real.removeItem(key),
+  })
+  return writes
+}
+
 // The stores are module singletons: start every test from a fresh Themer.
 beforeEach(() => {
   useEditorStore.setState(useEditorStore.getInitialState(), true)
@@ -84,6 +103,7 @@ afterEach(async () => {
   root = null
   document.body.innerHTML = ""
   vi.restoreAllMocks()
+  vi.unstubAllGlobals()
 })
 
 describe("Themer", () => {
@@ -310,28 +330,6 @@ describe("Themer", () => {
     })
 
     describe("writes", () => {
-      // Stands in for localStorage, recording each write's key; `write` runs
-      // before the real write (and can throw instead). A spy on the
-      // localStorage instance itself would be stored as an item.
-      function stubLocalStorage(write: (key: string) => void = () => {}) {
-        const real = localStorage
-        const writes: string[] = []
-        vi.stubGlobal("localStorage", {
-          getItem: (key: string) => real.getItem(key),
-          setItem: (key: string, value: string) => {
-            writes.push(key)
-            write(key)
-            real.setItem(key, value)
-          },
-          removeItem: (key: string) => real.removeItem(key),
-        })
-        return writes
-      }
-
-      afterEach(() => {
-        vi.unstubAllGlobals()
-      })
-
       it("leave editing working when storage throws on write, with one warning", async () => {
         const writes = stubLocalStorage(() => {
           throw new DOMException("full", "QuotaExceededError")
@@ -743,6 +741,99 @@ describe("Themer", () => {
         expect(themerSidebarState()).toBe("expanded")
         expect(event.defaultPrevented).toBe(false)
       }
+    })
+  })
+
+  describe("Sidebar Sync", () => {
+    // violet-bloom's sidebar colours differ from their base twins, so the
+    // sync changes it.
+    const UNSYNCED_PRESET = "violet-bloom"
+
+    function saveSidebarSync(namespace: string) {
+      localStorage.setItem(
+        `${namespace}:preferences`,
+        JSON.stringify({
+          state: { sidebarColorSync: true },
+          version: PREFERENCES_VERSION,
+        })
+      )
+    }
+
+    function sidebarsOnBase(styles: ThemeStyles) {
+      return (["light", "dark"] as const).every(
+        (mode) =>
+          styles[mode].sidebar === styles[mode].background &&
+          styles[mode]["sidebar-primary"] === styles[mode].primary
+      )
+    }
+
+    function presetTriggerLabel() {
+      return document
+        .querySelector('[data-testid="themer-preset-trigger"]')
+        ?.textContent?.trim()
+    }
+
+    function resetButton() {
+      const button = document.querySelector<HTMLButtonElement>(
+        '[data-testid="themer-ui"] [aria-label="Reset to preset"]'
+      )
+      if (!button) throw new Error("Reset not rendered")
+      return button
+    }
+
+    it("puts a Preset on in sync, with no unsaved mark and Reset disabled", async () => {
+      saveSidebarSync("sync-preset")
+      await mount({ storageNamespace: "sync-preset" })
+      await openThemer()
+
+      await act(async () =>
+        useEditorStore.getState().applyThemePreset(UNSYNCED_PRESET)
+      )
+
+      expect(sidebarsOnBase(useEditorStore.getState().themeState.styles)).toBe(
+        true
+      )
+      expect(presetTriggerLabel()).toBe("Violet Bloom")
+      expect(resetButton().disabled).toBe(true)
+    })
+
+    it("saves a Preset put on in sync with one storage write", async () => {
+      saveSidebarSync("sync-write")
+      await mount({ storageNamespace: "sync-write" })
+      const writes = stubLocalStorage()
+
+      await act(async () =>
+        useEditorStore.getState().applyThemePreset(UNSYNCED_PRESET)
+      )
+
+      expect(writes).toEqual(["sync-write:editor"])
+      const saved = JSON.parse(localStorage.getItem("sync-write:editor")!)
+      expect(sidebarsOnBase(saved.state.themeState.styles)).toBe(true)
+    })
+
+    it("keeps the checkpoint aligned with the Theme after an undo", async () => {
+      await mount({ storageNamespace: "sync-undo" })
+      await openThemer()
+      await act(async () =>
+        useEditorStore.getState().applyThemePreset(UNSYNCED_PRESET)
+      )
+      const toggle = document.querySelector<HTMLElement>(
+        '[aria-label="Sync sidebar colors"]'
+      )
+      if (!toggle) throw new Error("Sidebar Sync toggle not rendered")
+      await act(async () => toggle.click())
+
+      // Back to the Preset as it was before the toggle: sync puts it on its
+      // base colours again, and the HSL base (the checkpoint) with it.
+      await act(async () => useEditorStore.getState().undo())
+
+      const { themeState, themeCheckpoint } = useEditorStore.getState()
+      expect(sidebarsOnBase(themeState.styles)).toBe(true)
+      expect(themeCheckpoint?.styles).toEqual(themeState.styles)
+      // A checkpoint equal to the Theme is not stored.
+      expect(
+        JSON.parse(localStorage.getItem("sync-undo:editor")!).state
+      ).not.toHaveProperty("themeCheckpoint")
     })
   })
 })

@@ -11,6 +11,9 @@
 // - Applying a preset and importing CSS always start a new undo entry and
 //   move the checkpoint; resetting to the preset clears history.
 // - Preset colours always come from resolvePresetStyles (config/presets.ts).
+// - Sidebar Sync: while the preference (preferences store) is on, every
+//   action that sets the Theme passes it through withSidebarSync in the same
+//   commit, so the Theme is applied and saved once per action.
 // - Only themeState, themeCheckpoint and presetBaseline persist; history and
 //   future do not. The checkpoint and baseline are stored only when they
 //   differ from themeState (PersistedEditorState). Writes go through
@@ -66,6 +69,9 @@ import {
   getStorageKeys,
 } from "../config/constants"
 import { isDeepEqual } from "../utils/deep-equal"
+import { isIdentityHslAdjustment } from "../utils/hsl-adjust"
+import { applySidebarSync } from "../utils/sidebar-sync"
+import { usePreferencesStore } from "./preferences-store"
 import { dropOtherVersion, guardedLocalStorage } from "./persist-options"
 
 /**
@@ -144,17 +150,32 @@ function pushHistory(
   return next.length > MAX_HISTORY_COUNT ? next.slice(1) : next
 }
 
-/** `base` switched to a preset: the preset's styles, no HSL adjustments. */
+/**
+ * `themeState` with Sidebar Sync applied while the preference is on
+ * (preferences store): each sidebar colour on its base twin. The same object
+ * when nothing changes. Every action that sets the Theme passes it through
+ * here, so the Theme is synced in the same commit (one apply, one write).
+ */
+function withSidebarSync(themeState: ThemeEditorState): ThemeEditorState {
+  if (!usePreferencesStore.getState().sidebarColorSync) return themeState
+  const styles = applySidebarSync(themeState.styles)
+  return styles === themeState.styles ? themeState : { ...themeState, styles }
+}
+
+/**
+ * `base` switched to a preset: the preset's styles (synced, see
+ * withSidebarSync), no HSL adjustments.
+ */
 function presetThemeState(
   base: ThemeEditorState,
   presetId: string
 ): ThemeEditorState {
-  return {
+  return withSidebarSync({
     ...base,
     preset: presetId,
     styles: copyStyles(resolvePresetStyles(presetId)),
     hslAdjustments: defaultHSLAdjustments,
-  }
+  })
 }
 
 /** The baseline for a theme just put on `presetId`. */
@@ -185,10 +206,10 @@ export const useEditorStore = create<EditorStore>()(
           typeof stateOrUpdater === "function"
             ? stateOrUpdater(oldThemeState)
             : stateOrUpdater
-        const newState = {
+        const newState = withSidebarSync({
           ...updatedState,
           styles: copyStyles(updatedState.styles),
-        }
+        })
         let currentHistory = get().history
 
         // A change of light/dark mode only is not an edit: no undo entry and
@@ -266,10 +287,10 @@ export const useEditorStore = create<EditorStore>()(
           const updatedHistory = pushHistory(get().history, oldThemeState)
 
           set({
-            themeState: {
+            themeState: withSidebarSync({
               ...checkpoint,
               currentMode: get().themeState.currentMode,
-            },
+            }),
             history: updatedHistory,
             future: [],
           })
@@ -323,14 +344,14 @@ export const useEditorStore = create<EditorStore>()(
           if (value !== undefined) sharedFromLight[key] = value
         }
 
-        const newThemeState: ThemeEditorState = {
+        const newThemeState = withSidebarSync({
           ...currentThemeState,
           styles: copyStyles({
             light: { ...base.light, ...importedLight },
             dark: { ...base.dark, ...sharedFromLight, ...importedDark },
           }),
           hslAdjustments: defaultHSLAdjustments,
-        }
+        })
 
         set({
           themeState: newThemeState,
@@ -366,35 +387,30 @@ export const useEditorStore = create<EditorStore>()(
         const { themeState, presetBaseline } = get()
         const presetId = themeState.preset
         if (!presetId || !hasPreset(presetId)) return
-        const neutral = isDeepEqual(
-          themeState.hslAdjustments ?? defaultHSLAdjustments,
-          defaultHSLAdjustments
+        const neutral = isIdentityHslAdjustment(
+          themeState.hslAdjustments ?? defaultHSLAdjustments
         )
         if (!neutral) return
-        const fresh = resolvePresetStyles(presetId)
+        // The preset's current source, as applyThemePreset would put it on.
+        const newThemeState = presetThemeState(themeState, presetId)
 
         // No preset was ever put on this theme (the fresh default, then
         // edited): it can only be trusted when it already is its preset.
         if (!presetBaseline) {
-          if (isDeepEqual(themeState.styles, fresh)) {
-            set({ presetBaseline: baselineOf(presetId, fresh) })
+          if (isDeepEqual(themeState.styles, newThemeState.styles)) {
+            set({ presetBaseline: baselineOf(presetId, newThemeState.styles) })
           }
           return
         }
 
         if (presetBaseline.preset !== presetId) return
         if (!isDeepEqual(themeState.styles, presetBaseline.styles)) return
-        if (isDeepEqual(fresh, presetBaseline.styles)) return
+        if (isDeepEqual(newThemeState.styles, presetBaseline.styles)) return
 
-        const newThemeState: ThemeEditorState = {
-          ...themeState,
-          styles: copyStyles(fresh),
-          hslAdjustments: defaultHSLAdjustments,
-        }
         set({
           themeState: newThemeState,
           themeCheckpoint: newThemeState,
-          presetBaseline: baselineOf(presetId, fresh),
+          presetBaseline: baselineOf(presetId, newThemeState.styles),
         })
       },
 
@@ -414,12 +430,14 @@ export const useEditorStore = create<EditorStore>()(
         }
         const newFuture = [newFutureEntry, ...future]
 
+        // The checkpoint is the restored Theme itself, so it stays aligned.
+        const restored = withSidebarSync({
+          ...lastHistoryEntry.state,
+          currentMode: currentThemeState.currentMode,
+        })
         set({
-          themeState: {
-            ...lastHistoryEntry.state,
-            currentMode: currentThemeState.currentMode,
-          },
-          themeCheckpoint: lastHistoryEntry.state,
+          themeState: restored,
+          themeCheckpoint: restored,
           history: newHistory,
           future: newFuture,
         })
@@ -434,12 +452,13 @@ export const useEditorStore = create<EditorStore>()(
         const newFuture = future.slice(1)
         const currentThemeState = get().themeState
 
+        const restored = withSidebarSync({
+          ...firstFutureEntry.state,
+          currentMode: currentThemeState.currentMode,
+        })
         set({
-          themeState: {
-            ...firstFutureEntry.state,
-            currentMode: currentThemeState.currentMode,
-          },
-          themeCheckpoint: firstFutureEntry.state,
+          themeState: restored,
+          themeCheckpoint: restored,
           history: pushHistory(history, currentThemeState),
           future: newFuture,
         })

@@ -8,8 +8,8 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@workspace/ui/components/card";
-import { ScrollArea } from "@workspace/ui/components/scroll-area";
+} from "@workspace/ui/components/card"
+import { ScrollArea } from "@workspace/ui/components/scroll-area"
 
 export function DemoFontShowcase() {
   return (
@@ -22,7 +22,7 @@ export function DemoFontShowcase() {
         <ScrollArea className="flex size-full max-h-100 flex-1 flex-col px-6">
           <div className="space-y-4">
             <div>
-              <h3 className="text-muted-foreground mb-2 text-lg font-semibold">
+              <h3 className="mb-2 text-lg font-semibold text-muted-foreground">
                 Sans-Serif
               </h3>
               <div className="space-y-1 font-sans">
@@ -39,7 +39,7 @@ export function DemoFontShowcase() {
             </div>
 
             <div>
-              <h3 className="text-muted-foreground mb-2 text-lg font-semibold">
+              <h3 className="mb-2 text-lg font-semibold text-muted-foreground">
                 Serif
               </h3>
               <div className="space-y-1 font-serif">
@@ -56,7 +56,7 @@ export function DemoFontShowcase() {
             </div>
 
             <div>
-              <h3 className="text-muted-foreground mb-2 text-lg font-semibold">
+              <h3 className="mb-2 text-lg font-semibold text-muted-foreground">
                 Monospace
               </h3>
               <div className="space-y-1 font-mono">
@@ -75,5 +75,5 @@ export function DemoFontShowcase() {
         </ScrollArea>
       </CardContent>
     </Card>
-  );
+  )
 }

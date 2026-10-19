@@ -1,10 +1,10 @@
-"use client";
+"use client"
 
 // Base spacing: PresetSliderControl bound to `spacing` (rem). Shown in the
 // Other panel.
 
-import { PresetSliderControl } from "./preset-slider-control";
-import { SPACING_PRESETS } from "../../config/constants";
+import { PresetSliderControl } from "./preset-slider-control"
+import { SPACING_PRESETS } from "../../config/constants"
 
 /**
  * Base spacing control with presets and slider (both modes).
@@ -19,8 +19,8 @@ export function SpacingControl() {
       fallback={0.25}
       presetClassName="capitalize"
     />
-  );
+  )
 }
 
 // Plural alias of SpacingControl; both barrels export both names.
-export { SpacingControl as SpacingControls };
+export { SpacingControl as SpacingControls }

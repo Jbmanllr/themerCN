@@ -14,11 +14,9 @@
       "dependsOn": ["build"],
       "outputs": []
     },
-    "lint": {
-      "dependsOn": ["^lint"]
-    },
+    "lint": {},
     "format": {
-      "dependsOn": ["^format"]
+      "cache": false
     },
     "typecheck": {
       "dependsOn": ["^typecheck", "build:css"]
@@ -28,7 +26,11 @@
     },
     "e2e": {
       "dependsOn": ["build"],
-      "passThroughEnv": ["WEB_E2E_PORT", "VITE_E2E_PORT", "PLAYWRIGHT_BROWSERS_PATH"]
+      "passThroughEnv": [
+        "WEB_E2E_PORT",
+        "VITE_E2E_PORT",
+        "PLAYWRIGHT_BROWSERS_PATH"
+      ]
     },
     "dev": {
       "cache": false,

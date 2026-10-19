@@ -16,12 +16,12 @@
 //
 // See: utils/theme-script.ts for what the script does.
 
-import { generateThemeScript } from "./utils/theme-script";
+import { generateThemeScript } from "./utils/theme-script"
 
 /** Options of `getThemerHeadScript`. */
 export interface ThemerHeadScriptOptions {
   /** The `storageNamespace` of the Host's `<Themer>`. Default `"themercn"`. */
-  storageNamespace?: string;
+  storageNamespace?: string
 }
 
 /**
@@ -41,5 +41,5 @@ export interface ThemerHeadScriptOptions {
 export function getThemerHeadScript({
   storageNamespace,
 }: ThemerHeadScriptOptions = {}): string {
-  return generateThemeScript({ storageNamespace });
+  return generateThemeScript({ storageNamespace })
 }

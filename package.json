@@ -9,6 +9,7 @@
     "dev": "turbo dev",
     "lint": "turbo lint",
     "format": "turbo format",
+    "format:check": "prettier --check .",
     "typecheck": "turbo typecheck",
     "test": "turbo test",
     "e2e": "turbo e2e",

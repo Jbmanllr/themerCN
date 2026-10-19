@@ -8,5 +8,5 @@
  * @returns shiftAmount - CSS value for shift amount
  */
 export function useContentShift() {
-  return { shouldShift: false, shiftAmount: "0px" };
+  return { shouldShift: false, shiftAmount: "0px" }
 }

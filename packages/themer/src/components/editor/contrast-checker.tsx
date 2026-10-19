@@ -1,4 +1,4 @@
-"use client";
+"use client"
 
 // WCAG contrast checker: rates the standard token pairs (utils/
 // contrast-checker.ts checkThemeContrast) for one mode. The Light/Dark
@@ -9,10 +9,10 @@
 //
 // See: packages/themer/ARCHITECTURE.md (Contrast Checker).
 
-import * as React from "react";
-import { AlertCircle, CheckCircle2, XCircle } from "lucide-react";
-import { Badge } from "@workspace/ui/components/badge";
-import { Button } from "@workspace/ui/components/button";
+import * as React from "react"
+import { AlertCircle, CheckCircle2, XCircle } from "lucide-react"
+import { Badge } from "@workspace/ui/components/badge"
+import { Button } from "@workspace/ui/components/button"
 import {
   Item,
   ItemActions,
@@ -21,41 +21,41 @@ import {
   ItemGroup,
   ItemMedia,
   ItemTitle,
-} from "@workspace/ui/components/item";
+} from "@workspace/ui/components/item"
 import {
   ToggleGroup,
   ToggleGroupItem,
-} from "@workspace/ui/components/toggle-group";
-import { useEditorStore } from "../../stores/editor-store";
+} from "@workspace/ui/components/toggle-group"
+import { useEditorStore } from "../../stores/editor-store"
 import {
   checkThemeContrast,
   formatContrastRatio,
   type ContrastResult,
   type WCAGLevel,
-} from "../../utils/contrast-checker";
-import { focusColor } from "../../hooks/use-color-focus";
-import type { ThemeMode } from "../../types";
+} from "../../utils/contrast-checker"
+import { focusColor } from "../../hooks/use-color-focus"
+import type { ThemeMode } from "../../types"
 
-type FilterMode = "all" | "passing" | "failing";
+type FilterMode = "all" | "passing" | "failing"
 
 const FILTERS: ReadonlyArray<{ value: FilterMode; label: string }> = [
   { value: "all", label: "All" },
   { value: "passing", label: "Passing" },
   { value: "failing", label: "Failing" },
-];
+]
 
 const MODES: ReadonlyArray<{ value: ThemeMode; label: string }> = [
   { value: "light", label: "Light" },
   { value: "dark", label: "Dark" },
-];
+]
 
 /** First value of a single-select ToggleGroup change, if it is allowed. */
 function pickSingle<T extends string>(
   values: unknown[],
-  allowed: ReadonlyArray<{ value: T }>,
+  allowed: ReadonlyArray<{ value: T }>
 ): T | undefined {
-  const [next] = values;
-  return allowed.find((option) => option.value === next)?.value;
+  const [next] = values
+  return allowed.find((option) => option.value === next)?.value
 }
 
 /**
@@ -64,32 +64,32 @@ function pickSingle<T extends string>(
  * filter and one row per rated pair.
  */
 export function ContrastChecker() {
-  const pageMode = useEditorStore((state) => state.themeState.currentMode);
-  const [viewMode, setViewMode] = React.useState<ThemeMode>(pageMode);
-  const styles = useEditorStore((state) => state.themeState.styles[viewMode]);
-  const [filterMode, setFilterMode] = React.useState<FilterMode>("all");
+  const pageMode = useEditorStore((state) => state.themeState.currentMode)
+  const [viewMode, setViewMode] = React.useState<ThemeMode>(pageMode)
+  const styles = useEditorStore((state) => state.themeState.styles[viewMode])
+  const [filterMode, setFilterMode] = React.useState<FilterMode>("all")
 
-  const results = React.useMemo(() => checkThemeContrast(styles), [styles]);
-  const passingCount = results.filter((result) => result.passes).length;
-  const failingCount = results.length - passingCount;
+  const results = React.useMemo(() => checkThemeContrast(styles), [styles])
+  const passingCount = results.filter((result) => result.passes).length
+  const failingCount = results.length - passingCount
   const visibleResults =
     filterMode === "all"
       ? results
       : results.filter((result) =>
-          filterMode === "passing" ? result.passes : !result.passes,
-        );
-  const canFocus = viewMode === pageMode;
+          filterMode === "passing" ? result.passes : !result.passes
+        )
+  const canFocus = viewMode === pageMode
 
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-4 text-sm">
           <span className="flex items-center gap-1.5">
-            <CheckCircle2 aria-hidden className="text-primary size-4" />
+            <CheckCircle2 aria-hidden className="size-4 text-primary" />
             {passingCount} passing
           </span>
           <span className="flex items-center gap-1.5">
-            <XCircle aria-hidden className="text-destructive size-4" />
+            <XCircle aria-hidden className="size-4 text-destructive" />
             {failingCount} failing
           </span>
         </div>
@@ -100,8 +100,8 @@ export function ContrastChecker() {
           spacing={0}
           value={[viewMode]}
           onValueChange={(values) => {
-            const next = pickSingle(values, MODES);
-            if (next) setViewMode(next);
+            const next = pickSingle(values, MODES)
+            if (next) setViewMode(next)
           }}
         >
           {MODES.map((mode) => (
@@ -118,8 +118,8 @@ export function ContrastChecker() {
         spacing={1}
         value={[filterMode]}
         onValueChange={(values) => {
-          const next = pickSingle(values, FILTERS);
-          if (next) setFilterMode(next);
+          const next = pickSingle(values, FILTERS)
+          if (next) setFilterMode(next)
         }}
       >
         {FILTERS.map((filter) => (
@@ -130,7 +130,7 @@ export function ContrastChecker() {
       </ToggleGroup>
 
       {!canFocus ? (
-        <p className="text-muted-foreground text-xs">
+        <p className="text-xs text-muted-foreground">
           Viewing the {viewMode} theme. Switch the editor to {viewMode} mode to
           jump to these colors.
         </p>
@@ -146,16 +146,16 @@ export function ContrastChecker() {
         ))}
       </ItemGroup>
     </div>
-  );
+  )
 }
 
 interface ContrastResultItemProps {
-  result: ContrastResult;
-  canFocus: boolean;
+  result: ContrastResult
+  canFocus: boolean
 }
 
 function ContrastResultItem({ result, canFocus }: ContrastResultItemProps) {
-  const { level, passes, ratio, foreground, background, label, group } = result;
+  const { level, passes, ratio, foreground, background, label, group } = result
 
   return (
     <Item
@@ -182,7 +182,7 @@ function ContrastResultItem({ result, canFocus }: ContrastResultItemProps) {
           <span>
             {label}
             {group ? (
-              <span className="text-muted-foreground ms-1.5 text-xs font-normal">
+              <span className="ms-1.5 text-xs font-normal text-muted-foreground">
                 {group}
               </span>
             ) : null}
@@ -194,7 +194,7 @@ function ContrastResultItem({ result, canFocus }: ContrastResultItemProps) {
           <Button
             variant="link"
             size="xs"
-            className="text-muted-foreground px-0"
+            className="px-0 text-muted-foreground"
             disabled={!canFocus}
             onClick={() => focusColor(result.fg)}
           >
@@ -204,7 +204,7 @@ function ContrastResultItem({ result, canFocus }: ContrastResultItemProps) {
           <Button
             variant="link"
             size="xs"
-            className="text-muted-foreground px-0"
+            className="px-0 text-muted-foreground"
             disabled={!canFocus}
             onClick={() => focusColor(result.bg)}
           >
@@ -214,40 +214,40 @@ function ContrastResultItem({ result, canFocus }: ContrastResultItemProps) {
       </ItemContent>
 
       <ItemActions className="shrink-0">
-        <span className="text-muted-foreground text-sm tabular-nums">
+        <span className="text-sm text-muted-foreground tabular-nums">
           {formatContrastRatio(ratio)}
         </span>
         <ContrastBadge level={level} />
       </ItemActions>
     </Item>
-  );
+  )
 }
 
 interface ContrastBadgeProps {
-  level: WCAGLevel;
-  className?: string;
+  level: WCAGLevel
+  className?: string
 }
 
 const BADGES: Record<
   WCAGLevel,
   {
-    variant: "default" | "secondary" | "destructive" | "outline";
-    Icon: typeof CheckCircle2;
+    variant: "default" | "secondary" | "destructive" | "outline"
+    Icon: typeof CheckCircle2
   }
 > = {
   AAA: { variant: "default", Icon: CheckCircle2 },
   AA: { variant: "secondary", Icon: CheckCircle2 },
   "AA Large": { variant: "outline", Icon: AlertCircle },
   Fail: { variant: "destructive", Icon: XCircle },
-};
+}
 
 /** One WCAG level as a badge; "AA Large" carries a warning icon, not a check. */
 export function ContrastBadge({ level, className }: ContrastBadgeProps) {
-  const { variant, Icon } = BADGES[level];
+  const { variant, Icon } = BADGES[level]
   return (
     <Badge variant={variant} className={className}>
       <Icon aria-hidden />
       {level}
     </Badge>
-  );
+  )
 }

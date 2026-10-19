@@ -3,14 +3,14 @@ import {
   MoreHorizontalIcon,
   ShareIcon,
   type LucideIcon,
-} from "lucide-react";
+} from "lucide-react"
 
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@workspace/ui/components/dropdown-menu";
+} from "@workspace/ui/components/dropdown-menu"
 import {
   SidebarGroup,
   SidebarGroupLabel,
@@ -19,18 +19,18 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   useSidebar,
-} from "@workspace/ui/components/sidebar";
+} from "@workspace/ui/components/sidebar"
 
 export function NavDocuments({
   items,
 }: {
   items: {
-    name: string;
-    url: string;
-    icon: LucideIcon;
-  }[];
+    name: string
+    url: string
+    icon: LucideIcon
+  }[]
 }) {
-  const { isMobile } = useSidebar();
+  const { isMobile } = useSidebar()
 
   return (
     <SidebarGroup className="group-data-[collapsible=icon]:hidden">
@@ -48,7 +48,7 @@ export function NavDocuments({
                 render={
                   <SidebarMenuAction
                     showOnHover
-                    className="data-popup-open:bg-accent rounded-sm"
+                    className="rounded-sm data-popup-open:bg-accent"
                   >
                     <MoreHorizontalIcon />
                     <span className="sr-only">More</span>
@@ -80,5 +80,5 @@ export function NavDocuments({
         </SidebarMenuItem>
       </SidebarMenu>
     </SidebarGroup>
-  );
+  )
 }

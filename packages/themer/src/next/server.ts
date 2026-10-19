@@ -15,9 +15,9 @@
 /** Options of `createFontCatalogRoute`. */
 export interface FontCatalogRouteOptions {
   /** Whether the route serves the catalog; `false` answers 404. */
-  enabled: boolean;
+  enabled: boolean
   /** A Google Fonts API key, read on the server only. */
-  googleFontsApiKey?: string;
+  googleFontsApiKey?: string
 }
 
 /**
@@ -39,10 +39,10 @@ export function createFontCatalogRoute({
   return {
     async GET(request) {
       if (!enabled) {
-        return Response.json({ message: "Not found." }, { status: 404 });
+        return Response.json({ message: "Not found." }, { status: 404 })
       }
-      const { fontCatalogResponse } = await import("../api/font-catalog");
-      return fontCatalogResponse(new URL(request.url), googleFontsApiKey);
+      const { fontCatalogResponse } = await import("../api/font-catalog")
+      return fontCatalogResponse(new URL(request.url), googleFontsApiKey)
     },
-  };
+  }
 }

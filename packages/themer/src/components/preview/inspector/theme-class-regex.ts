@@ -13,8 +13,8 @@
 // The host's extra colours (ThemerConfig.extraColors) are inspectable too:
 // the default regex is rebuilt when their registration changes.
 
-import { COLOR_STYLE_KEYS } from "../../../config/defaults";
-import { getExtraColorKeys } from "../../../config/extra-colors";
+import { COLOR_STYLE_KEYS } from "../../../config/defaults"
+import { getExtraColorKeys } from "../../../config/extra-colors"
 
 /**
  * Colour utility prefixes, longest first so `ring-offset` wins over `ring`.
@@ -35,60 +35,60 @@ export const COLOR_UTILITY_PREFIXES = [
   "via",
   "bg",
   "to",
-] as const;
+] as const
 
 /** The editor's colour tokens that appear in utilities (not shadow-color). */
 export const INSPECTABLE_COLOR_KEYS: readonly string[] =
-  COLOR_STYLE_KEYS.filter((key) => !key.startsWith("shadow-"));
+  COLOR_STYLE_KEYS.filter((key) => !key.startsWith("shadow-"))
 
 const escapeRegex = (value: string) =>
-  value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
 
 /** Variant chain such as `hover:` or `data-[state=open]:` (brackets may hold `:`). */
-const VARIANT_PATTERN = String.raw`(?:(?:[^:\s\[]|\[[^\]]*\])+:)*`;
+const VARIANT_PATTERN = String.raw`(?:(?:[^:\s\[]|\[[^\]]*\])+:)*`
 
 /** Opacity modifier: `/50` or `/[0.35]`. */
-const OPACITY_PATTERN = String.raw`(?:\/(?:\d{1,3}|\[[^\]]+\]))?`;
+const OPACITY_PATTERN = String.raw`(?:\/(?:\d{1,3}|\[[^\]]+\]))?`
 
 /**
  * A regex that matches one whole class using a colour token, e.g.
  * `bg-primary`, `hover:text-muted-foreground/80`, `!border-input`.
  */
 export function createThemeClassRegex(
-  colorKeys: readonly string[] = INSPECTABLE_COLOR_KEYS,
+  colorKeys: readonly string[] = INSPECTABLE_COLOR_KEYS
 ): RegExp {
   const tokens = [...colorKeys]
     .sort((a, b) => b.length - a.length)
     .map(escapeRegex)
-    .join("|");
-  const prefixes = COLOR_UTILITY_PREFIXES.map(escapeRegex).join("|");
+    .join("|")
+  const prefixes = COLOR_UTILITY_PREFIXES.map(escapeRegex).join("|")
   return new RegExp(
-    `^${VARIANT_PATTERN}!?(?:${prefixes})-(?:${tokens})${OPACITY_PATTERN}!?$`,
-  );
+    `^${VARIANT_PATTERN}!?(?:${prefixes})-(?:${tokens})${OPACITY_PATTERN}!?$`
+  )
 }
 
-let cachedExtraKeys: readonly string[] | null = null;
-let cachedRegex: RegExp = createThemeClassRegex();
+let cachedExtraKeys: readonly string[] | null = null
+let cachedRegex: RegExp = createThemeClassRegex()
 
 /**
  * The regex for the built-in colour keys plus the registered host extras,
  * cached until the extras registration changes.
  */
 function getThemeClassRegex(): RegExp {
-  const extras = getExtraColorKeys();
+  const extras = getExtraColorKeys()
   if (extras !== cachedExtraKeys) {
-    cachedExtraKeys = extras;
-    cachedRegex = createThemeClassRegex([...INSPECTABLE_COLOR_KEYS, ...extras]);
+    cachedExtraKeys = extras
+    cachedRegex = createThemeClassRegex([...INSPECTABLE_COLOR_KEYS, ...extras])
   }
-  return cachedRegex;
+  return cachedRegex
 }
 
 /** Duck-typed element: works across realms (iframe documents). */
 export interface ElementLike {
-  readonly nodeType: number;
-  readonly parentElement: ElementLike | null;
-  readonly className: unknown;
-  getBoundingClientRect(): DOMRect;
+  readonly nodeType: number
+  readonly parentElement: ElementLike | null
+  readonly className: unknown
+  getBoundingClientRect(): DOMRect
 }
 
 function isElementLike(value: unknown): value is ElementLike {
@@ -96,34 +96,34 @@ function isElementLike(value: unknown): value is ElementLike {
     typeof value === "object" &&
     value !== null &&
     (value as { nodeType?: unknown }).nodeType === 1
-  );
+  )
 }
 
 /** An element's class attribute; SVG elements expose it as `baseVal`. */
 function getClassString(element: ElementLike): string {
-  const { className } = element;
-  if (typeof className === "string") return className;
+  const { className } = element
+  if (typeof className === "string") return className
   if (
     className &&
     typeof className === "object" &&
     "baseVal" in className &&
     typeof (className as { baseVal: unknown }).baseVal === "string"
   ) {
-    return (className as { baseVal: string }).baseVal;
+    return (className as { baseVal: string }).baseVal
   }
-  return "";
+  return ""
 }
 
 /** The token classes of one class string, deduplicated, in source order. */
 export function matchThemeClasses(
   classString: string,
-  regex: RegExp = getThemeClassRegex(),
+  regex: RegExp = getThemeClassRegex()
 ): string[] {
-  const seen = new Set<string>();
+  const seen = new Set<string>()
   for (const name of classString.split(/\s+/)) {
-    if (name && !seen.has(name) && regex.test(name)) seen.add(name);
+    if (name && !seen.has(name) && regex.test(name)) seen.add(name)
   }
-  return [...seen];
+  return [...seen]
 }
 
 /**
@@ -133,13 +133,13 @@ export function matchThemeClasses(
 export function findThemeClasses(
   target: unknown,
   boundary: unknown,
-  regex: RegExp = getThemeClassRegex(),
+  regex: RegExp = getThemeClassRegex()
 ): { element: ElementLike; matches: string[] } | null {
-  let current: ElementLike | null = isElementLike(target) ? target : null;
+  let current: ElementLike | null = isElementLike(target) ? target : null
   while (current && current !== boundary) {
-    const matches = matchThemeClasses(getClassString(current), regex);
-    if (matches.length > 0) return { element: current, matches };
-    current = current.parentElement;
+    const matches = matchThemeClasses(getClassString(current), regex)
+    if (matches.length > 0) return { element: current, matches }
+    current = current.parentElement
   }
-  return null;
+  return null
 }

@@ -3,42 +3,50 @@
 // popup in the PortalContainerContext container: the Themer's CSS is scoped
 // to its own root, so a popup portalled to <body> renders unstyled. A
 // `shadcn add -o` reinstall drops the container prop; this test catches it.
-import * as React from "react";
-import { act } from "react";
-import { createRoot, type Root } from "react-dom/client";
-import { afterEach, describe, expect, it } from "vitest";
+import * as React from "react"
+import { act } from "react"
+import { createRoot, type Root } from "react-dom/client"
+import { afterEach, describe, expect, it } from "vitest"
 
 import {
   AlertDialog,
   AlertDialogContent,
   AlertDialogTitle,
-} from "@workspace/ui/components/alert-dialog";
+} from "@workspace/ui/components/alert-dialog"
 import {
   Combobox,
   ComboboxContent,
   ComboboxInput,
   ComboboxItem,
   ComboboxList,
-} from "@workspace/ui/components/combobox";
+} from "@workspace/ui/components/combobox"
 import {
   ContextMenu,
   ContextMenuContent,
   ContextMenuItem,
   ContextMenuTrigger,
-} from "@workspace/ui/components/context-menu";
-import { Dialog, DialogContent, DialogTitle } from "@workspace/ui/components/dialog";
-import { Drawer, DrawerContent, DrawerTitle } from "@workspace/ui/components/drawer";
+} from "@workspace/ui/components/context-menu"
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+} from "@workspace/ui/components/dialog"
+import {
+  Drawer,
+  DrawerContent,
+  DrawerTitle,
+} from "@workspace/ui/components/drawer"
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@workspace/ui/components/dropdown-menu";
+} from "@workspace/ui/components/dropdown-menu"
 import {
   HoverCard,
   HoverCardContent,
   HoverCardTrigger,
-} from "@workspace/ui/components/hover-card";
+} from "@workspace/ui/components/hover-card"
 import {
   NavigationMenu,
   NavigationMenuContent,
@@ -46,32 +54,33 @@ import {
   NavigationMenuList,
   NavigationMenuPositioner,
   NavigationMenuTrigger,
-} from "@workspace/ui/components/navigation-menu";
+} from "@workspace/ui/components/navigation-menu"
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@workspace/ui/components/popover";
+} from "@workspace/ui/components/popover"
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@workspace/ui/components/select";
-import { Sheet, SheetContent, SheetTitle } from "@workspace/ui/components/sheet";
+} from "@workspace/ui/components/select"
+import { Sheet, SheetContent, SheetTitle } from "@workspace/ui/components/sheet"
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "@workspace/ui/components/tooltip";
-import { PortalContainerContext } from "@workspace/ui/lib/portal-container";
+} from "@workspace/ui/components/tooltip"
+import { PortalContainerContext } from "@workspace/ui/lib/portal-container"
 
-(globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT =
-  true;
+;(
+  globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }
+).IS_REACT_ACT_ENVIRONMENT = true
 
-const POPUP = "popup-under-test";
+const POPUP = "popup-under-test"
 
 const portalled: Record<string, () => React.ReactNode> = {
   Popover: () => (
@@ -173,57 +182,57 @@ const portalled: Record<string, () => React.ReactNode> = {
       </DrawerContent>
     </Drawer>
   ),
-};
+}
 
-let root: Root | null = null;
+let root: Root | null = null
 
 afterEach(async () => {
-  await act(async () => root?.unmount());
-  root = null;
-  document.body.innerHTML = "";
-});
+  await act(async () => root?.unmount())
+  root = null
+  document.body.innerHTML = ""
+})
 
 async function render(node: React.ReactNode) {
-  const host = document.createElement("div");
-  document.body.append(host);
-  root = createRoot(host);
-  await act(async () => root?.render(node));
+  const host = document.createElement("div")
+  document.body.append(host)
+  root = createRoot(host)
+  await act(async () => root?.render(node))
 }
 
 function popup() {
-  const el = document.querySelector(`[data-testid="${POPUP}"]`);
-  if (!el) throw new Error("popup not rendered");
-  return el;
+  const el = document.querySelector(`[data-testid="${POPUP}"]`)
+  if (!el) throw new Error("popup not rendered")
+  return el
 }
 
 describe("portalled @workspace/ui components", () => {
   it.each(Object.keys(portalled))(
     "%s mounts its popup in the provided portal container",
     async (name) => {
-      const Popup = portalled[name]!;
-      const container = document.createElement("div");
-      document.body.append(container);
+      const Popup = portalled[name]!
+      const container = document.createElement("div")
+      document.body.append(container)
 
       await render(
         <PortalContainerContext.Provider value={container}>
           <Popup />
-        </PortalContainerContext.Provider>,
-      );
+        </PortalContainerContext.Provider>
+      )
 
-      expect(container.contains(popup())).toBe(true);
-    },
-  );
+      expect(container.contains(popup())).toBe(true)
+    }
+  )
 
   it.each(Object.keys(portalled))(
     "%s mounts its popup on <body> without a container",
     async (name) => {
-      const Popup = portalled[name]!;
+      const Popup = portalled[name]!
 
-      await render(<Popup />);
+      await render(<Popup />)
 
       expect(popup().closest("[data-base-ui-portal]")?.parentElement).toBe(
-        document.body,
-      );
-    },
-  );
-});
+        document.body
+      )
+    }
+  )
+})

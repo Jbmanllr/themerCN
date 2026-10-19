@@ -1,4 +1,4 @@
-"use client";
+"use client"
 
 // One colour token control: native swatch input, text input and the
 // Tailwind palette popover. Memoised and given a stable `onChange(value,
@@ -13,24 +13,24 @@
 // native input only understands #rrggbb, so it gets a hex conversion. The
 // stored format is kept unless the user picks from the native input.
 
-import * as React from "react";
-import { Label } from "@workspace/ui/components/label";
-import { Input } from "@workspace/ui/components/input";
-import { cn } from "@workspace/ui/lib/utils";
-import { useColorFocus } from "../../hooks/use-color-focus";
-import { debounce } from "../../utils/debounce";
-import { isValidColor, toColorInputValue } from "../../utils/color-converter";
-import { COLOR_INPUT_DEBOUNCE_MS } from "../../config/constants";
-import { ColorSelectorPopover } from "./color-selector-popover";
+import * as React from "react"
+import { Label } from "@workspace/ui/components/label"
+import { Input } from "@workspace/ui/components/input"
+import { cn } from "@workspace/ui/lib/utils"
+import { useColorFocus } from "../../hooks/use-color-focus"
+import { debounce } from "../../utils/debounce"
+import { isValidColor, toColorInputValue } from "../../utils/color-converter"
+import { COLOR_INPUT_DEBOUNCE_MS } from "../../config/constants"
+import { ColorSelectorPopover } from "./color-selector-popover"
 
 interface ColorPickerProps {
   /** Token the picker edits; also its focus-registry name. */
-  name: string;
-  label: string;
-  color: string;
+  name: string
+  label: string
+  color: string
   /** Must be stable across renders (the debounce is built from it). */
-  onChange: (color: string, name: string) => void;
-  disabled?: boolean;
+  onChange: (color: string, name: string) => void
+  disabled?: boolean
 }
 
 export const ColorPicker = React.memo(function ColorPicker({
@@ -45,53 +45,53 @@ export const ColorPicker = React.memo(function ColorPicker({
   // render's colour (React's "adjust state when a prop changes" pattern):
   // keying the draft to the colour it started from would bring a stale draft
   // back when the colour returns to that value, e.g. edit then Reset.
-  const [textValue, setTextValue] = React.useState(color);
-  const [previousColor, setPreviousColor] = React.useState(color);
+  const [textValue, setTextValue] = React.useState(color)
+  const [previousColor, setPreviousColor] = React.useState(color)
   if (color !== previousColor) {
-    setPreviousColor(color);
-    setTextValue(color);
+    setPreviousColor(color)
+    setTextValue(color)
   }
-  const isInvalid = textValue.trim() !== "" && !isValidColor(textValue);
+  const isInvalid = textValue.trim() !== "" && !isValidColor(textValue)
   const previewColor =
-    !isInvalid && textValue.trim() !== "" ? textValue.trim() : color;
-  const { ref, isHighlighted } = useColorFocus(name);
-  const id = React.useId();
-  const swatchId = `${id}-swatch`;
-  const textId = `${id}-text`;
+    !isInvalid && textValue.trim() !== "" ? textValue.trim() : color
+  const { ref, isHighlighted } = useColorFocus(name)
+  const id = React.useId()
+  const swatchId = `${id}-swatch`
+  const textId = `${id}-text`
 
   const debouncedOnChange = React.useMemo(
     () =>
       debounce(
         (value: string) => onChange(value, name),
-        COLOR_INPUT_DEBOUNCE_MS,
+        COLOR_INPUT_DEBOUNCE_MS
       ),
-    [name, onChange],
-  );
+    [name, onChange]
+  )
 
   // A picker that unmounts mid-debounce (tab switch, search, editor close)
   // still commits the last valid value rather than dropping it.
-  React.useEffect(() => () => debouncedOnChange.flush(), [debouncedOnChange]);
+  React.useEffect(() => () => debouncedOnChange.flush(), [debouncedOnChange])
 
   const handleNativeChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const value = event.target.value;
-    setTextValue(value);
-    debouncedOnChange(value);
-  };
+    const value = event.target.value
+    setTextValue(value)
+    debouncedOnChange(value)
+  }
 
   const handleTextChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const value = event.target.value;
-    setTextValue(value);
-    if (isValidColor(value.trim())) debouncedOnChange(value.trim());
-    else debouncedOnChange.cancel();
-  };
+    const value = event.target.value
+    setTextValue(value)
+    if (isValidColor(value.trim())) debouncedOnChange(value.trim())
+    else debouncedOnChange.cancel()
+  }
 
   const handlePaletteSelect = React.useCallback(
     (value: string) => {
-      debouncedOnChange.cancel();
-      onChange(value, name);
+      debouncedOnChange.cancel()
+      onChange(value, name)
     },
-    [debouncedOnChange, name, onChange],
-  );
+    [debouncedOnChange, name, onChange]
+  )
 
   return (
     <div
@@ -100,7 +100,7 @@ export const ColorPicker = React.memo(function ColorPicker({
       className={cn(
         "mb-4 flex flex-col gap-2 transition-all duration-300",
         isHighlighted &&
-          "bg-border/50 ring-primary -m-1.5 mb-1.5 rounded-sm p-1.5 ring-2",
+          "-m-1.5 mb-1.5 rounded-sm bg-border/50 p-1.5 ring-2 ring-primary"
       )}
     >
       <Label htmlFor={textId} className="text-xs font-medium">
@@ -112,7 +112,7 @@ export const ColorPicker = React.memo(function ColorPicker({
           data-color-swatch-preview=""
           className={cn(
             "relative flex size-8 shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded border",
-            disabled && "cursor-not-allowed opacity-50",
+            disabled && "cursor-not-allowed opacity-50"
           )}
           style={{ backgroundColor: previewColor }}
         >
@@ -147,5 +147,5 @@ export const ColorPicker = React.memo(function ColorPicker({
         />
       </div>
     </div>
-  );
-});
+  )
+})

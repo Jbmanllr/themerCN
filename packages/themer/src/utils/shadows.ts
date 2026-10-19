@@ -14,10 +14,10 @@
 //
 // See: packages/themer/ARCHITECTURE.md ("Applying a theme").
 
-import type { ThemeEditorState, ThemeMode, ThemeStyleProps } from "../types";
-import { defaultThemeState } from "../config/defaults";
-import { colorFormatter } from "./color-converter";
-import { parseLength } from "./length";
+import type { ThemeEditorState, ThemeMode, ThemeStyleProps } from "../types"
+import { defaultThemeState } from "../config/defaults"
+import { colorFormatter } from "./color-converter"
+import { parseLength } from "./length"
 
 /** The shadow scale keys, in Tailwind order (`shadow` is the base size). */
 export const SHADOW_SCALE_KEYS = [
@@ -29,11 +29,11 @@ export const SHADOW_SCALE_KEYS = [
   "shadow-lg",
   "shadow-xl",
   "shadow-2xl",
-] as const;
+] as const
 
-export type ShadowScaleKey = (typeof SHADOW_SCALE_KEYS)[number];
+export type ShadowScaleKey = (typeof SHADOW_SCALE_KEYS)[number]
 
-export type ShadowMap = Record<ShadowScaleKey, string>;
+export type ShadowMap = Record<ShadowScaleKey, string>
 
 /**
  * The shadow scale for one mode (defaults to the state's current mode).
@@ -41,31 +41,31 @@ export type ShadowMap = Record<ShadowScaleKey, string>;
  */
 export function getShadowMap(
   themeState: ThemeEditorState,
-  mode: ThemeMode = themeState.currentMode,
+  mode: ThemeMode = themeState.currentMode
 ): ShadowMap {
   const styles: ThemeStyleProps = {
     ...defaultThemeState.styles[mode],
     ...themeState.styles[mode],
-  };
+  }
 
-  const hsl = colorFormatter(styles["shadow-color"], "hsl", "3");
-  const offsetX = styles["shadow-offset-x"];
-  const offsetY = styles["shadow-offset-y"];
-  const blur = styles["shadow-blur"];
-  const spread = styles["shadow-spread"];
-  const opacity = parseFloat(styles["shadow-opacity"]);
+  const hsl = colorFormatter(styles["shadow-color"], "hsl", "3")
+  const offsetX = styles["shadow-offset-x"]
+  const offsetY = styles["shadow-offset-y"]
+  const blur = styles["shadow-blur"]
+  const spread = styles["shadow-spread"]
+  const opacity = parseFloat(styles["shadow-opacity"])
   const color = (opacityMultiplier: number) =>
-    `hsl(${hsl} / ${(opacity * opacityMultiplier).toFixed(2)})`;
+    `hsl(${hsl} / ${(opacity * opacityMultiplier).toFixed(2)})`
 
   const firstLayer = (opacityMultiplier: number) =>
-    `${offsetX} ${offsetY} ${blur} ${spread} ${color(opacityMultiplier)}`;
+    `${offsetX} ${offsetY} ${blur} ${spread} ${color(opacityMultiplier)}`
 
   // Same offset X and colour as the first layer, a fixed offset Y and blur
   // per size, and the first layer's spread minus one pixel.
   const secondLayer = (fixedOffsetY: string, fixedBlur: string): string => {
-    const spread2 = `${parseFloat(spread.replace("px", "")) - 1}px`;
-    return `${offsetX} ${fixedOffsetY} ${fixedBlur} ${spread2} ${color(1.0)}`;
-  };
+    const spread2 = `${parseFloat(spread.replace("px", "")) - 1}px`
+    return `${offsetX} ${fixedOffsetY} ${fixedBlur} ${spread2} ${color(1.0)}`
+  }
 
   return {
     "shadow-2xs": firstLayer(0.5),
@@ -76,7 +76,7 @@ export function getShadowMap(
     "shadow-lg": `${firstLayer(1.0)}, ${secondLayer("4px", "6px")}`,
     "shadow-xl": `${firstLayer(1.0)}, ${secondLayer("8px", "10px")}`,
     "shadow-2xl": firstLayer(2.5),
-  };
+  }
 }
 
 /**
@@ -85,10 +85,10 @@ export function getShadowMap(
  */
 export function getShadowVariables(
   themeState: ThemeEditorState,
-  mode: ThemeMode = themeState.currentMode,
+  mode: ThemeMode = themeState.currentMode
 ): Record<string, string> {
-  const modeStyles = themeState.styles[mode];
-  const defaults = defaultThemeState.styles[mode];
+  const modeStyles = themeState.styles[mode]
+  const defaults = defaultThemeState.styles[mode]
 
   return {
     ...getShadowMap(themeState, mode),
@@ -100,7 +100,7 @@ export function getShadowVariables(
     "shadow-opacity-raw":
       modeStyles["shadow-opacity"] || defaults["shadow-opacity"],
     "shadow-color-raw": modeStyles["shadow-color"] || defaults["shadow-color"],
-  };
+  }
 }
 
 /**
@@ -121,16 +121,16 @@ export function getShadowParams(
       | "shadow-offset-x"
       | "shadow-offset-y"
     >
-  >,
+  >
 ): {
-  color: string;
-  opacity: number;
-  blur: number;
-  spread: number;
-  offsetX: number;
-  offsetY: number;
+  color: string
+  opacity: number
+  blur: number
+  spread: number
+  offsetX: number
+  offsetY: number
 } {
-  const opacity = parseFloat(styles["shadow-opacity"] || "0.1");
+  const opacity = parseFloat(styles["shadow-opacity"] || "0.1")
   return {
     color: styles["shadow-color"] || "oklch(0 0 0)",
     opacity: Number.isFinite(opacity) ? opacity : 0.1,
@@ -138,7 +138,7 @@ export function getShadowParams(
     spread: parseLength(styles["shadow-spread"], "px", 0),
     offsetX: parseLength(styles["shadow-offset-x"], "px", 0),
     offsetY: parseLength(styles["shadow-offset-y"], "px", 1),
-  };
+  }
 }
 
 /**
@@ -150,10 +150,10 @@ export function createCustomShadow(
   blur: number,
   spread: number,
   offsetX: number,
-  offsetY: number,
+  offsetY: number
 ): Record<string, string> {
-  const hsl = colorFormatter(color, "hsl", "3");
+  const hsl = colorFormatter(color, "hsl", "3")
   return {
     shadow: `${offsetX}px ${offsetY}px ${blur}px ${spread}px hsl(${hsl} / ${opacity.toFixed(2)})`,
-  };
+  }
 }

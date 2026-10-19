@@ -1,4 +1,4 @@
-"use client";
+"use client"
 
 // The Google Fonts picker and the four theme font slots (sans, heading,
 // serif, mono). A popover with a debounced search, a category filter and the
@@ -19,11 +19,11 @@
 // See: packages/themer/ARCHITECTURE.md (Font Catalog Flow, Font Picker
 // Positioning and Scroll Ownership).
 
-import * as React from "react";
-import { AlertCircle, ChevronDown, FunnelX } from "lucide-react";
-import { Alert, AlertAction, AlertTitle } from "@workspace/ui/components/alert";
-import { Badge } from "@workspace/ui/components/badge";
-import { Button } from "@workspace/ui/components/button";
+import * as React from "react"
+import { AlertCircle, ChevronDown, FunnelX } from "lucide-react"
+import { Alert, AlertAction, AlertTitle } from "@workspace/ui/components/alert"
+import { Badge } from "@workspace/ui/components/badge"
+import { Button } from "@workspace/ui/components/button"
 import {
   Command,
   CommandEmpty,
@@ -31,18 +31,18 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
-} from "@workspace/ui/components/command";
+} from "@workspace/ui/components/command"
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@workspace/ui/components/popover";
-import { Label } from "@workspace/ui/components/label";
+} from "@workspace/ui/components/popover"
+import { Label } from "@workspace/ui/components/label"
 import {
   Marker,
   MarkerContent,
   MarkerIcon,
-} from "@workspace/ui/components/marker";
+} from "@workspace/ui/components/marker"
 import {
   Select,
   SelectContent,
@@ -50,13 +50,13 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@workspace/ui/components/select";
-import { Separator } from "@workspace/ui/components/separator";
-import { Spinner } from "@workspace/ui/components/spinner";
-import { useFontSearch } from "../../hooks/use-font-search";
-import { useEditorStore } from "../../stores/editor-store";
-import { useOptionalThemerContext } from "../themer-provider";
-import { useScrollBoundary } from "./scroll-boundary";
+} from "@workspace/ui/components/select"
+import { Separator } from "@workspace/ui/components/separator"
+import { Spinner } from "@workspace/ui/components/spinner"
+import { useFontSearch } from "../../hooks/use-font-search"
+import { useEditorStore } from "../../stores/editor-store"
+import { useOptionalThemerContext } from "../themer-provider"
+import { useScrollBoundary } from "./scroll-boundary"
 import {
   acquireFontPreview,
   acquireGoogleFont,
@@ -71,31 +71,31 @@ import {
   type FilterFontCategory,
   type FontInfo,
   type ThemeFontRole,
-} from "../../utils/font-loader";
+} from "../../utils/font-loader"
 
 interface FontPickerProps {
-  value: string;
-  onChange: (font: string) => void;
-  category: ThemeFontRole;
-  label: string;
-  disabled?: boolean;
-  fontCatalogEndpoint?: string;
+  value: string
+  onChange: (font: string) => void
+  category: ThemeFontRole
+  label: string
+  disabled?: boolean
+  fontCatalogEndpoint?: string
 }
 
 type FontItemProps = {
-  font: FontInfo;
-  isSelected: boolean;
-  isLoading: boolean;
-  onSelect: (font: FontInfo) => void;
-  selectedRef: React.Ref<HTMLDivElement> | null;
-};
+  font: FontInfo
+  isSelected: boolean
+  isLoading: boolean
+  onSelect: (font: FontInfo) => void
+  selectedRef: React.Ref<HTMLDivElement> | null
+}
 
 /**
  * How long the picker keeps its own hold on a chosen family after onChange:
  * the theme's font slot (DynamicFontLoader) takes its reference once the
  * change renders, and releasing ours first would drop and refetch the link.
  */
-const FONT_HANDOFF_MS = 2000;
+const FONT_HANDOFF_MS = 2000
 
 /**
  * Load a row's preview (a `&text=` subset with the glyphs of its name) once
@@ -104,32 +104,32 @@ const FONT_HANDOFF_MS = 2000;
  */
 function useFontPreview(
   ref: React.RefObject<HTMLElement | null>,
-  family: string,
+  family: string
 ) {
   React.useEffect(() => {
-    const node = ref.current;
-    if (!node) return undefined;
+    const node = ref.current
+    if (!node) return undefined
 
     if (typeof IntersectionObserver === "undefined") {
-      return acquireFontPreview(family);
+      return acquireFontPreview(family)
     }
 
-    let release: (() => void) | null = null;
+    let release: (() => void) | null = null
     const observer = new IntersectionObserver(
       (entries) => {
-        if (release || !entries.some((entry) => entry.isIntersecting)) return;
-        release = acquireFontPreview(family);
-        observer.disconnect();
+        if (release || !entries.some((entry) => entry.isIntersecting)) return
+        release = acquireFontPreview(family)
+        observer.disconnect()
       },
-      { rootMargin: "100px" },
-    );
-    observer.observe(node);
+      { rootMargin: "100px" }
+    )
+    observer.observe(node)
 
     return () => {
-      observer.disconnect();
-      release?.();
-    };
-  }, [family, ref]);
+      observer.disconnect()
+      release?.()
+    }
+  }, [family, ref])
 }
 
 function FontItem({
@@ -139,9 +139,9 @@ function FontItem({
   onSelect,
   selectedRef,
 }: FontItemProps) {
-  const fontFamily = buildFontFamily(font.family, font.category);
-  const previewRef = React.useRef<HTMLSpanElement>(null);
-  useFontPreview(previewRef, font.family);
+  const fontFamily = buildFontFamily(font.family, font.category)
+  const previewRef = React.useRef<HTMLSpanElement>(null)
+  useFontPreview(previewRef, font.family)
 
   return (
     <CommandItem
@@ -151,7 +151,7 @@ function FontItem({
       disabled={isLoading}
       className="cursor-pointer justify-between gap-2 p-2"
       onSelect={() => {
-        onSelect(font);
+        onSelect(font)
       }}
     >
       <div className="inline-flex min-w-0 flex-1 flex-col">
@@ -174,23 +174,23 @@ function FontItem({
         </span>
       </div>
     </CommandItem>
-  );
+  )
 }
 
 function useDebouncedValue(value: string, delay: number) {
-  const [debouncedValue, setDebouncedValue] = React.useState(value);
+  const [debouncedValue, setDebouncedValue] = React.useState(value)
 
   React.useEffect(() => {
-    const timeout = setTimeout(() => setDebouncedValue(value), delay);
-    return () => clearTimeout(timeout);
-  }, [delay, value]);
+    const timeout = setTimeout(() => setDebouncedValue(value), delay)
+    return () => clearTimeout(timeout)
+  }, [delay, value])
 
-  return debouncedValue;
+  return debouncedValue
 }
 
 function readRootVariable(name: string): string {
-  if (typeof document === "undefined") return "";
-  return getComputedStyle(document.documentElement).getPropertyValue(name);
+  if (typeof document === "undefined") return ""
+  return getComputedStyle(document.documentElement).getPropertyValue(name)
 }
 
 /**
@@ -205,44 +205,44 @@ function FontValueLabel({
 }: Readonly<{ value: string; endpoint: string | undefined }>) {
   const description = React.useMemo(
     () => describeFontValue(value, readRootVariable),
-    [value],
-  );
+    [value]
+  )
   const family =
     description.kind === "family" || description.kind === "variable"
       ? description.family
-      : null;
+      : null
   const checkCatalog =
-    description.kind === "family" && !isLocalFontFamily(description.family);
+    description.kind === "family" && !isLocalFontFamily(description.family)
   // One cached catalog lookup per family (react-query, 24 h stale time).
   const catalog = useFontSearch({
     endpoint,
     query: checkCatalog ? description.family : "",
     limit: 50,
     enabled: checkCatalog,
-  });
+  })
   const inCatalog = catalog.data?.pages.some((page) =>
     page.fonts.some(
-      (font) => font.family.toLowerCase() === family?.toLowerCase(),
-    ),
-  );
+      (font) => font.family.toLowerCase() === family?.toLowerCase()
+    )
+  )
 
   const isCustom =
     description.kind === "variable" ||
     (description.kind === "family" &&
-      (!checkCatalog || (catalog.isSuccess && !inCatalog)));
+      (!checkCatalog || (catalog.isSuccess && !inCatalog)))
 
-  let name: string;
+  let name: string
   switch (description.kind) {
     case "empty":
-      return <span className="text-muted-foreground">Select font...</span>;
+      return <span className="text-muted-foreground">Select font...</span>
     case "system":
-      name = `System font (${description.generic})`;
-      break;
+      name = `System font (${description.generic})`
+      break
     case "variable":
-      name = description.family ?? description.variable;
-      break;
+      name = description.family ?? description.variable
+      break
     default:
-      name = description.family;
+      name = description.family
   }
 
   return (
@@ -264,25 +264,25 @@ function FontValueLabel({
         </Badge>
       )}
     </span>
-  );
+  )
 }
 
 type FontResultsProps = {
-  isLoading: boolean;
-  isError: boolean;
-  isEmpty: boolean;
-  popularFonts: FontInfo[];
-  remainingFonts: FontInfo[];
-  currentFontFamily: string;
-  loadingFont: string | null;
-  onSelect: (font: FontInfo) => void;
-  onRetry: () => void;
-  hasNextPage: boolean;
-  isFetchingNextPage: boolean;
-  scrollRef: React.Ref<HTMLDivElement>;
-  selectedFontRef: React.Ref<HTMLDivElement>;
-  loadMoreRef: React.Ref<HTMLDivElement>;
-};
+  isLoading: boolean
+  isError: boolean
+  isEmpty: boolean
+  popularFonts: FontInfo[]
+  remainingFonts: FontInfo[]
+  currentFontFamily: string
+  loadingFont: string | null
+  onSelect: (font: FontInfo) => void
+  onRetry: () => void
+  hasNextPage: boolean
+  isFetchingNextPage: boolean
+  scrollRef: React.Ref<HTMLDivElement>
+  selectedFontRef: React.Ref<HTMLDivElement>
+  loadMoreRef: React.Ref<HTMLDivElement>
+}
 
 /**
  * The picker's result area: the catalogue's loading, error and empty states,
@@ -314,14 +314,14 @@ function FontResults({
       onSelect={onSelect}
       selectedRef={font.family === currentFontFamily ? selectedFontRef : null}
     />
-  );
+  )
 
   return (
     <div className="relative isolate min-h-0 flex-1">
       {isLoading ? (
         <div className="absolute inset-0 flex size-full items-center justify-center gap-2 text-center">
           <Spinner />
-          <span className="text-muted-foreground text-sm">
+          <span className="text-sm text-muted-foreground">
             Loading fonts...
           </span>
         </div>
@@ -338,7 +338,7 @@ function FontResults({
                 // Inside the Command root, whose keydown handler cancels
                 // every Enter it sees; keep Enter for this button's own click.
                 onKeyDown={(event) => {
-                  if (event.key === "Enter") event.stopPropagation();
+                  if (event.key === "Enter") event.stopPropagation()
                 }}
               >
                 Retry
@@ -378,7 +378,7 @@ function FontResults({
         </CommandList>
       )}
     </div>
-  );
+  )
 }
 
 /**
@@ -396,30 +396,30 @@ export function FontPicker({
   disabled = false,
   fontCatalogEndpoint,
 }: FontPickerProps) {
-  const themerContext = useOptionalThemerContext();
-  const defaultCategory = toFontCategory(category);
+  const themerContext = useOptionalThemerContext()
+  const defaultCategory = toFontCategory(category)
   const endpoint =
-    fontCatalogEndpoint ?? themerContext?.config.fontCatalogEndpoint;
+    fontCatalogEndpoint ?? themerContext?.config.fontCatalogEndpoint
 
-  const [open, setOpen] = React.useState(false);
-  const labelId = React.useId();
-  const [inputValue, setInputValue] = React.useState("");
+  const [open, setOpen] = React.useState(false)
+  const labelId = React.useId()
+  const [inputValue, setInputValue] = React.useState("")
   const [selectedCategory, setSelectedCategory] =
-    React.useState<FilterFontCategory>(defaultCategory);
-  const [loadingFont, setLoadingFont] = React.useState<string | null>(null);
+    React.useState<FilterFontCategory>(defaultCategory)
+  const [loadingFont, setLoadingFont] = React.useState<string | null>(null)
   // Only the latest pick may commit: an earlier, slower load must not
   // overwrite it or clear its spinner.
-  const selectionRef = React.useRef(0);
-  const searchQuery = useDebouncedValue(inputValue, 300);
+  const selectionRef = React.useRef(0)
+  const searchQuery = useDebouncedValue(inputValue, 300)
 
-  const scrollRef = React.useRef<HTMLDivElement>(null);
-  const selectedFontRef = React.useRef<HTMLDivElement>(null);
-  const hasScrolledToSelectedFont = React.useRef(false);
+  const scrollRef = React.useRef<HTMLDivElement>(null)
+  const selectedFontRef = React.useRef<HTMLDivElement>(null)
+  const hasScrolledToSelectedFont = React.useRef(false)
 
   const currentFontFamily = React.useMemo(
     () => extractGoogleFontFamily(value) ?? "",
-    [value],
-  );
+    [value]
+  )
 
   const fontQuery = useFontSearch({
     endpoint,
@@ -427,19 +427,19 @@ export function FontPicker({
     category: selectedCategory,
     limit: 15,
     enabled: open,
-  });
+  })
 
   React.useEffect(() => {
-    if (!open) return;
-    scrollRef.current?.scrollTo({ top: 0 });
-  }, [selectedCategory, searchQuery, open]);
+    if (!open) return
+    scrollRef.current?.scrollTo({ top: 0 })
+  }, [selectedCategory, searchQuery, open])
 
   const allFonts = React.useMemo(() => {
-    if (!fontQuery.data) return [];
-    return fontQuery.data.pages.flatMap((page) => page.fonts);
-  }, [fontQuery.data]);
+    if (!fontQuery.data) return []
+    return fontQuery.data.pages.flatMap((page) => page.fonts)
+  }, [fontQuery.data])
 
-  useScrollBoundary(scrollRef, { enabled: open, rebindKey: allFonts.length });
+  useScrollBoundary(scrollRef, { enabled: open, rebindKey: allFonts.length })
 
   React.useEffect(() => {
     if (open && fontQuery.data && !hasScrolledToSelectedFont.current) {
@@ -447,80 +447,80 @@ export function FontPicker({
         selectedFontRef.current?.scrollIntoView?.({
           block: "center",
           inline: "nearest",
-        });
-      });
-      hasScrolledToSelectedFont.current = true;
+        })
+      })
+      hasScrolledToSelectedFont.current = true
     } else if (!open) {
-      hasScrolledToSelectedFont.current = false;
+      hasScrolledToSelectedFont.current = false
     }
-  }, [fontQuery.data, open]);
+  }, [fontQuery.data, open])
 
   const popularFonts = React.useMemo(() => {
-    if (searchQuery) return [];
-    return getPopularFonts(selectedCategory);
-  }, [searchQuery, selectedCategory]);
+    if (searchQuery) return []
+    return getPopularFonts(selectedCategory)
+  }, [searchQuery, selectedCategory])
 
   const remainingFonts = React.useMemo(() => {
-    if (popularFonts.length === 0) return allFonts;
-    const popularFamilies = new Set(popularFonts.map((font) => font.family));
-    return allFonts.filter((font) => !popularFamilies.has(font.family));
-  }, [allFonts, popularFonts]);
+    if (popularFonts.length === 0) return allFonts
+    const popularFamilies = new Set(popularFonts.map((font) => font.family))
+    return allFonts.filter((font) => !popularFamilies.has(font.family))
+  }, [allFonts, popularFonts])
 
   // Infinite scroll: one observer on the sentinel, rebuilt only when paging
   // state changes (the query object itself is new on every render) and
   // disconnected on cleanup. A page that leaves the sentinel in view fetches
   // the next one when allFonts grows.
-  const loadMoreRef = React.useRef<HTMLDivElement>(null);
-  const { hasNextPage, isFetchingNextPage, fetchNextPage } = fontQuery;
+  const loadMoreRef = React.useRef<HTMLDivElement>(null)
+  const { hasNextPage, isFetchingNextPage, fetchNextPage } = fontQuery
   React.useEffect(() => {
-    const node = loadMoreRef.current;
-    if (!open || !node || !hasNextPage || isFetchingNextPage) return undefined;
+    const node = loadMoreRef.current
+    if (!open || !node || !hasNextPage || isFetchingNextPage) return undefined
 
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries.some((entry) => entry.isIntersecting)) {
-          void fetchNextPage();
+          void fetchNextPage()
         }
       },
       {
         root: scrollRef.current,
         rootMargin: "100px",
         threshold: 0,
-      },
-    );
-    observer.observe(node);
-    return () => observer.disconnect();
-  }, [allFonts.length, fetchNextPage, hasNextPage, isFetchingNextPage, open]);
+      }
+    )
+    observer.observe(node)
+    return () => observer.disconnect()
+  }, [allFonts.length, fetchNextPage, hasNextPage, isFetchingNextPage, open])
 
   const handleFontSelect = React.useCallback(
     async (font: FontInfo) => {
-      const ticket = ++selectionRef.current;
-      setLoadingFont(font.family);
+      const ticket = ++selectionRef.current
+      setLoadingFont(font.family)
       // The picker loads the family first, with the weights the catalogue
       // says it has, so the theme slot reuses this link instead of guessing.
-      const weights = getDefaultWeights(font.variants);
-      const release = acquireGoogleFont(font.family, { weights });
+      const weights = getDefaultWeights(font.variants)
+      const release = acquireGoogleFont(font.family, { weights })
 
       try {
-        await waitForFont(font.family, weights[0]);
+        await waitForFont(font.family, weights[0])
       } catch (error) {
-        console.warn(`Failed to load font ${font.family}:`, error);
+        console.warn(`Failed to load font ${font.family}:`, error)
       }
 
       // A later pick superseded this one: drop our hold and leave the state
       // to it.
       if (ticket !== selectionRef.current) {
-        release();
-        return;
+        release()
+        return
       }
 
-      setLoadingFont(null);
-      onChange(buildFontFamily(font.family, font.category));
-      setOpen(false);
-      setTimeout(release, FONT_HANDOFF_MS);
+      setLoadingFont(null)
+      onChange(buildFontFamily(font.family, font.category))
+      setOpen(false)
+      setTimeout(release, FONT_HANDOFF_MS)
     },
-    [onChange],
-  );
+    [onChange]
+  )
 
   return (
     <div className="flex flex-col gap-1.5">
@@ -587,7 +587,7 @@ export function FontPicker({
                 >
                   <SelectTrigger
                     size="sm"
-                    className="bg-input/25 w-full px-2 text-xs"
+                    className="w-full bg-input/25 px-2 text-xs"
                   >
                     <SelectValue />
                   </SelectTrigger>
@@ -631,11 +631,11 @@ export function FontPicker({
         </PopoverContent>
       </Popover>
     </div>
-  );
+  )
 }
 
 /** The theme font variables the editor exposes; each has one picker. */
-type FontControlKey = "font-sans" | "font-heading" | "font-serif" | "font-mono";
+type FontControlKey = "font-sans" | "font-heading" | "font-serif" | "font-mono"
 
 const FONT_CONTROLS: Readonly<
   Record<FontControlKey, { category: "sans" | "serif" | "mono"; label: string }>
@@ -646,9 +646,9 @@ const FONT_CONTROLS: Readonly<
   "font-heading": { category: "serif", label: "Heading" },
   "font-serif": { category: "serif", label: "Serif" },
   "font-mono": { category: "mono", label: "Monospace" },
-};
+}
 
-const FONT_SLOTS = Object.keys(FONT_CONTROLS) as FontControlKey[];
+const FONT_SLOTS = Object.keys(FONT_CONTROLS) as FontControlKey[]
 
 /**
  * One theme font slot, with its label and category from FONT_CONTROLS.
@@ -657,14 +657,14 @@ const FONT_SLOTS = Object.keys(FONT_CONTROLS) as FontControlKey[];
  */
 export function FontSlotPicker({ slot }: Readonly<{ slot: FontControlKey }>) {
   const value = useEditorStore(
-    (state) => state.themeState.styles[state.themeState.currentMode][slot],
-  );
-  const updateCommonStyle = useEditorStore((state) => state.updateCommonStyle);
+    (state) => state.themeState.styles[state.themeState.currentMode][slot]
+  )
+  const updateCommonStyle = useEditorStore((state) => state.updateCommonStyle)
   const handleChange = React.useCallback(
     (font: string) => updateCommonStyle(slot, font),
-    [slot, updateCommonStyle],
-  );
-  const { category, label } = FONT_CONTROLS[slot];
+    [slot, updateCommonStyle]
+  )
+  const { category, label } = FONT_CONTROLS[slot]
 
   return (
     <FontPicker
@@ -673,7 +673,7 @@ export function FontSlotPicker({ slot }: Readonly<{ slot: FontControlKey }>) {
       category={category}
       label={label}
     />
-  );
+  )
 }
 
 /**
@@ -687,5 +687,5 @@ export function FontControls() {
         <FontSlotPicker key={slot} slot={slot} />
       ))}
     </div>
-  );
+  )
 }

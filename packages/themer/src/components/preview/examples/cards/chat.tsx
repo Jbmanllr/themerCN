@@ -1,4 +1,4 @@
-"use client";
+"use client"
 
 // Chat card of the Cards preview tab, with a "New message" dialog for picking
 // users. Static sample people and messages; avatars are inline SVG data URIs
@@ -8,20 +8,20 @@
 // which shows it when the item has `data-checked="true"`; do not draw a second
 // one here.
 
-import * as React from "react";
+import * as React from "react"
 
 import {
   Avatar,
   AvatarFallback,
   AvatarImage,
-} from "@workspace/ui/components/avatar";
-import { Button } from "@workspace/ui/components/button";
+} from "@workspace/ui/components/avatar"
+import { Button } from "@workspace/ui/components/button"
 import {
   Card,
   CardContent,
   CardFooter,
   CardHeader,
-} from "@workspace/ui/components/card";
+} from "@workspace/ui/components/card"
 import {
   Command,
   CommandEmpty,
@@ -29,8 +29,8 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
-} from "@workspace/ui/components/command";
-import { Input } from "@workspace/ui/components/input";
+} from "@workspace/ui/components/command"
+import { Input } from "@workspace/ui/components/input"
 import {
   Dialog,
   DialogContent,
@@ -38,16 +38,16 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@workspace/ui/components/dialog";
+} from "@workspace/ui/components/dialog"
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "@workspace/ui/components/tooltip";
-import { cn } from "@workspace/ui/lib/utils";
-import { ArrowUpIcon, PlusIcon } from "lucide-react";
-import { avatarDataUri } from "../avatar-data-uri";
+} from "@workspace/ui/components/tooltip"
+import { cn } from "@workspace/ui/lib/utils"
+import { ArrowUpIcon, PlusIcon } from "lucide-react"
+import { avatarDataUri } from "../avatar-data-uri"
 
 const users = [
   {
@@ -75,13 +75,13 @@ const users = [
     email: "will@email.com",
     avatar: avatarDataUri("WK", "#ea580c"),
   },
-] as const;
+] as const
 
-type User = (typeof users)[number];
+type User = (typeof users)[number]
 
 export function CardsChat() {
-  const [open, setOpen] = React.useState(false);
-  const [selectedUsers, setSelectedUsers] = React.useState<User[]>([]);
+  const [open, setOpen] = React.useState(false)
+  const [selectedUsers, setSelectedUsers] = React.useState<User[]>([])
 
   const [messages, setMessages] = React.useState([
     {
@@ -100,9 +100,9 @@ export function CardsChat() {
       role: "user",
       content: "I can't log in.",
     },
-  ]);
-  const [input, setInput] = React.useState("");
-  const inputLength = input.trim().length;
+  ])
+  const [input, setInput] = React.useState("")
+  const inputLength = input.trim().length
 
   return (
     <>
@@ -115,7 +115,7 @@ export function CardsChat() {
             </Avatar>
             <div className="flex flex-col gap-0.5">
               <p className="text-sm leading-none font-medium">Sofia Davis</p>
-              <p className="text-muted-foreground text-xs">m@example.com</p>
+              <p className="text-xs text-muted-foreground">m@example.com</p>
             </div>
           </div>
           <TooltipProvider delay={0}>
@@ -146,8 +146,8 @@ export function CardsChat() {
                 className={cn(
                   "flex w-max max-w-[75%] flex-col gap-2 rounded-lg px-3 py-2 text-sm",
                   message.role === "user"
-                    ? "bg-primary text-primary-foreground ml-auto"
-                    : "bg-muted",
+                    ? "ml-auto bg-primary text-primary-foreground"
+                    : "bg-muted"
                 )}
               >
                 {message.content}
@@ -158,16 +158,16 @@ export function CardsChat() {
         <CardFooter>
           <form
             onSubmit={(event) => {
-              event.preventDefault();
-              if (inputLength === 0) return;
+              event.preventDefault()
+              if (inputLength === 0) return
               setMessages([
                 ...messages,
                 {
                   role: "user",
                   content: input,
                 },
-              ]);
-              setInput("");
+              ])
+              setInput("")
             }}
             className="relative w-full"
           >
@@ -207,7 +207,7 @@ export function CardsChat() {
               <CommandEmpty>No users found.</CommandEmpty>
               <CommandGroup>
                 {users.map((user) => {
-                  const isSelected = selectedUsers.includes(user);
+                  const isSelected = selectedUsers.includes(user)
                   return (
                     <CommandItem
                       key={user.email}
@@ -217,16 +217,16 @@ export function CardsChat() {
                         if (selectedUsers.includes(user)) {
                           return setSelectedUsers(
                             selectedUsers.filter(
-                              (selectedUser) => selectedUser !== user,
-                            ),
-                          );
+                              (selectedUser) => selectedUser !== user
+                            )
+                          )
                         }
                         return setSelectedUsers(
                           [...users].filter((u) =>
                             // react-doctor-disable-next-line react-doctor/js-set-map-lookups -- runs once per pick over the five constant demo users; a Set would not pay for itself
-                            [...selectedUsers, user].includes(u),
-                          ),
-                        );
+                            [...selectedUsers, user].includes(u)
+                          )
+                        )
                       }}
                     >
                       <Avatar className="size-7.5 border">
@@ -237,12 +237,12 @@ export function CardsChat() {
                         <p className="text-sm leading-none font-medium">
                           {user.name}
                         </p>
-                        <p className="text-muted-foreground text-sm">
+                        <p className="text-sm text-muted-foreground">
                           {user.email}
                         </p>
                       </div>
                     </CommandItem>
-                  );
+                  )
                 })}
               </CommandGroup>
             </CommandList>
@@ -262,13 +262,13 @@ export function CardsChat() {
                 ))}
               </div>
             ) : (
-              <p className="text-muted-foreground text-sm">
+              <p className="text-sm text-muted-foreground">
                 Select users to add to this thread.
               </p>
             )}
             <Button
               onClick={() => {
-                setOpen(false);
+                setOpen(false)
               }}
               disabled={selectedUsers.length < 2}
             >
@@ -278,5 +278,5 @@ export function CardsChat() {
         </DialogContent>
       </Dialog>
     </>
-  );
+  )
 }

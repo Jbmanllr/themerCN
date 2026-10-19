@@ -9,23 +9,23 @@
 // 3:1, where it still fails.
 //
 // See: packages/themer/ARCHITECTURE.md ("Contrast Checker")
-import * as culori from "culori";
-import { WCAG_CONTRAST } from "../config/constants";
-import type { ThemeStyleProps } from "../types";
+import * as culori from "culori"
+import { WCAG_CONTRAST } from "../config/constants"
+import type { ThemeStyleProps } from "../types"
 
 /** WCAG relative luminance (0 to 1); an unparseable colour counts as black. */
 function getLuminance(color: string): number {
   try {
-    const parsed = culori.parse(color);
+    const parsed = culori.parse(color)
     if (!parsed) {
-      console.warn(`Invalid color: ${color}`);
-      return 0;
+      console.warn(`Invalid color: ${color}`)
+      return 0
     }
 
-    return culori.wcagLuminance(parsed);
+    return culori.wcagLuminance(parsed)
   } catch (error) {
-    console.error(`Error calculating luminance: ${color}`, error);
-    return 0;
+    console.error(`Error calculating luminance: ${color}`, error)
+    return 0
   }
 }
 
@@ -35,26 +35,26 @@ function getLuminance(color: string): number {
  */
 export function getContrastRatio(color1: string, color2: string): number {
   try {
-    const lum1 = getLuminance(color1);
-    const lum2 = getLuminance(color2);
+    const lum1 = getLuminance(color1)
+    const lum2 = getLuminance(color2)
 
     // WCAG contrast ratio formula
-    const lighter = Math.max(lum1, lum2);
-    const darker = Math.min(lum1, lum2);
+    const lighter = Math.max(lum1, lum2)
+    const darker = Math.min(lum1, lum2)
 
-    return (lighter + 0.05) / (darker + 0.05);
+    return (lighter + 0.05) / (darker + 0.05)
   } catch (error) {
     console.error(
       `Error calculating contrast between ${color1} and ${color2}:`,
-      error,
-    );
-    return 1;
+      error
+    )
+    return 1
   }
 }
 
 /** A ratio as shown in the dialog: two decimals, e.g. `4.50:1`. */
 export function formatContrastRatio(ratio: number): string {
-  return `${ratio.toFixed(2)}:1`;
+  return `${ratio.toFixed(2)}:1`
 }
 
 /**
@@ -62,7 +62,7 @@ export function formatContrastRatio(ratio: number): string {
  * returned for normal text and still fails there; large text rates "AA" from
  * the same ratio.
  */
-export type WCAGLevel = "AAA" | "AA" | "AA Large" | "Fail";
+export type WCAGLevel = "AAA" | "AA" | "AA Large" | "Fail"
 
 /**
  * Check WCAG compliance for normal text, or for large text with `isLargeText`.
@@ -70,48 +70,48 @@ export type WCAGLevel = "AAA" | "AA" | "AA Large" | "Fail";
 export function checkWCAGCompliance(
   foreground: string,
   background: string,
-  isLargeText = false,
+  isLargeText = false
 ): { ratio: number; level: WCAGLevel; passes: boolean } {
-  const ratio = getContrastRatio(foreground, background);
+  const ratio = getContrastRatio(foreground, background)
 
-  let level: WCAGLevel;
-  let passes: boolean;
+  let level: WCAGLevel
+  let passes: boolean
 
   if (isLargeText) {
     if (ratio >= WCAG_CONTRAST.AAA_LARGE) {
-      level = "AAA";
-      passes = true;
+      level = "AAA"
+      passes = true
     } else if (ratio >= WCAG_CONTRAST.AA_LARGE) {
-      level = "AA";
-      passes = true;
+      level = "AA"
+      passes = true
     } else {
-      level = "Fail";
-      passes = false;
+      level = "Fail"
+      passes = false
     }
   } else {
     if (ratio >= WCAG_CONTRAST.AAA_NORMAL) {
-      level = "AAA";
-      passes = true;
+      level = "AAA"
+      passes = true
     } else if (ratio >= WCAG_CONTRAST.AA_NORMAL) {
-      level = "AA";
-      passes = true;
+      level = "AA"
+      passes = true
     } else if (ratio >= WCAG_CONTRAST.AA_LARGE) {
-      level = "AA Large";
-      passes = false; // meets AA for large text only
+      level = "AA Large"
+      passes = false // meets AA for large text only
     } else {
-      level = "Fail";
-      passes = false;
+      level = "Fail"
+      passes = false
     }
   }
 
-  return { ratio, level, passes };
+  return { ratio, level, passes }
 }
 
 /** A foreground/background pair of colour values, with a display label. */
 export interface ColorPair {
-  foreground: string;
-  background: string;
-  label: string;
+  foreground: string
+  background: string
+  label: string
 }
 
 /**
@@ -120,10 +120,10 @@ export interface ColorPair {
  * view can label or group them.
  */
 export interface ContrastPair {
-  fg: string;
-  bg: string;
-  label: string;
-  group?: string;
+  fg: string
+  bg: string
+  label: string
+  group?: string
 }
 
 /** The token pairs the contrast dialog rates for each mode. */
@@ -162,15 +162,15 @@ export const standardColorPairs: readonly ContrastPair[] = [
     label: "Sidebar Accent Text",
     group: "Sidebar",
   },
-];
+]
 
 /** One rated pair: the pair's tokens plus their values and WCAG result. */
 export interface ContrastResult extends ContrastPair {
-  foreground: string;
-  background: string;
-  ratio: number;
-  level: WCAGLevel;
-  passes: boolean;
+  foreground: string
+  background: string
+  ratio: number
+  level: WCAGLevel
+  passes: boolean
 }
 
 /**
@@ -180,19 +180,16 @@ export interface ContrastResult extends ContrastPair {
  */
 export function checkThemeContrast(
   styles: Partial<ThemeStyleProps> | Partial<Record<string, string>>,
-  pairs: readonly ContrastPair[] = standardColorPairs,
+  pairs: readonly ContrastPair[] = standardColorPairs
 ): ContrastResult[] {
-  const values = styles as Partial<Record<string, string>>;
+  const values = styles as Partial<Record<string, string>>
   return pairs.flatMap((pair) => {
-    const foreground = values[pair.fg];
-    const background = values[pair.bg];
-    if (!foreground || !background) return [];
-    const { ratio, level, passes } = checkWCAGCompliance(
-      foreground,
-      background,
-    );
-    return [{ ...pair, foreground, background, ratio, level, passes }];
-  });
+    const foreground = values[pair.fg]
+    const background = values[pair.bg]
+    if (!foreground || !background) return []
+    const { ratio, level, passes } = checkWCAGCompliance(foreground, background)
+    return [{ ...pair, foreground, background, ratio, level, passes }]
+  })
 }
 
 /**
@@ -206,52 +203,52 @@ export function checkThemeContrast(
 export function suggestContrastFix(
   foreground: string,
   background: string,
-  targetRatio = WCAG_CONTRAST.AA_NORMAL,
+  targetRatio = WCAG_CONTRAST.AA_NORMAL
 ): string | null {
   try {
-    const fgOklch = culori.converter("oklch")(foreground);
-    const bgOklch = culori.converter("oklch")(background);
+    const fgOklch = culori.converter("oklch")(foreground)
+    const bgOklch = culori.converter("oklch")(background)
 
-    if (!fgOklch || !bgOklch) return null;
+    if (!fgOklch || !bgOklch) return null
 
-    const currentRatio = getContrastRatio(foreground, background);
-    if (currentRatio >= targetRatio) return foreground;
+    const currentRatio = getContrastRatio(foreground, background)
+    if (currentRatio >= targetRatio) return foreground
 
     // Determine if we should lighten or darken
-    const shouldLighten = (bgOklch.l ?? 0) < 0.5;
+    const shouldLighten = (bgOklch.l ?? 0) < 0.5
 
     // Binary search for the right lightness
-    let low = shouldLighten ? (fgOklch.l ?? 0) : 0;
-    let high = shouldLighten ? 1 : (fgOklch.l ?? 0);
-    let result = foreground;
+    let low = shouldLighten ? (fgOklch.l ?? 0) : 0
+    let high = shouldLighten ? 1 : (fgOklch.l ?? 0)
+    let result = foreground
 
     for (let i = 0; i < 20; i++) {
-      const mid = (low + high) / 2;
+      const mid = (low + high) / 2
       const adjusted = {
         ...fgOklch,
         l: mid,
-      };
-      const adjustedHex = culori.formatHex(adjusted) ?? foreground;
-      const ratio = getContrastRatio(adjustedHex, background);
+      }
+      const adjustedHex = culori.formatHex(adjusted) ?? foreground
+      const ratio = getContrastRatio(adjustedHex, background)
 
       if (ratio >= targetRatio) {
-        result = adjustedHex;
+        result = adjustedHex
         if (shouldLighten) {
-          high = mid;
+          high = mid
         } else {
-          low = mid;
+          low = mid
         }
       } else {
         if (shouldLighten) {
-          low = mid;
+          low = mid
         } else {
-          high = mid;
+          high = mid
         }
       }
     }
 
-    return result;
+    return result
   } catch {
-    return null;
+    return null
   }
 }

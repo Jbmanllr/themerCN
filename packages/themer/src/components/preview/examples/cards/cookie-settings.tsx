@@ -1,6 +1,6 @@
-"use client";
+"use client"
 
-import { Button } from "@workspace/ui/components/button";
+import { Button } from "@workspace/ui/components/button"
 import {
   Card,
   CardContent,
@@ -8,9 +8,9 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@workspace/ui/components/card";
-import { Label } from "@workspace/ui/components/label";
-import { Switch } from "@workspace/ui/components/switch";
+} from "@workspace/ui/components/card"
+import { Label } from "@workspace/ui/components/label"
+import { Switch } from "@workspace/ui/components/switch"
 
 export function CardsCookieSettings() {
   return (
@@ -23,7 +23,7 @@ export function CardsCookieSettings() {
         <div className="flex items-center justify-between gap-4">
           <Label htmlFor="necessary" className="flex flex-col items-start">
             <span>Strictly Necessary</span>
-            <span className="text-muted-foreground leading-snug font-normal">
+            <span className="leading-snug font-normal text-muted-foreground">
               These cookies are essential in order to use the website and use
               its features.
             </span>
@@ -33,7 +33,7 @@ export function CardsCookieSettings() {
         <div className="flex items-center justify-between gap-4">
           <Label htmlFor="functional" className="flex flex-col items-start">
             <span>Functional Cookies</span>
-            <span className="text-muted-foreground leading-snug font-normal">
+            <span className="leading-snug font-normal text-muted-foreground">
               These cookies allow the website to provide personalized
               functionality.
             </span>
@@ -47,5 +47,5 @@ export function CardsCookieSettings() {
         </Button>
       </CardFooter>
     </Card>
-  );
+  )
 }

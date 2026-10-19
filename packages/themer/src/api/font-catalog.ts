@@ -26,35 +26,35 @@ import {
   fetchGoogleFontsMetadataCatalog,
   filterAndPaginateFonts,
   type FontInfo,
-} from "../utils/font-loader";
+} from "../utils/font-loader"
 
-const METADATA_TTL_MS = 24 * 60 * 60 * 1000;
+const METADATA_TTL_MS = 24 * 60 * 60 * 1000
 // The metadata response (~2.7 MB) is over Next's 2 MB fetch-cache limit, so
 // it is cached here. A failed fetch is not cached: the next request retries.
-let metadataCache: { fonts: FontInfo[]; expires: number } | null = null;
+let metadataCache: { fonts: FontInfo[]; expires: number } | null = null
 // The download in flight: requests that arrive meanwhile (the picker asks
 // about several families at once) share it instead of starting their own.
-let metadataRequest: Promise<FontInfo[]> | null = null;
+let metadataRequest: Promise<FontInfo[]> | null = null
 
 async function keylessCatalog(): Promise<FontInfo[]> {
   if (metadataCache && metadataCache.expires > Date.now()) {
-    return metadataCache.fonts;
+    return metadataCache.fonts
   }
   metadataRequest ??= fetchGoogleFontsMetadataCatalog({ cache: "no-store" })
     .then((fonts) => {
-      metadataCache = { fonts, expires: Date.now() + METADATA_TTL_MS };
-      return fonts;
+      metadataCache = { fonts, expires: Date.now() + METADATA_TTL_MS }
+      return fonts
     })
     .finally(() => {
-      metadataRequest = null;
-    });
-  return metadataRequest;
+      metadataRequest = null
+    })
+  return metadataRequest
 }
 
 /** Test hook: forget the cached keyless catalog. */
 export function resetFontCatalogCache(): void {
-  metadataCache = null;
-  metadataRequest = null;
+  metadataCache = null
+  metadataRequest = null
 }
 
 /**
@@ -66,30 +66,30 @@ export function resetFontCatalogCache(): void {
  */
 export async function fontCatalogResponse(
   url: URL,
-  googleFontsApiKey: string | undefined,
+  googleFontsApiKey: string | undefined
 ): Promise<Response> {
-  let fonts = FALLBACK_FONTS;
+  let fonts = FALLBACK_FONTS
 
   try {
     fonts = googleFontsApiKey
       ? await fetchGoogleFontsCatalog(googleFontsApiKey, {
           next: { revalidate: 60 * 60 * 24 },
         })
-      : await keylessCatalog();
+      : await keylessCatalog()
   } catch (error) {
     console.warn(
       "Theme editor: Google Fonts catalog unavailable, using the bundled list.",
-      error,
-    );
+      error
+    )
   }
 
-  const params = url.searchParams;
+  const params = url.searchParams
   return Response.json(
     filterAndPaginateFonts(fonts, {
       category: params.get("category") ?? "all",
       limit: Number(params.get("limit") ?? 50),
       offset: Number(params.get("offset") ?? 0),
       query: params.get("q") ?? "",
-    }),
-  );
+    })
+  )
 }

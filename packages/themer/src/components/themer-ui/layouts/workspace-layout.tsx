@@ -1,4 +1,4 @@
-"use client";
+"use client"
 
 // Workspace: the Themer layout that covers the whole page, the sidebar beside
 // the Preview. The only layout with Preview tabs and fullscreen preview; its
@@ -7,13 +7,13 @@
 // Contract: the container must not clip overflow (no `overflow-hidden`,
 // `transform` or `contain`): popups position against the viewport.
 
-import { SidebarInset } from "@workspace/ui/components/sidebar";
-import { useThemerUIStore } from "../../../stores/themer-ui-store";
-import { ThemerSidebar } from "../../themer-sidebar";
-import { ThemerHeader } from "../themer-header";
-import { PreviewPanel } from "../preview-panel";
-import { ThemerSidebarProvider } from "../themer-sidebar-provider";
-import type { ThemerLayoutProps } from "./types";
+import { SidebarInset } from "@workspace/ui/components/sidebar"
+import { useThemerUIStore } from "../../../stores/themer-ui-store"
+import { ThemerSidebar } from "../../themer-sidebar"
+import { ThemerHeader } from "../themer-header"
+import { PreviewPanel } from "../preview-panel"
+import { ThemerSidebarProvider } from "../themer-sidebar-provider"
+import type { ThemerLayoutProps } from "./types"
 
 /**
  * Fullscreen preview: the preview tabs cover the rest of the Themer UI
@@ -22,14 +22,14 @@ import type { ThemerLayoutProps } from "./types";
  * tree, so the Live frame is not reloaded.
  */
 export function WorkspaceLayout({ onClose, zIndex }: ThemerLayoutProps) {
-  const isFullscreen = useThemerUIStore((state) => state.fullscreenPreview);
+  const isFullscreen = useThemerUIStore((state) => state.fullscreenPreview)
 
   return (
     <div
       data-themer-ui
       data-themer-layout="workspace"
       data-testid="themer-ui"
-      className="bg-background fixed inset-0"
+      className="fixed inset-0 bg-background"
       style={{ zIndex }}
     >
       <ThemerSidebarProvider>
@@ -40,5 +40,5 @@ export function WorkspaceLayout({ onClose, zIndex }: ThemerLayoutProps) {
         </SidebarInset>
       </ThemerSidebarProvider>
     </div>
-  );
+  )
 }

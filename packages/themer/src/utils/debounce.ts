@@ -9,40 +9,40 @@
  */
 export function debounce<T extends (...args: never[]) => unknown>(
   func: T,
-  wait: number,
+  wait: number
 ): T & { cancel: () => void; flush: () => void } {
-  let timeoutId: ReturnType<typeof setTimeout> | null = null;
-  let pendingArgs: Parameters<T> | null = null;
+  let timeoutId: ReturnType<typeof setTimeout> | null = null
+  let pendingArgs: Parameters<T> | null = null
 
   const debounced = ((...args: Parameters<T>) => {
     if (timeoutId !== null) {
-      clearTimeout(timeoutId);
+      clearTimeout(timeoutId)
     }
-    pendingArgs = args;
+    pendingArgs = args
     timeoutId = setTimeout(() => {
-      timeoutId = null;
-      const callArgs = pendingArgs;
-      pendingArgs = null;
-      if (callArgs !== null) func(...callArgs);
-    }, wait);
-  }) as T & { cancel: () => void; flush: () => void };
+      timeoutId = null
+      const callArgs = pendingArgs
+      pendingArgs = null
+      if (callArgs !== null) func(...callArgs)
+    }, wait)
+  }) as T & { cancel: () => void; flush: () => void }
 
   debounced.cancel = () => {
     if (timeoutId !== null) {
-      clearTimeout(timeoutId);
-      timeoutId = null;
+      clearTimeout(timeoutId)
+      timeoutId = null
     }
-    pendingArgs = null;
-  };
+    pendingArgs = null
+  }
 
   debounced.flush = () => {
-    if (timeoutId === null) return;
-    clearTimeout(timeoutId);
-    timeoutId = null;
-    const callArgs = pendingArgs;
-    pendingArgs = null;
-    if (callArgs !== null) func(...callArgs);
-  };
+    if (timeoutId === null) return
+    clearTimeout(timeoutId)
+    timeoutId = null
+    const callArgs = pendingArgs
+    pendingArgs = null
+    if (callArgs !== null) func(...callArgs)
+  }
 
-  return debounced;
+  return debounced
 }

@@ -1,4 +1,4 @@
-"use client";
+"use client"
 
 // Wheel containment for the editor's portaled scroll lists (font picker,
 // Tailwind palette popover): at the top or bottom edge a wheel turn stops
@@ -12,17 +12,17 @@
 // See: packages/themer/ARCHITECTURE.md (Font Picker Positioning and Scroll
 // Ownership).
 
-import * as React from "react";
+import * as React from "react"
 
 type ScrollBoundaryWheelEvent = Pick<
   WheelEvent,
   "deltaY" | "preventDefault" | "stopPropagation"
->;
+>
 
 type ScrollBoundaryElement = Pick<
   HTMLElement,
   "clientHeight" | "scrollHeight" | "scrollTop"
->;
+>
 
 /**
  * Clamp wheel events at a portaled scroll area's edges so the page behind the
@@ -30,26 +30,26 @@ type ScrollBoundaryElement = Pick<
  */
 function containScrollBoundary(
   event: ScrollBoundaryWheelEvent,
-  scrollable: ScrollBoundaryElement,
+  scrollable: ScrollBoundaryElement
 ) {
-  if (event.deltaY === 0) return;
+  if (event.deltaY === 0) return
 
-  const maxScrollTop = scrollable.scrollHeight - scrollable.clientHeight;
+  const maxScrollTop = scrollable.scrollHeight - scrollable.clientHeight
 
   if (maxScrollTop <= 0) {
-    event.preventDefault();
-    event.stopPropagation();
-    return;
+    event.preventDefault()
+    event.stopPropagation()
+    return
   }
 
-  const nextScrollTop = scrollable.scrollTop + event.deltaY;
-  const scrollingUpPastStart = event.deltaY < 0 && nextScrollTop < 0;
-  const scrollingDownPastEnd = event.deltaY > 0 && nextScrollTop > maxScrollTop;
+  const nextScrollTop = scrollable.scrollTop + event.deltaY
+  const scrollingUpPastStart = event.deltaY < 0 && nextScrollTop < 0
+  const scrollingDownPastEnd = event.deltaY > 0 && nextScrollTop > maxScrollTop
 
   if (scrollingUpPastStart || scrollingDownPastEnd) {
-    event.preventDefault();
-    event.stopPropagation();
-    scrollable.scrollTop = Math.max(0, Math.min(maxScrollTop, nextScrollTop));
+    event.preventDefault()
+    event.stopPropagation()
+    scrollable.scrollTop = Math.max(0, Math.min(maxScrollTop, nextScrollTop))
   }
 }
 
@@ -65,25 +65,25 @@ export function useScrollBoundary(
     enabled,
     viewportSelector,
     rebindKey,
-  }: { enabled: boolean; viewportSelector?: string; rebindKey?: unknown },
+  }: { enabled: boolean; viewportSelector?: string; rebindKey?: unknown }
 ) {
   React.useEffect(() => {
-    if (!enabled) return undefined;
+    if (!enabled) return undefined
 
-    let scrollable: HTMLElement | null | undefined;
+    let scrollable: HTMLElement | null | undefined
     const handleWheel = (event: WheelEvent) => {
-      if (scrollable) containScrollBoundary(event, scrollable);
-    };
+      if (scrollable) containScrollBoundary(event, scrollable)
+    }
     const animationFrameId = requestAnimationFrame(() => {
       scrollable = viewportSelector
         ? ref.current?.querySelector<HTMLElement>(viewportSelector)
-        : ref.current;
-      scrollable?.addEventListener("wheel", handleWheel, { passive: false });
-    });
+        : ref.current
+      scrollable?.addEventListener("wheel", handleWheel, { passive: false })
+    })
 
     return () => {
-      cancelAnimationFrame(animationFrameId);
-      scrollable?.removeEventListener("wheel", handleWheel);
-    };
-  }, [enabled, ref, viewportSelector, rebindKey]);
+      cancelAnimationFrame(animationFrameId)
+      scrollable?.removeEventListener("wheel", handleWheel)
+    }
+  }, [enabled, ref, viewportSelector, rebindKey])
 }

@@ -1,4 +1,4 @@
-"use client";
+"use client"
 
 // Adapted from tweakcn (Apache-2.0, github.com/jnsahaj/tweakcn @ a3b47b37); modified for themercn.
 //
@@ -35,8 +35,8 @@
 //
 // See: packages/themer/ARCHITECTURE.md (EditorStore)
 
-import { create } from "zustand";
-import { persist } from "zustand/middleware";
+import { create } from "zustand"
+import { persist } from "zustand/middleware"
 import type {
   PresetBaseline,
   ThemeEditorState,
@@ -46,37 +46,37 @@ import type {
   SetThemeStateArg,
   ThemeStyles,
   ThemeStyleProps,
-} from "../types";
-import { COMMON_STYLE_KEYS } from "../types/theme";
-import { defaultThemeState, defaultHSLAdjustments } from "../config/defaults";
+} from "../types"
+import { COMMON_STYLE_KEYS } from "../types/theme"
+import { defaultThemeState, defaultHSLAdjustments } from "../config/defaults"
 import {
   getDefaultPresetId,
   hasPreset,
   resolvePresetStyles,
-} from "../config/presets";
+} from "../config/presets"
 import {
   MAX_HISTORY_COUNT,
   HISTORY_DEBOUNCE_MS,
   getStorageKeys,
-} from "../config/constants";
-import { isDeepEqual } from "../utils/deep-equal";
+} from "../config/constants"
+import { isDeepEqual } from "../utils/deep-equal"
 
 /** Version of the persisted editor state (zustand persist `version`). */
-export const EDITOR_STATE_VERSION = 0;
+export const EDITOR_STATE_VERSION = 0
 
 type PersistedEditorState = Pick<
   EditorStoreState,
   "themeState" | "themeCheckpoint" | "presetBaseline"
->;
+>
 
 function copyStyles(styles: ThemeStyles): ThemeStyles {
-  const dark = { ...styles.dark };
+  const dark = { ...styles.dark }
   // Typography is shared: old imports/presets may carry a different dark font.
   for (const key of COMMON_STYLE_KEYS) {
-    const value = styles.light[key];
-    if (key.startsWith("font-") && value !== undefined) dark[key] = value;
+    const value = styles.light[key]
+    if (key.startsWith("font-") && value !== undefined) dark[key] = value
   }
-  return { light: { ...styles.light }, dark };
+  return { light: { ...styles.light }, dark }
 }
 
 /**
@@ -85,28 +85,28 @@ function copyStyles(styles: ThemeStyles): ThemeStyles {
  */
 function pushHistory(
   history: HistoryEntry[],
-  state: ThemeEditorState,
+  state: ThemeEditorState
 ): HistoryEntry[] {
-  const next = [...history, { state, timestamp: Date.now() }];
-  return next.length > MAX_HISTORY_COUNT ? next.slice(1) : next;
+  const next = [...history, { state, timestamp: Date.now() }]
+  return next.length > MAX_HISTORY_COUNT ? next.slice(1) : next
 }
 
 /** `base` switched to a preset: the preset's styles, no HSL adjustments. */
 function presetThemeState(
   base: ThemeEditorState,
-  presetId: string,
+  presetId: string
 ): ThemeEditorState {
   return {
     ...base,
     preset: presetId,
     styles: copyStyles(resolvePresetStyles(presetId)),
     hslAdjustments: defaultHSLAdjustments,
-  };
+  }
 }
 
 /** The baseline for a theme just put on `presetId`. */
 function baselineOf(presetId: string, styles: ThemeStyles): PresetBaseline {
-  return { preset: presetId, styles: copyStyles(styles) };
+  return { preset: presetId, styles: copyStyles(styles) }
 }
 
 /**
@@ -126,39 +126,39 @@ export const useEditorStore = create<EditorStore>()(
 
       // Actions
       setThemeState: (stateOrUpdater: SetThemeStateArg) => {
-        const oldThemeState = get().themeState;
+        const oldThemeState = get().themeState
         // Support functional updaters for avoiding stale closures
         const updatedState =
           typeof stateOrUpdater === "function"
             ? stateOrUpdater(oldThemeState)
-            : stateOrUpdater;
+            : stateOrUpdater
         const newState = {
           ...updatedState,
           styles: copyStyles(updatedState.styles),
-        };
-        let currentHistory = get().history;
+        }
+        let currentHistory = get().history
 
         // A change of light/dark mode only is not an edit: no undo entry and
         // redo is kept.
         const oldStateWithoutMode = {
           ...oldThemeState,
           currentMode: undefined,
-        };
-        const newStateWithoutMode = { ...newState, currentMode: undefined };
+        }
+        const newStateWithoutMode = { ...newState, currentMode: undefined }
 
         if (
           isDeepEqual(oldStateWithoutMode, newStateWithoutMode) &&
           oldThemeState.currentMode !== newState.currentMode
         ) {
-          set({ themeState: newState });
-          return;
+          set({ themeState: newState })
+          return
         }
 
-        const currentTime = Date.now();
+        const currentTime = Date.now()
         const lastHistoryEntry =
           currentHistory.length > 0
             ? currentHistory[currentHistory.length - 1]
-            : null;
+            : null
 
         // Batch rapid changes within debounce threshold
         if (
@@ -166,7 +166,7 @@ export const useEditorStore = create<EditorStore>()(
           currentTime - lastHistoryEntry.timestamp >= HISTORY_DEBOUNCE_MS
         ) {
           // Add a new history entry (pushHistory enforces the max count)
-          currentHistory = pushHistory(currentHistory, oldThemeState);
+          currentHistory = pushHistory(currentHistory, oldThemeState)
         }
 
         set({
@@ -174,24 +174,24 @@ export const useEditorStore = create<EditorStore>()(
           history: currentHistory,
           // Clear future on every recorded change, batched or not
           future: [],
-        });
+        })
       },
 
       setCurrentMode: (mode) => {
-        const currentState = get().themeState;
+        const currentState = get().themeState
         set({
           themeState: {
             ...currentState,
             currentMode: mode,
           },
-        });
+        })
       },
 
       applyThemePreset: (preset: string) => {
-        if (!hasPreset(preset)) return;
-        const currentThemeState = get().themeState;
+        if (!hasPreset(preset)) return
+        const currentThemeState = get().themeState
 
-        const newThemeState = presetThemeState(currentThemeState, preset);
+        const newThemeState = presetThemeState(currentThemeState, preset)
 
         set({
           themeState: newThemeState,
@@ -199,18 +199,18 @@ export const useEditorStore = create<EditorStore>()(
           presetBaseline: baselineOf(preset, newThemeState.styles),
           history: pushHistory(get().history, currentThemeState),
           future: [],
-        });
+        })
       },
 
       saveThemeCheckpoint: () => {
-        set({ themeCheckpoint: get().themeState });
+        set({ themeCheckpoint: get().themeState })
       },
 
       restoreThemeCheckpoint: () => {
-        const checkpoint = get().themeCheckpoint;
+        const checkpoint = get().themeCheckpoint
         if (checkpoint) {
-          const oldThemeState = get().themeState;
-          const updatedHistory = pushHistory(get().history, oldThemeState);
+          const oldThemeState = get().themeState
+          const updatedHistory = pushHistory(get().history, oldThemeState)
 
           set({
             themeState: {
@@ -219,20 +219,20 @@ export const useEditorStore = create<EditorStore>()(
             },
             history: updatedHistory,
             future: [],
-          });
+          })
         }
       },
 
       resetToCurrentPreset: () => {
-        const currentThemeState = get().themeState;
+        const currentThemeState = get().themeState
         // A preset id that is no longer registered (a removed Host Preset)
         // resets to the Host app's default preset instead of shadcn defaults.
         const presetId =
           currentThemeState.preset && hasPreset(currentThemeState.preset)
             ? currentThemeState.preset
-            : getDefaultPresetId();
+            : getDefaultPresetId()
 
-        const newThemeState = presetThemeState(currentThemeState, presetId);
+        const newThemeState = presetThemeState(currentThemeState, presetId)
 
         set({
           themeState: newThemeState,
@@ -240,7 +240,7 @@ export const useEditorStore = create<EditorStore>()(
           presetBaseline: baselineOf(presetId, newThemeState.styles),
           history: [],
           future: [],
-        });
+        })
       },
 
       updateCommonStyle: (key, value) => {
@@ -250,24 +250,24 @@ export const useEditorStore = create<EditorStore>()(
             light: { ...prev.styles.light, [key]: value },
             dark: { ...prev.styles.dark, [key]: value },
           },
-        }));
+        }))
       },
 
       importThemeStyles: (imported, options = {}) => {
-        const currentThemeState = get().themeState;
+        const currentThemeState = get().themeState
         const base = options.replace
           ? resolvePresetStyles(getDefaultPresetId())
-          : currentThemeState.styles;
+          : currentThemeState.styles
 
-        const importedLight = imported.light ?? {};
-        const importedDark = imported.dark ?? {};
+        const importedLight = imported.light ?? {}
+        const importedDark = imported.dark ?? {}
         // CSS usually declares fonts, radius and shadow geometry only in
         // :root; those keys are shared, so dark takes them from light unless
         // the dark block sets its own.
-        const sharedFromLight: Partial<ThemeStyleProps> = {};
+        const sharedFromLight: Partial<ThemeStyleProps> = {}
         for (const key of COMMON_STYLE_KEYS) {
-          const value = importedLight[key];
-          if (value !== undefined) sharedFromLight[key] = value;
+          const value = importedLight[key]
+          if (value !== undefined) sharedFromLight[key] = value
         }
 
         const newThemeState: ThemeEditorState = {
@@ -277,89 +277,89 @@ export const useEditorStore = create<EditorStore>()(
             dark: { ...base.dark, ...sharedFromLight, ...importedDark },
           }),
           hslAdjustments: defaultHSLAdjustments,
-        };
+        }
 
         set({
           themeState: newThemeState,
           themeCheckpoint: newThemeState,
           history: pushHistory(get().history, currentThemeState),
           future: [],
-        });
+        })
       },
 
       adoptDefaultPreset: (presetId) => {
-        const { restoredFromStorage, history, themeState } = get();
-        if (restoredFromStorage || history.length > 0) return;
-        if (themeState.preset !== defaultThemeState.preset) return;
-        if (!hasPreset(presetId)) return;
+        const { restoredFromStorage, history, themeState } = get()
+        if (restoredFromStorage || history.length > 0) return
+        if (themeState.preset !== defaultThemeState.preset) return
+        if (!hasPreset(presetId)) return
         // The same id is adopted again when a Host Preset replaced it (a Host
         // "default"): the fresh state still holds the built-in styles.
         if (
           presetId === themeState.preset &&
           isDeepEqual(themeState.styles, resolvePresetStyles(presetId))
         ) {
-          return;
+          return
         }
 
-        const newThemeState = presetThemeState(themeState, presetId);
+        const newThemeState = presetThemeState(themeState, presetId)
         set({
           themeState: newThemeState,
           themeCheckpoint: newThemeState,
           presetBaseline: baselineOf(presetId, newThemeState.styles),
-        });
+        })
       },
 
       refreshUntouchedPreset: () => {
-        const { themeState, presetBaseline } = get();
-        const presetId = themeState.preset;
-        if (!presetId || !hasPreset(presetId)) return;
+        const { themeState, presetBaseline } = get()
+        const presetId = themeState.preset
+        if (!presetId || !hasPreset(presetId)) return
         const neutral = isDeepEqual(
           themeState.hslAdjustments ?? defaultHSLAdjustments,
-          defaultHSLAdjustments,
-        );
-        if (!neutral) return;
-        const fresh = resolvePresetStyles(presetId);
+          defaultHSLAdjustments
+        )
+        if (!neutral) return
+        const fresh = resolvePresetStyles(presetId)
 
         // No preset was ever put on this theme (the fresh default, then
         // edited): it can only be trusted when it already is its preset.
         if (!presetBaseline) {
           if (isDeepEqual(themeState.styles, fresh)) {
-            set({ presetBaseline: baselineOf(presetId, fresh) });
+            set({ presetBaseline: baselineOf(presetId, fresh) })
           }
-          return;
+          return
         }
 
-        if (presetBaseline.preset !== presetId) return;
-        if (!isDeepEqual(themeState.styles, presetBaseline.styles)) return;
-        if (isDeepEqual(fresh, presetBaseline.styles)) return;
+        if (presetBaseline.preset !== presetId) return
+        if (!isDeepEqual(themeState.styles, presetBaseline.styles)) return
+        if (isDeepEqual(fresh, presetBaseline.styles)) return
 
         const newThemeState: ThemeEditorState = {
           ...themeState,
           styles: copyStyles(fresh),
           hslAdjustments: defaultHSLAdjustments,
-        };
+        }
         set({
           themeState: newThemeState,
           themeCheckpoint: newThemeState,
           presetBaseline: baselineOf(presetId, fresh),
-        });
+        })
       },
 
       undo: () => {
-        const history = get().history;
-        if (history.length === 0) return;
+        const history = get().history
+        if (history.length === 0) return
 
-        const currentThemeState = get().themeState;
-        const future = get().future;
+        const currentThemeState = get().themeState
+        const future = get().future
 
-        const lastHistoryEntry = history[history.length - 1]!;
-        const newHistory = history.slice(0, -1);
+        const lastHistoryEntry = history[history.length - 1]!
+        const newHistory = history.slice(0, -1)
 
         const newFutureEntry: HistoryEntry = {
           state: currentThemeState,
           timestamp: Date.now(),
-        };
-        const newFuture = [newFutureEntry, ...future];
+        }
+        const newFuture = [newFutureEntry, ...future]
 
         set({
           themeState: {
@@ -369,17 +369,17 @@ export const useEditorStore = create<EditorStore>()(
           themeCheckpoint: lastHistoryEntry.state,
           history: newHistory,
           future: newFuture,
-        });
+        })
       },
 
       redo: () => {
-        const future = get().future;
-        if (future.length === 0) return;
+        const future = get().future
+        if (future.length === 0) return
 
-        const history = get().history;
-        const firstFutureEntry = future[0]!;
-        const newFuture = future.slice(1);
-        const currentThemeState = get().themeState;
+        const history = get().history
+        const firstFutureEntry = future[0]!
+        const newFuture = future.slice(1)
+        const currentThemeState = get().themeState
 
         set({
           themeState: {
@@ -389,7 +389,7 @@ export const useEditorStore = create<EditorStore>()(
           themeCheckpoint: firstFutureEntry.state,
           history: pushHistory(history, currentThemeState),
           future: newFuture,
-        });
+        })
       },
 
       canUndo: () => get().history.length > 0,
@@ -421,6 +421,6 @@ export const useEditorStore = create<EditorStore>()(
         // history and future stay out of localStorage (quota): undo and
         // redo start empty after a reload.
       }),
-    },
-  ),
-);
+    }
+  )
+)

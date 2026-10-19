@@ -1,4 +1,4 @@
-"use client";
+"use client"
 
 // Themer UI state: open/closed, the active sidebar panel, and the two preview
 // modes (inspector, fullscreen). Transient: nothing here persists.
@@ -16,13 +16,13 @@
 //
 // See: packages/themer/ARCHITECTURE.md (ThemerUIStore)
 
-import { create } from "zustand";
-import type { ThemerUIStore } from "../types";
-import { enterFullscreen, exitFullscreen } from "../hooks/use-fullscreen";
+import { create } from "zustand"
+import type { ThemerUIStore } from "../types"
+import { enterFullscreen, exitFullscreen } from "../hooks/use-fullscreen"
 
 export const useThemerUIStore = create<ThemerUIStore>()((set, get) => {
   const setFullscreen = (fullscreenPreview: boolean) =>
-    set({ fullscreenPreview });
+    set({ fullscreenPreview })
 
   return {
     // State
@@ -48,9 +48,9 @@ export const useThemerUIStore = create<ThemerUIStore>()((set, get) => {
     // Runs inside the click handler, so the browser sees the user gesture
     // that requestFullscreen needs.
     toggleFullscreen: () => {
-      if (typeof document === "undefined") return;
-      if (get().fullscreenPreview) void exitFullscreen(document, setFullscreen);
-      else void enterFullscreen(document, setFullscreen);
+      if (typeof document === "undefined") return
+      if (get().fullscreenPreview) void exitFullscreen(document, setFullscreen)
+      else void enterFullscreen(document, setFullscreen)
     },
-  };
-});
+  }
+})

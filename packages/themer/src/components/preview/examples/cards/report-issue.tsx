@@ -1,8 +1,8 @@
-"use client";
+"use client"
 
-import * as React from "react";
+import * as React from "react"
 
-import { Button } from "@workspace/ui/components/button";
+import { Button } from "@workspace/ui/components/button"
 import {
   Card,
   CardContent,
@@ -10,20 +10,20 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@workspace/ui/components/card";
-import { Input } from "@workspace/ui/components/input";
-import { Label } from "@workspace/ui/components/label";
+} from "@workspace/ui/components/card"
+import { Input } from "@workspace/ui/components/input"
+import { Label } from "@workspace/ui/components/label"
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@workspace/ui/components/select";
-import { Textarea } from "@workspace/ui/components/textarea";
+} from "@workspace/ui/components/select"
+import { Textarea } from "@workspace/ui/components/textarea"
 
 export function CardsReportIssue() {
-  const id = React.useId();
+  const id = React.useId()
 
   return (
     <Card>
@@ -93,5 +93,5 @@ export function CardsReportIssue() {
         <Button size="sm">Submit</Button>
       </CardFooter>
     </Card>
-  );
+  )
 }

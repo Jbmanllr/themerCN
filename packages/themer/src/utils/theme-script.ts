@@ -8,9 +8,9 @@
 // Its imports are constants only, so the head-script entry stays small and
 // reaches no Themer code (scripts/check-entries.mjs).
 
-import { COMMON_STYLE_KEYS } from "../types/theme";
-import { RESTORE_STYLE_ID, getStorageKeys } from "../config/constants";
-import { GENERIC_FONT_FAMILIES, LOCAL_FONT_FAMILY_NAMES } from "./font-loader";
+import { COMMON_STYLE_KEYS } from "../types/theme"
+import { RESTORE_STYLE_ID, getStorageKeys } from "../config/constants"
+import { GENERIC_FONT_FAMILIES, LOCAL_FONT_FAMILY_NAMES } from "./font-loader"
 
 /**
  * The script that runs before hydration so the first paint already shows the saved Theme
@@ -31,7 +31,7 @@ import { GENERIC_FONT_FAMILIES, LOCAL_FONT_FAMILY_NAMES } from "./font-loader";
 export function generateThemeScript({
   storageNamespace,
 }: { storageNamespace?: string } = {}) {
-  const storageKeys = getStorageKeys(storageNamespace);
+  const storageKeys = getStorageKeys(storageNamespace)
   return `
     // ----- FONT LOADING UTILITIES -----
     // The Google family a font value starts with; null for a host font
@@ -143,5 +143,5 @@ export function generateThemeScript({
         console.warn("ThemeScript: Failed to load fonts:", e);
       }
     })();
-  `;
+  `
 }

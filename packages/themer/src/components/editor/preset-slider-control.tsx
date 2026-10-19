@@ -1,4 +1,4 @@
-"use client";
+"use client"
 
 // One control for a shared length style (radius, spacing, letter spacing):
 // a row of named presets as a single-select ToggleGroup and a slider with a
@@ -6,38 +6,38 @@
 // writes through updateCommonStyle, so both modes change together and every
 // write is a functional update (no stale snapshot of the theme state).
 
-import * as React from "react";
+import * as React from "react"
 import {
   ToggleGroup,
   ToggleGroupItem,
-} from "@workspace/ui/components/toggle-group";
-import { cn } from "@workspace/ui/lib/utils";
-import { useEditorStore } from "../../stores/editor-store";
-import { CONTROL_RANGES } from "../../config/constants";
-import type { CommonStyleKey } from "../../types";
-import { parseLength } from "../../utils/length";
-import { SliderWithInput } from "./slider-with-input";
+} from "@workspace/ui/components/toggle-group"
+import { cn } from "@workspace/ui/lib/utils"
+import { useEditorStore } from "../../stores/editor-store"
+import { CONTROL_RANGES } from "../../config/constants"
+import type { CommonStyleKey } from "../../types"
+import { parseLength } from "../../utils/length"
+import { SliderWithInput } from "./slider-with-input"
 
 type PresetSliderKey = Extract<
   CommonStyleKey,
   "radius" | "spacing" | "letter-spacing"
->;
+>
 
 export interface PresetSliderControlProps {
   /** The shared style this control edits; its range is CONTROL_RANGES[key]. */
-  styleKey: PresetSliderKey;
+  styleKey: PresetSliderKey
   /** Named preset values, shown in order as toggle items. */
-  presets: Readonly<Record<string, string>>;
+  presets: Readonly<Record<string, string>>
   /** Accessible name of the preset group, e.g. "Radius presets". */
-  presetsLabel: string;
+  presetsLabel: string
   /** Label of the slider's numeric input. */
-  sliderLabel: string;
+  sliderLabel: string
   /** Value used when the stored one cannot be parsed. */
-  fallback: number;
+  fallback: number
   /** Extra classes for each preset item (e.g. `capitalize`). */
-  presetClassName?: string;
+  presetClassName?: string
   /** Preview below the slider, given the stored CSS value. */
-  renderPreview?: (value: string) => React.ReactNode;
+  renderPreview?: (value: string) => React.ReactNode
 }
 
 /**
@@ -53,31 +53,31 @@ export function PresetSliderControl({
   renderPreview,
 }: PresetSliderControlProps) {
   const storedValue = useEditorStore(
-    (state) => state.themeState.styles[state.themeState.currentMode][styleKey],
-  );
-  const updateCommonStyle = useEditorStore((state) => state.updateCommonStyle);
-  const range = CONTROL_RANGES[styleKey];
+    (state) => state.themeState.styles[state.themeState.currentMode][styleKey]
+  )
+  const updateCommonStyle = useEditorStore((state) => state.updateCommonStyle)
+  const range = CONTROL_RANGES[styleKey]
 
   const handleChange = React.useCallback(
     (value: string) => updateCommonStyle(styleKey, value),
-    [styleKey, updateCommonStyle],
-  );
+    [styleKey, updateCommonStyle]
+  )
 
   const handlePresetChange = React.useCallback(
     (values: unknown[]) => {
       // Single select: clicking the active item again empties the group;
       // keep the current value instead of writing nothing.
-      const [next] = values;
-      if (typeof next !== "string") return;
-      const value = presets[next];
-      if (value !== undefined) handleChange(value);
+      const [next] = values
+      if (typeof next !== "string") return
+      const value = presets[next]
+      if (value !== undefined) handleChange(value)
     },
-    [handleChange, presets],
-  );
+    [handleChange, presets]
+  )
 
   const activePreset = Object.entries(presets).find(
-    ([, value]) => value === storedValue,
-  )?.[0];
+    ([, value]) => value === storedValue
+  )?.[0]
 
   return (
     <div className="space-y-3">
@@ -113,5 +113,5 @@ export function PresetSliderControl({
 
       {renderPreview?.(storedValue ?? "")}
     </div>
-  );
+  )
 }

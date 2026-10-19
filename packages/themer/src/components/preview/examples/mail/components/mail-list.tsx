@@ -1,18 +1,18 @@
-import { ComponentProps } from "react";
-import { formatDistanceToNow } from "date-fns";
+import { ComponentProps } from "react"
+import { formatDistanceToNow } from "date-fns"
 
-import { cn } from "@workspace/ui/lib/utils";
-import { Badge } from "@workspace/ui/components/badge";
-import { ScrollArea } from "@workspace/ui/components/scroll-area";
-import { Mail } from "../data";
-import { useMail } from "../use-mail";
+import { cn } from "@workspace/ui/lib/utils"
+import { Badge } from "@workspace/ui/components/badge"
+import { ScrollArea } from "@workspace/ui/components/scroll-area"
+import { Mail } from "../data"
+import { useMail } from "../use-mail"
 
 interface MailListProps {
-  items: Mail[];
+  items: Mail[]
 }
 
 export function MailList({ items }: MailListProps) {
-  const [mail, setMail] = useMail();
+  const [mail, setMail] = useMail()
 
   return (
     <ScrollArea className="h-full">
@@ -21,8 +21,8 @@ export function MailList({ items }: MailListProps) {
           <button
             key={item.id}
             className={cn(
-              "hover:bg-accent hover:text-accent-foreground flex flex-col items-start gap-2 rounded-lg border p-3 text-left text-sm transition-all",
-              mail.selected === item.id && "bg-muted",
+              "flex flex-col items-start gap-2 rounded-lg border p-3 text-left text-sm transition-all hover:bg-accent hover:text-accent-foreground",
+              mail.selected === item.id && "bg-muted"
             )}
             onClick={() =>
               setMail({
@@ -44,7 +44,7 @@ export function MailList({ items }: MailListProps) {
                     "ml-auto text-xs",
                     mail.selected === item.id
                       ? "text-foreground"
-                      : "text-muted-foreground",
+                      : "text-muted-foreground"
                   )}
                 >
                   {formatDistanceToNow(new Date(item.date), {
@@ -54,7 +54,7 @@ export function MailList({ items }: MailListProps) {
               </div>
               <div className="text-xs font-medium">{item.subject}</div>
             </div>
-            <div className="text-muted-foreground line-clamp-2 text-xs">
+            <div className="line-clamp-2 text-xs text-muted-foreground">
               {item.text.substring(0, 300)}
             </div>
             {item.labels.length ? (
@@ -70,19 +70,19 @@ export function MailList({ items }: MailListProps) {
         ))}
       </div>
     </ScrollArea>
-  );
+  )
 }
 
 function getBadgeVariantFromLabel(
-  label: string,
+  label: string
 ): ComponentProps<typeof Badge>["variant"] {
   if (["work"].includes(label.toLowerCase())) {
-    return "default";
+    return "default"
   }
 
   if (["personal"].includes(label.toLowerCase())) {
-    return "outline";
+    return "outline"
   }
 
-  return "secondary";
+  return "secondary"
 }

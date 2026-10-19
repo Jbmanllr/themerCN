@@ -1,4 +1,4 @@
-"use client";
+"use client"
 
 // The sidebar Themer layouts that sit on the Host app's real page, Overlay
 // and Push: the sidebar on the left, the page usable beside it (ADR 0001: it
@@ -22,14 +22,14 @@ import {
   SidebarFooter,
   SidebarTrigger,
   useSidebar,
-} from "@workspace/ui/components/sidebar";
-import { ActionBar } from "../../action-bar";
-import { ThemerActionsMenu } from "../../actions/themer-actions";
-import { ThemerSidebar } from "../../themer-sidebar";
-import { LayoutSwitcher } from "../layout-switcher";
-import { PageInspector, PageInspectorToggle } from "../page-inspector";
-import { ThemerSidebarProvider } from "../themer-sidebar-provider";
-import type { ThemerLayoutProps } from "./types";
+} from "@workspace/ui/components/sidebar"
+import { ActionBar } from "../../action-bar"
+import { ThemerActionsMenu } from "../../actions/themer-actions"
+import { ThemerSidebar } from "../../themer-sidebar"
+import { LayoutSwitcher } from "../layout-switcher"
+import { PageInspector, PageInspectorToggle } from "../page-inspector"
+import { ThemerSidebarProvider } from "../themer-sidebar-provider"
+import type { ThemerLayoutProps } from "./types"
 
 export function InPlaceSidebarLayout({
   layout,
@@ -64,7 +64,7 @@ export function InPlaceSidebarLayout({
         />
       </ThemerSidebarProvider>
     </div>
-  );
+  )
 }
 
 /**
@@ -72,7 +72,7 @@ export function InPlaceSidebarLayout({
  * hidden there); it opens beside the rail.
  */
 function CollapsedRailActions() {
-  const { state } = useSidebar();
-  if (state !== "collapsed") return null;
-  return <ThemerActionsMenu withHistory side="right" align="start" />;
+  const { state } = useSidebar()
+  if (state !== "collapsed") return null
+  return <ThemerActionsMenu withHistory side="right" align="start" />
 }

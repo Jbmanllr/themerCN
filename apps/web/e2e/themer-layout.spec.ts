@@ -21,7 +21,9 @@ test("the Overlay floats the sidebar over the real page, which stays usable", as
   // Right of the 320px sidebar, the page takes the wheel and the click.
   await page.mouse.move(900, 500)
   await page.mouse.wheel(0, 800)
-  await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(0)
+  await expect
+    .poll(() => page.evaluate(() => window.scrollY))
+    .toBeGreaterThan(0)
 
   await page.evaluate(() => window.scrollTo(0, 0))
   await page
@@ -29,7 +31,9 @@ test("the Overlay floats the sidebar over the real page, which stays usable", as
     .getByRole("link", { name: "Pricing", exact: true })
     .click()
   await expect(page).toHaveURL(/\/pricing$/)
-  await expect(page.getByRole("button", { name: "Close theme editor" })).toBeVisible()
+  await expect(
+    page.getByRole("button", { name: "Close theme editor" })
+  ).toBeVisible()
 })
 
 test("the user's layout survives a reload", async ({ page }) => {
@@ -69,7 +73,9 @@ test.describe("the Toolbar", () => {
     await page.mouse.click(120, 700)
     await expect(colors).toBeVisible()
 
-    await themerToolbar(page).getByRole("button", { name: "Typography" }).click()
+    await themerToolbar(page)
+      .getByRole("button", { name: "Typography" })
+      .click()
     await expect(toolbarPanel(page, "typography")).toBeVisible()
     await expect(colors).toHaveCount(0)
 
@@ -102,7 +108,9 @@ test.describe("the Toolbar", () => {
     await page.keyboard.press("Escape")
     await expect(colors).toBeVisible()
 
-    await themerToolbar(page).getByRole("button", { name: "Typography" }).click()
+    await themerToolbar(page)
+      .getByRole("button", { name: "Typography" })
+      .click()
     await toolbarPanel(page, "typography")
       .getByRole("button", { name: /^Font Families/ })
       .click()
@@ -198,9 +206,7 @@ test.describe("the sidebar", () => {
   }) => {
     await page.goto("/")
     await openLayout(page, "Overlay")
-    await page
-      .locator('[data-themer-ui] [data-slot="sidebar-trigger"]')
-      .click()
+    await page.locator('[data-themer-ui] [data-slot="sidebar-trigger"]').click()
 
     await page
       .locator('[data-themer-ui] [data-slot="sidebar"]')

@@ -1,4 +1,4 @@
-"use client";
+"use client"
 
 // Fullscreen preview: the preview area covers the editor chrome (sidebar,
 // header, action bar) and, where the browser allows it, the page itself goes
@@ -22,30 +22,30 @@
 //
 // The document is passed in, so tests drive the state machine with a fake.
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef } from "react"
 
-type Listener = (event: Event) => void;
+type Listener = (event: Event) => void
 
 /** The part of `Document` the fullscreen logic touches. */
 export interface FullscreenDocument {
   readonly documentElement: {
-    requestFullscreen?: () => Promise<void>;
-  };
-  readonly fullscreenElement?: unknown;
-  readonly fullscreenEnabled?: boolean;
-  exitFullscreen?: () => Promise<void>;
-  addEventListener(type: string, listener: Listener): void;
-  removeEventListener(type: string, listener: Listener): void;
+    requestFullscreen?: () => Promise<void>
+  }
+  readonly fullscreenElement?: unknown
+  readonly fullscreenEnabled?: boolean
+  exitFullscreen?: () => Promise<void>
+  addEventListener(type: string, listener: Listener): void
+  removeEventListener(type: string, listener: Listener): void
 }
 
 /** How fullscreen was entered: the browser API or the CSS-only layout. */
-export type FullscreenKind = "native" | "fallback";
+export type FullscreenKind = "native" | "fallback"
 
 function isNativeFullscreen(doc: FullscreenDocument): boolean {
   return (
     doc.fullscreenElement != null &&
     doc.fullscreenElement === doc.documentElement
-  );
+  )
 }
 
 /**
@@ -54,32 +54,32 @@ function isNativeFullscreen(doc: FullscreenDocument): boolean {
  */
 export async function enterFullscreen(
   doc: FullscreenDocument,
-  setActive: (active: boolean) => void,
+  setActive: (active: boolean) => void
 ): Promise<FullscreenKind> {
-  setActive(true);
-  const root = doc.documentElement;
+  setActive(true)
+  const root = doc.documentElement
   if (doc.fullscreenEnabled === false || !root.requestFullscreen) {
-    return "fallback";
+    return "fallback"
   }
   try {
-    await root.requestFullscreen();
-    return "native";
+    await root.requestFullscreen()
+    return "native"
   } catch {
     // Refused (no user gesture, permissions policy, iframe without
     // allowfullscreen): the CSS layout already covers the editor.
-    return "fallback";
+    return "fallback"
   }
 }
 
 /** Leave fullscreen: clear the flag and exit native fullscreen if it is on. */
 export async function exitFullscreen(
   doc: FullscreenDocument,
-  setActive: (active: boolean) => void,
+  setActive: (active: boolean) => void
 ): Promise<void> {
-  setActive(false);
-  if (!isNativeFullscreen(doc) || !doc.exitFullscreen) return;
+  setActive(false)
+  if (!isNativeFullscreen(doc) || !doc.exitFullscreen) return
   try {
-    await doc.exitFullscreen();
+    await doc.exitFullscreen()
   } catch {
     // Already left (the browser raced us); nothing to undo.
   }
@@ -91,32 +91,32 @@ export async function exitFullscreen(
 export function subscribeFullscreen(
   doc: FullscreenDocument,
   isActive: () => boolean,
-  setActive: (active: boolean) => void,
+  setActive: (active: boolean) => void
 ): () => void {
-  let wasNative = isNativeFullscreen(doc);
+  let wasNative = isNativeFullscreen(doc)
 
   const handleChange: Listener = () => {
-    const native = isNativeFullscreen(doc);
+    const native = isNativeFullscreen(doc)
     // Only our own fullscreen counts: a video going fullscreen is not the
     // preview, but leaving ours (Esc, browser UI) must drop the flag.
-    if (native) setActive(true);
-    else if (wasNative) setActive(false);
-    wasNative = native;
-  };
+    if (native) setActive(true)
+    else if (wasNative) setActive(false)
+    wasNative = native
+  }
 
   const handleKeyDown: Listener = (event) => {
-    const { key } = event as KeyboardEvent;
-    if (key !== "Escape" || event.defaultPrevented) return;
-    if (!isActive() || isNativeFullscreen(doc)) return;
-    setActive(false);
-  };
+    const { key } = event as KeyboardEvent
+    if (key !== "Escape" || event.defaultPrevented) return
+    if (!isActive() || isNativeFullscreen(doc)) return
+    setActive(false)
+  }
 
-  doc.addEventListener("fullscreenchange", handleChange);
-  doc.addEventListener("keydown", handleKeyDown);
+  doc.addEventListener("fullscreenchange", handleChange)
+  doc.addEventListener("keydown", handleKeyDown)
   return () => {
-    doc.removeEventListener("fullscreenchange", handleChange);
-    doc.removeEventListener("keydown", handleKeyDown);
-  };
+    doc.removeEventListener("fullscreenchange", handleChange)
+    doc.removeEventListener("keydown", handleKeyDown)
+  }
 }
 
 /**
@@ -129,30 +129,30 @@ export function useFullscreenSync({
   getActive,
   setActive,
 }: {
-  enabled: boolean;
-  active: boolean;
-  getActive: () => boolean;
-  setActive: (active: boolean) => void;
+  enabled: boolean
+  active: boolean
+  getActive: () => boolean
+  setActive: (active: boolean) => void
 }): void {
   useEffect(() => {
-    if (!enabled) return undefined;
-    return subscribeFullscreen(document, getActive, setActive);
-  }, [enabled, getActive, setActive]);
+    if (!enabled) return undefined
+    return subscribeFullscreen(document, getActive, setActive)
+  }, [enabled, getActive, setActive])
 
   // The flag dropped (toggle, close, Esc in the fallback): leave native
   // fullscreen too, then let measured layouts pick up the new size.
   // Only transitions count: on mount nothing changed, and a page that was
   // fullscreen before the editor opened is not ours to leave.
-  const previous = useRef(active);
+  const previous = useRef(active)
   useEffect(() => {
-    if (previous.current === active) return undefined;
-    previous.current = active;
+    if (previous.current === active) return undefined
+    previous.current = active
     if (!active && isNativeFullscreen(document)) {
-      void document.exitFullscreen().catch(() => undefined);
+      void document.exitFullscreen().catch(() => undefined)
     }
     const frame = window.requestAnimationFrame(() => {
-      window.dispatchEvent(new Event("resize"));
-    });
-    return () => window.cancelAnimationFrame(frame);
-  }, [active]);
+      window.dispatchEvent(new Event("resize"))
+    })
+    return () => window.cancelAnimationFrame(frame)
+  }, [active])
 }

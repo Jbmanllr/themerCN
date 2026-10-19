@@ -1,4 +1,4 @@
-"use client";
+"use client"
 
 // The editor's copy-to-clipboard button (the palette preview's per-colour
 // copy). It names itself for assistive technology and reports the copy
@@ -10,38 +10,38 @@
 // idle); the copied label overrides a caller's `aria-label` while the
 // feedback shows (copy-button.test.tsx).
 
-import * as React from "react";
-import { toast } from "sonner";
-import { Button } from "@workspace/ui/components/button";
+import * as React from "react"
+import { toast } from "sonner"
+import { Button } from "@workspace/ui/components/button"
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from "@workspace/ui/components/tooltip";
-import { useCopyFeedback } from "../../hooks/use-copy-feedback";
+} from "@workspace/ui/components/tooltip"
+import { useCopyFeedback } from "../../hooks/use-copy-feedback"
 
 type ButtonClickEvent = Parameters<
   NonNullable<React.ComponentProps<typeof Button>["onClick"]>
->[0];
+>[0]
 
 export interface CopyButtonProps extends React.ComponentProps<typeof Button> {
   /** Text to copy to clipboard */
-  textToCopy: string;
+  textToCopy: string
   /** Show tooltip feedback when copied (default: true) */
-  showFeedbackTooltip?: boolean;
+  showFeedbackTooltip?: boolean
   /** Show toast notification when copied (default: false) */
-  showFeedbackToast?: boolean;
+  showFeedbackToast?: boolean
   /**
    * How long the copied state (its tooltip and the "Copied" label) shows, in
    * milliseconds (default: 3000). Without `showFeedbackTooltip` it lasts 1200.
    */
-  tooltipDuration?: number;
+  tooltipDuration?: number
   /** Custom tooltip message (default: "Copied!") */
-  tooltipMessage?: string;
+  tooltipMessage?: string
   /** Custom toast message (default: "Copied to clipboard") */
-  toastMessage?: string;
+  toastMessage?: string
   /** Custom children to render. If not provided, shows "Copy" / "Copied" */
-  children?: React.ReactNode;
+  children?: React.ReactNode
 }
 
 /**
@@ -62,30 +62,30 @@ export function CopyButton({
   ...buttonProps
 }: CopyButtonProps) {
   const [copied, copy] = useCopyFeedback(
-    showFeedbackTooltip ? tooltipDuration : 1200,
-  );
+    showFeedbackTooltip ? tooltipDuration : 1200
+  )
 
   const handleCopy = React.useCallback(
     async (event: ButtonClickEvent) => {
-      event.stopPropagation();
+      event.stopPropagation()
 
       if (!(await copy(textToCopy))) {
         if (showFeedbackToast) {
-          toast.error("Failed to copy to clipboard");
+          toast.error("Failed to copy to clipboard")
         }
-        return;
+        return
       }
 
       if (showFeedbackToast) {
-        toast.success(toastMessage);
+        toast.success(toastMessage)
       }
 
-      onClick?.(event);
+      onClick?.(event)
     },
-    [copy, textToCopy, showFeedbackToast, toastMessage, onClick],
-  );
+    [copy, textToCopy, showFeedbackToast, toastMessage, onClick]
+  )
 
-  const buttonContent = children ?? (copied ? "Copied" : "Copy");
+  const buttonContent = children ?? (copied ? "Copied" : "Copy")
 
   // The label goes after the spread: a caller's aria-label names the idle
   // button, and the copied state still reaches assistive tech.
@@ -103,7 +103,7 @@ export function CopyButton({
     >
       {buttonContent}
     </Button>
-  );
+  )
 
   // The tooltip is controlled by `copied` alone (the no-op onOpenChange
   // drops hover and focus), so it appears only as copy feedback.
@@ -115,8 +115,8 @@ export function CopyButton({
           <p>{tooltipMessage}</p>
         </TooltipContent>
       </Tooltip>
-    );
+    )
   }
 
-  return button;
+  return button
 }

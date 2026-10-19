@@ -1,4 +1,4 @@
-"use client";
+"use client"
 
 // A labelled slider with a numeric input beside it. The input is the label's
 // target and the slider thumb is labelled by it (useId), so screen readers
@@ -7,23 +7,23 @@
 // on the way to "-2" never jumps the theme to a clamped bound; leaving the
 // field clamps whatever is there and commits it.
 
-import * as React from "react";
-import { Slider } from "@workspace/ui/components/slider";
-import { Input } from "@workspace/ui/components/input";
-import { Label } from "@workspace/ui/components/label";
-import { cn } from "@workspace/ui/lib/utils";
-import { clampToRange } from "../../utils/length";
+import * as React from "react"
+import { Slider } from "@workspace/ui/components/slider"
+import { Input } from "@workspace/ui/components/input"
+import { Label } from "@workspace/ui/components/label"
+import { cn } from "@workspace/ui/lib/utils"
+import { clampToRange } from "../../utils/length"
 
 interface SliderWithInputProps {
-  value: number;
-  onChange: (value: number) => void;
-  label: string;
-  min: number;
-  max: number;
-  step: number;
-  unit?: string;
-  disabled?: boolean;
-  className?: string;
+  value: number
+  onChange: (value: number) => void
+  label: string
+  min: number
+  max: number
+  step: number
+  unit?: string
+  disabled?: boolean
+  className?: string
 }
 
 /**
@@ -40,56 +40,56 @@ export function SliderWithInput({
   disabled = false,
   className,
 }: SliderWithInputProps) {
-  const inputId = React.useId();
-  const labelId = React.useId();
+  const inputId = React.useId()
+  const labelId = React.useId()
   const [draft, setDraft] = React.useState({
     propValue: value,
     inputValue: value.toString(),
-  });
+  })
   // A new value from outside (undo, preset, other mode) replaces the draft.
   const inputValue =
-    draft.propValue === value ? draft.inputValue : value.toString();
+    draft.propValue === value ? draft.inputValue : value.toString()
 
   const setInputValue = React.useCallback(
     (input: string, committed: number = value) =>
       setDraft({ propValue: committed, inputValue: input }),
-    [value],
-  );
+    [value]
+  )
 
   // The slider shows a clamped position; the stored value may lie outside
   // the range (e.g. the `full` radius preset).
-  const sliderValue = clampToRange(value, min, max);
+  const sliderValue = clampToRange(value, min, max)
 
   const handleSliderChange = (newValue: number | readonly number[]) => {
     // Base UI Slider can return either number or number[]
-    const val = Array.isArray(newValue) ? newValue[0] : newValue;
+    const val = Array.isArray(newValue) ? newValue[0] : newValue
     if (val !== undefined) {
-      setInputValue(val.toString(), val);
-      onChange(val);
+      setInputValue(val.toString(), val)
+      onChange(val)
     }
-  };
+  }
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const raw = e.target.value;
-    const parsed = parseFloat(raw);
+    const raw = e.target.value
+    const parsed = parseFloat(raw)
     if (!isNaN(parsed) && parsed >= min && parsed <= max) {
-      setInputValue(raw, parsed);
-      onChange(parsed);
+      setInputValue(raw, parsed)
+      onChange(parsed)
     } else {
-      setInputValue(raw);
+      setInputValue(raw)
     }
-  };
+  }
 
   const handleInputBlur = () => {
-    const parsed = parseFloat(inputValue);
+    const parsed = parseFloat(inputValue)
     if (isNaN(parsed)) {
-      setInputValue(value.toString());
+      setInputValue(value.toString())
     } else {
-      const clamped = clampToRange(parsed, min, max);
-      setInputValue(clamped.toString(), clamped);
-      onChange(clamped);
+      const clamped = clampToRange(parsed, min, max)
+      setInputValue(clamped.toString(), clamped)
+      onChange(clamped)
     }
-  };
+  }
 
   return (
     <div className={cn("mb-4", className)}>
@@ -111,7 +111,7 @@ export function SliderWithInput({
             className="h-7 w-16 text-end text-xs"
           />
           {unit && (
-            <span className="text-muted-foreground text-xs">{unit}</span>
+            <span className="text-xs text-muted-foreground">{unit}</span>
           )}
         </div>
       </div>
@@ -126,5 +126,5 @@ export function SliderWithInput({
         className="w-full py-1"
       />
     </div>
-  );
+  )
 }

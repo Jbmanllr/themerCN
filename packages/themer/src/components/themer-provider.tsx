@@ -1,4 +1,4 @@
-"use client";
+"use client"
 
 // The editor's context root, mounted by <Themer> (components/themer.tsx)
 // beside the Host app's tree: registers Host Presets and extra colours, applies
@@ -21,51 +21,48 @@
 //
 // See: packages/themer/ARCHITECTURE.md ("Core Entry Points").
 
-import * as React from "react";
-import { useShallow } from "zustand/react/shallow";
-import type {
-  ThemerConfig,
-  ThemerContextValue,
-} from "../types";
+import * as React from "react"
+import { useShallow } from "zustand/react/shallow"
+import type { ThemerConfig, ThemerContextValue } from "../types"
 import {
   useKeyboardShortcut,
   parseShortcut,
   themerShortcuts,
-} from "../hooks/use-keyboard-shortcut";
-import { useThemerUIStore } from "../stores/themer-ui-store";
-import { useEditorStore } from "../stores/editor-store";
-import { usePreferencesStore } from "../stores/preferences-store";
+} from "../hooks/use-keyboard-shortcut"
+import { useThemerUIStore } from "../stores/themer-ui-store"
+import { useEditorStore } from "../stores/editor-store"
+import { usePreferencesStore } from "../stores/preferences-store"
 import {
   applyThemeToElement,
   removeThemeFromElement,
-} from "../utils/apply-theme";
-import { useColorMode } from "./color-mode";
-import { DynamicFontLoader } from "./dynamic-font-loader";
-import { useSidebarSyncAlignment } from "../hooks/use-sidebar-sync-alignment";
-import { RESTORE_STYLE_ID, SHORTCUTS } from "../config/constants";
-import { configurePresets, getDefaultPresetId } from "../config/presets";
-import { configureExtraColors } from "../config/extra-colors";
+} from "../utils/apply-theme"
+import { useColorMode } from "./color-mode"
+import { DynamicFontLoader } from "./dynamic-font-loader"
+import { useSidebarSyncAlignment } from "../hooks/use-sidebar-sync-alignment"
+import { RESTORE_STYLE_ID, SHORTCUTS } from "../config/constants"
+import { configurePresets, getDefaultPresetId } from "../config/presets"
+import { configureExtraColors } from "../config/extra-colors"
 
 /**
  * Themer context
  */
-const ThemerContext = React.createContext<ThemerContextValue | null>(null);
+const ThemerContext = React.createContext<ThemerContextValue | null>(null)
 
 export function useThemerContext() {
-  const context = React.useContext(ThemerContext);
+  const context = React.useContext(ThemerContext)
   if (!context) {
-    throw new Error("useThemerContext must be used within a ThemerProvider");
+    throw new Error("useThemerContext must be used within a ThemerProvider")
   }
-  return context;
+  return context
 }
 
 export function useOptionalThemerContext() {
-  return React.useContext(ThemerContext);
+  return React.useContext(ThemerContext)
 }
 
 interface ThemerProviderProps {
-  children: React.ReactNode;
-  config?: ThemerConfig;
+  children: React.ReactNode
+  config?: ThemerConfig
 }
 
 /**
@@ -87,8 +84,8 @@ export function ThemerProvider({
       showTrigger: userConfig?.showTrigger ?? true,
       shortcut: userConfig?.shortcut ?? SHORTCUTS.toggle,
     }),
-    [userConfig],
-  );
+    [userConfig]
+  )
 
   // Host presets must be in the registry before any child (preset picker,
   // store actions) reads it, so register during render. Idempotent for the
@@ -96,36 +93,34 @@ export function ThemerProvider({
   configurePresets({
     presets: config.presets,
     defaultPreset: config.defaultPreset,
-  });
+  })
   // Host extra colours likewise (colour list, search, inspector, apply).
-  configureExtraColors(config.extraColors);
+  configureExtraColors(config.extraColors)
 
   // A fresh store (nothing persisted) starts on the Host app's default preset.
-  const adoptDefaultPreset = useEditorStore(
-    (state) => state.adoptDefaultPreset,
-  );
+  const adoptDefaultPreset = useEditorStore((state) => state.adoptDefaultPreset)
   const refreshUntouchedPreset = useEditorStore(
-    (state) => state.refreshUntouchedPreset,
-  );
+    (state) => state.refreshUntouchedPreset
+  )
   // A layout effect, so a first visit never paints the library default
   // before the Host Preset replaces it. Then a restored, unedited preset is
   // brought up to its current source (host tokens may have changed since it
   // was stored); this must run after configurePresets above, never at
   // module-load hydration, when Host Presets are not registered yet.
   React.useLayoutEffect(() => {
-    adoptDefaultPreset(getDefaultPresetId());
-    refreshUntouchedPreset();
+    adoptDefaultPreset(getDefaultPresetId())
+    refreshUntouchedPreset()
   }, [
     adoptDefaultPreset,
     refreshUntouchedPreset,
     config.defaultPreset,
     config.presets,
-  ]);
+  ])
 
-  const { mode } = useColorMode();
+  const { mode } = useColorMode()
 
   // Apply live editor variables; the root light/dark class is not ours.
-  const themeState = useEditorStore((state) => state.themeState);
+  const themeState = useEditorStore((state) => state.themeState)
   const { undo, redo, canUndo, canRedo, setCurrentMode } = useEditorStore(
     useShallow((state) => ({
       undo: state.undo,
@@ -133,19 +128,19 @@ export function ThemerProvider({
       canUndo: state.canUndo,
       canRedo: state.canRedo,
       setCurrentMode: state.setCurrentMode,
-    })),
-  );
+    }))
+  )
   const themeOverrideEnabled = usePreferencesStore(
-    (state) => state.themeOverrideEnabled,
-  );
+    (state) => state.themeOverrideEnabled
+  )
   const appliedThemeState = React.useMemo(
     () => ({ ...themeState, currentMode: mode }),
-    [mode, themeState],
-  );
+    [mode, themeState]
+  )
 
   React.useEffect(() => {
-    if (themeState.currentMode !== mode) setCurrentMode(mode);
-  }, [mode, setCurrentMode, themeState.currentMode]);
+    if (themeState.currentMode !== mode) setCurrentMode(mode)
+  }, [mode, setCurrentMode, themeState.currentMode])
 
   // Re-applying on every change is enough to drop properties the new theme no
   // longer sets (applyThemeToElement diffs against its previous call), so the
@@ -156,32 +151,32 @@ export function ThemerProvider({
     if (themeOverrideEnabled) {
       applyThemeToElement(appliedThemeState, document.documentElement, {
         updateClass: false,
-      });
+      })
     }
-    document.getElementById(RESTORE_STYLE_ID)?.remove();
-  }, [appliedThemeState, themeOverrideEnabled]);
+    document.getElementById(RESTORE_STYLE_ID)?.remove()
+  }, [appliedThemeState, themeOverrideEnabled])
 
   React.useEffect(() => {
-    if (!themeOverrideEnabled) return undefined;
-    return () => removeThemeFromElement(document.documentElement);
-  }, [themeOverrideEnabled]);
+    if (!themeOverrideEnabled) return undefined
+    return () => removeThemeFromElement(document.documentElement)
+  }, [themeOverrideEnabled])
 
   // Sidebar Sync re-aligns the sidebar colours after a preset, undo or
   // import even while the Colors panel (which owns the toggle) is unmounted.
-  useSidebarSyncAlignment();
+  useSidebarSyncAlignment()
 
   // Keyboard shortcuts. useKeyboardShortcut keys its listener on the
   // shortcut string, so the fresh arrays and inline callbacks below do not
   // re-add listeners on every theme edit.
-  const toggle = useThemerUIStore((state) => state.toggle);
-  const isOpen = useThemerUIStore((state) => state.isOpen);
-  const { key, modifiers } = parseShortcut(config.shortcut ?? SHORTCUTS.toggle);
+  const toggle = useThemerUIStore((state) => state.toggle)
+  const isOpen = useThemerUIStore((state) => state.isOpen)
+  const { key, modifiers } = parseShortcut(config.shortcut ?? SHORTCUTS.toggle)
 
   useKeyboardShortcut({
     key,
     modifiers,
     callback: toggle,
-  });
+  })
 
   // Undo keyboard shortcut (Ctrl+Z / Cmd+Z)
   useKeyboardShortcut({
@@ -189,11 +184,11 @@ export function ThemerProvider({
     modifiers: themerShortcuts.undo.modifiers,
     callback: () => {
       if (canUndo()) {
-        undo();
+        undo()
       }
     },
     enabled: isOpen,
-  });
+  })
 
   // Redo keyboard shortcut (Ctrl+Shift+Z / Cmd+Shift+Z)
   useKeyboardShortcut({
@@ -201,21 +196,21 @@ export function ThemerProvider({
     modifiers: themerShortcuts.redo.modifiers,
     callback: () => {
       if (canRedo()) {
-        redo();
+        redo()
       }
     },
     enabled: isOpen,
-  });
+  })
 
   const contextValue = React.useMemo<ThemerContextValue>(
     () => ({ config }),
-    [config],
-  );
+    [config]
+  )
 
   return (
     <ThemerContext.Provider value={contextValue}>
       <DynamicFontLoader />
       {children}
     </ThemerContext.Provider>
-  );
+  )
 }

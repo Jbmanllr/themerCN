@@ -1,4 +1,4 @@
-"use client";
+"use client"
 
 // Toolbar: the Themer layout with no sidebar. Every control sits in a bar
 // centred at the top of the Host app's real page (ADR 0001: it renders beside
@@ -17,43 +17,43 @@
 // - No Preview, no page pause, no scroll lock. Nested popups portal after
 //   the panel popup, into the same layer, so they paint above it.
 
-import * as React from "react";
-import { Popover as PopoverPrimitive } from "@base-ui/react/popover";
-import { X } from "lucide-react";
-import { ButtonGroup } from "@workspace/ui/components/button-group";
+import * as React from "react"
+import { Popover as PopoverPrimitive } from "@base-ui/react/popover"
+import { X } from "lucide-react"
+import { ButtonGroup } from "@workspace/ui/components/button-group"
 import {
   DropdownMenuSub,
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
-} from "@workspace/ui/components/dropdown-menu";
-import { Separator } from "@workspace/ui/components/separator";
-import { PopoverTrigger } from "@workspace/ui/components/popover";
+} from "@workspace/ui/components/dropdown-menu"
+import { Separator } from "@workspace/ui/components/separator"
+import { PopoverTrigger } from "@workspace/ui/components/popover"
 import {
   ToggleGroup,
   ToggleGroupItem,
-} from "@workspace/ui/components/toggle-group";
-import { useThemerLayout } from "../../../hooks/use-themer-layout";
-import { useColorFocusStore } from "../../../stores/color-focus-store";
-import { useEditorStore } from "../../../stores/editor-store";
-import { PresetSelect } from "../../actions/preset-select";
+} from "@workspace/ui/components/toggle-group"
+import { useThemerLayout } from "../../../hooks/use-themer-layout"
+import { useColorFocusStore } from "../../../stores/color-focus-store"
+import { useEditorStore } from "../../../stores/editor-store"
+import { PresetSelect } from "../../actions/preset-select"
 import {
   ThemerActionButton,
   ThemerActionsMenu,
   useThemerActions,
-} from "../../actions/themer-actions";
-import { LayoutRadioGroup } from "../layout-switcher";
-import { PageInspector, PageInspectorToggle } from "../page-inspector";
-import { THEMER_LAYOUTS } from "./registry";
-import { PanelPopover, usePanelPopovers } from "../../sidebar/panel-popover";
-import { ActionButton } from "../../ui/action-button";
-import { ModeToggle } from "../../ui/mode-toggle";
-import { PANELS, type Panel } from "../../sidebar/panels-config";
-import type { ThemerLayoutProps } from "./types";
+} from "../../actions/themer-actions"
+import { LayoutRadioGroup } from "../layout-switcher"
+import { PageInspector, PageInspectorToggle } from "../page-inspector"
+import { THEMER_LAYOUTS } from "./registry"
+import { PanelPopover, usePanelPopovers } from "../../sidebar/panel-popover"
+import { ActionButton } from "../../ui/action-button"
+import { ModeToggle } from "../../ui/mode-toggle"
+import { PANELS, type Panel } from "../../sidebar/panels-config"
+import type { ThemerLayoutProps } from "./types"
 
 export function ToolbarLayout({ onClose, zIndex }: ThemerLayoutProps) {
-  const preset = useEditorStore((state) => state.themeState.preset);
-  const applyPreset = useEditorStore((state) => state.applyThemePreset);
-  const { actions } = useThemerActions();
+  const preset = useEditorStore((state) => state.themeState.preset)
+  const applyPreset = useEditorStore((state) => state.applyThemePreset)
+  const { actions } = useThemerActions()
 
   return (
     <div
@@ -62,7 +62,7 @@ export function ToolbarLayout({ onClose, zIndex }: ThemerLayoutProps) {
       data-testid="themer-ui"
       role="toolbar"
       aria-label="Theme Editor"
-      className="bg-background fixed inset-x-0 top-3 mx-auto flex w-fit items-center gap-2 rounded-4xl border p-1.5 shadow-lg"
+      className="fixed inset-x-0 top-3 mx-auto flex w-fit items-center gap-2 rounded-4xl border bg-background p-1.5 shadow-lg"
       style={{ zIndex }}
     >
       <PageInspector />
@@ -91,12 +91,12 @@ export function ToolbarLayout({ onClose, zIndex }: ThemerLayoutProps) {
         <LayoutSubmenu />
       </ThemerActionsMenu>
     </div>
-  );
+  )
 }
 
 /** The layouts, as a submenu of the Toolbar's "More actions" menu. */
 function LayoutSubmenu() {
-  const layout = THEMER_LAYOUTS[useThemerLayout()];
+  const layout = THEMER_LAYOUTS[useThemerLayout()]
   return (
     <DropdownMenuSub>
       <DropdownMenuSubTrigger>
@@ -107,12 +107,12 @@ function LayoutSubmenu() {
         <LayoutRadioGroup />
       </DropdownMenuSubContent>
     </DropdownMenuSub>
-  );
+  )
 }
 
 const PANEL_POPOVERS = Object.fromEntries(
-  PANELS.map((panel) => [panel.id, PopoverPrimitive.createHandle()]),
-) as Record<Panel, PopoverPrimitive.Handle<unknown>>;
+  PANELS.map((panel) => [panel.id, PopoverPrimitive.createHandle()])
+) as Record<Panel, PopoverPrimitive.Handle<unknown>>
 
 /**
  * Colors, Typography, Other: popover triggers drawn as a ToggleGroup, the
@@ -121,12 +121,12 @@ const PANEL_POPOVERS = Object.fromEntries(
  * picker can mount.
  */
 function PanelGroups() {
-  const focusRequest = useColorFocusStore((state) => state.focusRequest);
-  const { openPanel, setOpenPanel, popoverProps } = usePanelPopovers();
+  const focusRequest = useColorFocusStore((state) => state.focusRequest)
+  const { openPanel, setOpenPanel, popoverProps } = usePanelPopovers()
 
   React.useEffect(() => {
-    if (focusRequest) setOpenPanel("colors");
-  }, [focusRequest, setOpenPanel]);
+    if (focusRequest) setOpenPanel("colors")
+  }, [focusRequest, setOpenPanel])
 
   return (
     <>
@@ -135,7 +135,9 @@ function PanelGroups() {
           <PopoverTrigger
             key={panel.id}
             handle={PANEL_POPOVERS[panel.id]}
-            render={<ToggleGroupItem value={panel.id} aria-label={panel.label} />}
+            render={
+              <ToggleGroupItem value={panel.id} aria-label={panel.label} />
+            }
           >
             <panel.icon aria-hidden />
             {panel.label}
@@ -155,5 +157,5 @@ function PanelGroups() {
         />
       ))}
     </>
-  );
+  )
 }

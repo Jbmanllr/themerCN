@@ -1,4 +1,4 @@
-"use client";
+"use client"
 
 // Adapted from tweakcn (Apache-2.0, github.com/jnsahaj/tweakcn @ a3b47b37); modified for themercn.
 // Source: components/editor/inspector-class-item.tsx.
@@ -8,26 +8,26 @@
 // button (keyboard reachable), and the swatch reads the live CSS variable
 // instead of subscribing to the editor store.
 
-import { memo, useMemo } from "react";
-import { SquarePen } from "lucide-react";
-import { segmentClassName } from "./segment-classname";
+import { memo, useMemo } from "react"
+import { SquarePen } from "lucide-react"
+import { segmentClassName } from "./segment-classname"
 
 export const InspectorClassItem = memo(function InspectorClassItem({
   className,
   onFocusColor,
 }: {
-  className: string;
-  onFocusColor: (colorKey: string) => void;
+  className: string
+  onFocusColor: (colorKey: string) => void
 }) {
-  const segments = useMemo(() => segmentClassName(className), [className]);
-  const { value } = segments;
+  const segments = useMemo(() => segmentClassName(className), [className])
+  const { value } = segments
 
   return (
     <button
       type="button"
-      className="group hover:bg-foreground/10 focus-visible:ring-ring flex w-full cursor-pointer items-center justify-between gap-2 rounded-md p-1.5 text-start transition-colors outline-none focus-visible:ring-2"
+      className="group flex w-full cursor-pointer items-center justify-between gap-2 rounded-md p-1.5 text-start transition-colors outline-none hover:bg-foreground/10 focus-visible:ring-2 focus-visible:ring-ring"
       onClick={() => {
-        if (value) onFocusColor(value);
+        if (value) onFocusColor(value)
       }}
       aria-label={value ? `Edit ${value} (${className})` : className}
     >
@@ -35,7 +35,7 @@ export const InspectorClassItem = memo(function InspectorClassItem({
         <span
           aria-hidden
           style={value ? { backgroundColor: `var(--${value})` } : undefined}
-          className="border-foreground ring-border block size-4 shrink-0 rounded-md border ring-1"
+          className="block size-4 shrink-0 rounded-md border border-foreground ring-1 ring-border"
         />
         <span className="truncate font-mono text-xs">
           {segments.selector && (
@@ -47,7 +47,7 @@ export const InspectorClassItem = memo(function InspectorClassItem({
           {value && (
             <>
               <span className="text-foreground/80">-</span>
-              <span className="text-foreground font-bold">{value}</span>
+              <span className="font-bold text-foreground">{value}</span>
             </>
           )}
           {segments.opacity && (
@@ -57,8 +57,8 @@ export const InspectorClassItem = memo(function InspectorClassItem({
       </span>
       <SquarePen
         aria-hidden
-        className="text-muted-foreground size-4 shrink-0 opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100"
+        className="size-4 shrink-0 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100"
       />
     </button>
-  );
-});
+  )
+})

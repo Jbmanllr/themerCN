@@ -14,115 +14,117 @@
 //    `:root` and `:host` selectors rewritten to `:scope`.
 // 3. `@property`, `@keyframes` and `@font-face` stay at the top level
 //    (document-wide by nature), and view-transition.css is appended as is.
-import fs from "node:fs";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
-import tailwind from "@tailwindcss/postcss";
-import postcss from "postcss";
+import fs from "node:fs"
+import path from "node:path"
+import { fileURLToPath } from "node:url"
+import tailwind from "@tailwindcss/postcss"
+import postcss from "postcss"
 
-const pkg = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const entry = path.join(pkg, "src/styles/themer.css");
-const appended = path.join(pkg, "src/styles/view-transition.css");
-const outFile = path.join(pkg, "src/generated/themer-css.ts");
+const pkg = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..")
+const entry = path.join(pkg, "src/styles/themer.css")
+const appended = path.join(pkg, "src/styles/view-transition.css")
+const outFile = path.join(pkg, "src/generated/themer-css.ts")
 
-export const SCOPE_PRELUDE = "([data-themer]) to ([data-themer-host])";
-const TOP_LEVEL_AT_RULES = new Set(["property", "keyframes", "font-face"]);
-const ROOT_SELECTOR = /^(html|:root|:host)$/;
+export const SCOPE_PRELUDE = "([data-themer]) to ([data-themer-host])"
+const TOP_LEVEL_AT_RULES = new Set(["property", "keyframes", "font-face"])
+const ROOT_SELECTOR = /^(html|:root|:host)$/
 
-const escapeRegExp = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+const escapeRegExp = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
 
 /** True for `--x: var(--x)` and `--x: var(--x, fallback)`. */
 export function isSelfReference(decl) {
-  if (!decl.prop.startsWith("--")) return false;
+  if (!decl.prop.startsWith("--")) return false
   return new RegExp(`^var\\(\\s*${escapeRegExp(decl.prop)}\\s*[,)]`).test(
-    decl.value.trim(),
-  );
+    decl.value.trim()
+  )
 }
 
 /** Drops rules and blocks left empty, repeating as parents empty in turn. */
 function removeEmpty(container) {
-  let removed = true;
+  let removed = true
   while (removed) {
-    removed = false;
+    removed = false
     container.walk((node) => {
       if (node.nodes?.length === 0) {
-        node.remove();
-        removed = true;
+        node.remove()
+        removed = true
       }
-    });
+    })
   }
 }
 
 function rootToScope(node) {
   const rewrite = (rule) => {
     const selectors = rule.selectors.map((s) =>
-      ROOT_SELECTOR.test(s.trim()) ? ":scope" : s,
-    );
-    rule.selectors = [...new Set(selectors)];
-  };
-  if (node.type === "rule") rewrite(node);
-  node.walkRules?.(rewrite);
+      ROOT_SELECTOR.test(s.trim()) ? ":scope" : s
+    )
+    rule.selectors = [...new Set(selectors)]
+  }
+  if (node.type === "rule") rewrite(node)
+  node.walkRules?.(rewrite)
 }
 
 /** Flattens `@layer` blocks into a list of top-level nodes, in order. */
 function unlayer(nodes) {
   return nodes.flatMap((node) => {
     if (node.type === "atrule" && node.name === "layer")
-      return node.nodes ? unlayer(node.nodes.slice()) : [];
-    return [node];
-  });
+      return node.nodes ? unlayer(node.nodes.slice()) : []
+    return [node]
+  })
 }
 
 /** Tailwind's output → the Themer's scoped, unlayered sheet. */
 export function scopeThemerCss(css) {
-  const root = postcss.parse(css);
+  const root = postcss.parse(css)
 
   root.walkDecls((decl) => {
-    if (isSelfReference(decl)) decl.remove();
-  });
-  removeEmpty(root);
+    if (isSelfReference(decl)) decl.remove()
+  })
+  removeEmpty(root)
 
-  const scope = postcss.atRule({ name: "scope", params: SCOPE_PRELUDE });
-  const top = [];
+  const scope = postcss.atRule({ name: "scope", params: SCOPE_PRELUDE })
+  const top = []
   for (const node of unlayer(root.nodes.slice())) {
-    if (node.type === "comment") continue;
+    if (node.type === "comment") continue
     if (node.type === "atrule" && TOP_LEVEL_AT_RULES.has(node.name)) {
-      top.push(node);
-      continue;
+      top.push(node)
+      continue
     }
-    rootToScope(node);
-    scope.append(node);
+    rootToScope(node)
+    scope.append(node)
   }
 
-  const out = postcss.root();
-  out.append(top.map((n) => n.clone()));
-  if (scope.nodes.length) out.append(scope);
-  return out.toString();
+  const out = postcss.root()
+  out.append(top.map((n) => n.clone()))
+  if (scope.nodes.length) out.append(scope)
+  return out.toString()
 }
 
 async function build() {
-  const input = fs.readFileSync(entry, "utf8");
-  const compiled = await postcss([tailwind({ optimize: { minify: true } })]).process(
-    input,
-    { from: entry },
-  );
-  const css = `${scopeThemerCss(compiled.css)}\n${fs.readFileSync(appended, "utf8")}`;
+  const input = fs.readFileSync(entry, "utf8")
+  const compiled = await postcss([
+    tailwind({ optimize: { minify: true } }),
+  ]).process(input, { from: entry })
+  const css = `${scopeThemerCss(compiled.css)}\n${fs.readFileSync(appended, "utf8")}`
   const moduleSource = [
     "// Generated by scripts/build-css.mjs from src/styles/. Do not edit.",
     "/** The Themer UI's CSS, scoped to `[data-themer]`; injected at mount. */",
     `export const THEMER_CSS = ${JSON.stringify(css)};`,
     "",
-  ].join("\n");
+  ].join("\n")
 
-  fs.mkdirSync(path.dirname(outFile), { recursive: true });
+  fs.mkdirSync(path.dirname(outFile), { recursive: true })
   // Atomic: typecheck and test may build concurrently.
-  const tmp = `${outFile}.${process.pid}.tmp`;
-  fs.writeFileSync(tmp, moduleSource);
-  fs.renameSync(tmp, outFile);
+  const tmp = `${outFile}.${process.pid}.tmp`
+  fs.writeFileSync(tmp, moduleSource)
+  fs.renameSync(tmp, outFile)
   console.log(
-    `themer css: ${(css.length / 1024).toFixed(1)} kB -> ${path.relative(pkg, outFile)}`,
-  );
+    `themer css: ${(css.length / 1024).toFixed(1)} kB -> ${path.relative(pkg, outFile)}`
+  )
 }
 
-if (process.argv[1] && fileURLToPath(import.meta.url) === path.resolve(process.argv[1]))
-  await build();
+if (
+  process.argv[1] &&
+  fileURLToPath(import.meta.url) === path.resolve(process.argv[1])
+)
+  await build()

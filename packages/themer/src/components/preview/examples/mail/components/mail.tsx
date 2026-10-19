@@ -6,7 +6,7 @@
 // no form submission (the search form prevents its submit, proved by
 // mail.test.tsx).
 
-import * as React from "react";
+import * as React from "react"
 import {
   AlertCircle,
   Archive,
@@ -19,40 +19,40 @@ import {
   ShoppingCart,
   Trash2,
   Users2,
-} from "lucide-react";
+} from "lucide-react"
 
-import { cn } from "@workspace/ui/lib/utils";
-import { Input } from "@workspace/ui/components/input";
+import { cn } from "@workspace/ui/lib/utils"
+import { Input } from "@workspace/ui/components/input"
 import {
   ResizableHandle,
   ResizablePanel,
   ResizablePanelGroup,
-} from "@workspace/ui/components/resizable";
-import { Separator } from "@workspace/ui/components/separator";
+} from "@workspace/ui/components/resizable"
+import { Separator } from "@workspace/ui/components/separator"
 import {
   Tabs,
   TabsContent,
   TabsList,
   TabsTrigger,
-} from "@workspace/ui/components/tabs";
-import { TooltipProvider } from "@workspace/ui/components/tooltip";
-import { AccountSwitcher } from "./account-switcher";
-import { MailDisplay } from "./mail-display";
-import { MailList } from "./mail-list";
-import { Nav } from "./nav";
-import { type Mail } from "../data";
-import { useMail } from "../use-mail";
+} from "@workspace/ui/components/tabs"
+import { TooltipProvider } from "@workspace/ui/components/tooltip"
+import { AccountSwitcher } from "./account-switcher"
+import { MailDisplay } from "./mail-display"
+import { MailList } from "./mail-list"
+import { Nav } from "./nav"
+import { type Mail } from "../data"
+import { useMail } from "../use-mail"
 
 interface MailProps {
   accounts: {
-    label: string;
-    email: string;
-    icon: React.ReactNode;
-  }[];
-  mails: Mail[];
-  defaultLayout?: number[];
-  defaultCollapsed?: boolean;
-  navCollapsedSize: number;
+    label: string
+    email: string
+    icon: React.ReactNode
+  }[]
+  mails: Mail[]
+  defaultLayout?: number[]
+  defaultCollapsed?: boolean
+  navCollapsedSize: number
 }
 
 export function Mail({
@@ -62,8 +62,8 @@ export function Mail({
   defaultCollapsed = false,
   navCollapsedSize,
 }: MailProps) {
-  const [isCollapsed, setIsCollapsed] = React.useState(defaultCollapsed);
-  const [mail] = useMail();
+  const [isCollapsed, setIsCollapsed] = React.useState(defaultCollapsed)
+  const [mail] = useMail()
 
   return (
     <TooltipProvider delay={0}>
@@ -78,18 +78,18 @@ export function Mail({
           minSize="15%"
           maxSize="20%"
           onResize={(panelSize) => {
-            const collapsed = panelSize.asPercentage <= navCollapsedSize;
-            setIsCollapsed(collapsed);
+            const collapsed = panelSize.asPercentage <= navCollapsedSize
+            setIsCollapsed(collapsed)
           }}
           className={cn(
             isCollapsed &&
-              "min-w-[50px] transition-all duration-300 ease-in-out",
+              "min-w-[50px] transition-all duration-300 ease-in-out"
           )}
         >
           <div
             className={cn(
               "flex items-center justify-center px-2 py-1.5",
-              isCollapsed && "px-0",
+              isCollapsed && "px-0"
             )}
           >
             <AccountSwitcher isCollapsed={isCollapsed} accounts={accounts} />
@@ -177,17 +177,17 @@ export function Mail({
         <ResizablePanel defaultSize={`${defaultLayout[1]}%`} minSize="30%">
           <Tabs defaultValue="all" className="flex h-full flex-col">
             <div className="flex items-center px-4 py-1.5">
-              <h1 className="text-foreground text-xl font-bold">Inbox</h1>
+              <h1 className="text-xl font-bold text-foreground">Inbox</h1>
               <TabsList className="ml-auto">
                 <TabsTrigger value="all">All mail</TabsTrigger>
                 <TabsTrigger value="unread">Unread</TabsTrigger>
               </TabsList>
             </div>
             <Separator />
-            <div className="bg-background/95 supports-[backdrop-filter]:bg-background/60 p-4 backdrop-blur">
+            <div className="bg-background/95 p-4 backdrop-blur supports-[backdrop-filter]:bg-background/60">
               <form onSubmit={(event) => event.preventDefault()}>
                 <div className="relative">
-                  <Search className="text-muted-foreground absolute top-2.5 left-2 h-4 w-4" />
+                  <Search className="absolute top-2.5 left-2 h-4 w-4 text-muted-foreground" />
                   <Input placeholder="Search" className="pl-8" />
                 </div>
               </form>
@@ -208,5 +208,5 @@ export function Mail({
         </ResizablePanel>
       </ResizablePanelGroup>
     </TooltipProvider>
-  );
+  )
 }

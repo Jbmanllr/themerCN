@@ -1,4 +1,4 @@
-"use client";
+"use client"
 
 // The Themer's actions, defined once for every surface that offers them:
 // the ActionBar (Workspace's bar, the in-place sidebar's footer), the
@@ -14,7 +14,7 @@
 //
 // Every value is selected narrowly from the stores (see action-bar.tsx).
 
-import * as React from "react";
+import * as React from "react"
 import {
   Code2,
   Ellipsis,
@@ -26,8 +26,8 @@ import {
   Undo2,
   Upload,
   type LucideIcon,
-} from "lucide-react";
-import { Button } from "@workspace/ui/components/button";
+} from "lucide-react"
+import { Button } from "@workspace/ui/components/button"
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -36,64 +36,59 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@workspace/ui/components/dropdown-menu";
-import { SHORTCUTS } from "../../config/constants";
-import { useToggleMode } from "../../hooks/use-themer";
+} from "@workspace/ui/components/dropdown-menu"
+import { SHORTCUTS } from "../../config/constants"
+import { useToggleMode } from "../../hooks/use-themer"
 import {
   selectCanRedo,
   selectCanResetToPreset,
   selectCanUndo,
   selectCurrentMode,
-} from "../../selectors";
-import { useEditorStore } from "../../stores/editor-store";
-import { usePreferencesStore } from "../../stores/preferences-store";
-import { CodePanelDialog } from "./code-panel-dialog";
-import { CssImportDialog } from "./css-import-dialog";
-import { ContrastCheckerDialog } from "../editor/contrast-checker-popover";
-import { ActionButton } from "../ui/action-button";
+} from "../../selectors"
+import { useEditorStore } from "../../stores/editor-store"
+import { usePreferencesStore } from "../../stores/preferences-store"
+import { CodePanelDialog } from "./code-panel-dialog"
+import { CssImportDialog } from "./css-import-dialog"
+import { ContrastCheckerDialog } from "../editor/contrast-checker-popover"
+import { ActionButton } from "../ui/action-button"
 
 export interface ThemerAction {
   /** Accessible name, tooltip and menu text. */
-  label: string;
-  icon: LucideIcon;
-  onSelect: () => void;
-  disabled?: boolean;
+  label: string
+  icon: LucideIcon
+  onSelect: () => void
+  disabled?: boolean
   /** Shortcut string ("ctrl+z") shown in the tooltip. */
-  shortcut?: string;
-  testId?: string;
+  shortcut?: string
+  testId?: string
 }
 
 export type ThemerActionId =
-  | "undo"
-  | "redo"
-  | "reset"
-  | "code"
-  | "importCss"
-  | "contrast";
+  "undo" | "redo" | "reset" | "code" | "importCss" | "contrast"
 
-type ActionDialog = "code" | "importCss" | "contrast";
+type ActionDialog = "code" | "importCss" | "contrast"
 
 export function useThemerActions() {
-  const undo = useEditorStore((state) => state.undo);
-  const redo = useEditorStore((state) => state.redo);
-  const reset = useEditorStore((state) => state.resetToCurrentPreset);
-  const canUndo = useEditorStore(selectCanUndo);
-  const canRedo = useEditorStore(selectCanRedo);
+  const undo = useEditorStore((state) => state.undo)
+  const redo = useEditorStore((state) => state.redo)
+  const reset = useEditorStore((state) => state.resetToCurrentPreset)
+  const canUndo = useEditorStore(selectCanUndo)
+  const canRedo = useEditorStore(selectCanRedo)
   const sidebarColorSync = usePreferencesStore(
-    (state) => state.sidebarColorSync,
-  );
-  const canReset = useEditorStore(selectCanResetToPreset(sidebarColorSync));
+    (state) => state.sidebarColorSync
+  )
+  const canReset = useEditorStore(selectCanResetToPreset(sidebarColorSync))
   const themeOverrideEnabled = usePreferencesStore(
-    (state) => state.themeOverrideEnabled,
-  );
+    (state) => state.themeOverrideEnabled
+  )
   const setThemeOverrideEnabled = usePreferencesStore(
-    (state) => state.setThemeOverrideEnabled,
-  );
+    (state) => state.setThemeOverrideEnabled
+  )
 
-  const [dialog, setDialog] = React.useState<ActionDialog | null>(null);
+  const [dialog, setDialog] = React.useState<ActionDialog | null>(null)
   const onDialogOpenChange = (open: boolean) => {
-    if (!open) setDialog(null);
-  };
+    if (!open) setDialog(null)
+  }
 
   const actions: Record<ThemerActionId, ThemerAction> = {
     undo: {
@@ -128,7 +123,7 @@ export function useThemerActions() {
       icon: Eye,
       onSelect: () => setDialog("contrast"),
     },
-  };
+  }
 
   const override = {
     label: "Theme override",
@@ -139,7 +134,7 @@ export function useThemerActions() {
     description: themeOverrideEnabled
       ? "Show the production theme"
       : "Apply the edited theme",
-  };
+  }
 
   const dialogs = (
     <>
@@ -156,9 +151,9 @@ export function useThemerActions() {
         <CodePanelDialog open onOpenChange={onDialogOpenChange} />
       ) : null}
     </>
-  );
+  )
 
-  return { actions, override, dialogs };
+  return { actions, override, dialogs }
 }
 
 /** An action as an icon button (ActionButton: tooltip with its shortcut). */
@@ -173,11 +168,11 @@ export function ThemerActionButton({ action }: { action: ThemerAction }) {
     >
       <action.icon />
     </ActionButton>
-  );
+  )
 }
 
 /** The actions every menu lists, in order; the override follows them. */
-const MENU_ITEMS: ThemerActionId[] = ["code", "importCss", "contrast", "reset"];
+const MENU_ITEMS: ThemerActionId[] = ["code", "importCss", "contrast", "reset"]
 
 /**
  * The actions as a "More actions" menu. `withHistory` leads with undo, redo
@@ -192,12 +187,12 @@ export function ThemerActionsMenu({
   align = "end",
   children,
 }: {
-  withHistory?: boolean;
-  side?: "right" | "bottom";
-  align?: "start" | "end";
-  children?: React.ReactNode;
+  withHistory?: boolean
+  side?: "right" | "bottom"
+  align?: "start" | "end"
+  children?: React.ReactNode
 }) {
-  const { actions, override, dialogs } = useThemerActions();
+  const { actions, override, dialogs } = useThemerActions()
 
   return (
     <>
@@ -243,7 +238,7 @@ export function ThemerActionsMenu({
       </DropdownMenu>
       {dialogs}
     </>
-  );
+  )
 }
 
 function ActionMenuItem({ action }: { action: ThemerAction }) {
@@ -256,14 +251,14 @@ function ActionMenuItem({ action }: { action: ThemerAction }) {
       <action.icon />
       {action.label}
     </DropdownMenuItem>
-  );
+  )
 }
 
 /** ModeToggle's menu form, named by the mode it switches to. */
 function ModeMenuItem() {
-  const isDark = useEditorStore(selectCurrentMode) === "dark";
-  const toggleMode = useToggleMode();
-  const Icon = isDark ? Sun : Moon;
+  const isDark = useEditorStore(selectCurrentMode) === "dark"
+  const toggleMode = useToggleMode()
+  const Icon = isDark ? Sun : Moon
 
   return (
     <DropdownMenuItem
@@ -272,5 +267,5 @@ function ModeMenuItem() {
       <Icon />
       {isDark ? "Switch to light mode" : "Switch to dark mode"}
     </DropdownMenuItem>
-  );
+  )
 }

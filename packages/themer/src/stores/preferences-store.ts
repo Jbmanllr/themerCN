@@ -1,4 +1,4 @@
-"use client";
+"use client"
 
 // The editor's user preferences (colour format, Tailwind version, Themer
 // layout, preview tab, sidebar and section states, theme override and more),
@@ -18,18 +18,18 @@
 //
 // See: packages/themer/ARCHITECTURE.md (PreferencesStore)
 
-import { create } from "zustand";
-import { persist } from "zustand/middleware";
-import type { PreferencesStore } from "../types";
-import { getStorageKeys } from "../config/constants";
+import { create } from "zustand"
+import { persist } from "zustand/middleware"
+import type { PreferencesStore } from "../types"
+import { getStorageKeys } from "../config/constants"
 
 /** Version of the persisted preferences (zustand persist `version`). */
-export const PREFERENCES_VERSION = 1;
+export const PREFERENCES_VERSION = 1
 
 const colorFormatsByVersion = {
   "3": ["hex", "rgb", "hsl"],
   "4": ["hex", "rgb", "hsl", "oklch"],
-} as const;
+} as const
 
 /**
  * User preferences store. `sectionStates` holds each ControlSection's open
@@ -55,15 +55,15 @@ export const usePreferencesStore = create<PreferencesStore>()(
       // Actions
       setColorFormat: (format) => {
         if (get().getAvailableColorFormats().includes(format)) {
-          set({ colorFormat: format });
+          set({ colorFormat: format })
         }
       },
       setTailwindVersion: (version) => {
-        const next: Partial<PreferencesStore> = { tailwindVersion: version };
+        const next: Partial<PreferencesStore> = { tailwindVersion: version }
         if (version === "3" && get().colorFormat === "oklch") {
-          next.colorFormat = "hsl";
+          next.colorFormat = "hsl"
         }
-        set(next);
+        set(next)
       },
       setPackageManager: (packageManager) => set({ packageManager }),
       setShowContrastWarnings: (show) => set({ showContrastWarnings: show }),
@@ -78,7 +78,7 @@ export const usePreferencesStore = create<PreferencesStore>()(
         set((state) =>
           state.sectionStates[id] === open
             ? state
-            : { sectionStates: { ...state.sectionStates, [id]: open } },
+            : { sectionStates: { ...state.sectionStates, [id]: open } }
         ),
       getAvailableColorFormats: () =>
         colorFormatsByVersion[get().tailwindVersion],
@@ -88,6 +88,6 @@ export const usePreferencesStore = create<PreferencesStore>()(
       // <Themer> names the namespace and hydrates (stores/hydrate.ts).
       skipHydration: true,
       version: PREFERENCES_VERSION,
-    },
-  ),
-);
+    }
+  )
+)

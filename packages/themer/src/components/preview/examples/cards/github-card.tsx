@@ -1,15 +1,15 @@
-"use client";
+"use client"
 
-import { Circle, Star } from "lucide-react";
+import { Circle, Star } from "lucide-react"
 
-import { Button } from "@workspace/ui/components/button";
+import { Button } from "@workspace/ui/components/button"
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@workspace/ui/components/card";
+} from "@workspace/ui/components/card"
 
 export function GithubCard() {
   return (
@@ -23,7 +23,7 @@ export function GithubCard() {
               Accessible. Customizable. Open Source.
             </CardDescription>
           </div>
-          <div className="bg-secondary text-secondary-foreground flex min-w-20 shrink-0 items-center space-x-1 rounded-md">
+          <div className="flex min-w-20 shrink-0 items-center space-x-1 rounded-md bg-secondary text-secondary-foreground">
             <Button
               variant="secondary"
               className="flex items-center gap-2 px-3 shadow-none"
@@ -37,7 +37,7 @@ export function GithubCard() {
         </div>
       </CardHeader>
       <CardContent>
-        <div className="text-muted-foreground flex space-x-4 text-sm">
+        <div className="flex space-x-4 text-sm text-muted-foreground">
           <div className="flex items-center">
             <Circle className="mr-1 h-3 w-3 fill-sky-400 text-sky-400" />
             TypeScript
@@ -50,5 +50,5 @@ export function GithubCard() {
         </div>
       </CardContent>
     </Card>
-  );
+  )
 }

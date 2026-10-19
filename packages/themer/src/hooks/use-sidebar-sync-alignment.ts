@@ -1,4 +1,4 @@
-"use client";
+"use client"
 
 // Keeps the theme's sidebar colours on their base twins while Sidebar Sync is
 // on (the rules are in utils/sidebar-sync.ts and editor/color-controls.tsx).
@@ -7,11 +7,11 @@
 // re-align even while the Colors panel, which owns the toggle, is unmounted. A
 // second mount only repeats the work.
 
-import * as React from "react";
-import { useEditorStore } from "../stores/editor-store";
-import { usePreferencesStore } from "../stores/preferences-store";
-import { isDeepEqual } from "../utils/deep-equal";
-import { applySidebarSync } from "../utils/sidebar-sync";
+import * as React from "react"
+import { useEditorStore } from "../stores/editor-store"
+import { usePreferencesStore } from "../stores/preferences-store"
+import { isDeepEqual } from "../utils/deep-equal"
+import { applySidebarSync } from "../utils/sidebar-sync"
 
 /**
  * Keep the theme's sidebar colours on their base twins while Sidebar Sync
@@ -24,12 +24,12 @@ import { applySidebarSync } from "../utils/sidebar-sync";
 export function useSidebarSyncAlignment() {
   React.useEffect(() => {
     const align = () => {
-      if (!usePreferencesStore.getState().sidebarColorSync) return;
+      if (!usePreferencesStore.getState().sidebarColorSync) return
       const { themeState, themeCheckpoint, presetBaseline } =
-        useEditorStore.getState();
-      const styles = applySidebarSync(themeState.styles);
-      if (styles === themeState.styles) return;
-      const nextThemeState = { ...themeState, styles };
+        useEditorStore.getState()
+      const styles = applySidebarSync(themeState.styles)
+      if (styles === themeState.styles) return
+      const nextThemeState = { ...themeState, styles }
       useEditorStore.setState({
         themeState: nextThemeState,
         themeCheckpoint:
@@ -40,20 +40,20 @@ export function useSidebarSyncAlignment() {
           isDeepEqual(presetBaseline.styles, themeState.styles)
             ? { ...presetBaseline, styles }
             : presetBaseline,
-      });
-    };
-    align();
+      })
+    }
+    align()
     const unsubscribeEditor = useEditorStore.subscribe((state, previous) => {
-      if (state.themeState.styles !== previous.themeState.styles) align();
-    });
+      if (state.themeState.styles !== previous.themeState.styles) align()
+    })
     const unsubscribePreferences = usePreferencesStore.subscribe(
       (state, previous) => {
-        if (state.sidebarColorSync && !previous.sidebarColorSync) align();
-      },
-    );
+        if (state.sidebarColorSync && !previous.sidebarColorSync) align()
+      }
+    )
     return () => {
-      unsubscribeEditor();
-      unsubscribePreferences();
-    };
-  }, []);
+      unsubscribeEditor()
+      unsubscribePreferences()
+    }
+  }, [])
 }

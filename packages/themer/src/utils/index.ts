@@ -2,8 +2,8 @@
 // none of them). Not here: font-loader's link registry (acquireGoogleFont,
 // setThemeFonts, ...), describeFontValue and theme-script; import those from
 // their own files.
-export { isDeepEqual } from "./deep-equal";
-export { debounce } from "./debounce";
+export { isDeepEqual } from "./deep-equal"
+export { debounce } from "./debounce"
 export {
   colorFormatter,
   convertToHSL,
@@ -18,7 +18,7 @@ export {
   adjustColorByHsl,
   interpolateColors,
   generateColorScale,
-} from "./color-converter";
+} from "./color-converter"
 export {
   getContrastRatio,
   formatContrastRatio,
@@ -30,7 +30,7 @@ export {
   type ColorPair,
   type ContrastPair,
   type ContrastResult,
-} from "./contrast-checker";
+} from "./contrast-checker"
 export {
   applyThemeToElement,
   removeThemeFromElement,
@@ -40,7 +40,7 @@ export {
   THEMER_OVERRIDES_ATTRIBUTE,
   applyThemeToIframe,
   createThemeStyleElement,
-} from "./apply-theme";
+} from "./apply-theme"
 export {
   getShadowMap,
   SHADOW_SCALE_KEYS,
@@ -49,25 +49,25 @@ export {
   getShadowVariables,
   getShadowParams,
   createCustomShadow,
-} from "./shadows";
+} from "./shadows"
 export {
   generateThemeCode,
   generateTailwindConfigCode,
   generateLayoutCode,
-} from "./theme-generator";
-export { parseLength, clampToRange, type LengthUnit } from "./length";
+} from "./theme-generator"
+export { parseLength, clampToRange, type LengthUnit } from "./length"
 export {
   runThemeTransition,
   transitionOriginPercent,
   type TransitionOrigin,
-} from "./theme-transition";
+} from "./theme-transition"
 export {
   SIDEBAR_SYNC_MAP,
   BASE_TO_SIDEBAR_MAP,
   isSyncedSidebarKey,
   applySidebarSync,
   isSidebarSynced,
-} from "./sidebar-sync";
+} from "./sidebar-sync"
 // COLOR_GROUPS (./types) is the plain key list; COLOR_LIST_GROUPS is the
 // labelled colour-list layout built from the same keys.
 export {
@@ -79,13 +79,13 @@ export {
   colorMatchesSearch,
   type ColorGroup,
   type ColorGroupEntry,
-} from "./color-groups";
+} from "./color-groups"
 export {
   HSL_ADJUSTABLE_KEYS,
   isIdentityHslAdjustment,
   adjustColor,
   adjustThemeStyles,
-} from "./hsl-adjust";
+} from "./hsl-adjust"
 export {
   parseThemeCss,
   type ParsedThemeCss,
@@ -94,7 +94,7 @@ export {
   stylesToCSS,
   validateCSSInput,
   extractColorVariables,
-} from "./parse-css";
+} from "./parse-css"
 export {
   FALLBACK_FONTS,
   FONT_CATEGORIES,
@@ -129,4 +129,4 @@ export {
   type GoogleFont,
   type PaginatedFontsResponse,
   type ThemeFontRole,
-} from "./font-loader";
+} from "./font-loader"

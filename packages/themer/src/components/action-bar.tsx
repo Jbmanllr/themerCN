@@ -1,4 +1,4 @@
-"use client";
+"use client"
 
 // The Themer's actions as a bar (tweakcn's action bar, minus its account
 // features): contrast check, light/dark, undo/redo, reset, CSS import, the
@@ -23,21 +23,18 @@
 //
 // See: packages/themer/ARCHITECTURE.md
 
-import { Button } from "@workspace/ui/components/button";
-import { cn } from "@workspace/ui/lib/utils";
-import { ButtonGroup } from "@workspace/ui/components/button-group";
-import { Separator } from "@workspace/ui/components/separator";
-import { Switch } from "@workspace/ui/components/switch";
+import { Button } from "@workspace/ui/components/button"
+import { cn } from "@workspace/ui/lib/utils"
+import { ButtonGroup } from "@workspace/ui/components/button-group"
+import { Separator } from "@workspace/ui/components/separator"
+import { Switch } from "@workspace/ui/components/switch"
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from "@workspace/ui/components/tooltip";
-import {
-  ThemerActionButton,
-  useThemerActions,
-} from "./actions/themer-actions";
-import { ModeToggle } from "./ui/mode-toggle";
+} from "@workspace/ui/components/tooltip"
+import { ThemerActionButton, useThemerActions } from "./actions/themer-actions"
+import { ModeToggle } from "./ui/mode-toggle"
 
 /**
  * The Themer's actions: `bar` is the strip above Workspace's preview,
@@ -47,21 +44,21 @@ import { ModeToggle } from "./ui/mode-toggle";
 export function ActionBar({
   variant = "bar",
 }: {
-  variant?: "bar" | "stacked";
+  variant?: "bar" | "stacked"
 }) {
-  const { actions, override, dialogs } = useThemerActions();
+  const { actions, override, dialogs } = useThemerActions()
 
   return (
     <div
       className={cn(
         variant === "bar" &&
-          "bg-background/95 h-12 shrink-0 border-b backdrop-blur-sm",
+          "h-12 shrink-0 border-b bg-background/95 backdrop-blur-sm"
       )}
     >
       <div
         className={cn(
           "flex items-center justify-between",
-          variant === "bar" ? "h-full px-4" : "flex-wrap gap-2",
+          variant === "bar" ? "h-full px-4" : "flex-wrap gap-2"
         )}
       >
         <div className="flex items-center gap-1">
@@ -111,5 +108,5 @@ export function ActionBar({
 
       {dialogs}
     </div>
-  );
+  )
 }

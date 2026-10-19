@@ -1,25 +1,25 @@
-"use client";
+"use client"
 
-import { addDays, format } from "date-fns";
-import { Calendar as CalendarIcon } from "lucide-react";
-import * as React from "react";
-import { DateRange } from "react-day-picker";
+import { addDays, format } from "date-fns"
+import { Calendar as CalendarIcon } from "lucide-react"
+import * as React from "react"
+import { DateRange } from "react-day-picker"
 
-import { Button } from "@workspace/ui/components/button";
-import { Calendar } from "@workspace/ui/components/calendar";
+import { Button } from "@workspace/ui/components/button"
+import { Calendar } from "@workspace/ui/components/calendar"
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@workspace/ui/components/card";
+} from "@workspace/ui/components/card"
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@workspace/ui/components/popover";
-import { cn } from "@workspace/ui/lib/utils";
+} from "@workspace/ui/components/popover"
+import { cn } from "@workspace/ui/lib/utils"
 
 export function DatePickerWithRange({
   className,
@@ -27,7 +27,7 @@ export function DatePickerWithRange({
   const [date, setDate] = React.useState<DateRange | undefined>({
     from: new Date(2022, 0, 20),
     to: addDays(new Date(2022, 0, 20), 20),
-  });
+  })
 
   return (
     <Card className={cn("grid gap-2", className)}>
@@ -45,7 +45,7 @@ export function DatePickerWithRange({
                 variant={"outline"}
                 className={cn(
                   "w-full max-w-[300px] justify-start text-left font-normal",
-                  !date && "text-muted-foreground",
+                  !date && "text-muted-foreground"
                 )}
               >
                 <CalendarIcon />
@@ -76,5 +76,5 @@ export function DatePickerWithRange({
         </Popover>
       </CardContent>
     </Card>
-  );
+  )
 }

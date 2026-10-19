@@ -18,9 +18,9 @@
 //
 // See: packages/themer/ARCHITECTURE.md (EditorStore)
 
-import type { ThemePreset, ThemeStyleProps, ThemeStyles } from "../types";
-import { defaultLightStyles, defaultDarkStyles } from "./defaults";
-import { tweakcnThemePresets } from "./tweakcn-presets";
+import type { ThemePreset, ThemeStyleProps, ThemeStyles } from "../types"
+import { defaultLightStyles, defaultDarkStyles } from "./defaults"
+import { tweakcnThemePresets } from "./tweakcn-presets"
 
 /** The registry's "default" preset: tweakcn's default theme (defaults.ts). */
 const tweakcnDefaultThemePreset: ThemePreset = {
@@ -32,12 +32,12 @@ const tweakcnDefaultThemePreset: ThemePreset = {
     light: defaultLightStyles,
     dark: defaultDarkStyles,
   },
-};
+}
 
 const tweakcnThemePresetsWithIds = Object.fromEntries(
   Object.entries(tweakcnThemePresets).map(([id, preset]) => {
     const themePreset = preset as typeof preset &
-      Partial<Pick<ThemePreset, "label" | "source">>;
+      Partial<Pick<ThemePreset, "label" | "source">>
 
     return [
       id,
@@ -47,17 +47,17 @@ const tweakcnThemePresetsWithIds = Object.fromEntries(
         ...themePreset,
         label: themePreset.label ?? id,
       },
-    ];
-  }),
-) as Record<string, ThemePreset>;
+    ]
+  })
+) as Record<string, ThemePreset>
 
 const builtInThemePresets: Readonly<Record<string, ThemePreset>> = {
   default: tweakcnDefaultThemePreset,
   ...tweakcnThemePresetsWithIds,
-};
+}
 
 /** The preset every unknown id resolves to. */
-export const FALLBACK_PRESET_ID = "default";
+export const FALLBACK_PRESET_ID = "default"
 
 /**
  * Live preset registry: built-ins plus registered Host Presets. The object
@@ -66,18 +66,18 @@ export const FALLBACK_PRESET_ID = "default";
  */
 export const themePresets: Record<string, ThemePreset> = {
   ...builtInThemePresets,
-};
+}
 
-const NO_HOST_PRESETS: readonly ThemePreset[] = [];
-let registeredHostPresets: readonly ThemePreset[] = NO_HOST_PRESETS;
-let configuredDefaultPresetId: string = FALLBACK_PRESET_ID;
-const resolvedStylesCache = new Map<string, ThemeStyles>();
+const NO_HOST_PRESETS: readonly ThemePreset[] = []
+let registeredHostPresets: readonly ThemePreset[] = NO_HOST_PRESETS
+let configuredDefaultPresetId: string = FALLBACK_PRESET_ID
+const resolvedStylesCache = new Map<string, ThemeStyles>()
 
 export interface PresetRegistryConfig {
   /** Host presets (ThemerConfig.presets). Host wins on an id clash. */
-  presets?: readonly ThemePreset[];
+  presets?: readonly ThemePreset[]
   /** Host default preset id (ThemerConfig.defaultPreset). */
-  defaultPreset?: string;
+  defaultPreset?: string
 }
 
 /**
@@ -92,29 +92,29 @@ export function configurePresets({
 }: PresetRegistryConfig): void {
   if (presets !== registeredHostPresets) {
     for (const preset of registeredHostPresets) {
-      const builtIn = builtInThemePresets[preset.id];
+      const builtIn = builtInThemePresets[preset.id]
       if (builtIn) {
-        themePresets[preset.id] = builtIn;
+        themePresets[preset.id] = builtIn
       } else {
-        Reflect.deleteProperty(themePresets, preset.id);
+        Reflect.deleteProperty(themePresets, preset.id)
       }
     }
     for (const preset of presets) {
-      themePresets[preset.id] = preset;
+      themePresets[preset.id] = preset
     }
-    registeredHostPresets = presets;
-    resolvedStylesCache.clear();
+    registeredHostPresets = presets
+    resolvedStylesCache.clear()
   }
 
   configuredDefaultPresetId =
     defaultPreset && hasPreset(defaultPreset)
       ? defaultPreset
-      : FALLBACK_PRESET_ID;
+      : FALLBACK_PRESET_ID
 }
 
 /** Whether a preset id is registered (built-in or host). */
 export function hasPreset(presetId: string): boolean {
-  return Object.hasOwn(themePresets, presetId);
+  return Object.hasOwn(themePresets, presetId)
 }
 
 /**
@@ -124,7 +124,7 @@ export function hasPreset(presetId: string): boolean {
 export function getDefaultPresetId(): string {
   return hasPreset(configuredDefaultPresetId)
     ? configuredDefaultPresetId
-    : FALLBACK_PRESET_ID;
+    : FALLBACK_PRESET_ID
 }
 
 /**
@@ -132,7 +132,7 @@ export function getDefaultPresetId(): string {
  * (`tweakcn.com/r/themes/<id>.json`) has it. Host presets are not there.
  */
 export function isTweakcnPreset(presetId: string): boolean {
-  return Object.hasOwn(tweakcnThemePresets, presetId);
+  return Object.hasOwn(tweakcnThemePresets, presetId)
 }
 
 function resolveModeHeading(
@@ -142,11 +142,11 @@ function resolveModeHeading(
   // A preset without a heading font uses its own serif for headings, not
   // the default heading stack (tweakcn presets have no heading slot).
   const declaresHeading = declared.some(
-    (styles) => styles?.["font-heading"] !== undefined,
-  );
+    (styles) => styles?.["font-heading"] !== undefined
+  )
   return declaresHeading
     ? resolved
-    : { ...resolved, "font-heading": resolved["font-serif"] };
+    : { ...resolved, "font-heading": resolved["font-serif"] }
 }
 
 /**
@@ -159,24 +159,24 @@ function resolveModeHeading(
  * cached per id and shared: treat it as read-only.
  */
 export function resolvePresetStyles(presetId: string): ThemeStyles {
-  const id = hasPreset(presetId) ? presetId : FALLBACK_PRESET_ID;
-  const cached = resolvedStylesCache.get(id);
-  if (cached) return cached;
+  const id = hasPreset(presetId) ? presetId : FALLBACK_PRESET_ID
+  const cached = resolvedStylesCache.get(id)
+  if (cached) return cached
 
-  const presetStyles = themePresets[id]?.styles;
-  const light = presetStyles?.light;
-  const dark = presetStyles?.dark;
+  const presetStyles = themePresets[id]?.styles
+  const light = presetStyles?.light
+  const dark = presetStyles?.dark
 
   const resolved: ThemeStyles = {
     light: resolveModeHeading({ ...defaultLightStyles, ...light }, light),
     dark: resolveModeHeading(
       { ...defaultDarkStyles, ...light, ...dark },
       light,
-      dark,
+      dark
     ),
-  };
-  resolvedStylesCache.set(id, resolved);
-  return resolved;
+  }
+  resolvedStylesCache.set(id, resolved)
+  return resolved
 }
 
 /** The quick-pick presets of the HSL adjustment controls. */
@@ -228,31 +228,31 @@ export const hslPresets = [
     lightnessScale: 0.95,
   },
   { label: "Neon", hueShift: 60, saturationScale: 1.5, lightnessScale: 1.1 },
-] as const;
+] as const
 
 /**
  * Get preset theme styles by ID, fully resolved (see resolvePresetStyles).
  */
 export function getPresetThemeStyles(presetId: string): ThemeStyles {
-  return resolvePresetStyles(presetId);
+  return resolvePresetStyles(presetId)
 }
 
 /** Every registered preset id: "default" first, then by label. */
 export function getPresetIds(): string[] {
   return Object.keys(themePresets).sort((a, b) => {
     if (a === FALLBACK_PRESET_ID) {
-      return -1;
+      return -1
     }
     if (b === FALLBACK_PRESET_ID) {
-      return 1;
+      return 1
     }
-    return getPresetLabel(a).localeCompare(getPresetLabel(b));
-  });
+    return getPresetLabel(a).localeCompare(getPresetLabel(b))
+  })
 }
 
 /**
  * Get preset label by ID
  */
 export function getPresetLabel(presetId: string): string {
-  return themePresets[presetId]?.label ?? presetId;
+  return themePresets[presetId]?.label ?? presetId
 }

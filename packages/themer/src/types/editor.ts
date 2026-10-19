@@ -9,27 +9,27 @@ import type {
   PartialThemeStyleProps,
   ThemeMode,
   ThemeStyles,
-} from "./theme";
+} from "./theme"
 
-import type { ThemerLayout } from "./index";
+import type { ThemerLayout } from "./index"
 
-export type PackageManager = "pnpm" | "npm" | "yarn" | "bun";
+export type PackageManager = "pnpm" | "npm" | "yarn" | "bun"
 
 /**
  * Complete theme editor state
  */
 export interface ThemeEditorState {
   /** Current theme styles for light and dark modes */
-  styles: ThemeStyles;
+  styles: ThemeStyles
   /** Currently active mode */
-  currentMode: ThemeMode;
+  currentMode: ThemeMode
   /**
    * Id of the preset the theme started from. On reset, a stale id (a removed
    * Host Preset) falls back to the Host app's default preset.
    */
-  preset?: string;
+  preset?: string
   /** HSL adjustment values; absent or neutral means no adjustment */
-  hslAdjustments?: HSLAdjustments;
+  hslAdjustments?: HSLAdjustments
 }
 
 /**
@@ -37,9 +37,9 @@ export interface ThemeEditorState {
  */
 export interface HistoryEntry {
   /** The theme as it was BEFORE the change this entry records. */
-  state: ThemeEditorState;
+  state: ThemeEditorState
   /** `Date.now()` when recorded; setThemeState batches against the last one. */
-  timestamp: number;
+  timestamp: number
 }
 
 /**
@@ -49,8 +49,8 @@ export interface HistoryEntry {
  * preset's source.
  */
 export interface PresetBaseline {
-  preset: string;
-  styles: ThemeStyles;
+  preset: string
+  styles: ThemeStyles
 }
 
 /**
@@ -58,39 +58,39 @@ export interface PresetBaseline {
  */
 export interface EditorStoreState {
   /** Current theme state */
-  themeState: ThemeEditorState;
+  themeState: ThemeEditorState
   /**
    * The theme before the first HSL adjustment: the base the HSL controls
    * recompute from and the target of restoreThemeCheckpoint. "Unsaved
    * changes" compares with the resolved preset, not with this. Persisted.
    */
-  themeCheckpoint: ThemeEditorState | null;
+  themeCheckpoint: ThemeEditorState | null
   /**
    * What refreshUntouchedPreset compares the theme with; null on a store
    * saved before it existed. Persisted.
    */
-  presetBaseline: PresetBaseline | null;
+  presetBaseline: PresetBaseline | null
   /** Undo stack, oldest first. Not persisted. */
-  history: HistoryEntry[];
+  history: HistoryEntry[]
   /** Redo stack, next redo first; a recorded edit empties it. Not persisted. */
-  future: HistoryEntry[];
+  future: HistoryEntry[]
   /**
    * True when the state was restored from localStorage at start-up. Not
    * persisted; `adoptDefaultPreset` only acts on a fresh store.
    */
-  restoredFromStorage: boolean;
+  restoredFromStorage: boolean
 }
 
 /**
  * SetThemeState argument - supports both direct state and functional updater
  */
 export type SetThemeStateArg =
-  ThemeEditorState | ((prev: ThemeEditorState) => ThemeEditorState);
+  ThemeEditorState | ((prev: ThemeEditorState) => ThemeEditorState)
 
 /** Styles parsed from imported CSS: either mode may be partial or absent. */
 export interface ImportedThemeStyles {
-  light?: PartialThemeStyleProps;
-  dark?: PartialThemeStyleProps;
+  light?: PartialThemeStyleProps
+  dark?: PartialThemeStyleProps
 }
 
 export interface ImportThemeStylesOptions {
@@ -98,7 +98,7 @@ export interface ImportThemeStylesOptions {
    * Start from the default preset's resolved styles instead of the current
    * ones, so keys the import does not mention are reset.
    */
-  replace?: boolean;
+  replace?: boolean
 }
 
 /**
@@ -110,51 +110,51 @@ export interface EditorStoreActions {
    * Edits within HISTORY_DEBOUNCE_MS share one entry; a mode-only change
    * records nothing.
    */
-  setThemeState: (stateOrUpdater: SetThemeStateArg) => void;
+  setThemeState: (stateOrUpdater: SetThemeStateArg) => void
   /**
    * Apply a registered preset (an unknown id is ignored): one undo entry and
    * a new checkpoint.
    */
-  applyThemePreset: (preset: string) => void;
+  applyThemePreset: (preset: string) => void
   /** Save current state as checkpoint */
-  saveThemeCheckpoint: () => void;
+  saveThemeCheckpoint: () => void
   /** Return to the checkpoint as a new undo entry, keeping the current mode. */
-  restoreThemeCheckpoint: () => void;
+  restoreThemeCheckpoint: () => void
   /**
    * Reset to the current preset's resolved styles (the Host app's default preset
    * when that id is no longer registered). Clears undo and redo and moves the
    * checkpoint.
    */
-  resetToCurrentPreset: () => void;
+  resetToCurrentPreset: () => void
   /** Undo last change; moves the checkpoint to the restored state. */
-  undo: () => void;
+  undo: () => void
   /** Redo last undone change; moves the checkpoint to the restored state. */
-  redo: () => void;
+  redo: () => void
   /** Check if undo is available */
-  canUndo: () => boolean;
+  canUndo: () => boolean
   /** Check if redo is available */
-  canRedo: () => boolean;
+  canRedo: () => boolean
   /** Set current mode (light/dark) */
-  setCurrentMode: (mode: ThemeMode) => void;
+  setCurrentMode: (mode: ThemeMode) => void
   /**
    * Write a style shared by both modes (fonts, radius, spacing, letter
    * spacing, shadow parameters except colour) to light and dark at once.
    * Goes through setThemeState, so it batches into undo history.
    */
-  updateCommonStyle: (key: CommonStyleKey, value: string) => void;
+  updateCommonStyle: (key: CommonStyleKey, value: string) => void
   /**
    * Apply styles parsed from imported CSS: one undo entry, a new checkpoint
    * and reset HSL adjustments. Common keys set only in light also reach dark.
    */
   importThemeStyles: (
     styles: ImportedThemeStyles,
-    options?: ImportThemeStylesOptions,
-  ) => void;
+    options?: ImportThemeStylesOptions
+  ) => void
   /**
    * Start a fresh store (nothing restored from storage, nothing edited) on
    * the Host app's default preset, without an undo entry. No-op otherwise.
    */
-  adoptDefaultPreset: (presetId: string) => void;
+  adoptDefaultPreset: (presetId: string) => void
   /**
    * Make an untouched preset follow its source: when the theme still equals
    * its presetBaseline (same preset, neutral HSL) but the preset now resolves
@@ -164,78 +164,78 @@ export interface EditorStoreActions {
    * store with no baseline gets one when its theme equals its preset. Call
    * after the Host Presets are registered.
    */
-  refreshUntouchedPreset: () => void;
+  refreshUntouchedPreset: () => void
 }
 
 /**
  * Complete editor store type
  */
-export type EditorStore = EditorStoreState & EditorStoreActions;
+export type EditorStore = EditorStoreState & EditorStoreActions
 
 /**
  * Preferences store state
  */
 export interface PreferencesState {
   /** Preferred color format for display */
-  colorFormat: "hex" | "rgb" | "hsl" | "oklch";
+  colorFormat: "hex" | "rgb" | "hsl" | "oklch"
   /** Tailwind version for export */
-  tailwindVersion: "3" | "4";
+  tailwindVersion: "3" | "4"
   /** Package manager for registry commands */
-  packageManager: PackageManager;
+  packageManager: PackageManager
   /** Show contrast warnings */
-  showContrastWarnings: boolean;
+  showContrastWarnings: boolean
   /**
    * Id of the last selected preview tab, built-in or host. An id that no
    * longer exists falls back to the first tab at render.
    */
-  previewTab?: string;
+  previewTab?: string
   /** Sidebar collapsed state, shared by every sidebar Themer layout */
-  sidebarCollapsed: boolean;
+  sidebarCollapsed: boolean
   /**
    * The Themer layout the user switched to; null follows the Host's
    * `layout` prop. A value that names no implemented layout is ignored at
    * render (resolveThemerLayout).
    */
-  layout: ThemerLayout | null;
+  layout: ThemerLayout | null
   /**
    * Whether the editor theme overrides the host application's production
    * theme. Off: nothing is applied to the page, and utils/theme-script.ts
    * skips its pre-hydration apply.
    */
-  themeOverrideEnabled: boolean;
+  themeOverrideEnabled: boolean
   /**
    * Sidebar colours follow their base twins (sidebar -> background, ...) in
    * both modes while on; the sidebar inputs are disabled.
    */
-  sidebarColorSync: boolean;
+  sidebarColorSync: boolean
   /** Last view of the Tailwind colour selector popover. */
-  colorSelectorTab: "list" | "palette";
+  colorSelectorTab: "list" | "palette"
   /** Open state of each editor ControlSection, by section id. */
-  sectionStates: Record<string, boolean>;
+  sectionStates: Record<string, boolean>
 }
 
 /**
  * Preferences store actions
  */
 export interface PreferencesActions {
-  setColorFormat: (format: PreferencesState["colorFormat"]) => void;
-  setTailwindVersion: (version: PreferencesState["tailwindVersion"]) => void;
-  setPackageManager: (packageManager: PackageManager) => void;
-  setShowContrastWarnings: (show: boolean) => void;
-  setPreviewTab: (tab: string) => void;
-  setSidebarCollapsed: (collapsed: boolean) => void;
-  setLayout: (layout: ThemerLayout) => void;
-  setThemeOverrideEnabled: (enabled: boolean) => void;
-  setSidebarColorSync: (enabled: boolean) => void;
-  setColorSelectorTab: (tab: PreferencesState["colorSelectorTab"]) => void;
-  setSectionOpen: (id: string, open: boolean) => void;
-  getAvailableColorFormats: () => readonly PreferencesState["colorFormat"][];
+  setColorFormat: (format: PreferencesState["colorFormat"]) => void
+  setTailwindVersion: (version: PreferencesState["tailwindVersion"]) => void
+  setPackageManager: (packageManager: PackageManager) => void
+  setShowContrastWarnings: (show: boolean) => void
+  setPreviewTab: (tab: string) => void
+  setSidebarCollapsed: (collapsed: boolean) => void
+  setLayout: (layout: ThemerLayout) => void
+  setThemeOverrideEnabled: (enabled: boolean) => void
+  setSidebarColorSync: (enabled: boolean) => void
+  setColorSelectorTab: (tab: PreferencesState["colorSelectorTab"]) => void
+  setSectionOpen: (id: string, open: boolean) => void
+  getAvailableColorFormats: () => readonly PreferencesState["colorFormat"][]
 }
 
 /**
  * Complete preferences store type
  */
-export type PreferencesStore = PreferencesState & PreferencesActions;
+export type PreferencesStore = PreferencesState & PreferencesActions
 
 /**
  * Color focus store: which colour control is highlighted and the colour list
@@ -244,16 +244,16 @@ export type PreferencesStore = PreferencesState & PreferencesActions;
  */
 export interface ColorFocusState {
   /** Currently highlighted color variable name */
-  highlightTarget: string | null;
+  highlightTarget: string | null
   /** Colour list search query; kept across panel switches, reset on close. */
-  colorSearch: string;
+  colorSearch: string
   /**
    * The token a focusColor jump is opening, until its picker is highlighted
    * or the jump ends. Each Themer layout shows the Colors panel while it is
    * set: the sidebar layouts expand their sidebar, the Toolbar opens its
    * Colors popup.
    */
-  focusRequest: string | null;
+  focusRequest: string | null
 }
 
 /**
@@ -261,28 +261,28 @@ export interface ColorFocusState {
  */
 export interface ColorFocusActions {
   /** Set the highlighted color */
-  setHighlightTarget: (target: string | null) => void;
+  setHighlightTarget: (target: string | null) => void
   /** Set the colour list search query */
-  setColorSearch: (query: string) => void;
+  setColorSearch: (query: string) => void
 }
 
 /**
  * Complete color focus store type
  */
-export type ColorFocusStore = ColorFocusState & ColorFocusActions;
+export type ColorFocusStore = ColorFocusState & ColorFocusActions
 
 /**
  * Themer UI state
  */
 export interface ThemerUIState {
   /** Whether the themer is open */
-  isOpen: boolean;
+  isOpen: boolean
   /** Current active panel. */
-  activePanel: "colors" | "typography" | "other";
+  activePanel: "colors" | "typography" | "other"
   /** Inspector mode enabled */
-  inspectorMode: boolean;
+  inspectorMode: boolean
   /** Fullscreen preview layout flag (see hooks/use-fullscreen.ts) */
-  fullscreenPreview: boolean;
+  fullscreenPreview: boolean
 }
 
 /**
@@ -290,20 +290,20 @@ export interface ThemerUIState {
  */
 export interface ThemerUIActions {
   /** Open the themer */
-  open: () => void;
+  open: () => void
   /** Close the themer */
-  close: () => void;
+  close: () => void
   /** Toggle the themer */
-  toggle: () => void;
+  toggle: () => void
   /** Set active panel */
-  setActivePanel: (panel: ThemerUIState["activePanel"]) => void;
+  setActivePanel: (panel: ThemerUIState["activePanel"]) => void
   /** Toggle inspector mode */
-  toggleInspector: () => void;
+  toggleInspector: () => void
   /** Toggle fullscreen preview */
-  toggleFullscreen: () => void;
+  toggleFullscreen: () => void
 }
 
 /**
  * Complete Themer UI store type
  */
-export type ThemerUIStore = ThemerUIState & ThemerUIActions;
+export type ThemerUIStore = ThemerUIState & ThemerUIActions

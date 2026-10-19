@@ -1,4 +1,4 @@
-"use client";
+"use client"
 
 // User menu at the foot of the Dashboard demo's sidebar.
 //
@@ -12,13 +12,13 @@ import {
   LogOutIcon,
   MoreVerticalIcon,
   UserCircleIcon,
-} from "lucide-react";
+} from "lucide-react"
 
 import {
   Avatar,
   AvatarFallback,
   AvatarImage,
-} from "@workspace/ui/components/avatar";
+} from "@workspace/ui/components/avatar"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -27,24 +27,24 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@workspace/ui/components/dropdown-menu";
+} from "@workspace/ui/components/dropdown-menu"
 import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
   useSidebar,
-} from "@workspace/ui/components/sidebar";
+} from "@workspace/ui/components/sidebar"
 
 export function NavUser({
   user,
 }: {
   user: {
-    name: string;
-    email: string;
-    avatar: string;
-  };
+    name: string
+    email: string
+    avatar: string
+  }
 }) {
-  const { isMobile } = useSidebar();
+  const { isMobile } = useSidebar()
 
   return (
     <SidebarMenu>
@@ -62,7 +62,7 @@ export function NavUser({
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-medium">{user.name}</span>
-                  <span className="text-muted-foreground truncate text-xs">
+                  <span className="truncate text-xs text-muted-foreground">
                     {user.email}
                   </span>
                 </div>
@@ -85,7 +85,7 @@ export function NavUser({
                   </Avatar>
                   <div className="grid flex-1 text-left text-sm leading-tight">
                     <span className="truncate font-medium">{user.name}</span>
-                    <span className="text-muted-foreground truncate text-xs">
+                    <span className="truncate text-xs text-muted-foreground">
                       {user.email}
                     </span>
                   </div>
@@ -116,5 +116,5 @@ export function NavUser({
         </DropdownMenu>
       </SidebarMenuItem>
     </SidebarMenu>
-  );
+  )
 }

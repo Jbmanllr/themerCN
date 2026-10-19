@@ -1,4 +1,4 @@
-"use client";
+"use client"
 
 // The editor's own preview tabs. Demos are lazy so their code (recharts in
 // Cards and Dashboard, the data table, the mail fixtures) loads only when a
@@ -13,26 +13,26 @@
 //
 // See: packages/themer/ARCHITECTURE.md (Preview System)
 
-import { lazy } from "react";
-import { useEditorStore } from "../../stores/editor-store";
-import ColorPreview from "./theme-preview/color-preview";
-import { LivePreview } from "./live-preview";
-import type { BuiltinPreviewTab } from "./preview-tab-registry";
+import { lazy } from "react"
+import { useEditorStore } from "../../stores/editor-store"
+import ColorPreview from "./theme-preview/color-preview"
+import { LivePreview } from "./live-preview"
+import type { BuiltinPreviewTab } from "./preview-tab-registry"
 
-const DemoCards = lazy(() => import("./examples/cards"));
-const DemoMail = lazy(() => import("./examples/mail"));
-const DemoDashboard = lazy(() => import("./examples/dashboard"));
-const DemoPricing = lazy(() => import("./examples/pricing/pricing"));
+const DemoCards = lazy(() => import("./examples/cards"))
+const DemoMail = lazy(() => import("./examples/mail"))
+const DemoDashboard = lazy(() => import("./examples/dashboard"))
+const DemoPricing = lazy(() => import("./examples/pricing/pricing"))
 const TypographyDemo = lazy(
-  () => import("./examples/typography/typography-demo"),
-);
+  () => import("./examples/typography/typography-demo")
+)
 
 function DashboardTab() {
   return (
     <div className="size-full min-w-[1400px]">
       <DemoDashboard />
     </div>
-  );
+  )
 }
 
 function MailTab() {
@@ -40,7 +40,7 @@ function MailTab() {
     <div className="size-full min-w-[1300px] rounded-lg border">
       <DemoMail />
     </div>
-  );
+  )
 }
 
 /**
@@ -49,13 +49,13 @@ function MailTab() {
  * theme, and only to the part it shows.
  */
 function ColorPaletteTab() {
-  const styles = useEditorStore((state) => state.themeState.styles);
-  const currentMode = useEditorStore((state) => state.themeState.currentMode);
+  const styles = useEditorStore((state) => state.themeState.styles)
+  const currentMode = useEditorStore((state) => state.themeState.currentMode)
   return (
     <div className="p-4">
       <ColorPreview styles={styles} currentMode={currentMode} />
     </div>
-  );
+  )
 }
 
 /** Built-in tabs; orders leave room for host tabs in between. */
@@ -108,4 +108,4 @@ export const BUILTIN_TABS: readonly BuiltinPreviewTab[] = [
     order: 60,
     inMenu: true,
   },
-];
+]

@@ -1,2 +1,2 @@
-export { LoadingDots } from "./loading-dots";
-export { SparklesIcon } from "./sparkles-icon";
+export { LoadingDots } from "./loading-dots"
+export { SparklesIcon } from "./sparkles-icon"

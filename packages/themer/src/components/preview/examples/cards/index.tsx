@@ -4,20 +4,20 @@
 // ../../theme-preview/examples-preview-container.tsx). Default export: loaded
 // through `lazy()` by ../../builtin-tabs.tsx and ../../preview-cards.tsx.
 
-import { CardsActivityGoal } from "./activity-goal";
-import { CardsCalendar } from "./calendar";
-import { CardsChat } from "./chat";
-import { CardsCookieSettings } from "./cookie-settings";
-import { CardsCreateAccount } from "./create-account";
-import { CardsExerciseMinutes } from "./exercise-minutes";
-import { CardsForms } from "./forms";
-import { CardsPayments } from "./payments";
-import { CardsReportIssue } from "./report-issue";
-import { CardsShare } from "./share";
-import { CardsStats } from "./stats";
-import { CardsTeamMembers } from "./team-members";
-import { DatePickerWithRange } from "./date-picker-with-range";
-import { GithubCard } from "./github-card";
+import { CardsActivityGoal } from "./activity-goal"
+import { CardsCalendar } from "./calendar"
+import { CardsChat } from "./chat"
+import { CardsCookieSettings } from "./cookie-settings"
+import { CardsCreateAccount } from "./create-account"
+import { CardsExerciseMinutes } from "./exercise-minutes"
+import { CardsForms } from "./forms"
+import { CardsPayments } from "./payments"
+import { CardsReportIssue } from "./report-issue"
+import { CardsShare } from "./share"
+import { CardsStats } from "./stats"
+import { CardsTeamMembers } from "./team-members"
+import { DatePickerWithRange } from "./date-picker-with-range"
+import { GithubCard } from "./github-card"
 
 export default function CardsDemo() {
   return (
@@ -74,5 +74,5 @@ export default function CardsDemo() {
         </div>
       </div>
     </div>
-  );
+  )
 }

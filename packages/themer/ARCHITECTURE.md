@@ -262,6 +262,14 @@ the switch inside a View Transition with a circular reveal where supported.
   ([stores/persist-options.ts](src/stores/persist-options.ts)), so an entry
   of another version is not applied, nothing is logged, and zustand rewrites
   the key at the current version.
+- Both stores read and write through `guardedLocalStorage` (same module).
+  Every localStorage access is wrapped in try/catch, so a full or blocked
+  storage never throws from a store action: the edit applies but isn't
+  saved, with one development warning per page. A write is skipped when the
+  persisted slice is shallow-equal to the last one written to that key (an
+  undo-history change, a preference set to its current value). The last
+  write is forgotten when the key is read, so the first write after a
+  hydration (a namespace switch, a stale entry rewritten) always lands.
 - [utils/theme-script.ts](src/utils/theme-script.ts) generates the head
   script string. It sets `.dark` from `<ns>:color-mode` when an uncontrolled
   Themer saved one (otherwise the Host owns the class, and its script may
@@ -294,7 +302,11 @@ Zustand stores. Two persist; two are transient.
 [stores/editor-store.ts](src/stores/editor-store.ts). Persisted under
 `<ns>:editor`, `version: EDITOR_STATE_VERSION` (0). Only `themeState`,
 `themeCheckpoint` and `presetBaseline` persist; `history`, `future` and
-`restoredFromStorage` do not. The package is pre-release: there are no
+`restoredFromStorage` do not. `themeCheckpoint` and `presetBaseline` are
+stored only when they differ from `themeState` (an absent key reads back as
+the Theme, `null` as none), so an entry on its Preset holds one copy of the
+styles, not three. The head script reads `themeState` only. The package is
+pre-release: there are no
 migrations, and a stored state of another version is dropped (the store
 starts fresh, see Persistence and the head script).
 

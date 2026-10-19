@@ -11,7 +11,8 @@
 //   PREFERENCES_VERSION (config/constants.ts) with no migrations
 //   (pre-release): stored preferences of another version are dropped without
 //   an error and the key rewritten (dropOtherVersion), and the head script
-//   ignores them.
+//   ignores them. Writes go through guardedLocalStorage
+//   (stores/persist-options.ts).
 // - utils/theme-script.ts reads `state.themeOverrideEnabled` from this entry
 //   before hydration (absent means on): keep that path and the storage key.
 // - colorFormat is always one of getAvailableColorFormats(): Tailwind 3 has
@@ -24,7 +25,7 @@ import { create } from "zustand"
 import { persist } from "zustand/middleware"
 import type { PreferencesStore } from "../types"
 import { PREFERENCES_VERSION, getStorageKeys } from "../config/constants"
-import { dropOtherVersion } from "./persist-options"
+import { dropOtherVersion, guardedLocalStorage } from "./persist-options"
 
 const colorFormatsByVersion = {
   "3": ["hex", "rgb", "hsl"],
@@ -95,6 +96,9 @@ export const usePreferencesStore = create<PreferencesStore>()(
         ...usePreferencesStore.getInitialState(),
         ...(persistedState as Partial<PreferencesStore> | undefined),
       }),
+      // Guarded writes, skipped when nothing changed (setSectionOpen with
+      // the value already set).
+      storage: guardedLocalStorage(),
     }
   )
 )

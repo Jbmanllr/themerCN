@@ -42,17 +42,7 @@ import { useSidebarSyncAlignment } from "../hooks/use-sidebar-sync-alignment"
 import { RESTORE_STYLE_ID, SHORTCUTS } from "../config/constants"
 import { configurePresets, getDefaultPresetId } from "../config/presets"
 import { configureExtraColors } from "../config/extra-colors"
-
-// Bundlers replace `process.env.NODE_ENV` with a literal; where nothing
-// replaced it and `process` does not exist, the build counts as development.
-function isProduction(): boolean {
-  try {
-    // eslint-disable-next-line turbo/no-undeclared-env-vars -- read by the Host's bundler when it builds the Host app, not by this package's turbo tasks
-    return process.env.NODE_ENV === "production"
-  } catch {
-    return false
-  }
-}
+import { isProduction } from "../utils/is-production"
 
 /**
  * Themer context

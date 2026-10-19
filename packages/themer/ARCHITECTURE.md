@@ -478,10 +478,14 @@ binary-searches a foreground that meets a target.
 Bound by `useKeyboardShortcut`
 ([use-keyboard-shortcut.ts](src/hooks/use-keyboard-shortcut.ts)); `ctrl`
 matches Cmd on macOS, an extra modifier rejects, editable targets are
-ignored. Toggle (`shortcut`, default `SHORTCUTS.toggle` = `ctrl+shift+e`),
-undo and redo in `ThemerProvider`; `Ctrl+I` in `PreviewTabs`; `Esc` in
-`subscribeFullscreen`. `save` and `export` are defined but have no handler.
-`SHORTCUTS` repeats undo/redo for tooltips; keep both in step.
+ignored. Every shortcut is defined once in `SHORTCUTS`; bindings read it
+parsed (`themerShortcuts`) and tooltips format it. Toggle (`shortcut`,
+default `SHORTCUTS.toggle` = `ctrl+shift+e`), undo and redo in
+`ThemerProvider`; `Ctrl+I` in `PreviewTabs`; `Esc` in `subscribeFullscreen`.
+`save` and `export` are defined but have no handler. A shortcut string
+accepts `cmd`/`command` (meta), `control` (ctrl) and `option` (alt); any
+other unknown part makes it invalid, and an invalid `shortcut` warns in
+development and falls back to the default toggle.
 
 ## Testing
 

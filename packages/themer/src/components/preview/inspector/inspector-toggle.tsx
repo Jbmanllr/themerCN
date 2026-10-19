@@ -11,9 +11,10 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@workspace/ui/components/tooltip"
+import { SHORTCUTS } from "../../../config/constants"
 import { formatShortcut } from "../../../hooks/use-keyboard-shortcut"
 
-const INSPECTOR_SHORTCUT = formatShortcut("ctrl+i")
+const INSPECTOR_SHORTCUT = formatShortcut(SHORTCUTS.inspector)
 
 export function InspectorToggle({
   pressed,

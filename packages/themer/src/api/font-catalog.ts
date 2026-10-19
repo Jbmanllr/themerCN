@@ -95,7 +95,7 @@ function catalog(googleFontsApiKey: string): Promise<FontInfo[]> {
       )
       .catch((error: unknown) => {
         console.warn(
-          "Theme editor: Google Fonts catalog unavailable, using the bundled list.",
+          "Themer: Google Fonts catalog unavailable, using the bundled list.",
           error
         )
         return remember(googleFontsApiKey, FALLBACK_FONTS, FAILURE_BACKOFF_MS)

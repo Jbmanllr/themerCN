@@ -169,7 +169,7 @@ export const defaultThemeStyles: ThemeStyles = {
 }
 
 /**
- * Default theme editor state
+ * Default Themer editor state
  */
 export const defaultThemeState: ThemeEditorState = {
   styles: defaultThemeStyles,

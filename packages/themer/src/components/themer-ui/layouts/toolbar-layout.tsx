@@ -91,7 +91,7 @@ export function ToolbarLayout({ onClose, zIndex }: ThemerLayoutProps) {
           <ThemerActionButton action={actions.redo} />
           <PageInspectorToggle size="default" />
           <ModeToggle data-testid="themer-mode-toggle" />
-          <ActionButton label="Close theme editor" onClick={onClose}>
+          <ActionButton label="Close Themer" onClick={onClose}>
             <X />
           </ActionButton>
         </ButtonGroup>
@@ -114,7 +114,7 @@ function LayoutSubmenu() {
     <DropdownMenuSub>
       <DropdownMenuSubTrigger>
         <layout.icon />
-        Layout: {layout.label}
+        Themer layout: {layout.label}
       </DropdownMenuSubTrigger>
       <DropdownMenuSubContent>
         <LayoutRadioGroup />

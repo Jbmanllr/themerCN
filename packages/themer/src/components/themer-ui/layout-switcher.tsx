@@ -45,7 +45,7 @@ export function LayoutSwitcher() {
       />
       <DropdownMenuContent align="end">
         <DropdownMenuGroup>
-          <DropdownMenuLabel>Layout</DropdownMenuLabel>
+          <DropdownMenuLabel>Themer layout</DropdownMenuLabel>
           <LayoutRadioGroup />
         </DropdownMenuGroup>
       </DropdownMenuContent>

@@ -35,7 +35,7 @@ export function ThemerTrigger({ className }: ThemerTriggerProps) {
 
   return (
     <ActionButton
-      label="Open Theme Editor"
+      label="Open Themer"
       shortcut={config.shortcut ?? SHORTCUTS.toggle}
       variant="outline"
       size="icon"

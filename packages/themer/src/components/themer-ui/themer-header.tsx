@@ -27,7 +27,7 @@ export function ThemerHeader({ onClose }: ThemerHeaderProps) {
       </div>
       <div className="flex items-center gap-1">
         <LayoutSwitcher />
-        <ActionButton label="Close theme editor" onClick={onClose}>
+        <ActionButton label="Close Themer" onClick={onClose}>
           <X />
         </ActionButton>
       </div>

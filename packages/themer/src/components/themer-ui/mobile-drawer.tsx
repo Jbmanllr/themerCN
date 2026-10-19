@@ -38,7 +38,7 @@ export function MobileDrawer({ isOpen, onClose }: MobileDrawerProps) {
     <Drawer open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DrawerContent className="max-h-[90dvh]">
         <DrawerHeader className="border-b px-4">
-          <DrawerTitle>Theme Editor</DrawerTitle>
+          <DrawerTitle>Themer</DrawerTitle>
         </DrawerHeader>
         <div className="border-b p-4">
           <PresetSelect value={preset ?? "default"} onChange={applyPreset} />

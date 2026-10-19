@@ -118,6 +118,33 @@ describe("CssImportDialog", () => {
     ).toBeNull()
   })
 
+  it("labels its own replace switch when two dialogs are mounted", async () => {
+    const second = document.createElement("div")
+    document.body.append(second)
+    const secondRoot = createRoot(second)
+    await act(async () => secondRoot.render(<Host />))
+    await vi.waitFor(() =>
+      expect(document.querySelectorAll("[role=dialog]")).toHaveLength(2)
+    )
+
+    const targets = [...document.querySelectorAll("[role=dialog]")].map(
+      (dialog) => {
+        const label = [...dialog.querySelectorAll("label")].find((element) =>
+          element.textContent?.includes("Replace tokens")
+        )
+        const target = document.getElementById(label?.htmlFor ?? "")
+        expect(dialog.contains(target), "label targets its own dialog").toBe(
+          true
+        )
+        return target
+      }
+    )
+    expect(targets[0]).not.toBe(targets[1])
+
+    await act(async () => secondRoot.unmount())
+    second.remove()
+  })
+
   it("imports nothing and says so for a stylesheet without theme variables", async () => {
     await paste("body { color: red; }")
     await act(async () => {

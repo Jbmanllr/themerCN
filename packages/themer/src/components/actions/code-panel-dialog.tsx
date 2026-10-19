@@ -136,12 +136,7 @@ export function CodePanelDialog({ open, onOpenChange }: CodePanelDialogProps) {
   )
   const configCode = React.useMemo(
     () =>
-      generateTailwindConfigCode(
-        themeState,
-        colorFormat,
-        "3",
-        getExtraColorKeys()
-      ),
+      generateTailwindConfigCode(themeState, colorFormat, getExtraColorKeys()),
     [themeState, colorFormat]
   )
   const layoutCode = React.useMemo(

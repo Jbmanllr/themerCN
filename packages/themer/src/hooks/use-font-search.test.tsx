@@ -83,7 +83,9 @@ describe("useFontSearch", () => {
       limit: 15,
       hasMore: false,
     }
-    const fetchSpy = vi.fn(async (_url: string) => Response.json(body))
+    const fetchSpy = vi.fn<(url: string) => Promise<Response>>(async () =>
+      Response.json(body)
+    )
     vi.stubGlobal("fetch", fetchSpy)
 
     const [page] = await search({

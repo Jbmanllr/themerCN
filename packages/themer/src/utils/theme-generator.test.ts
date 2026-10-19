@@ -146,7 +146,7 @@ describe("host extra colours", () => {
     const css = generateThemeCode(theme, "oklch", "3", extras)
     expect(block(css, ":root")).not.toContain("oklch")
     expect(block(css, ":root")).toMatch(/--signal: [\d.]+ [\d.]+% [\d.]+%;/)
-    const config = generateTailwindConfigCode(theme, "hsl", "3", extras)
+    const config = generateTailwindConfigCode(theme, "hsl", extras)
     expect(config).toContain('"signal": "hsl(var(--signal))",')
     expect(config).not.toContain("success")
   })

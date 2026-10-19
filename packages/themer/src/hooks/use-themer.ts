@@ -225,16 +225,15 @@ export function useThemer() {
   )
 
   /**
-   * Generate the Tailwind config for export. Always the v3 JS config:
-   * generateTailwindConfigCode ignores its version argument. Like exportCSS,
-   * it includes the host's extra colours the theme sets.
+   * Generate the Tailwind config for export. Always the v3 JS config, whatever
+   * the Tailwind version preference. Like exportCSS, it includes the host's
+   * extra colours the theme sets.
    */
   const exportTailwindConfig = useCallback(
     (format?: ColorFormat) => {
       return generateTailwindConfigCode(
         themeState,
         format ?? colorFormat,
-        "3",
         getExtraColorKeys()
       )
     },

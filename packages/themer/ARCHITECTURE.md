@@ -225,7 +225,12 @@ components and sets no positioner props of its own.
   `MutationObserver` follows changes made by anyone else. The mode is saved
   under `<ns>:color-mode` so the head script restores the class on reload.
 
-`ThemerProvider` mirrors the mode into the editor store and writes variables,
+The mode controls (the toggle, its menu item, the contrast panel's starting
+mode) read `useColorMode()` directly, so a Host `.dark` flip updates them in
+the commit that themes the page. The store's `themeState.currentMode` (which
+the style controls read) is written by the toggle's handler and by
+`ThemerProvider`'s Theme-apply effect, which applies the Theme from a store
+subscription (an edit never re-renders the provider) and writes variables,
 never the class (`applyThemeToElement(..., { updateClass: false })`).
 `useToggleMode` ([theme-transition.ts](src/utils/theme-transition.ts)) runs
 the switch inside a View Transition with a circular reveal where supported.

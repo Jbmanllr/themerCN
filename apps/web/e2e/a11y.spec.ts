@@ -122,3 +122,24 @@ test("the open Toolbar and its panel popup have no serious or critical axe viola
   ).toBeVisible()
   expect(await blockingViolations(page)).toEqual([])
 })
+
+// WCAG 2.1.4: no single-letter shortcut. Speech input dictating a "d" must not
+// flip the colour mode; the Themer's mode control is the way to switch.
+test("pressing d changes nothing", async ({ page }) => {
+  await page.goto("/")
+  await settlePage(page)
+  const html = page.locator("html")
+  const before = await html.getAttribute("class")
+
+  await page.keyboard.press("d")
+  // Give a listener a frame to commit a change before asserting none came.
+  await page.evaluate(
+    () =>
+      new Promise((resolve) =>
+        requestAnimationFrame(() => requestAnimationFrame(resolve))
+      )
+  )
+
+  expect(await html.getAttribute("class")).toBe(before)
+  expect(await page.evaluate(() => localStorage.getItem("theme"))).toBeNull()
+})

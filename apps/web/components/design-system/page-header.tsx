@@ -31,8 +31,8 @@ export function ModeNote() {
     <p className="max-w-2xl text-sm text-muted-foreground">
       The half that matches the page&apos;s mode shows your Theme edits as you
       make them. The other half keeps Nightjar&apos;s colours until you switch
-      mode (press <kbd className="font-sans font-medium">D</kbd>); radius,
-      fonts, spacing, tracking and shadows follow your edits in both.
+      mode with the Themer&apos;s mode toggle; radius, fonts, spacing, tracking
+      and shadows follow your edits in both.
     </p>
   )
 }

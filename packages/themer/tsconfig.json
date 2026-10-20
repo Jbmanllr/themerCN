@@ -10,13 +10,5 @@
     "declarationMap": false,
     "allowJs": true
   },
-  "include": ["src/**/*.ts", "src/**/*.tsx", "scripts/**/*.test.ts"],
-  "exclude": [
-    "src/components/preview/examples/typography/typography-demo.tsx",
-    "src/components/index.ts",
-    "src/components/editor/index.ts",
-    "src/hooks/index.ts",
-    "src/hooks/use-font-loader.ts",
-    "src/utils/index.ts"
-  ]
+  "include": ["src/**/*.ts", "src/**/*.tsx", "scripts/**/*.test.ts"]
 }

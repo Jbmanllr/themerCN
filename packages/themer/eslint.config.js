@@ -5,21 +5,6 @@ import globals from "globals"
 export default [
   ...config,
   {
-    // Retired by a rename and excluded from tsconfig.json; the owner deletes it.
-    ignores: ["src/components/preview/examples/typography/typography-demo.tsx"],
-  },
-  {
-    // Retired (#64), excluded from tsconfig.json: they import names that are
-    // gone. The owner deletes them.
-    ignores: [
-      "src/components/index.ts",
-      "src/components/editor/index.ts",
-      "src/hooks/index.ts",
-      "src/hooks/use-font-loader.ts",
-      "src/utils/index.ts",
-    ],
-  },
-  {
     // Build, packaging and release scripts run in Node.
     files: ["scripts/**/*.mjs"],
     languageOptions: { globals: globals.node },

@@ -3,6 +3,7 @@ import {
   appendFileSync,
   cpSync,
   existsSync,
+  mkdirSync,
   mkdtempSync,
   readdirSync,
   readFileSync,
@@ -289,6 +290,12 @@ describe("task hashes", () => {
         changes: ["vite-app#e2e"],
         keeps: ["vite-app#build"],
       },
+      // The e2e detector's tests live in web#test.
+      {
+        file: "scripts/e2e-affected.sh",
+        changes: ["web#test"],
+        keeps: ["web#build", "web#e2e"],
+      },
       {
         file: "packages/themer/README.md",
         changes: [],
@@ -445,6 +452,7 @@ describe("the CI gate", () => {
 })
 
 type CiStep = {
+  id?: string
   if?: string
   uses?: string
   run?: string
@@ -455,9 +463,20 @@ type CiStep = {
 // (push to main, schedule, dispatch, merge queue) runs everything.
 describe("CI task selection", () => {
   const ciYml = parse(read("../../.github/workflows/ci.yml")) as {
-    jobs: Record<string, { steps: CiStep[] }>
+    jobs: Record<
+      string,
+      {
+        name?: string
+        if?: string
+        needs?: string | string[]
+        outputs?: Record<string, string>
+        steps: CiStep[]
+      }
+    >
   }
-  const checks = ciYml.jobs.checks!
+  const [e2eId, e2eJob] =
+    Object.entries(ciYml.jobs).find(([, job]) => job.name?.startsWith("E2E")) ??
+    []
 
   // The step conditions this workflow uses: none, or an event-name test.
   const runsOn = (condition: string | undefined, event: string) => {
@@ -466,15 +485,16 @@ describe("CI task selection", () => {
     if (!test) throw new Error(`unsupported step condition: ${condition}`)
     return (test[2] === event) === (test[1] === "==")
   }
-  const scriptFor = (event: string) =>
-    checks.steps
-      .filter((step) => step.run !== undefined && runsOn(step.if, event))
+  const scriptFor = (event: string, job = "checks") =>
+    ciYml.jobs[job]!.steps.filter(
+      (step) => step.run !== undefined && runsOn(step.if, event)
+    )
       .map((step) => step.run)
       .join("\n")
   // The tasks `pnpm turbo` runs for an event, and whether each command
   // selects affected tasks.
-  const turboFor = (event: string) => {
-    const commands = scriptFor(event)
+  const turboFor = (event: string, job = "checks") => {
+    const commands = scriptFor(event, job)
       .split("\n")
       .map((line) => line.trim())
       .filter((line) => line.startsWith("pnpm turbo "))
@@ -520,12 +540,64 @@ describe("CI task selection", () => {
     }
   )
 
+  // The detector job (`changes`) decides whether the e2e job runs at all;
+  // it fails open (see "the e2e detector" below).
+  const detector = Object.entries(ciYml.jobs).flatMap(([job, { steps }]) =>
+    steps
+      .filter((step) => step.run?.startsWith("scripts/e2e-affected.sh"))
+      .map((step) => ({ job, step }))
+  )
+
+  it("one changes job runs the e2e detector and exposes its verdict", () => {
+    expect(detector).toHaveLength(1)
+    const [{ job, step }] = detector as [(typeof detector)[0]]
+    expect(job).toBe("changes")
+    expect(step.if).toBeUndefined()
+    expect(ciYml.jobs.changes?.outputs?.e2e).toBe(
+      `\${{ steps.${step.id}.outputs.e2e }}`
+    )
+  })
+
+  it("the e2e job runs only when the detector says so", () => {
+    expect([e2eJob?.needs ?? []].flat()).toContain("changes")
+    expect(e2eJob?.if).toBe("needs.changes.outputs.e2e == 'true'")
+  })
+
+  it("the detector asks about every task the e2e job runs", () => {
+    const asked = detector[0]?.step.run?.split(/\s+/).slice(1).sort()
+    for (const event of ["pull_request", "push"]) {
+      expect(turboFor(event, e2eId).tasks).toEqual(asked)
+    }
+  })
+
+  it("pull requests run the affected e2e tasks, against the detector's base", () => {
+    const { tasks, selections } = turboFor("pull_request", e2eId)
+    expect(tasks).toEqual(["e2e"])
+    expect(selections).not.toContain(false)
+    expect(scriptFor("pull_request", e2eId)).toMatch(
+      /TURBO_SCM_BASE=\$\(git rev-parse HEAD\^1\)/
+    )
+  })
+
+  it.each(["push", "schedule", "workflow_dispatch", "merge_group"])(
+    "%s runs every e2e task with no selection",
+    (event) => {
+      const { tasks, selections } = turboFor(event, e2eId)
+      expect(tasks).toEqual(["e2e"])
+      expect(selections).not.toContain(true)
+    }
+  )
+
   // A shallow clone makes Turbo treat every package as changed.
   it("every job that selects tasks checks out full history", () => {
     const selecting = Object.entries(ciYml.jobs).filter(([, job]) =>
-      job.steps.some((step) => /--affected|turbo query/.test(step.run ?? ""))
+      job.steps.some((step) =>
+        /--affected|turbo query|e2e-affected/.test(step.run ?? "")
+      )
     )
-    expect(selecting.map(([id]) => id)).toContain("checks")
+    expect(selecting.map(([id]) => id)).toEqual(
+      expect.arrayContaining(["checks", "changes", e2eId])
+    )
     for (const [id, job] of selecting) {
       const checkout = job.steps.find((step) =>
         step.uses?.startsWith("actions/checkout@")
@@ -546,4 +618,121 @@ describe("CI task selection", () => {
     const { futureFlags } = JSON.parse(read("../../turbo.json"))
     expect(futureFlags?.affectedUsingTaskInputs).toBe(true)
   })
+})
+
+// The detector CI's `changes` job runs to decide whether the e2e job runs.
+// It fails open: only a pull request whose base resolves and on which Turbo
+// reports no affected e2e task skips the job. Each case runs the real script
+// in a scratch repository, with a stand-in `pnpm` whose `turbo query
+// affected --exit-code` exits as given.
+describe("the e2e detector", () => {
+  const DETECTOR = join(ROOT, "scripts/e2e-affected.sh")
+  let scratch: string
+  beforeAll(() => {
+    scratch = mkdtempSync(join(tmpdir(), "themercn-e2e-detector-"))
+    mkdirSync(join(scratch, "bin"))
+    writeFileSync(
+      join(scratch, "bin/pnpm"),
+      '#!/bin/sh\necho "$@" > "$PNPM_ARGS"\nexit "$PNPM_EXIT"\n',
+      { mode: 0o755 }
+    )
+  })
+  afterAll(() => rmSync(scratch, { recursive: true, force: true }))
+
+  // A repository whose HEAD has `commits - 1` ancestors, like the merge
+  // commit a pull request checks out (its first parent is the base tip).
+  const repo = (commits: number) => {
+    const dir = mkdtempSync(join(scratch, "repo-"))
+    const git = (...args: string[]) =>
+      execFileSync("git", args, { cwd: dir, encoding: "utf8" }).trim()
+    git("init", "--quiet")
+    for (let i = 0; i < commits; i++) {
+      git(
+        "-c",
+        "user.name=probe",
+        "-c",
+        "user.email=probe@example.invalid",
+        "commit",
+        "--quiet",
+        "--allow-empty",
+        `--message=${i}`
+      )
+    }
+    return { dir, git }
+  }
+
+  // What the detector tells the e2e job, and the command it ran (if any).
+  const detect = ({
+    event,
+    turboExit = 0,
+    commits = 2,
+  }: {
+    event: string
+    turboExit?: number
+    commits?: number
+  }) => {
+    const { dir, git } = repo(commits)
+    const output = join(dir, "github-output")
+    const args = join(dir, "pnpm-args")
+    writeFileSync(output, "")
+    execFileSync(DETECTOR, ["e2e"], {
+      cwd: dir,
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "pipe"],
+      env: {
+        ...process.env,
+        // The stand-in pnpm first; PATH is not an input of any task.
+        // eslint-disable-next-line turbo/no-undeclared-env-vars
+        PATH: `${join(scratch, "bin")}:${process.env.PATH}`,
+        GITHUB_EVENT_NAME: event,
+        GITHUB_OUTPUT: output,
+        PNPM_ARGS: args,
+        PNPM_EXIT: String(turboExit),
+      },
+    })
+    return {
+      outputs: readFileSync(output, "utf8").trim().split("\n"),
+      ran: existsSync(args) ? readFileSync(args, "utf8").trim() : undefined,
+      base: commits > 1 ? git("rev-parse", "HEAD^1") : undefined,
+    }
+  }
+
+  it("skips e2e on a pull request with no affected e2e task", () => {
+    expect(detect({ event: "pull_request", turboExit: 0 }).outputs).toEqual([
+      "e2e=false",
+    ])
+  })
+
+  it("asks Turbo about the given tasks against the merge commit's first parent", () => {
+    const { ran, base } = detect({ event: "pull_request" })
+    expect(ran).toBe(
+      `exec turbo query affected --tasks e2e --base ${base} --exit-code`
+    )
+  })
+
+  it.each([
+    { reason: "an e2e task is affected", turboExit: 1 },
+    { reason: "the query fails", turboExit: 2 },
+  ])("runs e2e on a pull request when $reason", ({ turboExit }) => {
+    expect(detect({ event: "pull_request", turboExit }).outputs).toEqual([
+      "e2e=true",
+    ])
+  })
+
+  it("runs e2e on a pull request whose base is missing", () => {
+    expect(detect({ event: "pull_request", commits: 1 })).toMatchObject({
+      outputs: ["e2e=true"],
+      ran: undefined,
+    })
+  })
+
+  it.each(["push", "schedule", "workflow_dispatch", "merge_group"])(
+    "runs e2e on %s without asking Turbo",
+    (event) => {
+      expect(detect({ event, turboExit: 0 })).toMatchObject({
+        outputs: ["e2e=true"],
+        ran: undefined,
+      })
+    }
+  )
 })

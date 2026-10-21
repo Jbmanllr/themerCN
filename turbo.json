@@ -40,6 +40,15 @@
     "lint": {
       "inputs": ["$TURBO_DEFAULT$", "$TURBO_ROOT$/packages/eslint-config/*.js"]
     },
+    "//#lint:repo": {
+      "inputs": [
+        "tests/**",
+        "vitest.config.ts",
+        "eslint.config.mjs",
+        "packages/eslint-config/*.js"
+      ],
+      "outputs": []
+    },
     "format": {
       "cache": false
     },

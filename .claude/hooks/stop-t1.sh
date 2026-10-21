@@ -88,7 +88,7 @@ if [ "$continuing" = true ] && [ "$tree" = "$(cat "$blocked" 2>/dev/null)" ]; th
   give_up "T1 still fails, with nothing changed since the last block. The work is not done: don't report it done until T1 passes."
 fi
 
-if NO_COLOR=1 TURBO_SCM_BASE=$base pnpm turbo run lint typecheck test \
+if NO_COLOR=1 TURBO_SCM_BASE=$base pnpm turbo run lint lint:repo typecheck test \
   test:repo build check:package --affected --output-logs=errors-only \
   >"$index.out" 2>&1; then
   rm -f "$blocked"
@@ -97,7 +97,7 @@ fi
 
 echo "$tree" >"$blocked"
 {
-  echo "T1 fails (TURBO_SCM_BASE=$base pnpm turbo run lint typecheck test" \
+  echo "T1 fails (TURBO_SCM_BASE=$base pnpm turbo run lint lint:repo typecheck test" \
     "test:repo build check:package --affected). Fix it before you stop;" \
     "never edit or delete a test to get green, and don't report the work" \
     "done while T1 is red. Last lines:"

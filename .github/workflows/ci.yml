@@ -79,14 +79,14 @@ jobs:
           TURBO_SCM_BASE=$(git rev-parse HEAD^1)
           export TURBO_SCM_BASE
           echo "HEAD^1: $TURBO_SCM_BASE, pull_request.base.sha: $BASE_SHA"
-          pnpm turbo lint typecheck test test:repo build --affected
+          pnpm turbo lint lint:repo typecheck test test:repo build --affected
           pnpm turbo check:package --affected
 
       # Every other event runs everything.
       - name: All tasks
         if: github.event_name != 'pull_request'
         run: |
-          pnpm turbo lint typecheck test test:repo build
+          pnpm turbo lint lint:repo typecheck test test:repo build
           pnpm turbo check:package
 
       # Only main writes the cache: no pull request's output reaches it.

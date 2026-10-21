@@ -141,6 +141,33 @@ describe("linting", () => {
     30_000
   )
 
+  // The root's own TypeScript (these tests, the root configs) has no
+  // workspace to lint it, so the root task //#lint:repo does.
+  it("the root's lint:repo lints the repo tests and forbids warnings", async () => {
+    const { scripts } = JSON.parse(read("../package.json"))
+    expect(scripts["lint:repo"]).toMatch(/^eslint .*--max-warnings[ =]0\b/)
+    const eslint = new ESLint({ cwd: ROOT })
+    const files = ["tests/repo-config.test.ts", "vitest.config.ts"].map(
+      (file) => join(ROOT, file)
+    )
+    for (const file of files) {
+      expect(await eslint.isPathIgnored(file), file).toBe(false)
+      const config = await eslint.calculateConfigForFile(file)
+      expect(Object.keys(config?.rules ?? {}), file).toContain(
+        "turbo/no-undeclared-env-vars"
+      )
+    }
+    const results = await eslint.lintFiles(
+      scripts["lint:repo"]
+        .split(/\s+/)
+        .slice(1)
+        .filter((word: string) => !word.startsWith("-") && !/^\d+$/.test(word))
+    )
+    expect(results.map((result) => result.filePath)).toEqual(
+      expect.arrayContaining(files)
+    )
+  }, 60_000)
+
   it("no shared ESLint config downgrades errors to warnings", async () => {
     const configs = await Promise.all([
       import("../packages/eslint-config/base.js").then((m) => m.config),
@@ -246,6 +273,7 @@ describe("task hashes", () => {
   describe("an edit changes the hashes of the tasks that read the file", () => {
     const HASHED_TASKS = [
       "lint",
+      "lint:repo",
       "build",
       "build:css",
       "test",
@@ -357,6 +385,7 @@ describe("task hashes", () => {
         file: "packages/eslint-config/base.js",
         changes: [
           "//#test:repo",
+          "//#lint:repo",
           "web#lint",
           "vite-app#lint",
           "themercn#lint",
@@ -378,8 +407,8 @@ describe("task hashes", () => {
       },
       {
         file: "tests/repo-config.test.ts",
-        changes: ["//#test:repo"],
-        keeps: ["web#test", "web#build"],
+        changes: ["//#test:repo", "//#lint:repo"],
+        keeps: ["web#test", "web#lint", "web#build"],
       },
       // So do the e2e detector's tests.
       {
@@ -741,6 +770,7 @@ describe("CI task selection", () => {
     "build",
     "check:package",
     "lint",
+    "lint:repo",
     "test",
     "test:repo",
     "typecheck",
@@ -1342,7 +1372,7 @@ describe("Playwright tiers", () => {
 describe("the T1 Stop hook", () => {
   const HOOK = join(ROOT, ".claude/hooks/stop-t1.sh")
   const T1 =
-    "turbo run lint typecheck test test:repo build check:package --affected"
+    "turbo run lint lint:repo typecheck test test:repo build check:package --affected"
   const sandbox = scriptSandbox("stop-hook")
 
   // A repository whose `main` holds one commit, checked out on a branch
@@ -1537,6 +1567,24 @@ describe("the T1 Stop hook", () => {
     expect(
       stop(dir, { t1Exit: 1, input: { stop_hook_active: true } })
     ).toMatchObject({ status: 2, ran: [expect.stringContaining(T1)] })
+  })
+
+  // AGENTS.md's T1 and T3 run the same tasks the hook does, and CI's checks.
+  it.each(["T1", "T3"])("AGENTS.md's %s runs the hook's tasks", (tier) => {
+    const line = read("../AGENTS.md")
+      .split("\n")
+      .find((text) => text.startsWith(`- **${tier},`))
+    const command = line?.match(
+      /`(?:TURBO_SCM_BASE=\S+ )?pnpm (turbo run [^`]+)`/
+    )
+    const tasks = (text: string) =>
+      text
+        .split(/\s+/)
+        .slice(2)
+        .filter((word) => !word.startsWith("-"))
+        .sort()
+    expect(command?.[1]).toBeDefined()
+    expect(tasks(command![1]!)).toEqual(tasks(T1))
   })
 
   // Subagents too: agents in parallel worktrees are gated like the session.

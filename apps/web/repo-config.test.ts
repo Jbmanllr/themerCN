@@ -463,6 +463,7 @@ type CiStep = {
 // (push to main, schedule, dispatch, merge queue) runs everything.
 describe("CI task selection", () => {
   const ciYml = parse(read("../../.github/workflows/ci.yml")) as {
+    on: Record<string, unknown>
     jobs: Record<
       string,
       {
@@ -477,6 +478,18 @@ describe("CI task selection", () => {
   const [e2eId, e2eJob] =
     Object.entries(ciYml.jobs).find(([, job]) => job.name?.startsWith("E2E")) ??
     []
+
+  // Pushes to main, a weekly schedule, manual dispatch and the merge queue
+  // are the backstop: each runs the full suite.
+  it("runs on pull requests, pushes to main and the backstop events", () => {
+    expect(ciYml.on).toEqual({
+      pull_request: null,
+      push: { branches: ["main"] },
+      merge_group: null,
+      schedule: [{ cron: "0 4 * * 1" }],
+      workflow_dispatch: null,
+    })
+  })
 
   // The step conditions this workflow uses: none, or an event-name test.
   const runsOn = (condition: string | undefined, event: string) => {

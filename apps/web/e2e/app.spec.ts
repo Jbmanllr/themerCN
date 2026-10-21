@@ -5,18 +5,22 @@ import { hydrated } from "./page"
 // The auth screens and the subscriber app (#26). Everything is mock data, so
 // the assertions name the fixed values from lib/mock.
 
-test("logging in (fake) opens the dashboard", async ({ page }) => {
-  await page.goto("/login")
-  await hydrated(page)
-  await page.getByLabel("Email").fill("ada@example.com")
-  await page.getByLabel("Password").fill("whatever")
-  await page.getByRole("button", { name: "Log in" }).click()
+test(
+  "logging in (fake) opens the dashboard",
+  { tag: "@smoke" },
+  async ({ page }) => {
+    await page.goto("/login")
+    await hydrated(page)
+    await page.getByLabel("Email").fill("ada@example.com")
+    await page.getByLabel("Password").fill("whatever")
+    await page.getByRole("button", { name: "Log in" }).click()
 
-  await expect(page).toHaveURL("/app")
-  await expect(
-    page.getByRole("heading", { level: 2, name: "Good evening, Ada" })
-  ).toBeVisible()
-})
+    await expect(page).toHaveURL("/app")
+    await expect(
+      page.getByRole("heading", { level: 2, name: "Good evening, Ada" })
+    ).toBeVisible()
+  }
+)
 
 test("signing up (fake) opens the dashboard", async ({ page }) => {
   await page.goto("/signup")

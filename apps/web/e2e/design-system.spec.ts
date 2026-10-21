@@ -7,30 +7,32 @@ import { hydrated, resolveColor } from "./page"
 const panel = (page: Page, mode: "Light" | "Dark") =>
   page.getByRole("region", { name: mode, exact: true })
 
-test("the index links to every packages/ui component, and so does the nav", async ({
-  page,
-}) => {
-  await page.goto("/design-system")
-  await expect(
-    page.getByRole("heading", { level: 1, name: "Design system" })
-  ).toBeVisible()
+test(
+  "the index links to every packages/ui component, and so does the nav",
+  { tag: "@smoke" },
+  async ({ page }) => {
+    await page.goto("/design-system")
+    await expect(
+      page.getByRole("heading", { level: 1, name: "Design system" })
+    ).toBeVisible()
 
-  const main = page.getByRole("main")
-  const nav = page.getByRole("navigation", { name: "Design system" })
-  for (const component of uiComponents) {
-    const href = `/design-system/${component.slug}`
-    await expect(
-      main.getByRole("link", { name: component.name, exact: true })
-    ).toHaveAttribute("href", href)
-    await expect(
-      nav.getByRole("link", { name: component.name, exact: true })
-    ).toHaveAttribute("href", href)
+    const main = page.getByRole("main")
+    const nav = page.getByRole("navigation", { name: "Design system" })
+    for (const component of uiComponents) {
+      const href = `/design-system/${component.slug}`
+      await expect(
+        main.getByRole("link", { name: component.name, exact: true })
+      ).toHaveAttribute("href", href)
+      await expect(
+        nav.getByRole("link", { name: component.name, exact: true })
+      ).toHaveAttribute("href", href)
+    }
+    await expect(main.getByRole("link", { name: "Tokens" })).toHaveAttribute(
+      "href",
+      "/design-system/tokens"
+    )
   }
-  await expect(main.getByRole("link", { name: "Tokens" })).toHaveAttribute(
-    "href",
-    "/design-system/tokens"
-  )
-})
+)
 
 test("every component page shows the same specimen in light and dark", async ({
   page,

@@ -12,6 +12,7 @@
     "typecheck": "next typegen && tsc --noEmit",
     "test": "vitest run",
     "e2e": "playwright test",
+    "visual": "playwright test --project=visual",
     "e2e:smoke": "playwright test --project=chromium --grep @smoke --workers=2 && playwright test --project=a11y --workers=2"
   },
   "dependencies": {

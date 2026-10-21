@@ -5,6 +5,9 @@
 #   pnpm e2e:update-snapshots   regenerate apps/web visual baselines
 #   pnpm e2e:visual             compare against the committed baselines
 #
+# On any host. CI, already in that image, runs the same project as the
+# Playground's `visual` Turbo task instead; `pnpm e2e` never runs it.
+#
 # Extra arguments go to `playwright test` (e.g. `-g pricing`).
 #
 # The repo is copied into the container (without node_modules or build

@@ -43,3 +43,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Claude Code: only the project settings and hooks are committed; worktrees,
+# reports, reviews and local settings stay local.
+/.claude/*
+!/.claude/settings.json
+!/.claude/hooks/

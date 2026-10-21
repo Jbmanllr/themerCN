@@ -296,6 +296,17 @@ describe("task hashes", () => {
         changes: ["web#test"],
         keeps: ["web#build", "web#e2e"],
       },
+      // So do the agents' Stop hook's, and its wiring's.
+      {
+        file: ".claude/hooks/stop-t1.sh",
+        changes: ["web#test"],
+        keeps: ["web#build", "web#e2e"],
+      },
+      {
+        file: ".claude/settings.json",
+        changes: ["web#test"],
+        keeps: ["web#build", "web#e2e"],
+      },
       {
         file: "packages/themer/README.md",
         changes: [],
@@ -798,4 +809,237 @@ describe("Playwright tiers", () => {
       outputs: e2e.outputs,
     })
   })
+})
+
+// AGENTS.md "Verification tiers": a Stop hook keeps an agent's turn from
+// ending while T1 (the affected lint, typecheck, test, build and package
+// checks) fails. Each case runs the real hook in a scratch repository, with
+// a stand-in `pnpm` that records what it ran and exits as given.
+describe("the T1 Stop hook", () => {
+  const HOOK = join(ROOT, ".claude/hooks/stop-t1.sh")
+  const T1 = "turbo run lint typecheck test build check:package --affected"
+  let scratch: string
+  beforeAll(() => {
+    scratch = mkdtempSync(join(tmpdir(), "themercn-stop-hook-"))
+    mkdirSync(join(scratch, "bin"))
+    writeFileSync(
+      join(scratch, "bin/pnpm"),
+      [
+        "#!/bin/sh",
+        'echo "TURBO_SCM_BASE=$TURBO_SCM_BASE $*" >> "$PNPM_ARGS"',
+        'echo "T1 output: lint failed"',
+        'exit "$PNPM_EXIT"',
+        "",
+      ].join("\n"),
+      { mode: 0o755 }
+    )
+  })
+  afterAll(() => rmSync(scratch, { recursive: true, force: true }))
+
+  // A repository whose `main` holds one commit, checked out on a branch
+  // from it, like an agent's worktree off its integration branch.
+  const repo = () => {
+    const dir = mkdtempSync(join(scratch, "repo-"))
+    const git = (...args: string[]) =>
+      execFileSync(
+        "git",
+        [
+          "-c",
+          "user.name=probe",
+          "-c",
+          "user.email=probe@example.invalid",
+          ...args,
+        ],
+        { cwd: dir, encoding: "utf8" }
+      ).trim()
+    git("init", "--quiet", "--initial-branch=main")
+    writeFileSync(join(dir, "a.ts"), "export const a = 1\n")
+    git("add", ".")
+    git("commit", "--quiet", "--message=base")
+    git("switch", "--quiet", "--create", "ticket")
+    return { dir, git }
+  }
+
+  // The hook's verdict on stopping in `dir`, given the hook input fields and
+  // the exit code of the stand-in T1.
+  const stop = (
+    dir: string,
+    {
+      t1Exit = 0,
+      input = {},
+      env = {},
+    }: {
+      t1Exit?: number
+      input?: Record<string, unknown>
+      env?: Record<string, string>
+    } = {}
+  ) => {
+    const args = join(scratch, `pnpm-args-${Math.random()}`)
+    const inherited = { ...process.env }
+    delete inherited.TURBO_SCM_BASE
+    let status = 0
+    let stderr = ""
+    try {
+      execFileSync(HOOK, [], {
+        // The hook works in the session's cwd from its input, not its own.
+        cwd: scratch,
+        input: JSON.stringify({
+          hook_event_name: "Stop",
+          cwd: dir,
+          stop_hook_active: false,
+          ...input,
+        }),
+        encoding: "utf8",
+        stdio: ["pipe", "pipe", "pipe"],
+        env: {
+          ...inherited,
+          // The stand-in pnpm first; PATH is not an input of any task.
+          // eslint-disable-next-line turbo/no-undeclared-env-vars
+          PATH: `${join(scratch, "bin")}:${process.env.PATH}`,
+          PNPM_ARGS: args,
+          PNPM_EXIT: String(t1Exit),
+          ...env,
+        },
+      })
+    } catch (error) {
+      const failed = error as { status: number; stderr: string }
+      status = failed.status
+      stderr = failed.stderr
+    }
+    return {
+      status,
+      stderr,
+      ran: existsSync(args)
+        ? readFileSync(args, "utf8").trim().split("\n")
+        : [],
+    }
+  }
+
+  it("allows stopping at once, without running T1, when nothing changed", () => {
+    const { dir } = repo()
+    expect(stop(dir, { t1Exit: 1 })).toMatchObject({ status: 0, ran: [] })
+  })
+
+  it("runs T1 on the affected tasks against the branch's base when files changed", () => {
+    const { dir, git } = repo()
+    writeFileSync(join(dir, "a.ts"), "export const a = 2\n")
+    const { status, ran } = stop(dir)
+    expect(status).toBe(0)
+    expect(ran).toEqual([
+      `TURBO_SCM_BASE=${git("rev-parse", "main")} ${T1} --output-logs=errors-only`,
+    ])
+  })
+
+  it("counts committed and untracked changes against the base", () => {
+    const { dir, git } = repo()
+    writeFileSync(join(dir, "b.ts"), "export const b = 1\n")
+    expect(stop(dir).ran).toHaveLength(1)
+    git("add", ".")
+    git("commit", "--quiet", "--message=ticket")
+    expect(stop(dir).ran).toHaveLength(1)
+  })
+
+  it("compares against TURBO_SCM_BASE when it is set", () => {
+    const { dir, git } = repo()
+    writeFileSync(join(dir, "a.ts"), "export const a = 2\n")
+    git("commit", "--quiet", "--all", "--message=integration")
+    git("branch", "integration")
+    // Changed against main, unchanged against the integration branch.
+    expect(stop(dir, { env: { TURBO_SCM_BASE: "integration" } }).ran).toEqual(
+      []
+    )
+  })
+
+  it("blocks stopping while T1 fails, with T1's output as the reason", () => {
+    const { dir } = repo()
+    writeFileSync(join(dir, "a.ts"), "export const a = 2\n")
+    const { status, stderr } = stop(dir, { t1Exit: 1 })
+    expect(status).toBe(2)
+    expect(stderr).toContain("T1 output: lint failed")
+  })
+
+  it("never runs e2e or the visual baselines", () => {
+    const { dir } = repo()
+    writeFileSync(join(dir, "a.ts"), "export const a = 2\n")
+    const [command] = stop(dir, { t1Exit: 1 }).ran
+    expect(command).not.toMatch(/e2e|visual|smoke|playwright/)
+  })
+
+  // Claude Code sets stop_hook_active on the stop that follows a block.
+  it("does not block again when nothing changed since the block", () => {
+    const { dir } = repo()
+    writeFileSync(join(dir, "a.ts"), "export const a = 2\n")
+    expect(stop(dir, { t1Exit: 1 }).status).toBe(2)
+    expect(
+      stop(dir, { t1Exit: 1, input: { stop_hook_active: true } })
+    ).toMatchObject({ status: 0, ran: [] })
+  })
+
+  it("re-runs T1 and blocks again when files changed since the block", () => {
+    const { dir } = repo()
+    writeFileSync(join(dir, "a.ts"), "export const a = 2\n")
+    expect(stop(dir, { t1Exit: 1 }).status).toBe(2)
+    writeFileSync(join(dir, "a.ts"), "export const a = 3\n")
+    expect(
+      stop(dir, { t1Exit: 1, input: { stop_hook_active: true } })
+    ).toMatchObject({ status: 2, ran: [expect.stringContaining(T1)] })
+  })
+
+  it("Claude Code runs it on Stop, from the project's settings", () => {
+    const settings = JSON.parse(read("../../.claude/settings.json"))
+    const handlers = (settings.hooks?.Stop ?? []).flatMap(
+      (group: { hooks: { type: string; command: string }[] }) => group.hooks
+    )
+    expect(handlers).toEqual([
+      expect.objectContaining({
+        type: "command",
+        command: '"$CLAUDE_PROJECT_DIR"/.claude/hooks/stop-t1.sh',
+      }),
+    ])
+  })
+})
+
+// The project's Claude Code settings and hooks are committed; everything
+// else under .claude/ (worktrees, reports, reviews, local settings) is local
+// state that git and Prettier never see.
+describe("local Claude Code state", () => {
+  const ignoredByGit = (path: string) => {
+    try {
+      execFileSync("git", ["check-ignore", "--quiet", "--no-index", path], {
+        cwd: ROOT,
+      })
+      return true
+    } catch {
+      return false
+    }
+  }
+  const ignoredByPrettier = (path: string) =>
+    JSON.parse(
+      execFileSync(
+        join(ROOT, "node_modules/.bin/prettier"),
+        ["--file-info", path],
+        { cwd: ROOT, encoding: "utf8" }
+      )
+    ).ignored as boolean
+
+  it.each([
+    ".claude/worktrees/agent-1/README.md",
+    ".claude/research/reports/report.md",
+    ".claude/reviews/review.md",
+    ".claude/settings.local.json",
+    ".claude/launch.json",
+  ])("%s stays untracked and unformatted", (path) => {
+    expect({ path, git: ignoredByGit(path) }).toEqual({ path, git: true })
+    expect({ path, prettier: ignoredByPrettier(path) }).toEqual({
+      path,
+      prettier: true,
+    })
+  })
+
+  it.each([".claude/settings.json", ".claude/hooks/stop-t1.sh"])(
+    "%s is committed",
+    (path) => {
+      expect(ignoredByGit(path)).toBe(false)
+    }
+  )
 })

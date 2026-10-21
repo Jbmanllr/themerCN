@@ -47,7 +47,7 @@ The Playground's font picker uses Google's public catalog; set
 | `pnpm build`         | The package (`tsdown`, after its CSS build), the Playground and the Vite app.                                                                           |
 | `pnpm check:package` | After the build: publint, attw, the tarball and entry checks, and the Vite app's off-build check.                                                       |
 | `pnpm e2e`           | Playwright (Chromium) for both apps, after a build, without the visual baselines. First run: `pnpm --filter vite-app exec playwright install chromium`. |
-| `pnpm e2e:smoke`     | One `@smoke` test per journey plus `a11y`, two workers, after a build. Ports: `WEB_E2E_PORT`, `VITE_E2E_PORT`.                                          |
+| `pnpm e2e:smoke`     | One `@smoke` test per journey plus `a11y`, two workers, stopping at the first failure, after a build. Ports: `WEB_E2E_PORT`, `VITE_E2E_PORT`.           |
 | `pnpm e2e:visual`    | The Playground's visual baselines, compared in the pinned Playwright image (Docker). `pnpm e2e:update-snapshots` regenerates them.                      |
 
 CI ([`ci.yml`](.github/workflows/ci.yml)) runs `pnpm format:check`,

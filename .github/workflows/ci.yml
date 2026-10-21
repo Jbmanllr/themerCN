@@ -11,11 +11,14 @@ on:
     - cron: "0 4 * * 1" # Monday 04:00 UTC
   workflow_dispatch:
 
-# A pull request's new push cancels its superseded run. Each push to main
-# gets a group of its own: a run waiting in a shared group is cancelled by the
-# next one queued, so main's commits would lose their verdict.
+# A pull request's new push cancels its superseded run. Every other run gets
+# a group of its own, keyed by event and commit: a run waiting in a shared
+# group is cancelled by the next one queued, so a push to main would lose its
+# verdict to the next push, or to a schedule, dispatch or merge-queue run of
+# the same commit (main's tip, usually), and release.yml would have nothing
+# to release on.
 concurrency:
-  group: ci-${{ github.event_name == 'pull_request' && github.ref || github.sha }}
+  group: ci-${{ github.event_name }}-${{ github.event_name == 'pull_request' && github.ref || github.sha }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:

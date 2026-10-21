@@ -51,7 +51,9 @@ The Playground's font picker uses Google's public catalog; set
 
 CI ([`ci.yml`](.github/workflows/ci.yml)) runs `pnpm format:check`,
 `pnpm turbo lint typecheck test build`, then `pnpm turbo check:package`, and
-the e2e job. Run the same before opening a PR.
+the e2e job. On a pull request, the Turbo tasks run with `--affected`: only
+those whose inputs the change touches, compared with the base branch. `main`
+runs everything. Run the same before opening a PR.
 
 Things to know:
 

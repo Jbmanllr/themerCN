@@ -20,7 +20,12 @@ jobs:
     name: Lint, typecheck, test, build, package checks
     runs-on: ubuntu-latest
     steps:
+      # Full history (blobs on demand): from a shallow clone, Turbo treats
+      # every package as changed.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          filter: blob:none
 
       # pnpm version comes from "packageManager" in package.json.
       - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
@@ -35,11 +40,31 @@ jobs:
 
       - run: pnpm format:check
 
-      - run: pnpm turbo lint typecheck test build
+      # Lint, typecheck, test and build; then publint, attw and the
+      # packed-file check against the built package, plus the Vite app's
+      # off-build check (no `data-themer` in its dist).
+      #
+      # A pull request runs only the tasks its change affects (task-level:
+      # turbo.json's futureFlags.affectedUsingTaskInputs), compared with the
+      # base branch tip its merge commit was built on: the checkout's first
+      # parent. base.sha is logged beside it; it can lag, which over-selects.
+      - name: Affected tasks (pull request)
+        if: github.event_name == 'pull_request'
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          TURBO_SCM_BASE=$(git rev-parse HEAD^1)
+          export TURBO_SCM_BASE
+          echo "HEAD^1: $TURBO_SCM_BASE, pull_request.base.sha: $BASE_SHA"
+          pnpm turbo lint typecheck test build --affected
+          pnpm turbo check:package --affected
 
-      # publint, attw and the packed-file check, against the built package;
-      # plus the Vite app's off-build check (no `data-themer` in its dist).
-      - run: pnpm turbo check:package
+      # Every other event runs everything.
+      - name: All tasks
+        if: github.event_name != 'pull_request'
+        run: |
+          pnpm turbo lint typecheck test build
+          pnpm turbo check:package
 
   # Smoke, visual and a11y Playwright projects. Runs in the Playwright image
   # pinned to the @playwright/test version (apps/web, apps/vite): the visual

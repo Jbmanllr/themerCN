@@ -301,3 +301,107 @@ describe("the CI gate", () => {
     for (const [, job] of others) expect(protect).not.toContain(job.name)
   })
 })
+
+type CiStep = {
+  if?: string
+  uses?: string
+  run?: string
+  with?: Record<string, unknown>
+}
+
+// Pull requests run only the tasks their change affects; every other event
+// (push to main, schedule, dispatch, merge queue) runs everything.
+describe("CI task selection", () => {
+  const ciYml = parse(read("../../.github/workflows/ci.yml")) as {
+    jobs: Record<string, { steps: CiStep[] }>
+  }
+  const checks = ciYml.jobs.checks!
+
+  // The step conditions this workflow uses: none, or an event-name test.
+  const runsOn = (condition: string | undefined, event: string) => {
+    if (condition === undefined) return true
+    const test = condition.match(/^github\.event_name (==|!=) '(\w+)'$/)
+    if (!test) throw new Error(`unsupported step condition: ${condition}`)
+    return (test[2] === event) === (test[1] === "==")
+  }
+  const scriptFor = (event: string) =>
+    checks.steps
+      .filter((step) => step.run !== undefined && runsOn(step.if, event))
+      .map((step) => step.run)
+      .join("\n")
+  // The tasks `pnpm turbo` runs for an event, and whether each command
+  // selects affected tasks.
+  const turboFor = (event: string) => {
+    const commands = scriptFor(event)
+      .split("\n")
+      .map((line) => line.trim())
+      .filter((line) => line.startsWith("pnpm turbo "))
+      .map((line) => line.split(/\s+/).slice(2))
+    return {
+      tasks: commands
+        .flat()
+        .filter((word) => word !== "run" && !word.startsWith("-"))
+        .sort(),
+      selections: commands.map((words) => words.includes("--affected")),
+    }
+  }
+  const TASKS = ["build", "check:package", "lint", "test", "typecheck"]
+
+  it("pull requests run every check on its affected tasks only", () => {
+    const { tasks, selections } = turboFor("pull_request")
+    expect(tasks).toEqual(TASKS)
+    expect(selections).not.toContain(false)
+  })
+
+  // A pull request's checkout is GitHub's merge commit, whose first parent
+  // is the base branch tip it was built on.
+  it("pull requests compare against the merge commit's first parent", () => {
+    expect(scriptFor("pull_request")).toMatch(
+      /TURBO_SCM_BASE=\$\(git rev-parse HEAD\^1\)/
+    )
+  })
+
+  it.each(["push", "schedule", "workflow_dispatch", "merge_group"])(
+    "%s runs every task with no selection",
+    (event) => {
+      const { tasks, selections } = turboFor(event)
+      expect(tasks).toEqual(TASKS)
+      expect(selections).not.toContain(true)
+      expect(scriptFor(event)).not.toContain("TURBO_SCM_BASE")
+    }
+  )
+
+  it.each(["pull_request", "push"])(
+    "%s format-checks the whole repo",
+    (event) => {
+      expect(scriptFor(event).split("\n")).toContain("pnpm format:check")
+    }
+  )
+
+  // A shallow clone makes Turbo treat every package as changed.
+  it("every job that selects tasks checks out full history", () => {
+    const selecting = Object.entries(ciYml.jobs).filter(([, job]) =>
+      job.steps.some((step) => /--affected|turbo query/.test(step.run ?? ""))
+    )
+    expect(selecting.map(([id]) => id)).toContain("checks")
+    for (const [id, job] of selecting) {
+      const checkout = job.steps.find((step) =>
+        step.uses?.startsWith("actions/checkout@")
+      )
+      expect({ id, with: checkout?.with }).toEqual({
+        id,
+        with: expect.objectContaining({
+          "fetch-depth": 0,
+          filter: "blob:none",
+        }),
+      })
+    }
+  })
+
+  // Package-level selection ignores root files: a ci.yml-only change would
+  // select no task, so the tests guarding ci.yml would not run.
+  it("selection is task-level, on each task's inputs", () => {
+    const { futureFlags } = JSON.parse(read("../../turbo.json"))
+    expect(futureFlags?.affectedUsingTaskInputs).toBe(true)
+  })
+})

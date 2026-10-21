@@ -15,7 +15,7 @@ import { join } from "node:path"
 import { fileURLToPath } from "node:url"
 
 import { ESLint } from "eslint"
-import { afterAll, beforeAll, describe, expect, it } from "vitest"
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest"
 import { parse } from "yaml"
 
 // Repo-wide config assertions: the gates are only worth having if the config
@@ -457,6 +457,7 @@ type CiStep = {
   uses?: string
   run?: string
   with?: Record<string, unknown>
+  "continue-on-error"?: boolean
 }
 
 // Pull requests run only the tasks their change affects; every other event
@@ -491,33 +492,53 @@ describe("CI task selection", () => {
     })
   })
 
-  // The step conditions this workflow uses: none, or an event-name test.
+  // The step conditions this workflow uses: none, or event-name tests
+  // joined by `||`.
   const runsOn = (condition: string | undefined, event: string) => {
     if (condition === undefined) return true
-    const test = condition.match(/^github\.event_name (==|!=) '(\w+)'$/)
-    if (!test) throw new Error(`unsupported step condition: ${condition}`)
-    return (test[2] === event) === (test[1] === "==")
+    return condition.split(" || ").some((clause) => {
+      const test = clause.match(/^github\.event_name (==|!=) '(\w+)'$/)
+      if (!test) throw new Error(`unsupported step condition: ${condition}`)
+      return (test[2] === event) === (test[1] === "==")
+    })
   }
-  const scriptFor = (event: string, job = "checks") =>
+  const stepsFor = (event: string, job = "checks") =>
     ciYml.jobs[job]!.steps.filter(
       (step) => step.run !== undefined && runsOn(step.if, event)
     )
+  const scriptFor = (event: string, job = "checks") =>
+    stepsFor(event, job)
       .map((step) => step.run)
       .join("\n")
-  // The tasks `pnpm turbo` runs for an event, and whether each command
-  // selects affected tasks.
-  const turboFor = (event: string, job = "checks") => {
-    const commands = scriptFor(event, job)
+  // Each `pnpm turbo` command a step runs: its tasks, whether it selects
+  // affected tasks, the arguments it passes to the tasks (after `--`), and
+  // whether its failure fails the job.
+  const commandsOf = (step: CiStep) =>
+    (step.run ?? "")
       .split("\n")
       .map((line) => line.trim())
       .filter((line) => line.startsWith("pnpm turbo "))
-      .map((line) => line.split(/\s+/).slice(2))
+      .map((line) => {
+        const words = line.split(/\s+/).slice(2)
+        const end = words.includes("--") ? words.indexOf("--") : words.length
+        return {
+          tasks: words
+            .slice(0, end)
+            .filter((word) => word !== "run" && !word.startsWith("-")),
+          affected: words.slice(0, end).includes("--affected"),
+          args: words.slice(end + 1).join(" "),
+          gating: step["continue-on-error"] !== true,
+        }
+      })
+  const commandsFor = (event: string, job = "checks") =>
+    stepsFor(event, job).flatMap(commandsOf)
+  // The tasks `pnpm turbo` runs for an event, and whether each command
+  // selects affected tasks.
+  const turboFor = (event: string, job = "checks") => {
+    const commands = commandsFor(event, job)
     return {
-      tasks: commands
-        .flat()
-        .filter((word) => word !== "run" && !word.startsWith("-"))
-        .sort(),
-      selections: commands.map((words) => words.includes("--affected")),
+      tasks: [...new Set(commands.flatMap((command) => command.tasks))].sort(),
+      selections: commands.map((command) => command.affected),
     }
   }
   const TASKS = ["build", "check:package", "lint", "test", "typecheck"]
@@ -600,6 +621,88 @@ describe("CI task selection", () => {
       expect(tasks).toEqual(["e2e", "visual"])
       expect(selections).not.toContain(true)
     }
+  )
+
+  // Flaky tests are quarantined with `tag: "@quarantine"`: they stop gating
+  // and run repeatedly on the schedule (and its manual dispatch) instead.
+  const EVENTS = [
+    "pull_request",
+    "push",
+    "merge_group",
+    "schedule",
+    "workflow_dispatch",
+  ]
+  const QUARANTINED = /(^| )--grep[= ]@quarantine( |$)/
+
+  it.each(EVENTS)(
+    "%s gates on every e2e task without quarantined tests",
+    (event) => {
+      const gating = commandsFor(event, e2eId).filter((c) => c.gating)
+      expect([...new Set(gating.flatMap((c) => c.tasks))].sort()).toEqual([
+        "e2e",
+        "visual",
+      ])
+      for (const { args } of gating) {
+        expect(args).toMatch(/(^| )--grep-invert[= ]@quarantine( |$)/)
+      }
+    }
+  )
+
+  it.each(["schedule", "workflow_dispatch"])(
+    "%s repeats the quarantined tests of every e2e task, without gating",
+    (event) => {
+      const quarantined = commandsFor(event, e2eId).filter((c) =>
+        QUARANTINED.test(c.args)
+      )
+      expect(quarantined.flatMap((c) => c.tasks).sort()).toEqual([
+        "e2e",
+        "visual",
+      ])
+      for (const { args, gating, affected } of quarantined) {
+        expect({ gating, affected }).toEqual({ gating: false, affected: false })
+        const repeats = Number(args.match(/--repeat-each[= ](\d+)/)?.[1])
+        expect(repeats).toBeGreaterThan(1)
+      }
+    }
+  )
+
+  it.each(["pull_request", "push", "merge_group"])(
+    "%s runs no non-gating command",
+    (event) => {
+      expect(commandsFor(event, e2eId).filter((c) => !c.gating)).toEqual([])
+    }
+  )
+
+  // Its report is the only record of a quarantined test's failures.
+  it("a failed quarantine run uploads its report", () => {
+    const quarantine = e2eJob?.steps.find((step) =>
+      commandsOf(step).some((c) => QUARANTINED.test(c.args))
+    )
+    const upload = e2eJob?.steps.find((step) =>
+      step.uses?.startsWith("actions/upload-artifact@")
+    )
+    expect(quarantine?.id).toBeDefined()
+    expect(upload?.if).toContain(`steps.${quarantine?.id}.outcome == 'failure'`)
+  })
+
+  // Playwright accepts the arguments, and a run with no quarantined test
+  // (the usual case) passes.
+  it.each(["web", "vite"])(
+    "%s's Playwright accepts the quarantine run's arguments",
+    (app) => {
+      const { args } = commandsFor("schedule", e2eId).find((c) =>
+        QUARANTINED.test(c.args)
+      )!
+      const cwd = fileURLToPath(new URL(`../${app}/`, import.meta.url))
+      expect(() =>
+        execFileSync(
+          join(cwd, "node_modules/.bin/playwright"),
+          ["test", "--list", ...args.split(" ")],
+          { cwd, stdio: "pipe" }
+        )
+      ).not.toThrow()
+    },
+    30_000
   )
 
   // A shallow clone makes Turbo treat every package as changed.
@@ -767,6 +870,32 @@ describe("Playwright tiers", () => {
         ).matchAll(/^\s+\[([\w-]+)\] › /gm),
       ].map((match) => match[1])
     )
+
+  // A retry-pass fails a CI run, and every attempt keeps its trace.
+  describe.each([
+    ["web", () => import("./playwright.config")],
+    ["vite", () => import("../vite/playwright.config")],
+  ])("%s's Playwright config", (_app, importConfig) => {
+    // The config as Playwright loads it in a run with this CI value.
+    const load = async (ci: string | undefined) => {
+      vi.stubEnv("CI", ci)
+      vi.resetModules()
+      try {
+        return (await importConfig()).default
+      } finally {
+        vi.unstubAllEnvs()
+      }
+    }
+
+    it("fails a CI run on a flaky test, and only a CI run", async () => {
+      expect((await load("1")).failOnFlakyTests).toBe(true)
+      expect((await load(undefined)).failOnFlakyTests).toBe(false)
+    })
+
+    it("keeps the trace of every failed attempt and every retry", async () => {
+      expect((await load("1")).use?.trace).toBe("retain-on-failure-and-retries")
+    })
+  })
 
   it("a plain run lists no visual test", () => {
     const projects = listedProjects()

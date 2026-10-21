@@ -13,6 +13,7 @@
         "$TURBO_ROOT$/package.json",
         "$TURBO_ROOT$/pnpm-workspace.yaml",
         "$TURBO_ROOT$/README.md",
+        "$TURBO_ROOT$/scripts/e2e-affected.sh",
         "$TURBO_ROOT$/turbo.json",
         "$TURBO_ROOT$/apps/*/package.json",
         "$TURBO_ROOT$/apps/*/turbo.json",

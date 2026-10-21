@@ -93,18 +93,51 @@ jobs:
           path: .turbo/cache
           key: turbo-checks-${{ github.sha }}
 
+  # Decides whether the e2e job runs, from Turbo's graph: a pull request
+  # skips it only when `turbo query affected` reports none of the tasks the
+  # e2e job runs as affected (scripts/e2e-affected.sh). It fails open: a
+  # query error, a missing base and every other event run e2e.
+  changes:
+    name: Detect affected e2e tasks
+    runs-on: ubuntu-latest
+    outputs:
+      e2e: ${{ steps.detect.outputs.e2e }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          filter: blob:none
+
+      - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      # Names the tasks the e2e job runs below.
+      - id: detect
+        run: scripts/e2e-affected.sh e2e
+
   # Smoke, visual and a11y Playwright projects. Runs in the Playwright image
   # pinned to the @playwright/test version (apps/web, apps/vite): the visual
   # baselines are rendered there (`pnpm e2e:update-snapshots`), so CI must
   # render the same way. The image ships the browsers.
   e2e:
     name: E2E (Playwright, Chromium)
+    needs: changes
+    if: needs.changes.outputs.e2e == 'true'
     runs-on: ubuntu-latest
     container:
       image: mcr.microsoft.com/playwright:v1.64.0-noble
       options: --ipc=host --init
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          filter: blob:none
 
       - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
 
@@ -121,7 +154,18 @@ jobs:
           key: turbo-e2e-${{ github.sha }}
           restore-keys: turbo-e2e-
 
-      - run: pnpm turbo e2e
+      # A pull request runs the affected e2e tasks, against the same base
+      # as the checks job and the detector.
+      - name: Affected e2e (pull request)
+        if: github.event_name == 'pull_request'
+        run: |
+          TURBO_SCM_BASE=$(git rev-parse HEAD^1)
+          export TURBO_SCM_BASE
+          pnpm turbo e2e --affected
+
+      - name: All e2e
+        if: github.event_name != 'pull_request'
+        run: pnpm turbo e2e
 
       - if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
@@ -140,11 +184,12 @@ jobs:
   # succeeded, so jobs can be added, renamed or made conditional without
   # touching branch protection. `always()` makes it report even when a needed
   # job failed or was cancelled (a skipped required check would pass). Only
-  # the e2e job may be skipped.
+  # the e2e job may be skipped, as the detector decides; a failed detector
+  # skips it too, and fails the gate.
   ci-gate:
     name: ci-gate
     if: always()
-    needs: [checks, e2e]
+    needs: [checks, changes, e2e]
     runs-on: ubuntu-latest
     permissions: {}
     steps:

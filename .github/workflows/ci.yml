@@ -21,6 +21,13 @@ concurrency:
 permissions:
   contents: read
 
+# Turbo's local cache (.turbo/cache) is restored in each job and saved only
+# by pushes to main, so main's reruns and later runs replay unchanged tasks.
+# Turbo caches only tasks that succeeded. Each save carries forward what it
+# restored; Turbo evicts the oldest entries past this size at each run.
+env:
+  TURBO_CACHE_MAX_SIZE: 1GB
+
 jobs:
   checks:
     name: Lint, typecheck, test, build, package checks
@@ -45,6 +52,13 @@ jobs:
       - run: pnpm install --frozen-lockfile
 
       - run: pnpm format:check
+
+      # No entry has this run's key yet; the prefix restores main's latest.
+      - uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: .turbo/cache
+          key: turbo-checks-${{ github.sha }}
+          restore-keys: turbo-checks-
 
       # Lint, typecheck, test and build; then publint, attw and the
       # packed-file check against the built package, plus the Vite app's
@@ -71,6 +85,13 @@ jobs:
         run: |
           pnpm turbo lint typecheck test build
           pnpm turbo check:package
+
+      # Only main writes the cache: no pull request's output reaches it.
+      - if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: .turbo/cache
+          key: turbo-checks-${{ github.sha }}
 
   # Decides whether the e2e job runs, from Turbo's graph: a pull request
   # skips it only when `turbo query affected` reports none of the tasks the
@@ -127,6 +148,12 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
+      - uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: .turbo/cache
+          key: turbo-e2e-${{ github.sha }}
+          restore-keys: turbo-e2e-
+
       # A pull request runs the affected e2e tasks, against the same base
       # as the checks job and the detector.
       - name: Affected e2e (pull request)
@@ -139,6 +166,12 @@ jobs:
       - name: All e2e
         if: github.event_name != 'pull_request'
         run: pnpm turbo e2e
+
+      - if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: .turbo/cache
+          key: turbo-e2e-${{ github.sha }}
 
       - if: failure()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2

@@ -229,6 +229,126 @@ describe("ci.yml", () => {
   )
 })
 
+// CI reuses Turbo's local cache across runs. Only a push to main writes it,
+// so a pull request's (or a fork's) task outputs never reach main's runs or
+// the release.
+describe("CI's Turbo cache", () => {
+  type CiStep = Step & { if?: string }
+  const ciJobs = Object.entries(
+    (ci as unknown as { jobs: Record<string, { steps: CiStep[] }> }).jobs
+  )
+  const action = (step: CiStep) => step.uses?.split("@")[0]
+  const turboJobs = ciJobs.filter(([, job]) =>
+    job.steps.some((step) => /\bturbo\b/.test(step.run ?? ""))
+  )
+  const cacheSteps = (job: { steps: CiStep[] }, name: string) =>
+    job.steps.filter((step) => action(step) === `actions/cache/${name}`)
+
+  it("is restored before every job's first Turbo run", () => {
+    expect(turboJobs.map(([id]) => id)).toEqual(
+      expect.arrayContaining(["checks", "e2e"])
+    )
+    for (const [id, job] of turboJobs) {
+      const [restore] = cacheSteps(job, "restore")
+      const firstTurbo = job.steps.findIndex((step) =>
+        /\bturbo\b/.test(step.run ?? "")
+      )
+      expect({ id, restored: restore?.if }).toEqual({ id, restored: undefined })
+      expect(job.steps.indexOf(restore!), id).toBeLessThan(firstTurbo)
+      expect(restore?.with?.path, id).toBe(".turbo/cache")
+      // The exact key never exists yet; the prefix picks main's latest save.
+      const key = String(restore?.with?.key)
+      const prefix = String(restore?.with?.["restore-keys"]).trim()
+      expect(key, id).toMatch(/\$\{\{ github\.sha \}\}$/)
+      expect(key.startsWith(prefix), id).toBe(true)
+      expect(prefix.length, id).toBeGreaterThan(0)
+    }
+  })
+
+  it("each job saves under its own restore key, after its last Turbo run", () => {
+    for (const [id, job] of turboJobs) {
+      const [restore] = cacheSteps(job, "restore")
+      const saves = cacheSteps(job, "save")
+      expect(saves, id).toHaveLength(1)
+      const save = saves[0]!
+      expect(save.with?.path, id).toBe(restore?.with?.path)
+      expect(save.with?.key, id).toBe(restore?.with?.key)
+      const lastTurbo = Math.max(
+        ...job.steps.map((step, at) =>
+          /\bturbo\b/.test(step.run ?? "") ? at : -1
+        )
+      )
+      expect(job.steps.indexOf(save), id).toBeGreaterThan(lastTurbo)
+    }
+    // Two jobs saving one key: the second save would be refused.
+    const keys = turboJobs.map(
+      ([, job]) => cacheSteps(job, "save")[0]?.with?.key
+    )
+    const resolved = keys.map((key) => evaluate(String(key), { sha: "a1" }))
+    expect(new Set(resolved).size).toBe(keys.length)
+  })
+
+  const saveRuns = (github: Record<string, string>) =>
+    turboJobs.map(([, job]) => {
+      const condition = cacheSteps(job, "save")[0]?.if
+      return condition === undefined
+        ? true
+        : evaluate(`\${{ ${condition} }}`, github)
+    })
+
+  it("is saved by a push to main", () => {
+    expect(saveRuns({ event_name: "push", ref: "refs/heads/main" })).toEqual(
+      turboJobs.map(() => true)
+    )
+  })
+
+  it.each([
+    { event_name: "pull_request", ref: "refs/pull/7/merge" },
+    { event_name: "pull_request", ref: "refs/heads/main" },
+    { event_name: "push", ref: "refs/heads/feature" },
+    { event_name: "merge_group", ref: "refs/heads/gh-readonly-queue/main/x" },
+    { event_name: "schedule", ref: "refs/heads/main" },
+    { event_name: "workflow_dispatch", ref: "refs/heads/main" },
+  ])("is never saved by $event_name on $ref", (github) => {
+    expect(saveRuns(github)).toEqual(turboJobs.map(() => false))
+  })
+
+  // Each save carries forward everything it restored, so without a bound
+  // the cache would grow with every push to main.
+  it("bounds the size of the cache each run carries forward", () => {
+    const { env } = ci as unknown as { env?: Record<string, string> }
+    expect(env?.TURBO_CACHE_MAX_SIZE).toMatch(/^\d+(\.\d+)?(MB|GB)$/)
+  })
+
+  it("is the only actions/cache use in CI", () => {
+    const uses = ciJobs.flatMap(([, job]) =>
+      job.steps.map(action).filter((name) => name?.startsWith("actions/cache"))
+    )
+    expect(uses.sort()).toEqual(
+      turboJobs
+        .flatMap(() => ["actions/cache/restore", "actions/cache/save"])
+        .sort()
+    )
+  })
+
+  // The release builds and publishes from a clean slate: no restored task
+  // output or dependency store can reach the publish job.
+  it("never reaches release.yml", () => {
+    expect(
+      steps.filter((step) => step.uses?.startsWith("actions/cache"))
+    ).toEqual([])
+    const setupNode = steps.filter((step) =>
+      step.uses?.startsWith("actions/setup-node@")
+    )
+    expect(setupNode.length).toBeGreaterThan(0)
+    for (const step of setupNode) expect(step.with?.cache).toBeUndefined()
+    expect(readText("release.yml")).toMatch(
+      /# No dependency cache in this workflow/
+    )
+    expect(readText("release.yml")).not.toMatch(/TURBO_CACHE|\.turbo/)
+  })
+})
+
 describe("release.yml for CI's backstop runs", () => {
   const selectMode = release.jobs["select-mode"]!
   // A successful CI run of main's current commit, from this repository.

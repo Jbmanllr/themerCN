@@ -13,7 +13,7 @@
     "test": "vitest run",
     "e2e": "playwright test",
     "visual": "playwright test --project=visual",
-    "e2e:smoke": "playwright test --project=chromium --grep @smoke --workers=2 && playwright test --project=a11y --workers=2"
+    "e2e:smoke": "playwright test --project=chromium --grep @smoke --workers=2 --max-failures=1 && playwright test --project=a11y --workers=2 --max-failures=1"
   },
   "dependencies": {
     "@hookform/resolvers": "5.9.2",

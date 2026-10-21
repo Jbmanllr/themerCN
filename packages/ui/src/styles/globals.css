@@ -3,17 +3,22 @@
 @import "shadcn/tailwind.css";
 
 @custom-variant dark (&:is(.dark *));
-@source "../../../apps/**/*.{ts,tsx}";
-@source "../../../components/**/*.{ts,tsx}";
 @source "../**/*.{ts,tsx}";
-/* Each app's automatic source detection scans its whole directory. Skip what
-   turbo.json's build inputs exclude, so a class in a test or an e2e spec can't
-   change CSS that the build's hash doesn't cover. */
+/* Each app's automatic source detection scans its whole directory, and the
+   `@source` above adds this package's sources. Skip every file the build
+   tasks' inputs exclude in turbo.json (tests, e2e specs, snapshots, docs,
+   test configs), so a class in one can't change CSS that the build's hash
+   doesn't cover. tests/repo-config.test.ts keeps the two lists in step. */
 @source not "../../../../apps/**/*.test.{ts,tsx}";
 @source not "../../../../apps/*/e2e";
+@source not "../../../../apps/**/__snapshots__";
+@source not "../../../../apps/**/*-snapshots";
+@source not "../../../../apps/*/*.md";
 @source not "../../../../apps/*/vitest.config.*";
 @source not "../../../../apps/*/playwright.config.*";
 @source not "../**/*.test.{ts,tsx}";
+@source not "../**/__snapshots__";
+@source not "../**/*-snapshots";
 
 @theme inline {
   --font-heading: var(--font-sans);

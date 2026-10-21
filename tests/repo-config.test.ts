@@ -1,4 +1,4 @@
-import { execFileSync } from "node:child_process"
+import { execFileSync, spawnSync } from "node:child_process"
 import {
   appendFileSync,
   cpSync,
@@ -11,17 +11,42 @@ import {
   writeFileSync,
 } from "node:fs"
 import { tmpdir } from "node:os"
-import { join } from "node:path"
+import { dirname, join } from "node:path"
 import { fileURLToPath } from "node:url"
 
 import { ESLint } from "eslint"
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest"
 import { parse } from "yaml"
 
+import { runsIf, type Status } from "./github-expression"
+
 // Repo-wide config assertions: the gates are only worth having if the config
 // that wires them stays wired.
 const read = (path: string) =>
   readFileSync(new URL(path, import.meta.url), "utf8")
+
+type CiStep = {
+  id?: string
+  if?: string
+  uses?: string
+  run?: string
+  with?: Record<string, unknown>
+  "continue-on-error"?: boolean
+}
+type CiJob = {
+  name?: string
+  if?: string
+  needs?: string | string[]
+  outputs?: Record<string, string>
+  container?: unknown
+  permissions?: Record<string, string>
+  steps: CiStep[]
+}
+const ciYml = parse(read("../.github/workflows/ci.yml")) as {
+  name: string
+  on: Record<string, unknown>
+  jobs: Record<string, CiJob>
+}
 
 describe("formatting", () => {
   it("CI runs a format check", () => {
@@ -115,6 +140,33 @@ describe("linting", () => {
     },
     30_000
   )
+
+  // The root's own TypeScript (these tests, the root configs) has no
+  // workspace to lint it, so the root task //#lint:repo does.
+  it("the root's lint:repo lints the repo tests and forbids warnings", async () => {
+    const { scripts } = JSON.parse(read("../package.json"))
+    expect(scripts["lint:repo"]).toMatch(/^eslint .*--max-warnings[ =]0\b/)
+    const eslint = new ESLint({ cwd: ROOT })
+    const files = ["tests/repo-config.test.ts", "vitest.config.ts"].map(
+      (file) => join(ROOT, file)
+    )
+    for (const file of files) {
+      expect(await eslint.isPathIgnored(file), file).toBe(false)
+      const config = await eslint.calculateConfigForFile(file)
+      expect(Object.keys(config?.rules ?? {}), file).toContain(
+        "turbo/no-undeclared-env-vars"
+      )
+    }
+    const results = await eslint.lintFiles(
+      scripts["lint:repo"]
+        .split(/\s+/)
+        .slice(1)
+        .filter((word: string) => !word.startsWith("-") && !/^\d+$/.test(word))
+    )
+    expect(results.map((result) => result.filePath)).toEqual(
+      expect.arrayContaining(files)
+    )
+  }, 60_000)
 
   it("no shared ESLint config downgrades errors to warnings", async () => {
     const configs = await Promise.all([
@@ -219,7 +271,16 @@ describe("task hashes", () => {
   // Edits a scratch copy of the working tree (its tracked and unignored
   // files) one file at a time; the repo itself is never touched.
   describe("an edit changes the hashes of the tasks that read the file", () => {
-    const TASKS = ["build", "build:css", "test", "test:repo", "e2e", "visual"]
+    const HASHED_TASKS = [
+      "lint",
+      "lint:repo",
+      "build",
+      "build:css",
+      "test",
+      "test:repo",
+      "e2e",
+      "visual",
+    ]
     let copy: string
     let base: Record<string, string>
     beforeAll(() => {
@@ -232,7 +293,7 @@ describe("task hashes", () => {
         .split("\0")
         .filter((file) => file && existsSync(join(ROOT, file)))
         .forEach((file) => cpSync(join(ROOT, file), join(copy, file)))
-      base = hashes(dryRunWith({ cwd: copy }, ...TASKS))
+      base = hashes(dryRunWith({ cwd: copy }, ...HASHED_TASKS))
     }, 60_000)
     afterAll(() => rmSync(copy, { recursive: true, force: true }))
 
@@ -240,13 +301,15 @@ describe("task hashes", () => {
     const changedBy = (file: string) => {
       const path = join(copy, file)
       const original = existsSync(path) ? readFileSync(path) : undefined
+      // The first directory the probe creates, if any, to remove after.
+      const created = mkdirSync(dirname(path), { recursive: true })
       appendFileSync(path, "\n// hash probe\n")
       try {
-        const after = hashes(dryRunWith({ cwd: copy }, ...TASKS))
+        const after = hashes(dryRunWith({ cwd: copy }, ...HASHED_TASKS))
         return Object.keys(base).filter((id) => after[id] !== base[id])
       } finally {
         if (original) writeFileSync(path, original)
-        else rmSync(path)
+        else rmSync(created ?? path, { recursive: true })
       }
     }
 
@@ -254,7 +317,14 @@ describe("task hashes", () => {
       {
         file: "packages/themer/src/utils/color-converter.test.ts",
         changes: ["themercn#test"],
-        keeps: ["themercn#build", "themercn#build:css", "web#build"],
+        keeps: [
+          "themercn#build",
+          "themercn#build:css",
+          "web#build",
+          "themercn#e2e",
+          "web#e2e",
+          "vite-app#e2e",
+        ],
       },
       {
         file: "packages/ui/src/components/hash-probe.test.tsx",
@@ -264,12 +334,17 @@ describe("task hashes", () => {
       {
         file: "apps/web/lib/shop.test.ts",
         changes: ["web#test"],
-        keeps: ["web#build"],
+        keeps: ["web#build", "web#e2e", "web#visual"],
       },
       {
         file: "apps/web/vitest.config.ts",
         changes: ["web#test"],
-        keeps: ["web#build"],
+        keeps: ["web#build", "web#e2e", "web#visual"],
+      },
+      {
+        file: "apps/vite/src/__snapshots__/hash-probe.test.tsx.snap",
+        changes: ["vite-app#test"],
+        keeps: ["vite-app#build", "vite-app#e2e", "vite-app#visual"],
       },
       {
         file: "apps/web/e2e/shop.spec.ts",
@@ -304,12 +379,26 @@ describe("task hashes", () => {
         changes: ["//#test:repo"],
         keeps: ["web#test"],
       },
-      // The shared ESLint config still reaches every workspace's test through
-      // its `^build` dependency, so only the root task is asserted here.
+      // The shared ESLint config re-runs every lint that uses it, and no
+      // test or build: nothing builds it.
       {
         file: "packages/eslint-config/base.js",
-        changes: ["//#test:repo"],
-        keeps: [],
+        changes: [
+          "//#test:repo",
+          "//#lint:repo",
+          "web#lint",
+          "vite-app#lint",
+          "themercn#lint",
+          "@workspace/ui#lint",
+        ],
+        keeps: [
+          "web#test",
+          "vite-app#test",
+          "themercn#test",
+          "web#build",
+          "themercn#build",
+          "@workspace/ui#build",
+        ],
       },
       {
         file: "apps/vite/playwright.config.ts",
@@ -318,8 +407,8 @@ describe("task hashes", () => {
       },
       {
         file: "tests/repo-config.test.ts",
-        changes: ["//#test:repo"],
-        keeps: ["web#test", "web#build"],
+        changes: ["//#test:repo", "//#lint:repo"],
+        keeps: ["web#test", "web#lint", "web#build"],
       },
       // So do the e2e detector's tests.
       {
@@ -337,6 +426,18 @@ describe("task hashes", () => {
         file: ".claude/settings.json",
         changes: ["//#test:repo"],
         keeps: ["web#test", "web#build", "web#e2e"],
+      },
+      // The build-exclusion checks read the Tailwind entries, which the
+      // builds read too.
+      {
+        file: "packages/ui/src/styles/globals.css",
+        changes: ["//#test:repo", "web#build"],
+        keeps: [],
+      },
+      {
+        file: "packages/themer/src/styles/themer.css",
+        changes: ["//#test:repo", "themercn#build:css"],
+        keeps: [],
       },
       {
         file: "packages/themer/README.md",
@@ -357,6 +458,112 @@ describe("task hashes", () => {
         expect(changed.filter((id) => keeps.includes(id))).toEqual([])
       },
       60_000
+    )
+  })
+})
+
+// What a build reads is kept out of it in two places that must agree: the
+// build tasks' Turbo inputs (the hash) and Tailwind's `@source not` entries
+// (what the CSS can pick up). One list, root build:css's exclusions, is the
+// reference; a file it excludes must reach no build's hash and no CSS.
+describe("build input exclusions", () => {
+  const root = JSON.parse(read("../turbo.json")).tasks
+  const themer = JSON.parse(read("../packages/themer/turbo.json")).tasks
+  const exclusions = (inputs: string[]) =>
+    inputs.filter((glob) => glob.startsWith("!")).map((glob) => glob.slice(1))
+  const SHARED: string[] = exclusions(root["build:css"].inputs)
+  // Globs that match below any directory (`**/...`), not just a package's.
+  const NESTED = SHARED.filter((glob) => glob.startsWith("**/"))
+  const UI_SRC = "$TURBO_ROOT$/packages/ui/src"
+  const lists: [string, string[]][] = [
+    ["build", root.build.inputs],
+    ["build:css", root["build:css"].inputs],
+    ["themercn build", themer.build.inputs],
+    ["themercn build:css", themer["build:css"].inputs],
+  ]
+
+  it("excludes the tests, specs, snapshots, docs and test configs", () => {
+    expect(SHARED).toEqual(
+      expect.arrayContaining([
+        "**/*.test.{ts,tsx}",
+        "e2e/**",
+        "**/__snapshots__/**",
+        "**/*-snapshots/**",
+        "*.md",
+        "vitest.config.*",
+        "playwright.config.*",
+      ])
+    )
+  })
+
+  // themercn's own lists replace the root's, so they repeat it; they also
+  // keep out their generated CSS and packages/ui's own test files.
+  it.each(lists)("%s excludes exactly the shared globs", (_name, inputs) => {
+    const own = exclusions(inputs).filter(
+      (glob) => glob !== "src/generated/**" && !glob.startsWith(UI_SRC)
+    )
+    expect(own).toEqual(SHARED)
+  })
+
+  it.each(lists.slice(2))(
+    "%s excludes them from packages/ui's sources too",
+    (_name, inputs) => {
+      expect(inputs).toContain(`${UI_SRC}/**`)
+      expect(exclusions(inputs).filter((g) => g.startsWith(UI_SRC))).toEqual(
+        NESTED.map((glob) => `${UI_SRC}/${glob}`)
+      )
+    }
+  )
+
+  // A Tailwind source path for a Turbo glob under `dir`: `@source not`
+  // takes a directory for a `/**` glob.
+  const under = (dir: string, glob: string) =>
+    `${dir}/${glob.replace(/\/\*\*$/, "")}`
+  const sourceNots = (css: string) =>
+    [...css.matchAll(/^@source not "([^"]+)";$/gm)].map((match) => match[1])
+
+  // The apps import it: their automatic source detection scans each app's
+  // whole directory, and its own `@source` adds packages/ui's sources.
+  it("globals.css keeps every excluded file of the apps and ui out of the CSS", () => {
+    const css = read("../packages/ui/src/styles/globals.css")
+    expect(css).toContain('@source "../**/*.{ts,tsx}";')
+    expect(sourceNots(css)).toEqual(
+      expect.arrayContaining([
+        ...SHARED.map((glob) =>
+          glob.startsWith("**/")
+            ? under("../../../../apps", glob)
+            : under("../../../../apps/*", glob)
+        ),
+        ...NESTED.map((glob) => under("..", glob)),
+      ])
+    )
+  })
+
+  // A source that names no directory scans nothing, and reads as coverage.
+  it.each([
+    "../packages/ui/src/styles/globals.css",
+    "../packages/themer/src/styles/themer.css",
+  ])("every @source in %s names an existing directory", (file) => {
+    const sources = [...read(file).matchAll(/^@source "([^"]+)";$/gm)].map(
+      (match) => match[1]!.split(/[*{]/)[0]!
+    )
+    expect(sources.length).toBeGreaterThan(0)
+    const missing = sources.filter(
+      (path) => !existsSync(new URL(path, new URL(file, import.meta.url)))
+    )
+    expect(missing).toEqual([])
+  })
+
+  it("themer.css keeps every excluded file of its sources out of the CSS", () => {
+    const css = read("../packages/themer/src/styles/themer.css")
+    expect(css).toMatch(/^@source "\.\.";$/m)
+    expect(css).toMatch(/^@source "\.\.\/\.\.\/\.\.\/ui\/src";$/m)
+    expect(sourceNots(css)).toEqual(
+      expect.arrayContaining(
+        ["..", "../../../ui/src"].flatMap((dir) =>
+          NESTED.map((glob) => under(dir, glob))
+        )
+      )
     )
   })
 })
@@ -425,22 +632,10 @@ describe("toolchain", () => {
   // scripts/release-workflow.test.ts, beside the release gate it protects.
 })
 
-type CiJob = {
-  name?: string
-  if?: string
-  needs?: string | string[]
-  permissions?: Record<string, string>
-  steps: { uses?: string; with?: Record<string, string> }[]
-}
-
 // `ci-gate` is the single required check (README "Protect `main`"): it
 // passes only when every other job passed, so jobs can be added, renamed or
 // made conditional without touching branch protection.
 describe("the CI gate", () => {
-  const ciYml = parse(read("../.github/workflows/ci.yml")) as {
-    name: string
-    jobs: Record<string, CiJob>
-  }
   const entries = Object.entries(ciYml.jobs)
   const gateEntry = entries.find(([id, job]) => (job.name ?? id) === "ci-gate")
   const [gateId, gate] = gateEntry ?? []
@@ -450,7 +645,9 @@ describe("the CI gate", () => {
   )
 
   it("reports a ci-gate check even when needed jobs fail or are skipped", () => {
-    expect(gate?.if).toBe("always()")
+    for (const status of ["success", "failure", "cancelled"] as const) {
+      expect(runsIf(gate?.if, { status }), status).toBe(true)
+    }
     expect(gate?.permissions).toEqual({})
   })
 
@@ -493,32 +690,35 @@ describe("the CI gate", () => {
   })
 })
 
-type CiStep = {
-  id?: string
-  if?: string
-  uses?: string
-  run?: string
-  with?: Record<string, unknown>
-  "continue-on-error"?: boolean
-}
+// Each Turbo command a step runs (`turbo`, `pnpm turbo` or `pnpm exec
+// turbo`, alone on its line): its tasks, whether it selects affected tasks,
+// the arguments it passes to the tasks (after `--`), and whether its failure
+// fails the job. Any other line naming turbo throws, so a new spelling can't
+// slip past the assertions built on this.
+const turboCommandsOf = (step: CiStep) =>
+  (step.run ?? "")
+    .split("\n")
+    .map((line) => line.trim())
+    .filter((line) => /(^|[^\w$-])turbo\b/.test(line))
+    .map((line) => {
+      const prefix = line.match(/^(?:pnpm (?:exec )?)?turbo /)
+      if (!prefix || /&&|\|\||;|\|/.test(line))
+        throw new Error(`unrecognised Turbo invocation: ${line}`)
+      const words = line.slice(prefix[0].length).split(/\s+/)
+      const end = words.includes("--") ? words.indexOf("--") : words.length
+      return {
+        tasks: words
+          .slice(0, end)
+          .filter((word) => word !== "run" && !word.startsWith("-")),
+        affected: words.slice(0, end).includes("--affected"),
+        args: words.slice(end + 1).join(" "),
+        gating: step["continue-on-error"] !== true,
+      }
+    })
 
 // Pull requests run only the tasks their change affects; every other event
 // (push to main, schedule, dispatch, merge queue) runs everything.
 describe("CI task selection", () => {
-  const ciYml = parse(read("../.github/workflows/ci.yml")) as {
-    on: Record<string, unknown>
-    jobs: Record<
-      string,
-      {
-        name?: string
-        if?: string
-        needs?: string | string[]
-        outputs?: Record<string, string>
-        container?: unknown
-        steps: CiStep[]
-      }
-    >
-  }
   const [e2eId, e2eJob] =
     Object.entries(ciYml.jobs).find(([, job]) => job.name?.startsWith("E2E")) ??
     []
@@ -537,46 +737,29 @@ describe("CI task selection", () => {
 
   // The step conditions this workflow uses: none, or event-name tests
   // joined by `||`.
-  const runsOn = (condition: string | undefined, event: string) => {
-    if (condition === undefined) return true
-    return condition.split(" || ").some((clause) => {
-      const test = clause.match(/^github\.event_name (==|!=) '(\w+)'$/)
-      if (!test) throw new Error(`unsupported step condition: ${condition}`)
-      return (test[2] === event) === (test[1] === "==")
-    })
-  }
-  const stepsFor = (event: string, job = "checks") =>
+  // The steps with a `run` that a job runs for an event, given how the job
+  // has gone so far (a gating step's failure makes it "failure").
+  const stepsFor = (
+    event: string,
+    job = "checks",
+    status: Status = "success"
+  ) =>
     ciYml.jobs[job]!.steps.filter(
-      (step) => step.run !== undefined && runsOn(step.if, event)
+      (step) =>
+        step.run !== undefined &&
+        runsIf(step.if, { github: { event_name: event }, status })
     )
   const scriptFor = (event: string, job = "checks") =>
     stepsFor(event, job)
       .map((step) => step.run)
       .join("\n")
-  // Each `pnpm turbo` command a step runs: its tasks, whether it selects
-  // affected tasks, the arguments it passes to the tasks (after `--`), and
-  // whether its failure fails the job.
-  const commandsOf = (step: CiStep) =>
-    (step.run ?? "")
-      .split("\n")
-      .map((line) => line.trim())
-      .filter((line) => line.startsWith("pnpm turbo "))
-      .map((line) => {
-        const words = line.split(/\s+/).slice(2)
-        const end = words.includes("--") ? words.indexOf("--") : words.length
-        return {
-          tasks: words
-            .slice(0, end)
-            .filter((word) => word !== "run" && !word.startsWith("-")),
-          affected: words.slice(0, end).includes("--affected"),
-          args: words.slice(end + 1).join(" "),
-          gating: step["continue-on-error"] !== true,
-        }
-      })
-  const commandsFor = (event: string, job = "checks") =>
-    stepsFor(event, job).flatMap(commandsOf)
-  // The tasks `pnpm turbo` runs for an event, and whether each command
-  // selects affected tasks.
+  const commandsFor = (
+    event: string,
+    job = "checks",
+    status: Status = "success"
+  ) => stepsFor(event, job, status).flatMap(turboCommandsOf)
+  // The tasks Turbo runs for an event, and whether each command selects
+  // affected tasks.
   const turboFor = (event: string, job = "checks") => {
     const commands = commandsFor(event, job)
     return {
@@ -584,14 +767,37 @@ describe("CI task selection", () => {
       selections: commands.map((command) => command.affected),
     }
   }
-  const TASKS = [
+  // The tasks the checks job runs: everything but the browser tests.
+  const CHECK_TASKS = [
     "build",
     "check:package",
     "lint",
+    "lint:repo",
     "test",
     "test:repo",
     "typecheck",
   ]
+
+  it("reads every way a step can invoke Turbo, and refuses the rest", () => {
+    const step = (run: string): CiStep => ({ run })
+    expect(
+      turboCommandsOf(
+        step(
+          [
+            "pnpm turbo lint --affected",
+            "turbo run build -- --grep x",
+            "pnpm exec turbo e2e",
+          ].join("\n")
+        )
+      ).map(({ tasks, affected, args }) => ({ tasks, affected, args }))
+    ).toEqual([
+      { tasks: ["lint"], affected: true, args: "" },
+      { tasks: ["build"], affected: false, args: "--grep x" },
+      { tasks: ["e2e"], affected: false, args: "" },
+    ])
+    expect(() => turboCommandsOf(step("npx turbo lint"))).toThrow()
+    expect(() => turboCommandsOf(step("pnpm lint && turbo test"))).toThrow()
+  })
 
   // A container runs as a different user from the checkout's owner, and git
   // refuses such a repository ("dubious ownership"): `git rev-parse` and
@@ -614,7 +820,7 @@ describe("CI task selection", () => {
 
   it("pull requests run every check on its affected tasks only", () => {
     const { tasks, selections } = turboFor("pull_request")
-    expect(tasks).toEqual(TASKS)
+    expect(tasks).toEqual(CHECK_TASKS)
     expect(selections).not.toContain(false)
   })
 
@@ -630,7 +836,7 @@ describe("CI task selection", () => {
     "%s runs every task with no selection",
     (event) => {
       const { tasks, selections } = turboFor(event)
-      expect(tasks).toEqual(TASKS)
+      expect(tasks).toEqual(CHECK_TASKS)
       expect(selections).not.toContain(true)
       expect(scriptFor(event)).not.toContain("TURBO_SCM_BASE")
     }
@@ -663,7 +869,15 @@ describe("CI task selection", () => {
 
   it("the e2e job runs only when the detector says so", () => {
     expect([e2eJob?.needs ?? []].flat()).toContain("changes")
-    expect(e2eJob?.if).toBe("needs.changes.outputs.e2e == 'true'")
+    const runsWhen = (e2e: string) =>
+      runsIf(e2eJob?.if, {
+        github: { event_name: "pull_request" },
+        needs: { changes: { outputs: { e2e } } },
+      })
+    expect({ true: runsWhen("true"), false: runsWhen("false") }).toEqual({
+      true: true,
+      false: false,
+    })
   })
 
   it("the detector asks about every task the e2e job runs", () => {
@@ -717,10 +931,16 @@ describe("CI task selection", () => {
     }
   )
 
-  it.each(["schedule", "workflow_dispatch"])(
-    "%s repeats the quarantined tests of every e2e task, without gating",
-    (event) => {
-      const quarantined = commandsFor(event, e2eId).filter((c) =>
+  // However the gating run went, short of a cancelled job: a quarantined
+  // test's record must not depend on the gate passing.
+  it.each(
+    ["schedule", "workflow_dispatch"].flatMap((event) =>
+      (["success", "failure"] as const).map((status) => ({ event, status }))
+    )
+  )(
+    "$event repeats the quarantined tests of every e2e task, without gating, after a gating $status",
+    ({ event, status }) => {
+      const quarantined = commandsFor(event, e2eId, status).filter((c) =>
         QUARANTINED.test(c.args)
       )
       expect(quarantined.flatMap((c) => c.tasks).sort()).toEqual([
@@ -735,24 +955,63 @@ describe("CI task selection", () => {
     }
   )
 
+  it("a cancelled job runs no quarantined test", () => {
+    expect(
+      commandsFor("schedule", e2eId, "cancelled").filter((c) =>
+        QUARANTINED.test(c.args)
+      )
+    ).toEqual([])
+  })
+
+  // The quarantine steps, each with the commands it runs.
+  const quarantineSteps = () =>
+    (e2eJob?.steps ?? []).filter((step) =>
+      turboCommandsOf(step).some((c) => QUARANTINED.test(c.args))
+    )
+
+  // A failing step ends its own run: one task's quarantined failures must
+  // not skip the other's.
+  it("runs each task's quarantined tests in a step of its own", () => {
+    const steps = quarantineSteps()
+    expect(steps.map((step) => turboCommandsOf(step).length)).toEqual(
+      steps.map(() => 1)
+    )
+  })
+
+  // Its report is the only record of a quarantined test's failures.
+  it("a failed quarantine run uploads its report, whichever task failed", () => {
+    const upload = e2eJob?.steps.find((step) =>
+      step.uses?.startsWith("actions/upload-artifact@")
+    )
+    const steps = quarantineSteps()
+    expect(steps.length).toBeGreaterThan(1)
+    for (const failed of steps) {
+      expect(failed.id).toBeDefined()
+      const outcomes = Object.fromEntries(
+        steps.map((step) => [
+          step.id,
+          { outcome: step === failed ? "failure" : "success" },
+        ])
+      )
+      expect(
+        runsIf(upload?.if, {
+          github: { event_name: "schedule" },
+          steps: outcomes,
+        }),
+        failed.id
+      ).toBe(true)
+    }
+    expect(
+      runsIf(upload?.if, { github: { event_name: "schedule" }, steps: {} })
+    ).toBe(false)
+  })
+
   it.each(["pull_request", "push", "merge_group"])(
     "%s runs no non-gating command",
     (event) => {
       expect(commandsFor(event, e2eId).filter((c) => !c.gating)).toEqual([])
     }
   )
-
-  // Its report is the only record of a quarantined test's failures.
-  it("a failed quarantine run uploads its report", () => {
-    const quarantine = e2eJob?.steps.find((step) =>
-      commandsOf(step).some((c) => QUARANTINED.test(c.args))
-    )
-    const upload = e2eJob?.steps.find((step) =>
-      step.uses?.startsWith("actions/upload-artifact@")
-    )
-    expect(quarantine?.id).toBeDefined()
-    expect(upload?.if).toContain(`steps.${quarantine?.id}.outcome == 'failure'`)
-  })
 
   // Playwright accepts the arguments, and a run with no quarantined test
   // (the usual case) passes.
@@ -806,101 +1065,210 @@ describe("CI task selection", () => {
   })
 })
 
-// The detector CI's `changes` job runs to decide whether the e2e job runs.
-// It fails open: only a pull request whose base resolves and on which Turbo
-// reports no affected e2e task skips the job. Each case runs the real script
-// in a scratch repository, with a stand-in `pnpm` whose `turbo query
-// affected --exit-code` exits as given.
-describe("the e2e detector", () => {
-  const DETECTOR = join(ROOT, "scripts/e2e-affected.sh")
-  let scratch: string
+// Runs a repo script (the e2e detector, the Stop hook) as CI or Claude Code
+// would, in scratch git repositories, with a stand-in `pnpm` first on PATH.
+// The stand-in appends the command it was given, prefixed with
+// `TURBO_SCM_BASE=<base>` when that is set, to a log; prints `stdout`; and
+// exits with `exit`.
+const scriptSandbox = (name: string) => {
+  let scratch = ""
   beforeAll(() => {
-    scratch = mkdtempSync(join(tmpdir(), "themercn-e2e-detector-"))
+    scratch = mkdtempSync(join(tmpdir(), `themercn-${name}-`))
     mkdirSync(join(scratch, "bin"))
     writeFileSync(
       join(scratch, "bin/pnpm"),
-      '#!/bin/sh\necho "$@" > "$PNPM_ARGS"\nexit "$PNPM_EXIT"\n',
+      [
+        "#!/bin/sh",
+        'echo "${TURBO_SCM_BASE:+TURBO_SCM_BASE=$TURBO_SCM_BASE }$*" >> "$PNPM_ARGS"',
+        'printf "%s\\n" "$PNPM_STDOUT"',
+        'exit "$PNPM_EXIT"',
+        "",
+      ].join("\n"),
       { mode: 0o755 }
     )
   })
   afterAll(() => rmSync(scratch, { recursive: true, force: true }))
 
+  // An empty git repository in the scratch directory.
+  const repo = () => {
+    const dir = mkdtempSync(join(scratch, "repo-"))
+    const git = (...args: string[]) =>
+      execFileSync(
+        "git",
+        [
+          "-c",
+          "user.name=probe",
+          "-c",
+          "user.email=probe@example.invalid",
+          ...args,
+        ],
+        { cwd: dir, encoding: "utf8" }
+      ).trim()
+    git("init", "--quiet", "--initial-branch=main")
+    return { dir, git }
+  }
+
+  // The script's exit status and output, and each command the stand-in pnpm
+  // ran.
+  const run = (
+    script: string,
+    {
+      args = [],
+      cwd = scratch,
+      input = "",
+      env = {},
+      pnpm = {},
+    }: {
+      args?: string[]
+      cwd?: string
+      input?: string
+      env?: Record<string, string>
+      pnpm?: { exit?: number; stdout?: string }
+    } = {}
+  ) => {
+    const log = join(scratch, `pnpm-args-${Math.random()}`)
+    const inherited = { ...process.env }
+    delete inherited.TURBO_SCM_BASE
+    const { status, stdout, stderr, error } = spawnSync(script, args, {
+      cwd,
+      input,
+      encoding: "utf8",
+      env: {
+        ...inherited,
+        // The stand-in pnpm first; PATH is not an input of any task.
+        // eslint-disable-next-line turbo/no-undeclared-env-vars
+        PATH: `${join(scratch, "bin")}:${process.env.PATH}`,
+        PNPM_ARGS: log,
+        PNPM_EXIT: String(pnpm.exit ?? 0),
+        PNPM_STDOUT: pnpm.stdout ?? "",
+        ...env,
+      },
+    })
+    if (error) throw error
+    return {
+      status,
+      stdout,
+      stderr,
+      ran: existsSync(log) ? readFileSync(log, "utf8").trim().split("\n") : [],
+    }
+  }
+
+  return { repo, run }
+}
+
+// The detector CI's `changes` job runs to decide whether the e2e job runs.
+// It fails open: only a pull request whose base resolves and on which Turbo
+// reports no affected e2e task that has a script skips the job. Each case
+// runs the real script in a scratch repository, with a stand-in `pnpm` whose
+// `turbo query` prints the given affected tasks and exits as given.
+describe("the e2e detector", () => {
+  const DETECTOR = join(ROOT, "scripts/e2e-affected.sh")
+  const sandbox = scriptSandbox("e2e-detector")
+
   // A repository whose HEAD has `commits - 1` ancestors, like the merge
   // commit a pull request checks out (its first parent is the base tip).
   const repo = (commits: number) => {
-    const dir = mkdtempSync(join(scratch, "repo-"))
-    const git = (...args: string[]) =>
-      execFileSync("git", args, { cwd: dir, encoding: "utf8" }).trim()
-    git("init", "--quiet")
+    const { dir, git } = sandbox.repo()
     for (let i = 0; i < commits; i++) {
-      git(
-        "-c",
-        "user.name=probe",
-        "-c",
-        "user.email=probe@example.invalid",
-        "commit",
-        "--quiet",
-        "--allow-empty",
-        `--message=${i}`
-      )
+      git("commit", "--quiet", "--allow-empty", `--message=${i}`)
     }
     return { dir, git }
   }
 
+  // `turbo query`'s answer listing these affected tasks: [fullName, script].
+  const answer = (...items: [string, string | null][]) =>
+    JSON.stringify({
+      data: {
+        affectedTasks: {
+          items: items.map(([fullName, script]) => ({
+            fullName,
+            name: fullName.split("#")[1],
+            script,
+          })),
+        },
+      },
+    })
+
   // What the detector tells the e2e job, and the command it ran (if any).
   const detect = ({
     event,
+    tasks = ["e2e"],
     turboExit = 0,
+    turboStdout = answer(),
     commits = 2,
   }: {
     event: string
+    tasks?: string[]
     turboExit?: number
+    turboStdout?: string
     commits?: number
   }) => {
     const { dir, git } = repo(commits)
     const output = join(dir, "github-output")
-    const args = join(dir, "pnpm-args")
     writeFileSync(output, "")
-    execFileSync(DETECTOR, ["e2e"], {
+    const { status, ran } = sandbox.run(DETECTOR, {
+      args: tasks,
       cwd: dir,
-      encoding: "utf8",
-      stdio: ["ignore", "pipe", "pipe"],
-      env: {
-        ...process.env,
-        // The stand-in pnpm first; PATH is not an input of any task.
-        // eslint-disable-next-line turbo/no-undeclared-env-vars
-        PATH: `${join(scratch, "bin")}:${process.env.PATH}`,
-        GITHUB_EVENT_NAME: event,
-        GITHUB_OUTPUT: output,
-        PNPM_ARGS: args,
-        PNPM_EXIT: String(turboExit),
-      },
+      env: { GITHUB_EVENT_NAME: event, GITHUB_OUTPUT: output },
+      pnpm: { exit: turboExit, stdout: turboStdout },
     })
+    expect(status).toBe(0)
     return {
       outputs: readFileSync(output, "utf8").trim().split("\n"),
-      ran: existsSync(args) ? readFileSync(args, "utf8").trim() : undefined,
+      ran: ran[0],
       base: commits > 1 ? git("rev-parse", "HEAD^1") : undefined,
     }
   }
 
   it("skips e2e on a pull request with no affected e2e task", () => {
-    expect(detect({ event: "pull_request", turboExit: 0 }).outputs).toEqual([
+    expect(detect({ event: "pull_request" }).outputs).toEqual(["e2e=false"])
+  })
+
+  it("asks Turbo about the given tasks against the merge commit's first parent", () => {
+    const { ran, base } = detect({
+      event: "pull_request",
+      tasks: ["e2e", "visual"],
+    })
+    expect(ran).toMatch(/^exec turbo query /)
+    expect(ran).toContain(
+      `affectedTasks(base: "${base}", head: "HEAD", tasks: ["e2e", "visual"])`
+    )
+  })
+
+  it("runs e2e on a pull request when an e2e task with a script is affected", () => {
+    const turboStdout = answer(
+      ["web#build", "next build"],
+      ["web#e2e", "playwright test"]
+    )
+    expect(detect({ event: "pull_request", turboStdout }).outputs).toEqual([
+      "e2e=true",
+    ])
+  })
+
+  // `turbo query` lists every package's e2e task, scripted or not, and the
+  // tasks the affected ones need: neither is an e2e run.
+  it("skips e2e when the affected e2e tasks have no script, or are prerequisites", () => {
+    const turboStdout = answer(
+      ["themercn#build", "tsdown"],
+      ["themercn#e2e", null],
+      ["@workspace/ui#e2e", null]
+    )
+    expect(detect({ event: "pull_request", turboStdout }).outputs).toEqual([
       "e2e=false",
     ])
   })
 
-  it("asks Turbo about the given tasks against the merge commit's first parent", () => {
-    const { ran, base } = detect({ event: "pull_request" })
-    expect(ran).toBe(
-      `exec turbo query affected --tasks e2e --base ${base} --exit-code`
-    )
-  })
-
   it.each([
-    { reason: "an e2e task is affected", turboExit: 1 },
-    { reason: "the query fails", turboExit: 2 },
-  ])("runs e2e on a pull request when $reason", ({ turboExit }) => {
-    expect(detect({ event: "pull_request", turboExit }).outputs).toEqual([
+    { reason: "the query exits 1", turboExit: 1, turboStdout: answer() },
+    { reason: "the query exits 2", turboExit: 2, turboStdout: "" },
+    { reason: "the query prints no JSON", turboExit: 0, turboStdout: "oops" },
+    {
+      reason: "the query reports errors",
+      turboExit: 0,
+      turboStdout: JSON.stringify({ data: null, errors: [{ message: "x" }] }),
+    },
+  ])("runs e2e on a pull request when $reason", (query) => {
+    expect(detect({ event: "pull_request", ...query }).outputs).toEqual([
       "e2e=true",
     ])
   })
@@ -915,7 +1283,7 @@ describe("the e2e detector", () => {
   it.each(["push", "schedule", "workflow_dispatch", "merge_group"])(
     "runs e2e on %s without asking Turbo",
     (event) => {
-      expect(detect({ event, turboExit: 0 })).toMatchObject({
+      expect(detect({ event })).toMatchObject({
         outputs: ["e2e=true"],
         ran: undefined,
       })
@@ -984,18 +1352,19 @@ describe("Playwright tiers", () => {
     expect(visual?.dependencies).toContain("web#build")
   }, 60_000)
 
-  it("the visual task hashes and passes through what e2e does, and caches its report", () => {
-    const { e2e, visual } = JSON.parse(read("../turbo.json")).tasks
-    expect({
-      env: visual?.env,
-      passThroughEnv: visual?.passThroughEnv,
-      outputs: visual?.outputs,
-    }).toEqual({
-      env: e2e.env,
-      passThroughEnv: e2e.passThroughEnv,
-      outputs: e2e.outputs,
-    })
-  })
+  it.each(["visual", "e2e:smoke"])(
+    "the %s task hashes, passes through and caches what e2e does",
+    (name) => {
+      const { tasks } = JSON.parse(read("../turbo.json"))
+      const pick = (task: Record<string, unknown>) => ({
+        env: task.env,
+        passThroughEnv: task.passThroughEnv,
+        inputs: task.inputs,
+        outputs: task.outputs,
+      })
+      expect(pick(tasks[name])).toEqual(pick(tasks.e2e))
+    }
+  )
 })
 
 // AGENTS.md "Verification tiers": a Stop hook keeps an agent's turn from
@@ -1005,42 +1374,13 @@ describe("Playwright tiers", () => {
 describe("the T1 Stop hook", () => {
   const HOOK = join(ROOT, ".claude/hooks/stop-t1.sh")
   const T1 =
-    "turbo run lint typecheck test test:repo build check:package --affected"
-  let scratch: string
-  beforeAll(() => {
-    scratch = mkdtempSync(join(tmpdir(), "themercn-stop-hook-"))
-    mkdirSync(join(scratch, "bin"))
-    writeFileSync(
-      join(scratch, "bin/pnpm"),
-      [
-        "#!/bin/sh",
-        'echo "TURBO_SCM_BASE=$TURBO_SCM_BASE $*" >> "$PNPM_ARGS"',
-        'echo "T1 output: lint failed"',
-        'exit "$PNPM_EXIT"',
-        "",
-      ].join("\n"),
-      { mode: 0o755 }
-    )
-  })
-  afterAll(() => rmSync(scratch, { recursive: true, force: true }))
+    "turbo run lint lint:repo typecheck test test:repo build check:package --affected"
+  const sandbox = scriptSandbox("stop-hook")
 
   // A repository whose `main` holds one commit, checked out on a branch
   // from it, like an agent's worktree off its integration branch.
   const repo = () => {
-    const dir = mkdtempSync(join(scratch, "repo-"))
-    const git = (...args: string[]) =>
-      execFileSync(
-        "git",
-        [
-          "-c",
-          "user.name=probe",
-          "-c",
-          "user.email=probe@example.invalid",
-          ...args,
-        ],
-        { cwd: dir, encoding: "utf8" }
-      ).trim()
-    git("init", "--quiet", "--initial-branch=main")
+    const { dir, git } = sandbox.repo()
     writeFileSync(join(dir, "a.ts"), "export const a = 1\n")
     git("add", ".")
     git("commit", "--quiet", "--message=base")
@@ -1061,47 +1401,18 @@ describe("the T1 Stop hook", () => {
       input?: Record<string, unknown>
       env?: Record<string, string>
     } = {}
-  ) => {
-    const args = join(scratch, `pnpm-args-${Math.random()}`)
-    const inherited = { ...process.env }
-    delete inherited.TURBO_SCM_BASE
-    let status = 0
-    let stderr = ""
-    try {
-      execFileSync(HOOK, [], {
-        // The hook works in the session's cwd from its input, not its own.
-        cwd: scratch,
-        input: JSON.stringify({
-          hook_event_name: "Stop",
-          cwd: dir,
-          stop_hook_active: false,
-          ...input,
-        }),
-        encoding: "utf8",
-        stdio: ["pipe", "pipe", "pipe"],
-        env: {
-          ...inherited,
-          // The stand-in pnpm first; PATH is not an input of any task.
-          // eslint-disable-next-line turbo/no-undeclared-env-vars
-          PATH: `${join(scratch, "bin")}:${process.env.PATH}`,
-          PNPM_ARGS: args,
-          PNPM_EXIT: String(t1Exit),
-          ...env,
-        },
-      })
-    } catch (error) {
-      const failed = error as { status: number; stderr: string }
-      status = failed.status
-      stderr = failed.stderr
-    }
-    return {
-      status,
-      stderr,
-      ran: existsSync(args)
-        ? readFileSync(args, "utf8").trim().split("\n")
-        : [],
-    }
-  }
+  ) =>
+    sandbox.run(HOOK, {
+      // The hook works in the session's cwd from its input, not its own.
+      input: JSON.stringify({
+        hook_event_name: "Stop",
+        cwd: dir,
+        stop_hook_active: false,
+        ...input,
+      }),
+      env,
+      pnpm: { exit: t1Exit, stdout: "T1 output: lint failed" },
+    })
 
   it("allows stopping at once, without running T1, when nothing changed", () => {
     const { dir } = repo()
@@ -1138,6 +1449,56 @@ describe("the T1 Stop hook", () => {
     )
   })
 
+  // A pushed branch's upstream is its own remote copy, so against it a
+  // pushed ticket would look unchanged and T1 would never run.
+  it("compares against main, not the branch's upstream, after a push", () => {
+    const { dir, git } = repo()
+    const remote = mkdtempSync(join(dir, "..", "remote-"))
+    execFileSync("git", ["init", "--quiet", "--bare", remote])
+    git("remote", "add", "origin", remote)
+    writeFileSync(join(dir, "a.ts"), "export const a = 2\n")
+    git("commit", "--quiet", "--all", "--message=ticket")
+    git("push", "--quiet", "--set-upstream", "origin", "ticket")
+    expect(stop(dir).ran).toEqual([
+      `TURBO_SCM_BASE=${git("rev-parse", "main")} ${T1} --output-logs=errors-only`,
+    ])
+  })
+
+  it("falls back to origin/main when there is no local main", () => {
+    const { dir, git } = repo()
+    const remote = mkdtempSync(join(dir, "..", "remote-"))
+    execFileSync("git", ["init", "--quiet", "--bare", remote])
+    git("remote", "add", "origin", remote)
+    git("push", "--quiet", "origin", "main")
+    git("fetch", "--quiet", "origin")
+    git("branch", "--quiet", "-D", "main")
+    writeFileSync(join(dir, "a.ts"), "export const a = 2\n")
+    expect(stop(dir).ran).toEqual([
+      `TURBO_SCM_BASE=${git("rev-parse", "origin/main")} ${T1} --output-logs=errors-only`,
+    ])
+  })
+
+  it("says why it lets the turn end when no base resolves", () => {
+    const { dir, git } = repo()
+    git("branch", "--quiet", "-m", "main", "trunk")
+    writeFileSync(join(dir, "a.ts"), "export const a = 2\n")
+    const { status, ran, stderr } = stop(dir, { t1Exit: 1 })
+    expect({ status, ran }).toEqual({ status: 0, ran: [] })
+    expect(stderr).toMatch(/no base.*T1 not run/i)
+  })
+
+  it("blocks stopping when the base shares no history with HEAD", () => {
+    const { dir, git } = repo()
+    git("switch", "--quiet", "--orphan", "unrelated")
+    git("commit", "--quiet", "--allow-empty", "--message=unrelated")
+    git("switch", "--quiet", "ticket")
+    const { status, stderr } = stop(dir, {
+      env: { TURBO_SCM_BASE: "unrelated" },
+    })
+    expect(status).toBe(2)
+    expect(stderr).toMatch(/unrelated shares no history with HEAD/)
+  })
+
   it("blocks stopping while T1 fails, with T1's output as the reason", () => {
     const { dir } = repo()
     writeFileSync(join(dir, "a.ts"), "export const a = 2\n")
@@ -1146,11 +1507,32 @@ describe("the T1 Stop hook", () => {
     expect(stderr).toContain("T1 output: lint failed")
   })
 
+  // SubagentStop carries the same cwd and stop_hook_active fields.
+  it("blocks a subagent from stopping the same way", () => {
+    const { dir } = repo()
+    writeFileSync(join(dir, "a.ts"), "export const a = 2\n")
+    const input = {
+      hook_event_name: "SubagentStop",
+      agent_id: "def456",
+      agent_type: "general-purpose",
+    }
+    expect(stop(dir, { t1Exit: 1, input })).toMatchObject({
+      status: 2,
+      stderr: expect.stringContaining("T1 output: lint failed"),
+    })
+    expect(
+      stop(dir, { t1Exit: 1, input: { ...input, stop_hook_active: true } })
+    ).toMatchObject({ status: 0, ran: [] })
+  })
+
   it("never runs e2e or the visual baselines", () => {
     const { dir } = repo()
     writeFileSync(join(dir, "a.ts"), "export const a = 2\n")
     const [command] = stop(dir, { t1Exit: 1 }).ran
-    expect(command).not.toMatch(/e2e|visual|smoke|playwright/)
+    // Past the base SHA, whose hex digits can spell "e2e".
+    expect(command?.replace(/^TURBO_SCM_BASE=\S+ /, "")).not.toMatch(
+      /e2e|visual|smoke|playwright/
+    )
   })
 
   // Claude Code sets stop_hook_active on the stop that follows a block.
@@ -1163,6 +1545,22 @@ describe("the T1 Stop hook", () => {
     ).toMatchObject({ status: 0, ran: [] })
   })
 
+  // Letting the turn end is no pass: the user is told T1 is still red.
+  it("warns the user that T1 still fails when it lets the turn end", () => {
+    const { dir } = repo()
+    writeFileSync(join(dir, "a.ts"), "export const a = 2\n")
+    stop(dir, { t1Exit: 1 })
+    const { stdout, stderr } = stop(dir, {
+      t1Exit: 1,
+      input: { stop_hook_active: true },
+    })
+    const { systemMessage } = JSON.parse(stdout) as { systemMessage: string }
+    for (const message of [systemMessage, stderr]) {
+      expect(message).toMatch(/T1 still fails/)
+      expect(message).toMatch(/not done/)
+    }
+  })
+
   it("re-runs T1 and blocks again when files changed since the block", () => {
     const { dir } = repo()
     writeFileSync(join(dir, "a.ts"), "export const a = 2\n")
@@ -1173,18 +1571,40 @@ describe("the T1 Stop hook", () => {
     ).toMatchObject({ status: 2, ran: [expect.stringContaining(T1)] })
   })
 
-  it("Claude Code runs it on Stop, from the project's settings", () => {
-    const settings = JSON.parse(read("../.claude/settings.json"))
-    const handlers = (settings.hooks?.Stop ?? []).flatMap(
-      (group: { hooks: { type: string; command: string }[] }) => group.hooks
+  // AGENTS.md's T1 and T3 run the same tasks the hook does, and CI's checks.
+  it.each(["T1", "T3"])("AGENTS.md's %s runs the hook's tasks", (tier) => {
+    const line = read("../AGENTS.md")
+      .split("\n")
+      .find((text) => text.startsWith(`- **${tier},`))
+    const command = line?.match(
+      /`(?:TURBO_SCM_BASE=\S+ )?pnpm (turbo run [^`]+)`/
     )
-    expect(handlers).toEqual([
-      expect.objectContaining({
-        type: "command",
-        command: '"$CLAUDE_PROJECT_DIR"/.claude/hooks/stop-t1.sh',
-      }),
-    ])
+    const tasks = (text: string) =>
+      text
+        .split(/\s+/)
+        .slice(2)
+        .filter((word) => !word.startsWith("-"))
+        .sort()
+    expect(command?.[1]).toBeDefined()
+    expect(tasks(command![1]!)).toEqual(tasks(T1))
   })
+
+  // Subagents too: agents in parallel worktrees are gated like the session.
+  it.each(["Stop", "SubagentStop"])(
+    "Claude Code runs it on %s, from the project's settings",
+    (event) => {
+      const settings = JSON.parse(read("../.claude/settings.json"))
+      const handlers = (settings.hooks?.[event] ?? []).flatMap(
+        (group: { hooks: { type: string; command: string }[] }) => group.hooks
+      )
+      expect(handlers).toEqual([
+        expect.objectContaining({
+          type: "command",
+          command: '"$CLAUDE_PROJECT_DIR"/.claude/hooks/stop-t1.sh',
+        }),
+      ])
+    }
+  )
 })
 
 // The project's Claude Code settings and hooks are committed; everything

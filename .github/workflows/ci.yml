@@ -11,11 +11,14 @@ on:
     - cron: "0 4 * * 1" # Monday 04:00 UTC
   workflow_dispatch:
 
-# A pull request's new push cancels its superseded run. Each push to main
-# gets a group of its own: a run waiting in a shared group is cancelled by the
-# next one queued, so main's commits would lose their verdict.
+# A pull request's new push cancels its superseded run. Every other run gets
+# a group of its own, keyed by event and commit: a run waiting in a shared
+# group is cancelled by the next one queued, so a push to main would lose its
+# verdict to the next push, or to a schedule, dispatch or merge-queue run of
+# the same commit (main's tip, usually), and release.yml would have nothing
+# to release on.
 concurrency:
-  group: ci-${{ github.event_name == 'pull_request' && github.ref || github.sha }}
+  group: ci-${{ github.event_name }}-${{ github.event_name == 'pull_request' && github.ref || github.sha }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
@@ -76,14 +79,14 @@ jobs:
           TURBO_SCM_BASE=$(git rev-parse HEAD^1)
           export TURBO_SCM_BASE
           echo "HEAD^1: $TURBO_SCM_BASE, pull_request.base.sha: $BASE_SHA"
-          pnpm turbo lint typecheck test test:repo build --affected
+          pnpm turbo lint lint:repo typecheck test test:repo build --affected
           pnpm turbo check:package --affected
 
       # Every other event runs everything.
       - name: All tasks
         if: github.event_name != 'pull_request'
         run: |
-          pnpm turbo lint typecheck test test:repo build
+          pnpm turbo lint lint:repo typecheck test test:repo build
           pnpm turbo check:package
 
       # Only main writes the cache: no pull request's output reaches it.
@@ -94,9 +97,9 @@ jobs:
           key: turbo-checks-${{ github.sha }}
 
   # Decides whether the e2e job runs, from Turbo's graph: a pull request
-  # skips it only when `turbo query affected` reports none of the tasks the
-  # e2e job runs as affected (scripts/e2e-affected.sh). It fails open: a
-  # query error, a missing base and every other event run e2e.
+  # skips it only when `turbo query` reports no task the e2e job runs, with a
+  # script, as affected (scripts/e2e-affected.sh). It fails open: a query
+  # error, a missing base and every other event run e2e.
   changes:
     name: Detect affected e2e tasks
     runs-on: ubuntu-latest
@@ -181,15 +184,20 @@ jobs:
           pnpm turbo visual -- --grep-invert @quarantine
 
       # The quarantined tests, ten times each: their failures show in the
-      # uploaded report, never in the gate. `--pass-with-no-tests`: usually
-      # none is quarantined.
+      # uploaded report, never in the gate. Each task in a step of its own,
+      # and whether or not the gating run above passed, so neither's failure
+      # skips the other. `--pass-with-no-tests`: usually none is quarantined.
       - name: Quarantined e2e (scheduled)
-        id: quarantine
-        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+        id: quarantine-e2e
+        if: (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && !cancelled()
         continue-on-error: true
-        run: |
-          pnpm turbo e2e -- --grep @quarantine --repeat-each=10 --pass-with-no-tests
-          pnpm turbo visual -- --grep @quarantine --repeat-each=10 --pass-with-no-tests
+        run: pnpm turbo e2e -- --grep @quarantine --repeat-each=10 --pass-with-no-tests
+
+      - name: Quarantined visual (scheduled)
+        id: quarantine-visual
+        if: (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && !cancelled()
+        continue-on-error: true
+        run: pnpm turbo visual -- --grep @quarantine --repeat-each=10 --pass-with-no-tests
 
       - if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
@@ -197,7 +205,7 @@ jobs:
           path: .turbo/cache
           key: turbo-e2e-${{ github.sha }}
 
-      - if: failure() || steps.quarantine.outcome == 'failure'
+      - if: failure() || steps.quarantine-e2e.outcome == 'failure' || steps.quarantine-visual.outcome == 'failure'
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: playwright-report

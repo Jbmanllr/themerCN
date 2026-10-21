@@ -211,9 +211,10 @@ describe("ci.yml", () => {
   })
 
   // The backstop runs: sharing a push run's group would cancel it, or have
-  // it cancelled while waiting.
+  // it cancelled while waiting. A scheduled or dispatched run usually builds
+  // main's tip, the very commit its push run builds.
   it.each(["schedule", "workflow_dispatch", "merge_group"])(
-    "gives a %s run a group of its own that never cancels",
+    "gives a %s run of main's tip a group apart from that commit's push run, that never cancels",
     (event_name) => {
       expect(Object.keys(ci.on)).toContain(event_name)
       const push = runFor({
@@ -221,7 +222,7 @@ describe("ci.yml", () => {
         ref: "refs/heads/main",
         sha: "a1",
       })
-      const backstop = runFor({ event_name, ref: "refs/heads/main", sha: "b2" })
+      const backstop = runFor({ event_name, ref: "refs/heads/main", sha: "a1" })
 
       expect(backstop.group).not.toBe(push.group)
       expect(backstop.cancels).toBe(false)

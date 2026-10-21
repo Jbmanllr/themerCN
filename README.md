@@ -41,7 +41,7 @@ The Playground's font picker uses Google's public catalog; set
 | -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `pnpm format`        | Prettier writes the whole repo (one root config and ignore file).                                                                                       |
 | `pnpm format:check`  | Prettier checks the whole repo, as CI does first.                                                                                                       |
-| `pnpm lint`          | ESLint in every workspace.                                                                                                                              |
+| `pnpm lint`          | ESLint in every workspace, and on the root's own tests and configs (`lint:repo`).                                                                       |
 | `pnpm typecheck`     | `tsc` (and `next typegen` for the Playground).                                                                                                          |
 | `pnpm test`          | Vitest: the package's unit and DOM tests (TSDoc and README-recipe checks included), the apps' tests, and the root's repo-wide config checks.            |
 | `pnpm build`         | The package (`tsdown`, after its CSS build), the Playground and the Vite app.                                                                           |
@@ -51,14 +51,15 @@ The Playground's font picker uses Google's public catalog; set
 | `pnpm e2e:visual`    | The Playground's visual baselines, compared in the pinned Playwright image (Docker). `pnpm e2e:update-snapshots` regenerates them.                      |
 
 CI ([`ci.yml`](.github/workflows/ci.yml)) runs `pnpm format:check`,
-`pnpm turbo lint typecheck test test:repo build` (`test:repo` is a root task:
+`pnpm turbo lint lint:repo typecheck test test:repo build` (`lint:repo` and
+`test:repo` are root tasks, linting and running
 the repo-wide config checks in [`tests/`](tests)), then
 `pnpm turbo check:package`, and the e2e job: `pnpm turbo e2e`, then
 `pnpm turbo visual` (the visual baselines, in the pinned Playwright image).
 On a pull request, the Turbo tasks run with `--affected`: only those whose
 inputs the change touches, compared with the base branch. The e2e job runs on
 a pull request only when
-`turbo query affected` reports an affected `e2e` or `visual` task (a
+`turbo query` reports an affected `e2e` or `visual` task with a script (a
 docs-only change skips it; a `packages/ui` change runs both apps'), and
 whenever that query fails or has no base. `main` runs everything. Run the
 same before opening a PR.

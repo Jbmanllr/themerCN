@@ -5,28 +5,6 @@
     "dev": {
       "with": ["themercn#dev"],
       "passThroughEnv": ["GOOGLE_FONTS_API_KEY"]
-    },
-    "test": {
-      "inputs": [
-        "$TURBO_DEFAULT$",
-        "$TURBO_ROOT$/.claude/settings.json",
-        "$TURBO_ROOT$/.claude/hooks/*",
-        "$TURBO_ROOT$/.gitignore",
-        "$TURBO_ROOT$/.prettierignore",
-        "$TURBO_ROOT$/.github/workflows/ci.yml",
-        "$TURBO_ROOT$/package.json",
-        "$TURBO_ROOT$/pnpm-workspace.yaml",
-        "$TURBO_ROOT$/README.md",
-        "$TURBO_ROOT$/scripts/e2e-affected.sh",
-        "$TURBO_ROOT$/turbo.json",
-        "$TURBO_ROOT$/apps/*/package.json",
-        "$TURBO_ROOT$/apps/*/turbo.json",
-        "$TURBO_ROOT$/apps/*/eslint.config.js",
-        "$TURBO_ROOT$/packages/*/package.json",
-        "$TURBO_ROOT$/packages/*/turbo.json",
-        "$TURBO_ROOT$/packages/*/eslint.config.js",
-        "$TURBO_ROOT$/packages/eslint-config/*.js"
-      ]
     }
   }
 }

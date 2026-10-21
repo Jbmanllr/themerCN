@@ -23,9 +23,9 @@ Single-context: one `GLOSSARY.md` and `docs/adr/` at the repo root. See `docs/ag
 Verify at the tier the moment calls for, scoped to what you changed. `<base>` is your integration branch (the branch your worktree was cut from), or `main` when you work on `main` directly.
 
 - **T0, local loop (never a gate):** while editing, `pnpm --filter <pkg> exec vitest run --changed origin/main --passWithNoTests`, and `pnpm --filter <app> exec playwright test --only-changed=origin/main` while editing specs. A green T0 is feedback, not verification.
-- **T1, ticket handoff:** `TURBO_SCM_BASE=<base> pnpm turbo run lint typecheck test build check:package --affected`. Then `pnpm exec turbo query affected --tasks e2e --base <base> --exit-code`; when it exits nonzero (1 affected, 2 error), also run `TURBO_SCM_BASE=<base> WEB_E2E_PORT=<port> VITE_E2E_PORT=<port> pnpm turbo run e2e:smoke --affected` (`@smoke` plus `a11y`, two workers, stops at the first failure). No Docker visual at T1.
+- **T1, ticket handoff:** `TURBO_SCM_BASE=<base> pnpm turbo run lint typecheck test test:repo build check:package --affected`. Then `pnpm exec turbo query affected --tasks e2e --base <base> --exit-code`; when it exits nonzero (1 affected, 2 error), also run `TURBO_SCM_BASE=<base> WEB_E2E_PORT=<port> VITE_E2E_PORT=<port> pnpm turbo run e2e:smoke --affected` (`@smoke` plus `a11y`, two workers, stops at the first failure). No Docker visual at T1.
 - **T2, per merge into an integration branch:** T1 on the merged result. Escalate to `pnpm e2e` when global inputs changed (root `turbo.json`, `package.json`, the lockfile) or the merge's affected set overlaps a recent merge's.
-- **T3, batch, before the integration→`main` PR:** the full suite once: `pnpm turbo run lint typecheck test build check:package`, `pnpm format:check`, `pnpm e2e`, `pnpm e2e:visual`. On a failure, rerun it once; if it fails again, find the culprit with `git bisect run` over the first-parent merges.
+- **T3, batch, before the integration→`main` PR:** the full suite once: `pnpm turbo run lint typecheck test test:repo build check:package`, `pnpm format:check`, `pnpm e2e`, `pnpm e2e:visual`. On a failure, rerun it once; if it fails again, find the culprit with `git bisect run` over the first-parent merges.
 
 Rules for every tier:
 

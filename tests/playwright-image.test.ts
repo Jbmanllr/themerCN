@@ -13,14 +13,16 @@ const pin = (path: string) =>
 describe("the Playwright image", () => {
   it("CI's e2e job runs in the image matching the @playwright/test pin", () => {
     const images = [
-      ...read("../../.github/workflows/ci.yml").matchAll(
+      ...read("../.github/workflows/ci.yml").matchAll(
         /mcr\.microsoft\.com\/playwright:(\S+)/g
       ),
     ].map((match) => match[1])
-    expect(images).toEqual([`v${pin("./package.json")}-noble`])
+    expect(images).toEqual([`v${pin("../apps/web/package.json")}-noble`])
   })
 
   it("both apps pin the same @playwright/test version", () => {
-    expect(pin("../vite/package.json")).toBe(pin("./package.json"))
+    expect(pin("../apps/vite/package.json")).toBe(
+      pin("../apps/web/package.json")
+    )
   })
 })

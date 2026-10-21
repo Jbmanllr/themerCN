@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # Claude Code Stop hook (wired in .claude/settings.json): T1 of AGENTS.md
 # "Verification tiers". It keeps the turn from ending while the affected
-# lint, typecheck, test, build and package checks fail. It never runs e2e or
-# the visual baselines.
+# lint, typecheck, test (the root's repo-wide checks included), build and
+# package checks fail. It never runs e2e or the visual baselines.
 #
 # Reads the hook input on stdin and works in its `cwd`, the session's
 # worktree. The base is $TURBO_SCM_BASE, else the branch's upstream, else
@@ -61,7 +61,7 @@ if [ "$continuing" = true ] && [ "$tree" = "$(cat "$blocked" 2>/dev/null)" ]; th
 fi
 
 if NO_COLOR=1 TURBO_SCM_BASE=$base pnpm turbo run lint typecheck test \
-  build check:package --affected --output-logs=errors-only \
+  test:repo build check:package --affected --output-logs=errors-only \
   >"$index.out" 2>&1; then
   rm -f "$blocked"
   exit 0
@@ -70,8 +70,8 @@ fi
 echo "$tree" >"$blocked"
 {
   echo "T1 fails (TURBO_SCM_BASE=$base pnpm turbo run lint typecheck test" \
-    "build check:package --affected). Fix it before you stop; never edit" \
-    "or delete a test to get green. Last lines:"
+    "test:repo build check:package --affected). Fix it before you stop;" \
+    "never edit or delete a test to get green. Last lines:"
   tail -n 60 "$index.out"
 } >&2
 exit 2

@@ -26,31 +26,31 @@ const read = (path: string) =>
 describe("formatting", () => {
   it("CI runs a format check", () => {
     const steps = [
-      ...read("../../.github/workflows/ci.yml").matchAll(/run: (.+)/g),
+      ...read("../.github/workflows/ci.yml").matchAll(/run: (.+)/g),
     ].map((match) => match[1])
     expect(steps).toContain("pnpm format:check")
   })
 
   it("the root format check covers the whole repo", () => {
-    const scripts = JSON.parse(read("../../package.json")).scripts
+    const scripts = JSON.parse(read("../package.json")).scripts
     expect(scripts["format:check"]).toBe("prettier --check .")
   })
 
   it("the root format writes exactly what the check checks", () => {
-    const scripts = JSON.parse(read("../../package.json")).scripts
+    const scripts = JSON.parse(read("../package.json")).scripts
     expect(scripts.format).toBe(
       scripts["format:check"].replace("--check", "--write")
     )
   })
 
   it("format is an uncached write with no upstream chain", () => {
-    const { format } = JSON.parse(read("../../turbo.json")).tasks
+    const { format } = JSON.parse(read("../turbo.json")).tasks
     expect(format.cache).toBe(false)
     expect(format.dependsOn ?? []).toEqual([])
   })
 
   it("lint does not wait on upstream lint", () => {
-    const { lint } = JSON.parse(read("../../turbo.json")).tasks
+    const { lint } = JSON.parse(read("../turbo.json")).tasks
     expect(lint.dependsOn ?? []).not.toContain("^lint")
   })
 })
@@ -73,15 +73,12 @@ describe("linting", () => {
   // pnpm-workspace.yaml).
   const linted = ["apps", "packages"]
     .flatMap((group) =>
-      readdirSync(new URL(`../../${group}/`, import.meta.url)).map(
+      readdirSync(new URL(`../${group}/`, import.meta.url)).map(
         (name) => `${group}/${name}`
       )
     )
     .filter((workspace) => {
-      const manifest = new URL(
-        `../../${workspace}/package.json`,
-        import.meta.url
-      )
+      const manifest = new URL(`../${workspace}/package.json`, import.meta.url)
       return (
         existsSync(manifest) &&
         JSON.parse(readFileSync(manifest, "utf8")).scripts?.lint
@@ -100,14 +97,14 @@ describe("linting", () => {
   })
 
   it.each(linted)("%s lint script forbids warnings", (workspace) => {
-    const { scripts } = JSON.parse(read(`../../${workspace}/package.json`))
+    const { scripts } = JSON.parse(read(`../${workspace}/package.json`))
     expect(scripts.lint).toMatch(/--max-warnings[ =]0\b/)
   })
 
   it.each(linted)(
     "%s ESLint run lints its TSX files",
     async (workspace) => {
-      const cwd = fileURLToPath(new URL(`../../${workspace}/`, import.meta.url))
+      const cwd = fileURLToPath(new URL(`../${workspace}/`, import.meta.url))
       const eslint = new ESLint({ cwd })
       const ignored = await Promise.all(
         tsxFiles(cwd).map((file) => eslint.isPathIgnored(file))
@@ -121,9 +118,11 @@ describe("linting", () => {
 
   it("no shared ESLint config downgrades errors to warnings", async () => {
     const configs = await Promise.all([
-      import("@workspace/eslint-config/base").then((m) => m.config),
-      import("@workspace/eslint-config/react-internal").then((m) => m.config),
-      import("@workspace/eslint-config/next-js").then((m) => m.nextJsConfig),
+      import("../packages/eslint-config/base.js").then((m) => m.config),
+      import("../packages/eslint-config/react-internal.js").then(
+        (m) => m.config
+      ),
+      import("../packages/eslint-config/next.js").then((m) => m.nextJsConfig),
     ])
     const plugins = configs
       .flat()
@@ -132,7 +131,7 @@ describe("linting", () => {
   })
 })
 
-const ROOT = fileURLToPath(new URL("../../", import.meta.url))
+const ROOT = fileURLToPath(new URL("../", import.meta.url))
 const TURBO = join(ROOT, "node_modules/.bin/turbo")
 
 // The task graph `turbo run <args>` would run, without running it, from the
@@ -202,13 +201,15 @@ describe("task graph", () => {
 // A task's hash is its cache key and what `--affected` compares: it changes
 // with everything the task's result depends on, and with nothing else.
 describe("task hashes", () => {
-  it.each(["web#test", "vite-app#test", "themercn#test"])(
+  it.each(["web#test", "vite-app#test", "themercn#test", "//#test:repo"])(
     "%s hashes CI, which turns off Vitest's allowOnly",
     (id) => {
       const env = { ...process.env }
       delete env.CI
-      const local = hashes(dryRunWith({ env }, "test"))
-      const ci = hashes(dryRunWith({ env: { ...env, CI: "1" } }, "test"))
+      const run = (env: NodeJS.ProcessEnv) =>
+        hashes(dryRunWith({ env }, "test", "test:repo"))
+      const local = run(env)
+      const ci = run({ ...env, CI: "1" })
       expect(ci[id]).toBeDefined()
       expect(ci[id]).not.toBe(local[id])
     },
@@ -218,7 +219,7 @@ describe("task hashes", () => {
   // Edits a scratch copy of the working tree (its tracked and unignored
   // files) one file at a time; the repo itself is never touched.
   describe("an edit changes the hashes of the tasks that read the file", () => {
-    const TASKS = ["build", "build:css", "test", "e2e", "visual"]
+    const TASKS = ["build", "build:css", "test", "test:repo", "e2e", "visual"]
     let copy: string
     let base: Record<string, string>
     beforeAll(() => {
@@ -290,22 +291,52 @@ describe("task hashes", () => {
         changes: ["vite-app#e2e"],
         keeps: ["vite-app#build"],
       },
-      // The e2e detector's tests live in web#test.
+      // The repo-wide config checks (these tests) live in //#test:repo: it
+      // re-runs when the config they read changes, and no workspace's test
+      // does.
+      {
+        file: ".github/workflows/ci.yml",
+        changes: ["//#test:repo"],
+        keeps: ["web#test", "web#build", "web#e2e"],
+      },
+      {
+        file: "apps/vite/eslint.config.js",
+        changes: ["//#test:repo"],
+        keeps: ["web#test"],
+      },
+      // The shared ESLint config still reaches every workspace's test through
+      // its `^build` dependency, so only the root task is asserted here.
+      {
+        file: "packages/eslint-config/base.js",
+        changes: ["//#test:repo"],
+        keeps: [],
+      },
+      {
+        file: "apps/vite/playwright.config.ts",
+        changes: ["//#test:repo", "vite-app#e2e"],
+        keeps: ["web#test"],
+      },
+      {
+        file: "tests/repo-config.test.ts",
+        changes: ["//#test:repo"],
+        keeps: ["web#test", "web#build"],
+      },
+      // So do the e2e detector's tests.
       {
         file: "scripts/e2e-affected.sh",
-        changes: ["web#test"],
-        keeps: ["web#build", "web#e2e"],
+        changes: ["//#test:repo"],
+        keeps: ["web#test", "web#build", "web#e2e"],
       },
-      // So do the agents' Stop hook's, and its wiring's.
+      // And the agents' Stop hook's, and its wiring's.
       {
         file: ".claude/hooks/stop-t1.sh",
-        changes: ["web#test"],
-        keeps: ["web#build", "web#e2e"],
+        changes: ["//#test:repo"],
+        keeps: ["web#test", "web#build", "web#e2e"],
       },
       {
         file: ".claude/settings.json",
-        changes: ["web#test"],
-        keeps: ["web#build", "web#e2e"],
+        changes: ["//#test:repo"],
+        keeps: ["web#test", "web#build", "web#e2e"],
       },
       {
         file: "packages/themer/README.md",
@@ -332,7 +363,7 @@ describe("task hashes", () => {
 
 describe("shared dependency versions", () => {
   const dependencies = (workspace: string): Record<string, string> =>
-    JSON.parse(read(`../../${workspace}/package.json`)).dependencies ?? {}
+    JSON.parse(read(`../${workspace}/package.json`)).dependencies ?? {}
 
   it("runtime dependencies shared by packages/ui and themercn use the catalog", () => {
     const ui = dependencies("packages/ui")
@@ -356,7 +387,7 @@ describe("shared dependency versions", () => {
     const ui = dependencies("packages/ui")
     const consumers = ["apps", "packages"]
       .flatMap((group) =>
-        readdirSync(new URL(`../../${group}/`, import.meta.url)).map(
+        readdirSync(new URL(`../${group}/`, import.meta.url)).map(
           (name) => `${group}/${name}`
         )
       )
@@ -377,17 +408,17 @@ describe("shared dependency versions", () => {
 
 describe("toolchain", () => {
   it("the root does not depend on the shared ESLint config, so editing it does not invalidate every package", () => {
-    const pkg = JSON.parse(read("../../package.json"))
+    const pkg = JSON.parse(read("../package.json"))
     const deps = { ...pkg.dependencies, ...pkg.devDependencies }
     expect(Object.keys(deps)).not.toContain("@workspace/eslint-config")
   })
 
   it("root engines.node matches the README's Node requirement", () => {
-    const required = read("../../README.md").match(
+    const required = read("../README.md").match(
       /Requires Node (\d+)\.(\d+) or later/
     )
     expect(required).not.toBeNull()
-    const { engines } = JSON.parse(read("../../package.json"))
+    const { engines } = JSON.parse(read("../package.json"))
     expect(engines.node).toBe(`>=${required?.[1]}.${required?.[2]}.0`)
   })
   // CI's concurrency (S57) is evaluated per event in themercn's
@@ -406,7 +437,7 @@ type CiJob = {
 // passes only when every other job passed, so jobs can be added, renamed or
 // made conditional without touching branch protection.
 describe("the CI gate", () => {
-  const ciYml = parse(read("../../.github/workflows/ci.yml")) as {
+  const ciYml = parse(read("../.github/workflows/ci.yml")) as {
     name: string
     jobs: Record<string, CiJob>
   }
@@ -453,7 +484,7 @@ describe("the CI gate", () => {
   })
 
   it("the README's owner bootstrap requires only ci-gate", () => {
-    const protect = read("../../README.md").match(
+    const protect = read("../README.md").match(
       /\*\*Protect `main`\.\*\*([\s\S]*?)\n\d+\. \*\*/
     )?.[1]
     expect(protect).toBeDefined()
@@ -474,7 +505,7 @@ type CiStep = {
 // Pull requests run only the tasks their change affects; every other event
 // (push to main, schedule, dispatch, merge queue) runs everything.
 describe("CI task selection", () => {
-  const ciYml = parse(read("../../.github/workflows/ci.yml")) as {
+  const ciYml = parse(read("../.github/workflows/ci.yml")) as {
     on: Record<string, unknown>
     jobs: Record<
       string,
@@ -553,7 +584,14 @@ describe("CI task selection", () => {
       selections: commands.map((command) => command.affected),
     }
   }
-  const TASKS = ["build", "check:package", "lint", "test", "typecheck"]
+  const TASKS = [
+    "build",
+    "check:package",
+    "lint",
+    "test",
+    "test:repo",
+    "typecheck",
+  ]
 
   // A container runs as a different user from the checkout's owner, and git
   // refuses such a repository ("dubious ownership"): `git rev-parse` and
@@ -724,7 +762,7 @@ describe("CI task selection", () => {
       const { args } = commandsFor("schedule", e2eId).find((c) =>
         QUARANTINED.test(c.args)
       )!
-      const cwd = fileURLToPath(new URL(`../${app}/`, import.meta.url))
+      const cwd = fileURLToPath(new URL(`../apps/${app}/`, import.meta.url))
       expect(() =>
         execFileSync(
           join(cwd, "node_modules/.bin/playwright"),
@@ -763,7 +801,7 @@ describe("CI task selection", () => {
   // Package-level selection ignores root files: a ci.yml-only change would
   // select no task, so the tests guarding ci.yml would not run.
   it("selection is task-level, on each task's inputs", () => {
-    const { futureFlags } = JSON.parse(read("../../turbo.json"))
+    const { futureFlags } = JSON.parse(read("../turbo.json"))
     expect(futureFlags?.affectedUsingTaskInputs).toBe(true)
   })
 })
@@ -889,7 +927,7 @@ describe("the e2e detector", () => {
 // plain `pnpm e2e` never runs them on any host; the `visual` task (and the
 // Docker wrapper) select the project explicitly.
 describe("Playwright tiers", () => {
-  const WEB = fileURLToPath(new URL("./", import.meta.url))
+  const WEB = fileURLToPath(new URL("../apps/web/", import.meta.url))
   // The Playwright projects `playwright test --list <args>` would run.
   const listedProjects = (...args: string[]) =>
     new Set(
@@ -904,8 +942,8 @@ describe("Playwright tiers", () => {
 
   // A retry-pass fails a CI run, and every attempt keeps its trace.
   describe.each([
-    ["web", () => import("./playwright.config")],
-    ["vite", () => import("../vite/playwright.config")],
+    ["web", () => import("../apps/web/playwright.config")],
+    ["vite", () => import("../apps/vite/playwright.config")],
   ])("%s's Playwright config", (_app, importConfig) => {
     // The config as Playwright loads it in a run with this CI value.
     const load = async (ci: string | undefined) => {
@@ -947,7 +985,7 @@ describe("Playwright tiers", () => {
   }, 60_000)
 
   it("the visual task hashes and passes through what e2e does, and caches its report", () => {
-    const { e2e, visual } = JSON.parse(read("../../turbo.json")).tasks
+    const { e2e, visual } = JSON.parse(read("../turbo.json")).tasks
     expect({
       env: visual?.env,
       passThroughEnv: visual?.passThroughEnv,
@@ -966,7 +1004,8 @@ describe("Playwright tiers", () => {
 // a stand-in `pnpm` that records what it ran and exits as given.
 describe("the T1 Stop hook", () => {
   const HOOK = join(ROOT, ".claude/hooks/stop-t1.sh")
-  const T1 = "turbo run lint typecheck test build check:package --affected"
+  const T1 =
+    "turbo run lint typecheck test test:repo build check:package --affected"
   let scratch: string
   beforeAll(() => {
     scratch = mkdtempSync(join(tmpdir(), "themercn-stop-hook-"))
@@ -1135,7 +1174,7 @@ describe("the T1 Stop hook", () => {
   })
 
   it("Claude Code runs it on Stop, from the project's settings", () => {
-    const settings = JSON.parse(read("../../.claude/settings.json"))
+    const settings = JSON.parse(read("../.claude/settings.json"))
     const handlers = (settings.hooks?.Stop ?? []).flatMap(
       (group: { hooks: { type: string; command: string }[] }) => group.hooks
     )

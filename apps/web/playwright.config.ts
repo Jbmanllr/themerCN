@@ -19,6 +19,10 @@ export default defineConfig({
   // A test that passes only on its retry fails a CI run: flakes are fixed or
   // quarantined (`tag: "@quarantine"`, see the README), not retried away.
   failOnFlakyTests: !!process.env.CI,
+  // Tests of the Playground's own pages (`tag: "@playground"`), not of the
+  // Themer, stay out of every run, the gate included, unless
+  // PLAYGROUND_E2E=1 (see the README). CI never sets it.
+  grepInvert: process.env.PLAYGROUND_E2E === "1" ? undefined : /@playground/,
   reporter: process.env.CI ? [["list"], ["html", { open: "never" }]] : "list",
   use: {
     baseURL: `http://localhost:${port}`,

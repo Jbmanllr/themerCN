@@ -1352,6 +1352,122 @@ describe("Playwright tiers", () => {
     expect(visual?.dependencies).toContain("web#build")
   }, 60_000)
 
+  // The gate covers the Themer. Tests of the Playground's own pages are
+  // tagged `@playground` and run only with PLAYGROUND_E2E=1, which CI never
+  // sets.
+  describe("the @playground tests", () => {
+    type Listed = { project: string; title: string; tags: string[] }
+    type Suite = {
+      title: string
+      suites?: Suite[]
+      specs?: {
+        title: string
+        tags: string[]
+        tests: { projectName: string }[]
+      }[]
+    }
+    // The tests `playwright test --list <args>` would run in `app`.
+    const listed = (
+      app: "web" | "vite",
+      args: string[],
+      env: Record<string, string> = {}
+    ): Listed[] => {
+      const cwd = fileURLToPath(new URL(`../apps/${app}/`, import.meta.url))
+      // A flag set in the shell running these checks must not leak in.
+      const inherited = { ...process.env, PLAYGROUND_E2E: "" }
+      const report = JSON.parse(
+        execFileSync(
+          join(cwd, "node_modules/.bin/playwright"),
+          ["test", "--list", "--reporter=json", ...args],
+          {
+            cwd,
+            encoding: "utf8",
+            env: { ...inherited, ...env },
+            stdio: ["ignore", "pipe", "pipe"],
+            maxBuffer: 64 * 1024 * 1024,
+          }
+        )
+      ) as { suites: Suite[] }
+      const walk = (suite: Suite, path: string[]): Listed[] => [
+        ...(suite.specs ?? []).flatMap((spec) =>
+          spec.tests.map((test) => ({
+            project: test.projectName,
+            title: [...path, spec.title].join(" › "),
+            tags: spec.tags.map((tag) => `@${tag.replace(/^@/, "")}`),
+          }))
+        ),
+        ...(suite.suites ?? []).flatMap((child) =>
+          walk(child, [...path, child.title])
+        ),
+      ]
+      return report.suites.flatMap((suite) => walk(suite, [suite.title]))
+    }
+    const playground = (tests: Listed[]) =>
+      tests.filter((test) => test.tags.includes("@playground"))
+
+    // A plain run, the visual task, smoke, and CI's gating arguments.
+    const GATING_RUNS: Record<"web" | "vite", string[][]> = {
+      web: [
+        [],
+        ["--project=visual"],
+        ["--project=chromium", "--grep", "@smoke"],
+        ["--project=a11y"],
+        ["--grep-invert", "@quarantine"],
+        ["--project=visual", "--grep-invert", "@quarantine"],
+      ],
+      vite: [[], ["--grep", "@smoke"], ["--grep-invert", "@quarantine"]],
+    }
+
+    it.each(
+      Object.entries(GATING_RUNS).flatMap(([app, runs]) =>
+        runs.map((args) => [app as "web" | "vite", args] as const)
+      )
+    )(
+      "%s's %j run leaves them out",
+      (app, args) => {
+        const tests = listed(app, args)
+        expect(tests.length).toBeGreaterThan(0)
+        expect(playground(tests)).toEqual([])
+      },
+      60_000
+    )
+
+    it.each([[[] as string[]], [["--project=visual"]], [["--project=a11y"]]])(
+      "PLAYGROUND_E2E=1 adds them to web's %j run",
+      (args) => {
+        const gated = listed("web", args)
+        const all = listed("web", args, { PLAYGROUND_E2E: "1" })
+        expect(playground(all).length).toBeGreaterThan(0)
+        expect(all.length).toBe(gated.length + playground(all).length)
+      },
+      60_000
+    )
+
+    // Smoke is one test per gated journey: none of them is a Playground's.
+    it.each(["web", "vite"] as const)(
+      "no %s @smoke test is a @playground test",
+      (app) => {
+        const all = listed(app, [], { PLAYGROUND_E2E: "1" })
+        expect(
+          playground(all).filter((test) => test.tags.includes("@smoke"))
+        ).toEqual([])
+      },
+      60_000
+    )
+
+    it("CI never sets PLAYGROUND_E2E", () => {
+      expect(read("../.github/workflows/ci.yml")).not.toMatch(/PLAYGROUND_E2E/)
+    })
+
+    it.each(["e2e", "visual", "e2e:smoke"])(
+      "the %s task hashes PLAYGROUND_E2E",
+      (name) => {
+        const { tasks } = JSON.parse(read("../turbo.json"))
+        expect(tasks[name].env).toContain("PLAYGROUND_E2E")
+      }
+    )
+  })
+
   it.each(["visual", "e2e:smoke"])(
     "the %s task hashes, passes through and caches what e2e does",
     (name) => {

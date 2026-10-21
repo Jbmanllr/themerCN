@@ -92,7 +92,7 @@
     },
     "e2e": {
       "dependsOn": ["build"],
-      "env": ["CI"],
+      "env": ["CI", "PLAYGROUND_E2E"],
       "passThroughEnv": [
         "WEB_E2E_PORT",
         "VITE_E2E_PORT",
@@ -108,7 +108,7 @@
     },
     "visual": {
       "dependsOn": ["build"],
-      "env": ["CI"],
+      "env": ["CI", "PLAYGROUND_E2E"],
       "passThroughEnv": [
         "WEB_E2E_PORT",
         "VITE_E2E_PORT",
@@ -124,7 +124,7 @@
     },
     "e2e:smoke": {
       "dependsOn": ["build"],
-      "env": ["CI"],
+      "env": ["CI", "PLAYGROUND_E2E"],
       "passThroughEnv": [
         "WEB_E2E_PORT",
         "VITE_E2E_PORT",

@@ -70,13 +70,15 @@ for (const colorScheme of ["light", "dark"] as const) {
     test.use({ colorScheme })
 
     for (const route of routes) {
-      test(`${route} has no serious or critical axe violations`, async ({
-        page,
-      }) => {
-        await page.goto(route)
-        await settlePage(page)
-        expect(await blockingViolations(page)).toEqual([])
-      })
+      test(
+        `${route} has no serious or critical axe violations`,
+        { tag: "@playground" },
+        async ({ page }) => {
+          await page.goto(route)
+          await settlePage(page)
+          expect(await blockingViolations(page)).toEqual([])
+        }
+      )
     }
   })
 }
@@ -125,7 +127,7 @@ test("the open Toolbar and its panel popup have no serious or critical axe viola
 
 // WCAG 2.1.4: no single-letter shortcut. Speech input dictating a "d" must not
 // flip the colour mode; the Themer's mode control is the way to switch.
-test("pressing d changes nothing", async ({ page }) => {
+test("pressing d changes nothing", { tag: "@playground" }, async ({ page }) => {
   await page.goto("/")
   await settlePage(page)
   const html = page.locator("html")

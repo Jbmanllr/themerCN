@@ -1,10 +1,20 @@
 import { execFileSync } from "node:child_process"
-import { existsSync, readdirSync, readFileSync } from "node:fs"
+import {
+  appendFileSync,
+  cpSync,
+  existsSync,
+  mkdtempSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs"
+import { tmpdir } from "node:os"
 import { join } from "node:path"
 import { fileURLToPath } from "node:url"
 
 import { ESLint } from "eslint"
-import { describe, expect, it } from "vitest"
+import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
 // Repo-wide config assertions: the gates are only worth having if the config
 // that wires them stays wired.
@@ -120,16 +130,34 @@ describe("linting", () => {
   })
 })
 
-// The task graph `turbo run <args>` would run, without running it.
-type DryTask = { taskId: string; command: string; dependencies: string[] }
-const dryRun = (...args: string[]): DryTask[] =>
+const ROOT = fileURLToPath(new URL("../../", import.meta.url))
+const TURBO = join(ROOT, "node_modules/.bin/turbo")
+
+// The task graph `turbo run <args>` would run, without running it, from the
+// repo root or from `cwd` (a copy of the repo) with `env` as its environment.
+type DryTask = {
+  taskId: string
+  command: string
+  hash: string
+  dependencies: string[]
+}
+const dryRunWith = (
+  { cwd = ROOT, env = process.env }: { cwd?: string; env?: NodeJS.ProcessEnv },
+  ...args: string[]
+): DryTask[] =>
   JSON.parse(
-    execFileSync("pnpm", ["exec", "turbo", "run", ...args, "--dry=json"], {
-      cwd: fileURLToPath(new URL("../../", import.meta.url)),
+    execFileSync(TURBO, ["run", ...args, "--dry=json"], {
+      cwd,
+      env,
       encoding: "utf8",
       maxBuffer: 64 * 1024 * 1024,
+      // A copy has no node_modules, and turbo warns that it runs a global one.
+      stdio: ["ignore", "pipe", "pipe"],
     })
   ).tasks
+const dryRun = (...args: string[]) => dryRunWith({}, ...args)
+const hashes = (tasks: DryTask[]) =>
+  Object.fromEntries(tasks.map((t) => [t.taskId, t.hash]))
 const APPS = ["web", "vite-app"]
 
 describe("task graph", () => {
@@ -167,6 +195,120 @@ describe("task graph", () => {
     },
     60_000
   )
+})
+
+// A task's hash is its cache key and what `--affected` compares: it changes
+// with everything the task's result depends on, and with nothing else.
+describe("task hashes", () => {
+  it.each(["web#test", "vite-app#test", "themercn#test"])(
+    "%s hashes CI, which turns off Vitest's allowOnly",
+    (id) => {
+      const env = { ...process.env }
+      delete env.CI
+      const local = hashes(dryRunWith({ env }, "test"))
+      const ci = hashes(dryRunWith({ env: { ...env, CI: "1" } }, "test"))
+      expect(ci[id]).toBeDefined()
+      expect(ci[id]).not.toBe(local[id])
+    },
+    60_000
+  )
+
+  // Edits a scratch copy of the working tree (its tracked and unignored
+  // files) one file at a time; the repo itself is never touched.
+  describe("an edit changes the hashes of the tasks that read the file", () => {
+    const TASKS = ["build", "build:css", "test", "e2e"]
+    let copy: string
+    let base: Record<string, string>
+    beforeAll(() => {
+      copy = mkdtempSync(join(tmpdir(), "themercn-hashes-"))
+      execFileSync(
+        "git",
+        ["ls-files", "-z", "--cached", "--others", "--exclude-standard"],
+        { cwd: ROOT, encoding: "utf8" }
+      )
+        .split("\0")
+        .filter((file) => file && existsSync(join(ROOT, file)))
+        .forEach((file) => cpSync(join(ROOT, file), join(copy, file)))
+      base = hashes(dryRunWith({ cwd: copy }, ...TASKS))
+    }, 60_000)
+    afterAll(() => rmSync(copy, { recursive: true, force: true }))
+
+    // The tasks whose hash an edit to `file` (or creating it) changes.
+    const changedBy = (file: string) => {
+      const path = join(copy, file)
+      const original = existsSync(path) ? readFileSync(path) : undefined
+      appendFileSync(path, "\n// hash probe\n")
+      try {
+        const after = hashes(dryRunWith({ cwd: copy }, ...TASKS))
+        return Object.keys(base).filter((id) => after[id] !== base[id])
+      } finally {
+        if (original) writeFileSync(path, original)
+        else rmSync(path)
+      }
+    }
+
+    it.each([
+      {
+        file: "packages/themer/src/utils/color-converter.test.ts",
+        changes: ["themercn#test"],
+        keeps: ["themercn#build", "themercn#build:css", "web#build"],
+      },
+      {
+        file: "packages/ui/src/components/hash-probe.test.tsx",
+        changes: [],
+        keeps: ["themercn#build", "themercn#build:css", "web#build"],
+      },
+      {
+        file: "apps/web/lib/shop.test.ts",
+        changes: ["web#test"],
+        keeps: ["web#build"],
+      },
+      {
+        file: "apps/web/vitest.config.ts",
+        changes: ["web#test"],
+        keeps: ["web#build"],
+      },
+      {
+        file: "apps/web/e2e/shop.spec.ts",
+        changes: ["web#e2e"],
+        keeps: ["web#build"],
+      },
+      {
+        file: "apps/web/playwright.config.ts",
+        changes: ["web#e2e"],
+        keeps: ["web#build"],
+      },
+      {
+        file: "apps/web/e2e/visual.spec.ts-snapshots/cart-dark-visual-linux.png",
+        changes: ["web#e2e"],
+        keeps: ["web#build"],
+      },
+      {
+        file: "apps/vite/e2e/hash-probe.spec.ts",
+        changes: ["vite-app#e2e"],
+        keeps: ["vite-app#build"],
+      },
+      {
+        file: "packages/themer/README.md",
+        changes: [],
+        keeps: ["themercn#build", "themercn#build:css"],
+      },
+      // The control: a source edit still reaches every build that bundles it.
+      {
+        file: "packages/ui/src/components/button.tsx",
+        changes: ["themercn#build", "themercn#build:css", "web#build"],
+        keeps: [],
+      },
+    ])(
+      "$file",
+      ({ file, changes, keeps }) => {
+        const changed = changedBy(file)
+        expect(changed).toEqual(expect.arrayContaining(changes))
+        expect(changed.filter((id) => keeps.includes(id))).toEqual([])
+      },
+      60_000
+    )
+  })
 })
 
 describe("shared dependency versions", () => {

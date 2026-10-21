@@ -115,10 +115,9 @@ These need the npm and GitHub owner accounts, once, in this order:
    Actions to create and approve pull requests". (It governs `GITHUB_TOKEN`;
    the version step uses the App token.)
 4. **Protect `main`.** Under repository Settings → Branches, the `main` rule
-   requires both CI jobs' status checks
-   (`Lint, typecheck, test, build, package checks` and
-   `E2E (Playwright, Chromium)`), requires branches to be up to date before
-   merging (strict), and is enforced for administrators ("Do not allow
+   requires one status check, `ci-gate` (CI's summary job: it fails when any
+   other CI job fails or is cancelled), requires branches to be up to date
+   before merging (strict), and is enforced for administrators ("Do not allow
    bypassing the above settings").
 5. **Publish a `0.0.0` placeholder** (trusted publishing can only be linked to
    a package that exists). Logged in to npm with 2FA:

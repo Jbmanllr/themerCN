@@ -767,10 +767,16 @@ describe("CI task selection", () => {
     }
   )
 
-  it.each(["schedule", "workflow_dispatch"])(
-    "%s repeats the quarantined tests of every e2e task, without gating",
-    (event) => {
-      const quarantined = commandsFor(event, e2eId).filter((c) =>
+  // However the gating run went, short of a cancelled job: a quarantined
+  // test's record must not depend on the gate passing.
+  it.each(
+    ["schedule", "workflow_dispatch"].flatMap((event) =>
+      (["success", "failure"] as const).map((status) => ({ event, status }))
+    )
+  )(
+    "$event repeats the quarantined tests of every e2e task, without gating, after a gating $status",
+    ({ event, status }) => {
+      const quarantined = commandsFor(event, e2eId, status).filter((c) =>
         QUARANTINED.test(c.args)
       )
       expect(quarantined.flatMap((c) => c.tasks).sort()).toEqual([
@@ -785,24 +791,63 @@ describe("CI task selection", () => {
     }
   )
 
+  it("a cancelled job runs no quarantined test", () => {
+    expect(
+      commandsFor("schedule", e2eId, "cancelled").filter((c) =>
+        QUARANTINED.test(c.args)
+      )
+    ).toEqual([])
+  })
+
+  // The quarantine steps, each with the commands it runs.
+  const quarantineSteps = () =>
+    (e2eJob?.steps ?? []).filter((step) =>
+      turboCommandsOf(step).some((c) => QUARANTINED.test(c.args))
+    )
+
+  // A failing step ends its own run: one task's quarantined failures must
+  // not skip the other's.
+  it("runs each task's quarantined tests in a step of its own", () => {
+    const steps = quarantineSteps()
+    expect(steps.map((step) => turboCommandsOf(step).length)).toEqual(
+      steps.map(() => 1)
+    )
+  })
+
+  // Its report is the only record of a quarantined test's failures.
+  it("a failed quarantine run uploads its report, whichever task failed", () => {
+    const upload = e2eJob?.steps.find((step) =>
+      step.uses?.startsWith("actions/upload-artifact@")
+    )
+    const steps = quarantineSteps()
+    expect(steps.length).toBeGreaterThan(1)
+    for (const failed of steps) {
+      expect(failed.id).toBeDefined()
+      const outcomes = Object.fromEntries(
+        steps.map((step) => [
+          step.id,
+          { outcome: step === failed ? "failure" : "success" },
+        ])
+      )
+      expect(
+        runsIf(upload?.if, {
+          github: { event_name: "schedule" },
+          steps: outcomes,
+        }),
+        failed.id
+      ).toBe(true)
+    }
+    expect(
+      runsIf(upload?.if, { github: { event_name: "schedule" }, steps: {} })
+    ).toBe(false)
+  })
+
   it.each(["pull_request", "push", "merge_group"])(
     "%s runs no non-gating command",
     (event) => {
       expect(commandsFor(event, e2eId).filter((c) => !c.gating)).toEqual([])
     }
   )
-
-  // Its report is the only record of a quarantined test's failures.
-  it("a failed quarantine run uploads its report", () => {
-    const quarantine = e2eJob?.steps.find((step) =>
-      turboCommandsOf(step).some((c) => QUARANTINED.test(c.args))
-    )
-    const upload = e2eJob?.steps.find((step) =>
-      step.uses?.startsWith("actions/upload-artifact@")
-    )
-    expect(quarantine?.id).toBeDefined()
-    expect(upload?.if).toContain(`steps.${quarantine?.id}.outcome == 'failure'`)
-  })
 
   // Playwright accepts the arguments, and a run with no quarantined test
   // (the usual case) passes.

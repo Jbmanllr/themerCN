@@ -181,15 +181,20 @@ jobs:
           pnpm turbo visual -- --grep-invert @quarantine
 
       # The quarantined tests, ten times each: their failures show in the
-      # uploaded report, never in the gate. `--pass-with-no-tests`: usually
-      # none is quarantined.
+      # uploaded report, never in the gate. Each task in a step of its own,
+      # and whether or not the gating run above passed, so neither's failure
+      # skips the other. `--pass-with-no-tests`: usually none is quarantined.
       - name: Quarantined e2e (scheduled)
-        id: quarantine
-        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+        id: quarantine-e2e
+        if: (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && !cancelled()
         continue-on-error: true
-        run: |
-          pnpm turbo e2e -- --grep @quarantine --repeat-each=10 --pass-with-no-tests
-          pnpm turbo visual -- --grep @quarantine --repeat-each=10 --pass-with-no-tests
+        run: pnpm turbo e2e -- --grep @quarantine --repeat-each=10 --pass-with-no-tests
+
+      - name: Quarantined visual (scheduled)
+        id: quarantine-visual
+        if: (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && !cancelled()
+        continue-on-error: true
+        run: pnpm turbo visual -- --grep @quarantine --repeat-each=10 --pass-with-no-tests
 
       - if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
@@ -197,7 +202,7 @@ jobs:
           path: .turbo/cache
           key: turbo-e2e-${{ github.sha }}
 
-      - if: failure() || steps.quarantine.outcome == 'failure'
+      - if: failure() || steps.quarantine-e2e.outcome == 'failure' || steps.quarantine-visual.outcome == 'failure'
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: playwright-report

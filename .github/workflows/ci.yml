@@ -4,6 +4,12 @@ on:
   pull_request:
   push:
     branches: [main]
+  # The backstop: with pushes to main, these run the full suite, with no
+  # task selection. release.yml releases only push runs.
+  merge_group:
+  schedule:
+    - cron: "0 4 * * 1" # Monday 04:00 UTC
+  workflow_dispatch:
 
 # A pull request's new push cancels its superseded run. Each push to main
 # gets a group of its own: a run waiting in a shared group is cancelled by the

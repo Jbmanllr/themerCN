@@ -37,26 +37,29 @@ plus a CSS-build watcher), so Themer edits reach the apps without a restart.
 The Playground's font picker uses Google's public catalog; set
 `GOOGLE_FONTS_API_KEY` (server-only) to use the Fonts Developer API instead.
 
-| Command              | Runs                                                                                                                      |
-| -------------------- | ------------------------------------------------------------------------------------------------------------------------- |
-| `pnpm format`        | Prettier writes the whole repo (one root config and ignore file).                                                         |
-| `pnpm format:check`  | Prettier checks the whole repo, as CI does first.                                                                         |
-| `pnpm lint`          | ESLint in every workspace.                                                                                                |
-| `pnpm typecheck`     | `tsc` (and `next typegen` for the Playground).                                                                            |
-| `pnpm test`          | Vitest: the package's unit and DOM tests (TSDoc and README-recipe checks included), the apps' tests.                      |
-| `pnpm build`         | The package (`tsdown`, after its CSS build), the Playground and the Vite app.                                             |
-| `pnpm check:package` | After the build: publint, attw, the tarball and entry checks, and the Vite app's off-build check.                         |
-| `pnpm e2e`           | Playwright (Chromium) for both apps, after a build. First run: `pnpm --filter vite-app exec playwright install chromium`. |
-| `pnpm e2e:smoke`     | One `@smoke` test per journey plus `a11y`, two workers, after a build. Ports: `WEB_E2E_PORT`, `VITE_E2E_PORT`.            |
+| Command              | Runs                                                                                                                                                    |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `pnpm format`        | Prettier writes the whole repo (one root config and ignore file).                                                                                       |
+| `pnpm format:check`  | Prettier checks the whole repo, as CI does first.                                                                                                       |
+| `pnpm lint`          | ESLint in every workspace.                                                                                                                              |
+| `pnpm typecheck`     | `tsc` (and `next typegen` for the Playground).                                                                                                          |
+| `pnpm test`          | Vitest: the package's unit and DOM tests (TSDoc and README-recipe checks included), the apps' tests.                                                    |
+| `pnpm build`         | The package (`tsdown`, after its CSS build), the Playground and the Vite app.                                                                           |
+| `pnpm check:package` | After the build: publint, attw, the tarball and entry checks, and the Vite app's off-build check.                                                       |
+| `pnpm e2e`           | Playwright (Chromium) for both apps, after a build, without the visual baselines. First run: `pnpm --filter vite-app exec playwright install chromium`. |
+| `pnpm e2e:smoke`     | One `@smoke` test per journey plus `a11y`, two workers, after a build. Ports: `WEB_E2E_PORT`, `VITE_E2E_PORT`.                                          |
+| `pnpm e2e:visual`    | The Playground's visual baselines, compared in the pinned Playwright image (Docker). `pnpm e2e:update-snapshots` regenerates them.                      |
 
 CI ([`ci.yml`](.github/workflows/ci.yml)) runs `pnpm format:check`,
 `pnpm turbo lint typecheck test build`, then `pnpm turbo check:package`, and
-the e2e job. On a pull request, the Turbo tasks run with `--affected`: only
-those whose inputs the change touches, compared with the base branch. The
-e2e job runs on a pull request only when `turbo query affected` reports an
-affected `e2e` task (a docs-only change skips it; a `packages/ui` change runs
-both apps'), and whenever that query fails or has no base. `main` runs
-everything. Run the same before opening a PR.
+the e2e job: `pnpm turbo e2e`, then `pnpm turbo visual` (the visual
+baselines, in the pinned Playwright image). On a pull request, the Turbo
+tasks run with `--affected`: only those whose inputs the change touches,
+compared with the base branch. The e2e job runs on a pull request only when
+`turbo query affected` reports an affected `e2e` or `visual` task (a
+docs-only change skips it; a `packages/ui` change runs both apps'), and
+whenever that query fails or has no base. `main` runs everything. Run the
+same before opening a PR.
 
 Things to know:
 

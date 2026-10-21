@@ -22,7 +22,9 @@ export default defineConfig({
     trace: "retain-on-failure",
   },
   // Visual baselines are produced only in the pinned Playwright image
-  // (`pnpm e2e:update-snapshots`); a run never writes missing ones.
+  // (`pnpm e2e:update-snapshots`); a run never writes missing ones. The
+  // visual project runs only when named (`--project=visual`: the `visual`
+  // task and the Docker wrapper), never in a plain `pnpm e2e`.
   updateSnapshots: "none",
   projects: [
     {
@@ -30,7 +32,12 @@ export default defineConfig({
       testIgnore: ["visual.spec.ts", "a11y.spec.ts"],
       use: desktop,
     },
-    { name: "visual", testMatch: "visual.spec.ts", use: desktop },
+    {
+      name: "visual",
+      testMatch: "visual.spec.ts",
+      use: desktop,
+      default: false,
+    },
     { name: "a11y", testMatch: "a11y.spec.ts", use: desktop },
   ],
   webServer: {

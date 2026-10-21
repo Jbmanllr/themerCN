@@ -119,12 +119,14 @@ jobs:
 
       # Names the tasks the e2e job runs below.
       - id: detect
-        run: scripts/e2e-affected.sh e2e
+        run: scripts/e2e-affected.sh e2e visual
 
-  # Smoke, visual and a11y Playwright projects. Runs in the Playwright image
+  # The e2e task (every Playwright project but visual), then the visual
+  # task (the Playground's visual baselines). Runs in the Playwright image
   # pinned to the @playwright/test version (apps/web, apps/vite): the visual
   # baselines are rendered there (`pnpm e2e:update-snapshots`), so CI must
-  # render the same way. The image ships the browsers.
+  # render the same way. The image ships the browsers. The two tasks run one
+  # after the other: each starts the Playground's server on the same port.
   e2e:
     name: E2E (Playwright, Chromium)
     needs: changes
@@ -162,10 +164,13 @@ jobs:
           TURBO_SCM_BASE=$(git rev-parse HEAD^1)
           export TURBO_SCM_BASE
           pnpm turbo e2e --affected
+          pnpm turbo visual --affected
 
       - name: All e2e
         if: github.event_name != 'pull_request'
-        run: pnpm turbo e2e
+        run: |
+          pnpm turbo e2e
+          pnpm turbo visual
 
       - if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0

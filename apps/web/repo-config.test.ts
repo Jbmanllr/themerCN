@@ -218,7 +218,7 @@ describe("task hashes", () => {
   // Edits a scratch copy of the working tree (its tracked and unignored
   // files) one file at a time; the repo itself is never touched.
   describe("an edit changes the hashes of the tasks that read the file", () => {
-    const TASKS = ["build", "build:css", "test", "e2e"]
+    const TASKS = ["build", "build:css", "test", "e2e", "visual"]
     let copy: string
     let base: Record<string, string>
     beforeAll(() => {
@@ -282,7 +282,7 @@ describe("task hashes", () => {
       },
       {
         file: "apps/web/e2e/visual.spec.ts-snapshots/cart-dark-visual-linux.png",
-        changes: ["web#e2e"],
+        changes: ["web#visual"],
         keeps: ["web#build"],
       },
       {
@@ -583,9 +583,10 @@ describe("CI task selection", () => {
     }
   })
 
+  // The visual baselines are their own task, in the same pinned image.
   it("pull requests run the affected e2e tasks, against the detector's base", () => {
     const { tasks, selections } = turboFor("pull_request", e2eId)
-    expect(tasks).toEqual(["e2e"])
+    expect(tasks).toEqual(["e2e", "visual"])
     expect(selections).not.toContain(false)
     expect(scriptFor("pull_request", e2eId)).toMatch(
       /TURBO_SCM_BASE=\$\(git rev-parse HEAD\^1\)/
@@ -596,7 +597,7 @@ describe("CI task selection", () => {
     "%s runs every e2e task with no selection",
     (event) => {
       const { tasks, selections } = turboFor(event, e2eId)
-      expect(tasks).toEqual(["e2e"])
+      expect(tasks).toEqual(["e2e", "visual"])
       expect(selections).not.toContain(true)
     }
   )
@@ -748,4 +749,53 @@ describe("the e2e detector", () => {
       })
     }
   )
+})
+
+// Visual baselines are rendered only in the pinned Playwright image, so a
+// plain `pnpm e2e` never runs them on any host; the `visual` task (and the
+// Docker wrapper) select the project explicitly.
+describe("Playwright tiers", () => {
+  const WEB = fileURLToPath(new URL("./", import.meta.url))
+  // The Playwright projects `playwright test --list <args>` would run.
+  const listedProjects = (...args: string[]) =>
+    new Set(
+      [
+        ...execFileSync(
+          join(WEB, "node_modules/.bin/playwright"),
+          ["test", "--list", ...args],
+          { cwd: WEB, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] }
+        ).matchAll(/^\s+\[([\w-]+)\] › /gm),
+      ].map((match) => match[1])
+    )
+
+  it("a plain run lists no visual test", () => {
+    const projects = listedProjects()
+    expect(projects).toContain("chromium")
+    expect(projects).not.toContain("visual")
+  }, 30_000)
+
+  it("the visual project lists its tests when named", () => {
+    expect([...listedProjects("--project=visual")]).toEqual(["visual"])
+  }, 30_000)
+
+  it("the web visual task runs only the visual project, after the build", () => {
+    const [visual] = dryRun("visual", "--filter=web").filter(
+      (t) => t.taskId === "web#visual"
+    )
+    expect(visual?.command).toMatch(/playwright test --project=visual\b/)
+    expect(visual?.dependencies).toContain("web#build")
+  }, 60_000)
+
+  it("the visual task hashes and passes through what e2e does, and caches its report", () => {
+    const { e2e, visual } = JSON.parse(read("../../turbo.json")).tasks
+    expect({
+      env: visual?.env,
+      passThroughEnv: visual?.passThroughEnv,
+      outputs: visual?.outputs,
+    }).toEqual({
+      env: e2e.env,
+      passThroughEnv: e2e.passThroughEnv,
+      outputs: e2e.outputs,
+    })
+  })
 })

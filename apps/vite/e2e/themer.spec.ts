@@ -15,24 +15,26 @@ function pagePrimary(page: Page) {
   })
 }
 
-test("a token edited in the Themer restyles the page and survives a reload", async ({
-  page,
-}) => {
-  await page.goto("/")
-  await expect(page.getByRole("heading", { name: "Vite app" })).toBeVisible()
-  expect(await pagePrimary(page)).not.toBe("rgb(255, 0, 0)")
+test(
+  "a token edited in the Themer restyles the page and survives a reload",
+  { tag: "@smoke" },
+  async ({ page }) => {
+    await page.goto("/")
+    await expect(page.getByRole("heading", { name: "Vite app" })).toBeVisible()
+    expect(await pagePrimary(page)).not.toBe("rgb(255, 0, 0)")
 
-  await page.getByRole("button", { name: "Open Themer" }).click()
-  await page.getByRole("button", { name: /^Primary & Secondary/ }).click()
-  const primary = page.getByLabel("Primary", { exact: true })
-  await primary.fill("#ff0000")
+    await page.getByRole("button", { name: "Open Themer" }).click()
+    await page.getByRole("button", { name: /^Primary & Secondary/ }).click()
+    const primary = page.getByLabel("Primary", { exact: true })
+    await primary.fill("#ff0000")
 
-  await expect.poll(() => pagePrimary(page)).toBe("rgb(255, 0, 0)")
+    await expect.poll(() => pagePrimary(page)).toBe("rgb(255, 0, 0)")
 
-  await page.reload()
-  await expect(page.getByRole("heading", { name: "Vite app" })).toBeVisible()
-  expect(await pagePrimary(page)).toBe("rgb(255, 0, 0)")
-})
+    await page.reload()
+    await expect(page.getByRole("heading", { name: "Vite app" })).toBeVisible()
+    expect(await pagePrimary(page)).toBe("rgb(255, 0, 0)")
+  }
+)
 
 test("the mode the Themer switched to is the first paint of a reload, with the saved Theme", async ({
   page,

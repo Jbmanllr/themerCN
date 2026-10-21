@@ -13,6 +13,7 @@
     "typecheck": "turbo typecheck",
     "test": "turbo test",
     "e2e": "turbo e2e",
+    "e2e:smoke": "turbo e2e:smoke",
     "e2e:visual": "scripts/playwright-docker.sh",
     "e2e:update-snapshots": "scripts/playwright-docker.sh --update-snapshots"
   },

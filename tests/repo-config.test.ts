@@ -384,6 +384,18 @@ describe("task hashes", () => {
         changes: ["//#test:repo"],
         keeps: ["web#test", "web#build", "web#e2e"],
       },
+      // The build-exclusion checks read the Tailwind entries, which the
+      // builds read too.
+      {
+        file: "packages/ui/src/styles/globals.css",
+        changes: ["//#test:repo", "web#build"],
+        keeps: [],
+      },
+      {
+        file: "packages/themer/src/styles/themer.css",
+        changes: ["//#test:repo", "themercn#build:css"],
+        keeps: [],
+      },
       {
         file: "packages/themer/README.md",
         changes: [],
@@ -403,6 +415,97 @@ describe("task hashes", () => {
         expect(changed.filter((id) => keeps.includes(id))).toEqual([])
       },
       60_000
+    )
+  })
+})
+
+// What a build reads is kept out of it in two places that must agree: the
+// build tasks' Turbo inputs (the hash) and Tailwind's `@source not` entries
+// (what the CSS can pick up). One list, root build:css's exclusions, is the
+// reference; a file it excludes must reach no build's hash and no CSS.
+describe("build input exclusions", () => {
+  const root = JSON.parse(read("../turbo.json")).tasks
+  const themer = JSON.parse(read("../packages/themer/turbo.json")).tasks
+  const exclusions = (inputs: string[]) =>
+    inputs.filter((glob) => glob.startsWith("!")).map((glob) => glob.slice(1))
+  const SHARED: string[] = exclusions(root["build:css"].inputs)
+  // Globs that match below any directory (`**/...`), not just a package's.
+  const NESTED = SHARED.filter((glob) => glob.startsWith("**/"))
+  const UI_SRC = "$TURBO_ROOT$/packages/ui/src"
+  const lists: [string, string[]][] = [
+    ["build", root.build.inputs],
+    ["build:css", root["build:css"].inputs],
+    ["themercn build", themer.build.inputs],
+    ["themercn build:css", themer["build:css"].inputs],
+  ]
+
+  it("excludes the tests, specs, snapshots, docs and test configs", () => {
+    expect(SHARED).toEqual(
+      expect.arrayContaining([
+        "**/*.test.{ts,tsx}",
+        "e2e/**",
+        "**/__snapshots__/**",
+        "**/*-snapshots/**",
+        "*.md",
+        "vitest.config.*",
+        "playwright.config.*",
+      ])
+    )
+  })
+
+  // themercn's own lists replace the root's, so they repeat it; they also
+  // keep out their generated CSS and packages/ui's own test files.
+  it.each(lists)("%s excludes exactly the shared globs", (_name, inputs) => {
+    const own = exclusions(inputs).filter(
+      (glob) => glob !== "src/generated/**" && !glob.startsWith(UI_SRC)
+    )
+    expect(own).toEqual(SHARED)
+  })
+
+  it.each(lists.slice(2))(
+    "%s excludes them from packages/ui's sources too",
+    (_name, inputs) => {
+      expect(inputs).toContain(`${UI_SRC}/**`)
+      expect(exclusions(inputs).filter((g) => g.startsWith(UI_SRC))).toEqual(
+        NESTED.map((glob) => `${UI_SRC}/${glob}`)
+      )
+    }
+  )
+
+  // A Tailwind source path for a Turbo glob under `dir`: `@source not`
+  // takes a directory for a `/**` glob.
+  const under = (dir: string, glob: string) =>
+    `${dir}/${glob.replace(/\/\*\*$/, "")}`
+  const sourceNots = (css: string) =>
+    [...css.matchAll(/^@source not "([^"]+)";$/gm)].map((match) => match[1])
+
+  // The apps import it: their automatic source detection scans each app's
+  // whole directory, and its own `@source` adds packages/ui's sources.
+  it("globals.css keeps every excluded file of the apps and ui out of the CSS", () => {
+    const css = read("../packages/ui/src/styles/globals.css")
+    expect(css).toContain('@source "../**/*.{ts,tsx}";')
+    expect(sourceNots(css)).toEqual(
+      expect.arrayContaining([
+        ...SHARED.map((glob) =>
+          glob.startsWith("**/")
+            ? under("../../../../apps", glob)
+            : under("../../../../apps/*", glob)
+        ),
+        ...NESTED.map((glob) => under("..", glob)),
+      ])
+    )
+  })
+
+  it("themer.css keeps every excluded file of its sources out of the CSS", () => {
+    const css = read("../packages/themer/src/styles/themer.css")
+    expect(css).toMatch(/^@source "\.\.";$/m)
+    expect(css).toMatch(/^@source "\.\.\/\.\.\/\.\.\/ui\/src";$/m)
+    expect(sourceNots(css)).toEqual(
+      expect.arrayContaining(
+        ["..", "../../../ui/src"].flatMap((dir) =>
+          NESTED.map((glob) => under(dir, glob))
+        )
+      )
     )
   })
 })

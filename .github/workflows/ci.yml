@@ -94,9 +94,9 @@ jobs:
           key: turbo-checks-${{ github.sha }}
 
   # Decides whether the e2e job runs, from Turbo's graph: a pull request
-  # skips it only when `turbo query affected` reports none of the tasks the
-  # e2e job runs as affected (scripts/e2e-affected.sh). It fails open: a
-  # query error, a missing base and every other event run e2e.
+  # skips it only when `turbo query` reports no task the e2e job runs, with a
+  # script, as affected (scripts/e2e-affected.sh). It fails open: a query
+  # error, a missing base and every other event run e2e.
   changes:
     name: Detect affected e2e tasks
     runs-on: ubuntu-latest

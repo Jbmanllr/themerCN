@@ -11,7 +11,7 @@ import {
   writeFileSync,
 } from "node:fs"
 import { tmpdir } from "node:os"
-import { join } from "node:path"
+import { dirname, join } from "node:path"
 import { fileURLToPath } from "node:url"
 
 import { ESLint } from "eslint"
@@ -272,13 +272,15 @@ describe("task hashes", () => {
     const changedBy = (file: string) => {
       const path = join(copy, file)
       const original = existsSync(path) ? readFileSync(path) : undefined
+      // The first directory the probe creates, if any, to remove after.
+      const created = mkdirSync(dirname(path), { recursive: true })
       appendFileSync(path, "\n// hash probe\n")
       try {
         const after = hashes(dryRunWith({ cwd: copy }, ...HASHED_TASKS))
         return Object.keys(base).filter((id) => after[id] !== base[id])
       } finally {
         if (original) writeFileSync(path, original)
-        else rmSync(path)
+        else rmSync(created ?? path, { recursive: true })
       }
     }
 
@@ -286,7 +288,14 @@ describe("task hashes", () => {
       {
         file: "packages/themer/src/utils/color-converter.test.ts",
         changes: ["themercn#test"],
-        keeps: ["themercn#build", "themercn#build:css", "web#build"],
+        keeps: [
+          "themercn#build",
+          "themercn#build:css",
+          "web#build",
+          "themercn#e2e",
+          "web#e2e",
+          "vite-app#e2e",
+        ],
       },
       {
         file: "packages/ui/src/components/hash-probe.test.tsx",
@@ -296,12 +305,17 @@ describe("task hashes", () => {
       {
         file: "apps/web/lib/shop.test.ts",
         changes: ["web#test"],
-        keeps: ["web#build"],
+        keeps: ["web#build", "web#e2e", "web#visual"],
       },
       {
         file: "apps/web/vitest.config.ts",
         changes: ["web#test"],
-        keeps: ["web#build"],
+        keeps: ["web#build", "web#e2e", "web#visual"],
+      },
+      {
+        file: "apps/vite/src/__snapshots__/hash-probe.test.tsx.snap",
+        changes: ["vite-app#test"],
+        keeps: ["vite-app#build", "vite-app#e2e", "vite-app#visual"],
       },
       {
         file: "apps/web/e2e/shop.spec.ts",
@@ -945,9 +959,9 @@ const scriptSandbox = (name: string) => {
 
 // The detector CI's `changes` job runs to decide whether the e2e job runs.
 // It fails open: only a pull request whose base resolves and on which Turbo
-// reports no affected e2e task skips the job. Each case runs the real script
-// in a scratch repository, with a stand-in `pnpm` whose `turbo query
-// affected --exit-code` exits as given.
+// reports no affected e2e task that has a script skips the job. Each case
+// runs the real script in a scratch repository, with a stand-in `pnpm` whose
+// `turbo query` prints the given affected tasks and exits as given.
 describe("the e2e detector", () => {
   const DETECTOR = join(ROOT, "scripts/e2e-affected.sh")
   const sandbox = scriptSandbox("e2e-detector")
@@ -962,24 +976,42 @@ describe("the e2e detector", () => {
     return { dir, git }
   }
 
+  // `turbo query`'s answer listing these affected tasks: [fullName, script].
+  const answer = (...items: [string, string | null][]) =>
+    JSON.stringify({
+      data: {
+        affectedTasks: {
+          items: items.map(([fullName, script]) => ({
+            fullName,
+            name: fullName.split("#")[1],
+            script,
+          })),
+        },
+      },
+    })
+
   // What the detector tells the e2e job, and the command it ran (if any).
   const detect = ({
     event,
+    tasks = ["e2e"],
     turboExit = 0,
+    turboStdout = answer(),
     commits = 2,
   }: {
     event: string
+    tasks?: string[]
     turboExit?: number
+    turboStdout?: string
     commits?: number
   }) => {
     const { dir, git } = repo(commits)
     const output = join(dir, "github-output")
     writeFileSync(output, "")
     const { status, ran } = sandbox.run(DETECTOR, {
-      args: ["e2e"],
+      args: tasks,
       cwd: dir,
       env: { GITHUB_EVENT_NAME: event, GITHUB_OUTPUT: output },
-      pnpm: { exit: turboExit },
+      pnpm: { exit: turboExit, stdout: turboStdout },
     })
     expect(status).toBe(0)
     return {
@@ -990,23 +1022,54 @@ describe("the e2e detector", () => {
   }
 
   it("skips e2e on a pull request with no affected e2e task", () => {
-    expect(detect({ event: "pull_request", turboExit: 0 }).outputs).toEqual([
+    expect(detect({ event: "pull_request" }).outputs).toEqual(["e2e=false"])
+  })
+
+  it("asks Turbo about the given tasks against the merge commit's first parent", () => {
+    const { ran, base } = detect({
+      event: "pull_request",
+      tasks: ["e2e", "visual"],
+    })
+    expect(ran).toMatch(/^exec turbo query /)
+    expect(ran).toContain(
+      `affectedTasks(base: "${base}", head: "HEAD", tasks: ["e2e", "visual"])`
+    )
+  })
+
+  it("runs e2e on a pull request when an e2e task with a script is affected", () => {
+    const turboStdout = answer(
+      ["web#build", "next build"],
+      ["web#e2e", "playwright test"]
+    )
+    expect(detect({ event: "pull_request", turboStdout }).outputs).toEqual([
+      "e2e=true",
+    ])
+  })
+
+  // `turbo query` lists every package's e2e task, scripted or not, and the
+  // tasks the affected ones need: neither is an e2e run.
+  it("skips e2e when the affected e2e tasks have no script, or are prerequisites", () => {
+    const turboStdout = answer(
+      ["themercn#build", "tsdown"],
+      ["themercn#e2e", null],
+      ["@workspace/ui#e2e", null]
+    )
+    expect(detect({ event: "pull_request", turboStdout }).outputs).toEqual([
       "e2e=false",
     ])
   })
 
-  it("asks Turbo about the given tasks against the merge commit's first parent", () => {
-    const { ran, base } = detect({ event: "pull_request" })
-    expect(ran).toBe(
-      `exec turbo query affected --tasks e2e --base ${base} --exit-code`
-    )
-  })
-
   it.each([
-    { reason: "an e2e task is affected", turboExit: 1 },
-    { reason: "the query fails", turboExit: 2 },
-  ])("runs e2e on a pull request when $reason", ({ turboExit }) => {
-    expect(detect({ event: "pull_request", turboExit }).outputs).toEqual([
+    { reason: "the query exits 1", turboExit: 1, turboStdout: answer() },
+    { reason: "the query exits 2", turboExit: 2, turboStdout: "" },
+    { reason: "the query prints no JSON", turboExit: 0, turboStdout: "oops" },
+    {
+      reason: "the query reports errors",
+      turboExit: 0,
+      turboStdout: JSON.stringify({ data: null, errors: [{ message: "x" }] }),
+    },
+  ])("runs e2e on a pull request when $reason", (query) => {
+    expect(detect({ event: "pull_request", ...query }).outputs).toEqual([
       "e2e=true",
     ])
   })
@@ -1021,7 +1084,7 @@ describe("the e2e detector", () => {
   it.each(["push", "schedule", "workflow_dispatch", "merge_group"])(
     "runs e2e on %s without asking Turbo",
     (event) => {
-      expect(detect({ event, turboExit: 0 })).toMatchObject({
+      expect(detect({ event })).toMatchObject({
         outputs: ["e2e=true"],
         ran: undefined,
       })
@@ -1090,18 +1153,19 @@ describe("Playwright tiers", () => {
     expect(visual?.dependencies).toContain("web#build")
   }, 60_000)
 
-  it("the visual task hashes and passes through what e2e does, and caches its report", () => {
-    const { e2e, visual } = JSON.parse(read("../turbo.json")).tasks
-    expect({
-      env: visual?.env,
-      passThroughEnv: visual?.passThroughEnv,
-      outputs: visual?.outputs,
-    }).toEqual({
-      env: e2e.env,
-      passThroughEnv: e2e.passThroughEnv,
-      outputs: e2e.outputs,
-    })
-  })
+  it.each(["visual", "e2e:smoke"])(
+    "the %s task hashes, passes through and caches what e2e does",
+    (name) => {
+      const { tasks } = JSON.parse(read("../turbo.json"))
+      const pick = (task: Record<string, unknown>) => ({
+        env: task.env,
+        passThroughEnv: task.passThroughEnv,
+        inputs: task.inputs,
+        outputs: task.outputs,
+      })
+      expect(pick(tasks[name])).toEqual(pick(tasks.e2e))
+    }
+  )
 })
 
 // AGENTS.md "Verification tiers": a Stop hook keeps an agent's turn from

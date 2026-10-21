@@ -472,6 +472,7 @@ describe("CI task selection", () => {
         if?: string
         needs?: string | string[]
         outputs?: Record<string, string>
+        container?: unknown
         steps: CiStep[]
       }
     >
@@ -542,6 +543,25 @@ describe("CI task selection", () => {
     }
   }
   const TASKS = ["build", "check:package", "lint", "test", "typecheck"]
+
+  // A container runs as a different user from the checkout's owner, and git
+  // refuses such a repository ("dubious ownership"): `git rev-parse` and
+  // Turbo's `--affected` both need it trusted first.
+  it("container jobs trust their checkout before any step uses git", () => {
+    const trust = 'git config --global --add safe.directory "$GITHUB_WORKSPACE"'
+    const containerJobs = Object.entries(ciYml.jobs).filter(
+      ([, job]) => job.container !== undefined
+    )
+    expect(containerJobs).not.toEqual([])
+    for (const [id, job] of containerJobs) {
+      const isTrust = (step: CiStep) => step.run?.trim() === trust
+      const usesGit = (step: CiStep) =>
+        !isTrust(step) && /\bgit |--affected/.test(step.run ?? "")
+      const trustAt = job.steps.findIndex(isTrust)
+      expect(trustAt, id).toBeGreaterThan(-1)
+      expect(job.steps.findIndex(usesGit), id).toBeGreaterThan(trustAt)
+    }
+  })
 
   it("pull requests run every check on its affected tasks only", () => {
     const { tasks, selections } = turboFor("pull_request")

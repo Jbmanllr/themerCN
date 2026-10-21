@@ -47,8 +47,8 @@ The Playground's font picker uses Google's public catalog; set
 | `pnpm build`         | The package (`tsdown`, after its CSS build), the Playground and the Vite app.                                                                           |
 | `pnpm check:package` | After the build: publint, attw, the tarball and entry checks, and the Vite app's off-build check.                                                       |
 | `pnpm e2e`           | Playwright (Chromium) for both apps, after a build, without the visual baselines. First run: `pnpm --filter vite-app exec playwright install chromium`. |
-| `pnpm e2e:smoke`     | One `@smoke` test per journey plus `a11y`, two workers, stopping at the first failure, after a build. Ports: `WEB_E2E_PORT`, `VITE_E2E_PORT`.           |
-| `pnpm e2e:visual`    | The Playground's visual baselines, compared in the pinned Playwright image (Docker). `pnpm e2e:update-snapshots` regenerates them.                      |
+| `pnpm e2e:smoke`     | One `@smoke` test per Themer journey plus `a11y`, two workers, stopping at the first failure, after a build. Ports: `WEB_E2E_PORT`, `VITE_E2E_PORT`.    |
+| `pnpm e2e:visual`    | The Themer UI's visual baselines, compared in the pinned Playwright image (Docker). `pnpm e2e:update-snapshots` regenerates them.                       |
 
 CI ([`ci.yml`](.github/workflows/ci.yml)) runs `pnpm format:check`,
 `pnpm turbo lint lint:repo typecheck test test:repo build` (`lint:repo` and
@@ -63,6 +63,22 @@ a pull request only when
 docs-only change skips it; a `packages/ui` change runs both apps'), and
 whenever that query fails or has no base. `main` runs everything. Run the
 same before opening a PR.
+
+The e2e gate covers the Themer: opening it, editing tokens, its layouts and
+inspector, persistence, the Themer UI's accessibility and visual baselines,
+and its CSS isolation in the Vite app. Tests of the Playground's own pages
+(marketing, app and auth, shop, the design-system index, axe scans of every
+route, screenshots of its screens) are tagged `@playground` and left out of
+every run, CI included, unless `PLAYGROUND_E2E=1` is set:
+
+```sh
+PLAYGROUND_E2E=1 pnpm e2e            # every e2e test, the Playground's included
+PLAYGROUND_E2E=1 pnpm turbo visual   # every visual screen (Linux only)
+PLAYGROUND_E2E=1 pnpm e2e:visual     # the same, in the pinned image (Docker)
+```
+
+CI never sets it. A Playground screen's baseline is kept as it is, and is
+regenerated only with the flag (`PLAYGROUND_E2E=1 pnpm e2e:update-snapshots`).
 
 A Playwright test that passes only on its retry fails CI as flaky; the
 uploaded report keeps the trace of every attempt. To quarantine a known-flaky

@@ -8,7 +8,9 @@
 # On any host. CI, already in that image, runs the same project as the
 # Playground's `visual` Turbo task instead; `pnpm e2e` never runs it.
 #
-# Extra arguments go to `playwright test` (e.g. `-g pricing`).
+# Extra arguments go to `playwright test` (e.g. `-g pricing`). The Playground
+# screens (`@playground`) run only with PLAYGROUND_E2E=1, forwarded here;
+# their baselines stay as they are otherwise, even when updating.
 #
 # The repo is copied into the container (without node_modules or build
 # output) so the host's platform-specific installs are never touched; only
@@ -31,6 +33,7 @@ docker run --rm --ipc=host --init \
   -v "$root/apps/web/e2e:/out" \
   -v themercn-pnpm-store:/pnpm-store \
   -e CI=true \
+  -e PLAYGROUND_E2E="${PLAYGROUND_E2E:-}" \
   -e npm_config_store_dir=/pnpm-store \
   -e UPDATE="$update" \
   -e HOST_UID="$(id -u)" -e HOST_GID="$(id -g)" \

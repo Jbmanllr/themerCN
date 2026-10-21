@@ -28,9 +28,13 @@ const screens: {
   show: (page: Page) => Promise<void>
   // The Themer UI is fixed to the viewport, so its screen is the viewport only.
   fullPage?: false
+  // A screen of the Playground's own pages, not of the Themer UI: it runs
+  // only with PLAYGROUND_E2E=1 (see the README).
+  tag?: "@playground"
 }[] = [
   {
     name: "home",
+    tag: "@playground",
     show: async (page) => {
       await page.goto("/")
       await expect(heading(page, "Good coffee, slowly.")).toBeVisible()
@@ -38,6 +42,7 @@ const screens: {
   },
   {
     name: "pricing",
+    tag: "@playground",
     show: async (page) => {
       await page.goto("/pricing")
       await expect(page.getByRole("heading", { level: 1 })).toBeVisible()
@@ -45,6 +50,7 @@ const screens: {
   },
   {
     name: "product",
+    tag: "@playground",
     show: async (page) => {
       await page.goto("/shop/p/night-owl-blend")
       await expect(heading(page, "Night Owl Blend")).toBeVisible()
@@ -54,6 +60,7 @@ const screens: {
     // The cart lives in memory, so it is filled in-app: a page.goto would
     // empty it.
     name: "cart",
+    tag: "@playground",
     show: async (page) => {
       await page.goto("/shop/p/night-owl-blend")
       await expect(heading(page, "Night Owl Blend")).toBeVisible()
@@ -67,6 +74,7 @@ const screens: {
   },
   {
     name: "app-dashboard",
+    tag: "@playground",
     show: async (page) => {
       await page.goto("/app")
       await expect(heading(page, "Good evening, Ada", 2)).toBeVisible()
@@ -75,6 +83,7 @@ const screens: {
   {
     // Saved messages are server-rendered, so the load is the final state.
     name: "chat-thread",
+    tag: "@playground",
     show: async (page) => {
       await page.goto("/app/chat/espresso-too-sour")
       await expect(
@@ -85,6 +94,7 @@ const screens: {
   {
     // Token values are read client-side after hydration.
     name: "design-system-tokens",
+    tag: "@playground",
     show: async (page) => {
       await page.goto("/design-system/tokens")
       await expect(
@@ -94,6 +104,7 @@ const screens: {
   },
   {
     name: "login",
+    tag: "@playground",
     show: async (page) => {
       await page.goto("/login")
       await expect(heading(page, "Welcome back")).toBeVisible()
@@ -101,6 +112,7 @@ const screens: {
   },
   {
     name: "not-found",
+    tag: "@playground",
     show: async (page) => {
       await page.goto("/this-page-does-not-exist")
       await expect(page.getByRole("heading", { level: 1 })).toBeVisible()
@@ -162,17 +174,21 @@ for (const colorScheme of ["light", "dark"] as const) {
     test.use({ colorScheme })
 
     for (const screen of screens) {
-      test(`${screen.name} matches its baseline`, async ({ page }) => {
-        await screen.show(page)
-        await settle(page)
-        await expect(page).toHaveScreenshot(
-          `${screen.name}-${colorScheme}.png`,
-          {
-            animations: "disabled",
-            fullPage: screen.fullPage ?? true,
-          }
-        )
-      })
+      test(
+        `${screen.name} matches its baseline`,
+        { tag: screen.tag ?? [] },
+        async ({ page }) => {
+          await screen.show(page)
+          await settle(page)
+          await expect(page).toHaveScreenshot(
+            `${screen.name}-${colorScheme}.png`,
+            {
+              animations: "disabled",
+              fullPage: screen.fullPage ?? true,
+            }
+          )
+        }
+      )
     }
   })
 }

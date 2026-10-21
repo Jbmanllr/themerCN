@@ -37,7 +37,9 @@
       "dependsOn": ["build"],
       "outputs": []
     },
-    "lint": {},
+    "lint": {
+      "inputs": ["$TURBO_DEFAULT$", "$TURBO_ROOT$/packages/eslint-config/*.js"]
+    },
     "format": {
       "cache": false
     },

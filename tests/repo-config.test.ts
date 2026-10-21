@@ -245,6 +245,7 @@ describe("task hashes", () => {
   // files) one file at a time; the repo itself is never touched.
   describe("an edit changes the hashes of the tasks that read the file", () => {
     const HASHED_TASKS = [
+      "lint",
       "build",
       "build:css",
       "test",
@@ -350,12 +351,25 @@ describe("task hashes", () => {
         changes: ["//#test:repo"],
         keeps: ["web#test"],
       },
-      // The shared ESLint config still reaches every workspace's test through
-      // its `^build` dependency, so only the root task is asserted here.
+      // The shared ESLint config re-runs every lint that uses it, and no
+      // test or build: nothing builds it.
       {
         file: "packages/eslint-config/base.js",
-        changes: ["//#test:repo"],
-        keeps: [],
+        changes: [
+          "//#test:repo",
+          "web#lint",
+          "vite-app#lint",
+          "themercn#lint",
+          "@workspace/ui#lint",
+        ],
+        keeps: [
+          "web#test",
+          "vite-app#test",
+          "themercn#test",
+          "web#build",
+          "themercn#build",
+          "@workspace/ui#build",
+        ],
       },
       {
         file: "apps/vite/playwright.config.ts",

@@ -16,10 +16,14 @@ export default defineConfig({
   testDir: "e2e",
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,
+  // A test that passes only on its retry fails a CI run: flakes are fixed or
+  // quarantined (`tag: "@quarantine"`, see the README), not retried away.
+  failOnFlakyTests: !!process.env.CI,
   reporter: process.env.CI ? [["list"], ["html", { open: "never" }]] : "list",
   use: {
     baseURL: `http://localhost:${port}`,
-    trace: "retain-on-failure",
+    // Every failed attempt and every retry keeps its trace.
+    trace: "retain-on-failure-and-retries",
   },
   // Visual baselines are produced only in the pinned Playwright image
   // (`pnpm e2e:update-snapshots`); a run never writes missing ones. The

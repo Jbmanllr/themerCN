@@ -645,7 +645,9 @@ describe("the CI gate", () => {
   )
 
   it("reports a ci-gate check even when needed jobs fail or are skipped", () => {
-    expect(gate?.if).toBe("always()")
+    for (const status of ["success", "failure", "cancelled"] as const) {
+      expect(runsIf(gate?.if, { status }), status).toBe(true)
+    }
     expect(gate?.permissions).toEqual({})
   })
 

@@ -41,9 +41,6 @@ importers:
       '@changesets/cli':
         specifier: 3.0.3
         version: 3.0.3
-      '@workspace/eslint-config':
-        specifier: workspace:*
-        version: link:packages/eslint-config
       '@workspace/typescript-config':
         specifier: workspace:*
         version: link:packages/typescript-config

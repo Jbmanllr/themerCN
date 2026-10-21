@@ -215,6 +215,12 @@ describe("shared dependency versions", () => {
 })
 
 describe("toolchain", () => {
+  it("the root does not depend on the shared ESLint config, so editing it does not invalidate every package", () => {
+    const pkg = JSON.parse(read("../../package.json"))
+    const deps = { ...pkg.dependencies, ...pkg.devDependencies }
+    expect(Object.keys(deps)).not.toContain("@workspace/eslint-config")
+  })
+
   it("root engines.node matches the README's Node requirement", () => {
     const required = read("../../README.md").match(
       /Requires Node (\d+)\.(\d+) or later/

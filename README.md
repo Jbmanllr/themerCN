@@ -61,6 +61,32 @@ docs-only change skips it; a `packages/ui` change runs both apps'), and
 whenever that query fails or has no base. `main` runs everything. Run the
 same before opening a PR.
 
+A Playwright test that passes only on its retry fails CI as flaky; the
+uploaded report keeps the trace of every attempt. To quarantine a known-flaky
+test, open an issue for it with an owner, then tag the test and link the
+issue:
+
+```ts
+test(
+  "…",
+  {
+    tag: "@quarantine",
+    annotation: {
+      type: "issue",
+      description: "https://github.com/Jbmanllr/themerCN/issues/<n>",
+    },
+  },
+  async ({ page }) => {
+    // …
+  }
+)
+```
+
+Gating runs leave quarantined tests out (`--grep-invert @quarantine`). The
+weekly scheduled run, and a manual dispatch, run them ten times each
+(`--repeat-each=10`) in a step that never fails the gate; check its report.
+Remove the tag once the issue is fixed.
+
 Things to know:
 
 - The package's CSS is generated (`packages/themer/src/generated/`, not

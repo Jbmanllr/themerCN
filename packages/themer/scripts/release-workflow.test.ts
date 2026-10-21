@@ -209,4 +209,47 @@ describe("ci.yml", () => {
     expect(new Set(pushes.map((run) => run.group)).size).toBe(3)
     for (const run of pushes) expect(run.cancels).toBe(false)
   })
+
+  // The backstop runs: sharing a push run's group would cancel it, or have
+  // it cancelled while waiting.
+  it.each(["schedule", "workflow_dispatch", "merge_group"])(
+    "gives a %s run a group of its own that never cancels",
+    (event_name) => {
+      expect(Object.keys(ci.on)).toContain(event_name)
+      const push = runFor({
+        event_name: "push",
+        ref: "refs/heads/main",
+        sha: "a1",
+      })
+      const backstop = runFor({ event_name, ref: "refs/heads/main", sha: "b2" })
+
+      expect(backstop.group).not.toBe(push.group)
+      expect(backstop.cancels).toBe(false)
+    }
+  )
+})
+
+describe("release.yml for CI's backstop runs", () => {
+  const selectMode = release.jobs["select-mode"]!
+  // A successful CI run of main's current commit, from this repository.
+  const releasesFrom = (event: string) =>
+    evaluate(`\${{ ${selectMode.if} }}`, {
+      "event.workflow_run.conclusion": "success",
+      "event.workflow_run.event": event,
+      "event.workflow_run.head_sha": "a1",
+      sha: "a1",
+      "event.workflow_run.head_repository.full_name": "Jbmanllr/themerCN",
+      repository: "Jbmanllr/themerCN",
+    })
+
+  it("releases from a push run", () => {
+    expect(releasesFrom("push")).toBe(true)
+  })
+
+  it.each(["schedule", "workflow_dispatch", "merge_group"])(
+    "never releases from a %s run",
+    (event) => {
+      expect(releasesFrom(event)).toBe(false)
+    }
+  )
 })

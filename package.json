@@ -13,13 +13,13 @@
     "typecheck": "turbo typecheck",
     "test": "turbo test",
     "e2e": "turbo e2e",
+    "e2e:smoke": "turbo e2e:smoke",
     "e2e:visual": "scripts/playwright-docker.sh",
     "e2e:update-snapshots": "scripts/playwright-docker.sh --update-snapshots"
   },
   "devDependencies": {
     "@changesets/changelog-github": "^1.0.1",
     "@changesets/cli": "3.0.3",
-    "@workspace/eslint-config": "workspace:*",
     "@workspace/typescript-config": "workspace:*",
     "prettier": "^3.9.9",
     "prettier-plugin-tailwindcss": "^0.8.1",

@@ -47,6 +47,7 @@ The Playground's font picker uses Google's public catalog; set
 | `pnpm build`         | The package (`tsdown`, after its CSS build), the Playground and the Vite app.                                             |
 | `pnpm check:package` | After the build: publint, attw, the tarball and entry checks, and the Vite app's off-build check.                         |
 | `pnpm e2e`           | Playwright (Chromium) for both apps, after a build. First run: `pnpm --filter vite-app exec playwright install chromium`. |
+| `pnpm e2e:smoke`     | One `@smoke` test per journey plus `a11y`, two workers, after a build. Ports: `WEB_E2E_PORT`, `VITE_E2E_PORT`.            |
 
 CI ([`ci.yml`](.github/workflows/ci.yml)) runs `pnpm format:check`,
 `pnpm turbo lint typecheck test build`, then `pnpm turbo check:package`, and
@@ -115,10 +116,9 @@ These need the npm and GitHub owner accounts, once, in this order:
    Actions to create and approve pull requests". (It governs `GITHUB_TOKEN`;
    the version step uses the App token.)
 4. **Protect `main`.** Under repository Settings → Branches, the `main` rule
-   requires both CI jobs' status checks
-   (`Lint, typecheck, test, build, package checks` and
-   `E2E (Playwright, Chromium)`), requires branches to be up to date before
-   merging (strict), and is enforced for administrators ("Do not allow
+   requires one status check, `ci-gate` (CI's summary job: it fails when any
+   other CI job fails or is cancelled), requires branches to be up to date
+   before merging (strict), and is enforced for administrators ("Do not allow
    bypassing the above settings").
 5. **Publish a `0.0.0` placeholder** (trusted publishing can only be linked to
    a package that exists). Logged in to npm with 2FA:

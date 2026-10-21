@@ -15,6 +15,7 @@ import { fileURLToPath } from "node:url"
 
 import { ESLint } from "eslint"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
+import { parse } from "yaml"
 
 // Repo-wide config assertions: the gates are only worth having if the config
 // that wires them stays wired.
@@ -357,6 +358,12 @@ describe("shared dependency versions", () => {
 })
 
 describe("toolchain", () => {
+  it("the root does not depend on the shared ESLint config, so editing it does not invalidate every package", () => {
+    const pkg = JSON.parse(read("../../package.json"))
+    const deps = { ...pkg.dependencies, ...pkg.devDependencies }
+    expect(Object.keys(deps)).not.toContain("@workspace/eslint-config")
+  })
+
   it("root engines.node matches the README's Node requirement", () => {
     const required = read("../../README.md").match(
       /Requires Node (\d+)\.(\d+) or later/
@@ -367,4 +374,72 @@ describe("toolchain", () => {
   })
   // CI's concurrency (S57) is evaluated per event in themercn's
   // scripts/release-workflow.test.ts, beside the release gate it protects.
+})
+
+type CiJob = {
+  name?: string
+  if?: string
+  needs?: string | string[]
+  permissions?: Record<string, string>
+  steps: { uses?: string; with?: Record<string, string> }[]
+}
+
+// `ci-gate` is the single required check (README "Protect `main`"): it
+// passes only when every other job passed, so jobs can be added, renamed or
+// made conditional without touching branch protection.
+describe("the CI gate", () => {
+  const ciYml = parse(read("../../.github/workflows/ci.yml")) as {
+    name: string
+    jobs: Record<string, CiJob>
+  }
+  const entries = Object.entries(ciYml.jobs)
+  const gateEntry = entries.find(([id, job]) => (job.name ?? id) === "ci-gate")
+  const [gateId, gate] = gateEntry ?? []
+  const others = entries.filter(([id]) => id !== gateId)
+  const verdict = gate?.steps.find((step) =>
+    step.uses?.startsWith("re-actors/alls-green@")
+  )
+
+  it("reports a ci-gate check even when needed jobs fail or are skipped", () => {
+    expect(gate?.if).toBe("always()")
+    expect(gate?.permissions).toEqual({})
+  })
+
+  it("needs every other job", () => {
+    expect([gate?.needs ?? []].flat().sort()).toEqual(
+      others.map(([id]) => id).sort()
+    )
+  })
+
+  it("decides from every needed job's result", () => {
+    expect(verdict?.with?.jobs).toBe("${{ toJSON(needs) }}")
+  })
+
+  it("allows no failure and only the e2e job's skip", () => {
+    const e2e = others.find(([, job]) => job.name?.startsWith("E2E"))
+    expect(e2e).toBeDefined()
+    expect(verdict?.with?.["allowed-failures"] ?? "").toBe("")
+    expect(verdict?.with?.["allowed-skips"]).toBe(e2e?.[0])
+  })
+
+  // Branch protection requires these until the owner swaps to ci-gate, and
+  // release.yml listens for the workflow by name.
+  it("keeps the workflow and job names branch protection and release.yml use", () => {
+    expect(ciYml.name).toBe("CI")
+    expect(others.map(([, job]) => job.name)).toEqual(
+      expect.arrayContaining([
+        "Lint, typecheck, test, build, package checks",
+        "E2E (Playwright, Chromium)",
+      ])
+    )
+  })
+
+  it("the README's owner bootstrap requires only ci-gate", () => {
+    const protect = read("../../README.md").match(
+      /\*\*Protect `main`\.\*\*([\s\S]*?)\n\d+\. \*\*/
+    )?.[1]
+    expect(protect).toBeDefined()
+    expect(protect).toContain("`ci-gate`")
+    for (const [, job] of others) expect(protect).not.toContain(job.name)
+  })
 })

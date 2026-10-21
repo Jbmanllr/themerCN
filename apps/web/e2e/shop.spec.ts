@@ -2,33 +2,35 @@ import { expect, test } from "@playwright/test"
 
 import { cartLink, definitionOf, hydrated } from "./page"
 
-test("a visitor browses to a product and adds it to the cart", async ({
-  page,
-}) => {
-  await page.goto("/shop")
-  await hydrated(page)
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText(
-    "Beans, gear and a standing order"
-  )
-  await expect(cartLink(page)).toHaveAccessibleName("Cart, 0 items")
+test(
+  "a visitor browses to a product and adds it to the cart",
+  { tag: "@smoke" },
+  async ({ page }) => {
+    await page.goto("/shop")
+    await hydrated(page)
+    await expect(page.getByRole("heading", { level: 1 })).toHaveText(
+      "Beans, gear and a standing order"
+    )
+    await expect(cartLink(page)).toHaveAccessibleName("Cart, 0 items")
 
-  await page.getByRole("link", { name: "All beans" }).click()
-  await expect(
-    page.getByRole("heading", { level: 1, name: "Beans" })
-  ).toBeVisible()
-  await page.getByRole("link", { name: "Night Owl Blend" }).click()
+    await page.getByRole("link", { name: "All beans" }).click()
+    await expect(
+      page.getByRole("heading", { level: 1, name: "Beans" })
+    ).toBeVisible()
+    await page.getByRole("link", { name: "Night Owl Blend" }).click()
 
-  await expect(
-    page.getByRole("heading", { level: 1, name: "Night Owl Blend" })
-  ).toBeVisible()
-  await page.getByRole("radio", { name: "Filter" }).check()
-  await page.getByRole("radio", { name: "1kg" }).check()
-  await page.getByRole("button", { name: "Increase quantity" }).click()
-  await page.getByRole("button", { name: "Add to cart" }).click()
+    await expect(
+      page.getByRole("heading", { level: 1, name: "Night Owl Blend" })
+    ).toBeVisible()
+    await page.getByRole("radio", { name: "Filter" }).check()
+    await page.getByRole("radio", { name: "1kg" }).check()
+    await page.getByRole("button", { name: "Increase quantity" }).click()
+    await page.getByRole("button", { name: "Add to cart" }).click()
 
-  await expect(cartLink(page)).toHaveAccessibleName("Cart, 2 items")
-  await expect(page.getByText("Added 2 to your cart.")).toBeVisible()
-})
+    await expect(cartLink(page)).toHaveAccessibleName("Cart, 2 items")
+    await expect(page.getByText("Added 2 to your cart.")).toBeVisible()
+  }
+)
 
 test("the cart edits quantities, removes lines and checks out", async ({
   page,

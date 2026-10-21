@@ -55,6 +55,16 @@
       ],
       "outputs": ["playwright-report/**", "test-results/**"]
     },
+    "e2e:smoke": {
+      "dependsOn": ["build"],
+      "env": ["CI"],
+      "passThroughEnv": [
+        "WEB_E2E_PORT",
+        "VITE_E2E_PORT",
+        "PLAYWRIGHT_BROWSERS_PATH"
+      ],
+      "outputs": ["playwright-report/**", "test-results/**"]
+    },
     "dev": {
       "dependsOn": ["^build"],
       "cache": false,

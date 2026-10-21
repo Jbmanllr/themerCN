@@ -20,25 +20,27 @@ const pages = [
   { path: "/blog/a-slower-pour-over", heading: "A slower pour-over" },
 ]
 
-test("home walks through a slow brew and leads to the shop, plans and journal", async ({
-  page,
-}) => {
-  await page.goto("/")
-  const brew = page.getByRole("list", { name: "A four-minute pour-over" })
-  await expect(brew.getByRole("listitem")).toHaveCount(6)
-  await expect(brew.getByRole("listitem").first()).toContainText("Bloom")
+test(
+  "home walks through a slow brew and leads to the shop, plans and journal",
+  { tag: "@smoke" },
+  async ({ page }) => {
+    await page.goto("/")
+    const brew = page.getByRole("list", { name: "A four-minute pour-over" })
+    await expect(brew.getByRole("listitem")).toHaveCount(6)
+    await expect(brew.getByRole("listitem").first()).toContainText("Bloom")
 
-  const main = page.getByRole("main")
-  await expect(
-    main.getByRole("link", { name: "Night Owl Blend" })
-  ).toHaveAttribute("href", "/shop/p/night-owl-blend")
-  await expect(
-    main.getByRole("link", { name: "Compare plans" })
-  ).toHaveAttribute("href", "/pricing")
-  await expect(
-    main.getByRole("link", { name: "How to dial in espresso" })
-  ).toHaveAttribute("href", "/blog/how-to-dial-in-espresso")
-})
+    const main = page.getByRole("main")
+    await expect(
+      main.getByRole("link", { name: "Night Owl Blend" })
+    ).toHaveAttribute("href", "/shop/p/night-owl-blend")
+    await expect(
+      main.getByRole("link", { name: "Compare plans" })
+    ).toHaveAttribute("href", "/pricing")
+    await expect(
+      main.getByRole("link", { name: "How to dial in espresso" })
+    ).toHaveAttribute("href", "/blog/how-to-dial-in-espresso")
+  }
+)
 
 test("pricing switches the plans between monthly and yearly billing", async ({
   page,

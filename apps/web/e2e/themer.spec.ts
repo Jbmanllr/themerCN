@@ -27,24 +27,26 @@ test("the page starts on Nightjar, and the Themer applying it changes nothing", 
   expect(await pagePrimary(page)).toBe(nightjarPrimary)
 })
 
-test("a token edited in the Themer restyles the page and survives a reload", async ({
-  page,
-}) => {
-  await page.goto("/")
-  await hydrated(page)
-  await expect(home(page)).toBeVisible()
-  expect(await pagePrimary(page)).not.toBe("rgb(255, 0, 0)")
+test(
+  "a token edited in the Themer restyles the page and survives a reload",
+  { tag: "@smoke" },
+  async ({ page }) => {
+    await page.goto("/")
+    await hydrated(page)
+    await expect(home(page)).toBeVisible()
+    expect(await pagePrimary(page)).not.toBe("rgb(255, 0, 0)")
 
-  await themerTrigger(page).click()
-  await page.getByRole("button", { name: /^Primary & Secondary/ }).click()
-  await page.getByLabel("Primary", { exact: true }).fill("#ff0000")
+    await themerTrigger(page).click()
+    await page.getByRole("button", { name: /^Primary & Secondary/ }).click()
+    await page.getByLabel("Primary", { exact: true }).fill("#ff0000")
 
-  await expect.poll(() => pagePrimary(page)).toBe("rgb(255, 0, 0)")
+    await expect.poll(() => pagePrimary(page)).toBe("rgb(255, 0, 0)")
 
-  await page.reload()
-  await expect(home(page)).toBeVisible()
-  expect(await pagePrimary(page)).toBe("rgb(255, 0, 0)")
-})
+    await page.reload()
+    await expect(home(page)).toBeVisible()
+    expect(await pagePrimary(page)).toBe("rgb(255, 0, 0)")
+  }
+)
 
 test("a reload paints the saved Theme in the mode next-themes restores, whatever mode it was saved in", async ({
   page,

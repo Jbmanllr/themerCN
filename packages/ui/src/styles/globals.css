@@ -6,6 +6,14 @@
 @source "../../../apps/**/*.{ts,tsx}";
 @source "../../../components/**/*.{ts,tsx}";
 @source "../**/*.{ts,tsx}";
+/* Each app's automatic source detection scans its whole directory. Skip what
+   turbo.json's build inputs exclude, so a class in a test or an e2e spec can't
+   change CSS that the build's hash doesn't cover. */
+@source not "../../../../apps/**/*.test.{ts,tsx}";
+@source not "../../../../apps/*/e2e";
+@source not "../../../../apps/*/vitest.config.*";
+@source not "../../../../apps/*/playwright.config.*";
+@source not "../**/*.test.{ts,tsx}";
 
 @theme inline {
   --font-heading: var(--font-sans);

@@ -11,3 +11,5 @@ The Overlay, Push and Toolbar Themer layouts edit the Host app's real page, whic
 
 - Wrapping the Host tree in `SidebarProvider`/`SidebarInset`: rejected for the remount above.
 - Overlay only, with no Push: rejected because covering the left edge of the page hides content that Push keeps visible.
+
+Throwaway verification line.

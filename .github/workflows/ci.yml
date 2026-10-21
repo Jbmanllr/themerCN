@@ -21,6 +21,13 @@ concurrency:
 permissions:
   contents: read
 
+# Turbo's local cache (.turbo/cache) is restored in each job and saved only
+# by pushes to main, so main's reruns and later runs replay unchanged tasks.
+# Turbo caches only tasks that succeeded. Each save carries forward what it
+# restored; Turbo evicts the oldest entries past this size at each run.
+env:
+  TURBO_CACHE_MAX_SIZE: 1GB
+
 jobs:
   checks:
     name: Lint, typecheck, test, build, package checks
@@ -45,6 +52,13 @@ jobs:
       - run: pnpm install --frozen-lockfile
 
       - run: pnpm format:check
+
+      # No entry has this run's key yet; the prefix restores main's latest.
+      - uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: .turbo/cache
+          key: turbo-checks-${{ github.sha }}
+          restore-keys: turbo-checks-
 
       # Lint, typecheck, test and build; then publint, attw and the
       # packed-file check against the built package, plus the Vite app's
@@ -72,6 +86,13 @@ jobs:
           pnpm turbo lint typecheck test build
           pnpm turbo check:package
 
+      # Only main writes the cache: no pull request's output reaches it.
+      - if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: .turbo/cache
+          key: turbo-checks-${{ github.sha }}
+
   # Smoke, visual and a11y Playwright projects. Runs in the Playwright image
   # pinned to the @playwright/test version (apps/web, apps/vite): the visual
   # baselines are rendered there (`pnpm e2e:update-snapshots`), so CI must
@@ -94,7 +115,19 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
+      - uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: .turbo/cache
+          key: turbo-e2e-${{ github.sha }}
+          restore-keys: turbo-e2e-
+
       - run: pnpm turbo e2e
+
+      - if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: .turbo/cache
+          key: turbo-e2e-${{ github.sha }}
 
       - if: failure()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2

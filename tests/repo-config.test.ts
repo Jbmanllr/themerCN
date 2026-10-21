@@ -496,6 +496,21 @@ describe("build input exclusions", () => {
     )
   })
 
+  // A source that names no directory scans nothing, and reads as coverage.
+  it.each([
+    "../packages/ui/src/styles/globals.css",
+    "../packages/themer/src/styles/themer.css",
+  ])("every @source in %s names an existing directory", (file) => {
+    const sources = [...read(file).matchAll(/^@source "([^"]+)";$/gm)].map(
+      (match) => match[1]!.split(/[*{]/)[0]!
+    )
+    expect(sources.length).toBeGreaterThan(0)
+    const missing = sources.filter(
+      (path) => !existsSync(new URL(path, new URL(file, import.meta.url)))
+    )
+    expect(missing).toEqual([])
+  })
+
   it("themer.css keeps every excluded file of its sources out of the CSS", () => {
     const css = read("../packages/themer/src/styles/themer.css")
     expect(css).toMatch(/^@source "\.\.";$/m)

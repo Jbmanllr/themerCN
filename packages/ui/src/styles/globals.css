@@ -3,8 +3,6 @@
 @import "shadcn/tailwind.css";
 
 @custom-variant dark (&:is(.dark *));
-@source "../../../apps/**/*.{ts,tsx}";
-@source "../../../components/**/*.{ts,tsx}";
 @source "../**/*.{ts,tsx}";
 /* Each app's automatic source detection scans its whole directory, and the
    `@source` above adds this package's sources. Skip every file the build

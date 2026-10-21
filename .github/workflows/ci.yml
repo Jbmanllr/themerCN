@@ -71,3 +71,20 @@ jobs:
           name: playwright-report
           path: apps/*/playwright-report
           retention-days: 7
+
+  # The single required status check: green only when every job it needs
+  # succeeded, so jobs can be added, renamed or made conditional without
+  # touching branch protection. `always()` makes it report even when a needed
+  # job failed or was cancelled (a skipped required check would pass). Only
+  # the e2e job may be skipped.
+  ci-gate:
+    name: ci-gate
+    if: always()
+    needs: [checks, e2e]
+    runs-on: ubuntu-latest
+    permissions: {}
+    steps:
+      - uses: re-actors/alls-green@b5b5b37504aa4183270bd3d855c52a67f212be35 # v1.3.0
+        with:
+          jobs: ${{ toJSON(needs) }}
+          allowed-skips: e2e

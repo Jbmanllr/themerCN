@@ -11,7 +11,9 @@
     "format": "prettier --write . --ignore-path ../../.gitignore --ignore-path ../../.prettierignore",
     "typecheck": "next typegen && tsc --noEmit",
     "test": "vitest run",
-    "e2e": "playwright test"
+    "e2e": "playwright test",
+    "visual": "playwright test --project=visual",
+    "e2e:smoke": "playwright test --project=chromium --grep @smoke --workers=2 --max-failures=1 && playwright test --project=a11y --workers=2 --max-failures=1"
   },
   "dependencies": {
     "@hookform/resolvers": "5.9.2",
@@ -40,7 +42,6 @@
     "culori": "4.0.2",
     "eslint": "^10",
     "typescript": "^5",
-    "vitest": "^5.0.4",
-    "yaml": "2.9.1"
+    "vitest": "^5.0.4"
   }
 }

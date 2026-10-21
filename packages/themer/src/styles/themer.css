@@ -4,7 +4,8 @@
  * <style> when it mounts. The Host app compiles nothing of the Themer's.
  *
  * Contract:
- * - Sources: this package and @workspace/ui only (`source(none)`).
+ * - Sources: this package and @workspace/ui only (`source(none)`), minus
+ *   the files the build inputs exclude (packages/themer/turbo.json).
  * - The theme is inlined (`theme(inline)`, `@theme inline`): utilities read
  *   the page's own variables, so the Themer UI follows every Theme edit and
  *   declares no theme variables of its own. Keys whose name matches the
@@ -23,8 +24,13 @@
 @tailwind utilities source(none);
 @source "..";
 @source not "../**/*.test.{ts,tsx}";
+@source not "../**/__snapshots__";
+@source not "../**/*-snapshots";
 @source not "../generated";
 @source "../../../ui/src";
+@source not "../../../ui/src/**/*.test.{ts,tsx}";
+@source not "../../../ui/src/**/__snapshots__";
+@source not "../../../ui/src/**/*-snapshots";
 
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";

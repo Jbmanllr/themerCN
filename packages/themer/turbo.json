@@ -6,7 +6,17 @@
       "inputs": [
         "$TURBO_DEFAULT$",
         "!src/generated/**",
-        "$TURBO_ROOT$/packages/ui/src/**"
+        "$TURBO_ROOT$/packages/ui/src/**",
+        "!**/*.test.{ts,tsx}",
+        "!e2e/**",
+        "!**/__snapshots__/**",
+        "!**/*-snapshots/**",
+        "!*.md",
+        "!vitest.config.*",
+        "!playwright.config.*",
+        "!$TURBO_ROOT$/packages/ui/src/**/*.test.{ts,tsx}",
+        "!$TURBO_ROOT$/packages/ui/src/**/__snapshots__/**",
+        "!$TURBO_ROOT$/packages/ui/src/**/*-snapshots/**"
       ],
       "outputs": ["src/generated/**"]
     },
@@ -14,7 +24,17 @@
       "inputs": [
         "$TURBO_DEFAULT$",
         "!src/generated/**",
-        "$TURBO_ROOT$/packages/ui/src/**"
+        "$TURBO_ROOT$/packages/ui/src/**",
+        "!**/*.test.{ts,tsx}",
+        "!e2e/**",
+        "!**/__snapshots__/**",
+        "!**/*-snapshots/**",
+        "!*.md",
+        "!vitest.config.*",
+        "!playwright.config.*",
+        "!$TURBO_ROOT$/packages/ui/src/**/*.test.{ts,tsx}",
+        "!$TURBO_ROOT$/packages/ui/src/**/__snapshots__/**",
+        "!$TURBO_ROOT$/packages/ui/src/**/*-snapshots/**"
       ],
       "outputs": ["dist/**"]
     },

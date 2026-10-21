@@ -4,23 +4,44 @@ on:
   pull_request:
   push:
     branches: [main]
+  # The backstop: with pushes to main, these run the full suite, with no
+  # task selection. release.yml releases only push runs.
+  merge_group:
+  schedule:
+    - cron: "0 4 * * 1" # Monday 04:00 UTC
+  workflow_dispatch:
 
-# A pull request's new push cancels its superseded run. Each push to main
-# gets a group of its own: a run waiting in a shared group is cancelled by the
-# next one queued, so main's commits would lose their verdict.
+# A pull request's new push cancels its superseded run. Every other run gets
+# a group of its own, keyed by event and commit: a run waiting in a shared
+# group is cancelled by the next one queued, so a push to main would lose its
+# verdict to the next push, or to a schedule, dispatch or merge-queue run of
+# the same commit (main's tip, usually), and release.yml would have nothing
+# to release on.
 concurrency:
-  group: ci-${{ github.event_name == 'pull_request' && github.ref || github.sha }}
+  group: ci-${{ github.event_name }}-${{ github.event_name == 'pull_request' && github.ref || github.sha }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
   contents: read
+
+# Turbo's local cache (.turbo/cache) is restored in each job and saved only
+# by pushes to main, so main's reruns and later runs replay unchanged tasks.
+# Turbo caches only tasks that succeeded. Each save carries forward what it
+# restored; Turbo evicts the oldest entries past this size at each run.
+env:
+  TURBO_CACHE_MAX_SIZE: 1GB
 
 jobs:
   checks:
     name: Lint, typecheck, test, build, package checks
     runs-on: ubuntu-latest
     steps:
+      # Full history (blobs on demand): from a shallow clone, Turbo treats
+      # every package as changed.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          filter: blob:none
 
       # pnpm version comes from "packageManager" in package.json.
       - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
@@ -35,24 +56,60 @@ jobs:
 
       - run: pnpm format:check
 
-      - run: pnpm turbo lint typecheck test build
+      # No entry has this run's key yet; the prefix restores main's latest.
+      - uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: .turbo/cache
+          key: turbo-checks-${{ github.sha }}
+          restore-keys: turbo-checks-
 
-      # publint, attw and the packed-file check, against the built package;
-      # plus the Vite app's off-build check (no `data-themer` in its dist).
-      - run: pnpm turbo check:package
+      # Lint, typecheck, test and build; then publint, attw and the
+      # packed-file check against the built package, plus the Vite app's
+      # off-build check (no `data-themer` in its dist).
+      #
+      # A pull request runs only the tasks its change affects (task-level:
+      # turbo.json's futureFlags.affectedUsingTaskInputs), compared with the
+      # base branch tip its merge commit was built on: the checkout's first
+      # parent. base.sha is logged beside it; it can lag, which over-selects.
+      - name: Affected tasks (pull request)
+        if: github.event_name == 'pull_request'
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          TURBO_SCM_BASE=$(git rev-parse HEAD^1)
+          export TURBO_SCM_BASE
+          echo "HEAD^1: $TURBO_SCM_BASE, pull_request.base.sha: $BASE_SHA"
+          pnpm turbo lint lint:repo typecheck test test:repo build --affected
+          pnpm turbo check:package --affected
 
-  # Smoke, visual and a11y Playwright projects. Runs in the Playwright image
-  # pinned to the @playwright/test version (apps/web, apps/vite): the visual
-  # baselines are rendered there (`pnpm e2e:update-snapshots`), so CI must
-  # render the same way. The image ships the browsers.
-  e2e:
-    name: E2E (Playwright, Chromium)
+      # Every other event runs everything.
+      - name: All tasks
+        if: github.event_name != 'pull_request'
+        run: |
+          pnpm turbo lint lint:repo typecheck test test:repo build
+          pnpm turbo check:package
+
+      # Only main writes the cache: no pull request's output reaches it.
+      - if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: .turbo/cache
+          key: turbo-checks-${{ github.sha }}
+
+  # Decides whether the e2e job runs, from Turbo's graph: a pull request
+  # skips it only when `turbo query` reports no task the e2e job runs, with a
+  # script, as affected (scripts/e2e-affected.sh). It fails open: a query
+  # error, a missing base and every other event run e2e.
+  changes:
+    name: Detect affected e2e tasks
     runs-on: ubuntu-latest
-    container:
-      image: mcr.microsoft.com/playwright:v1.64.0-noble
-      options: --ipc=host --init
+    outputs:
+      e2e: ${{ steps.detect.outputs.e2e }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          filter: blob:none
 
       - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
 
@@ -63,9 +120,92 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
-      - run: pnpm turbo e2e
+      # Names the tasks the e2e job runs below.
+      - id: detect
+        run: scripts/e2e-affected.sh e2e visual
 
-      - if: failure()
+  # The e2e task (every Playwright project but visual), then the visual
+  # task (the Playground's visual baselines). Runs in the Playwright image
+  # pinned to the @playwright/test version (apps/web, apps/vite): the visual
+  # baselines are rendered there (`pnpm e2e:update-snapshots`), so CI must
+  # render the same way. The image ships the browsers. The two tasks run one
+  # after the other: each starts the Playground's server on the same port.
+  # A test that passes only on retry fails the run (failOnFlakyTests in each
+  # app's playwright.config.ts). Quarantined tests (`@quarantine`, see the
+  # README) never gate: the scheduled run repeats them in a step of their own.
+  e2e:
+    name: E2E (Playwright, Chromium)
+    needs: changes
+    if: needs.changes.outputs.e2e == 'true'
+    runs-on: ubuntu-latest
+    container:
+      image: mcr.microsoft.com/playwright:v1.64.0-noble
+      options: --ipc=host --init
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          filter: blob:none
+
+      # The container's user doesn't own the checkout, so git refuses it
+      # ("dubious ownership") until it's trusted. `git rev-parse` and
+      # Turbo's `--affected` below both need it.
+      - run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+
+      - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: .turbo/cache
+          key: turbo-e2e-${{ github.sha }}
+          restore-keys: turbo-e2e-
+
+      # A pull request runs the affected e2e tasks, against the same base
+      # as the checks job and the detector.
+      - name: Affected e2e (pull request)
+        if: github.event_name == 'pull_request'
+        run: |
+          TURBO_SCM_BASE=$(git rev-parse HEAD^1)
+          export TURBO_SCM_BASE
+          pnpm turbo e2e --affected -- --grep-invert @quarantine
+          pnpm turbo visual --affected -- --grep-invert @quarantine
+
+      - name: All e2e
+        if: github.event_name != 'pull_request'
+        run: |
+          pnpm turbo e2e -- --grep-invert @quarantine
+          pnpm turbo visual -- --grep-invert @quarantine
+
+      # The quarantined tests, ten times each: their failures show in the
+      # uploaded report, never in the gate. Each task in a step of its own,
+      # and whether or not the gating run above passed, so neither's failure
+      # skips the other. `--pass-with-no-tests`: usually none is quarantined.
+      - name: Quarantined e2e (scheduled)
+        id: quarantine-e2e
+        if: (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && !cancelled()
+        continue-on-error: true
+        run: pnpm turbo e2e -- --grep @quarantine --repeat-each=10 --pass-with-no-tests
+
+      - name: Quarantined visual (scheduled)
+        id: quarantine-visual
+        if: (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && !cancelled()
+        continue-on-error: true
+        run: pnpm turbo visual -- --grep @quarantine --repeat-each=10 --pass-with-no-tests
+
+      - if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: .turbo/cache
+          key: turbo-e2e-${{ github.sha }}
+
+      - if: failure() || steps.quarantine-e2e.outcome == 'failure' || steps.quarantine-visual.outcome == 'failure'
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: playwright-report
@@ -76,11 +216,12 @@ jobs:
   # succeeded, so jobs can be added, renamed or made conditional without
   # touching branch protection. `always()` makes it report even when a needed
   # job failed or was cancelled (a skipped required check would pass). Only
-  # the e2e job may be skipped.
+  # the e2e job may be skipped, as the detector decides; a failed detector
+  # skips it too, and fails the gate.
   ci-gate:
     name: ci-gate
     if: always()
-    needs: [checks, e2e]
+    needs: [checks, changes, e2e]
     runs-on: ubuntu-latest
     permissions: {}
     steps:

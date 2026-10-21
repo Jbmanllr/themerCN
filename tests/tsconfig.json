@@ -1,0 +1,13 @@
+{
+  // Type-checks the root's tests (run by `test:repo`), which import the apps'
+  // Playwright configs and the shared ESLint configs by path.
+  "extends": "@workspace/typescript-config/base.json",
+  "compilerOptions": {
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "allowJs": true,
+    "noEmit": true,
+    "types": ["node"]
+  },
+  "include": ["*.ts", "../vitest.config.ts"]
+}

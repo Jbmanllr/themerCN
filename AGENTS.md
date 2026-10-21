@@ -33,7 +33,7 @@ Rules for every tier:
 - Give each worktree its own `WEB_E2E_PORT` and `VITE_E2E_PORT` (defaults 3100 and 4173), and run Playwright with two workers at most.
 - Run at most one Docker visual run (`pnpm e2e:visual`, `pnpm e2e:update-snapshots`) per host at a time.
 
-A Stop hook (`.claude/hooks/stop-t1.sh`, wired in `.claude/settings.json`) runs T1's Turbo command when you end a turn with changes against your base, and blocks the turn while it fails. It reads the base from `TURBO_SCM_BASE`, else the branch's upstream, else `main`. It never runs e2e or visual, so the smoke step of T1 stays yours.
+A Stop hook (`.claude/hooks/stop-t1.sh`, wired in `.claude/settings.json` on `Stop` and `SubagentStop`) runs T1's Turbo command when you or a subagent end a turn with changes against your base, and blocks the turn while it fails. It reads the base from `TURBO_SCM_BASE`, else `main`, else `origin/main`; set `TURBO_SCM_BASE` to your integration branch. If you stop again with nothing changed, it lets the turn end but warns that T1 is still red: the work is not done. It never runs e2e or visual, so the smoke step of T1 stays yours.
 
 <!-- BEGIN:turborepo-agent-rules -->
 

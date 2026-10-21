@@ -1,4 +1,4 @@
-import { execFileSync } from "node:child_process"
+import { execFileSync, spawnSync } from "node:child_process"
 import {
   appendFileSync,
   cpSync,
@@ -965,32 +965,22 @@ const scriptSandbox = (name: string) => {
     const log = join(scratch, `pnpm-args-${Math.random()}`)
     const inherited = { ...process.env }
     delete inherited.TURBO_SCM_BASE
-    let status = 0
-    let stdout = ""
-    let stderr = ""
-    try {
-      stdout = execFileSync(script, args, {
-        cwd,
-        input,
-        encoding: "utf8",
-        stdio: ["pipe", "pipe", "pipe"],
-        env: {
-          ...inherited,
-          // The stand-in pnpm first; PATH is not an input of any task.
-          // eslint-disable-next-line turbo/no-undeclared-env-vars
-          PATH: `${join(scratch, "bin")}:${process.env.PATH}`,
-          PNPM_ARGS: log,
-          PNPM_EXIT: String(pnpm.exit ?? 0),
-          PNPM_STDOUT: pnpm.stdout ?? "",
-          ...env,
-        },
-      })
-    } catch (error) {
-      const failed = error as { status: number; stdout: string; stderr: string }
-      status = failed.status
-      stdout = failed.stdout
-      stderr = failed.stderr
-    }
+    const { status, stdout, stderr, error } = spawnSync(script, args, {
+      cwd,
+      input,
+      encoding: "utf8",
+      env: {
+        ...inherited,
+        // The stand-in pnpm first; PATH is not an input of any task.
+        // eslint-disable-next-line turbo/no-undeclared-env-vars
+        PATH: `${join(scratch, "bin")}:${process.env.PATH}`,
+        PNPM_ARGS: log,
+        PNPM_EXIT: String(pnpm.exit ?? 0),
+        PNPM_STDOUT: pnpm.stdout ?? "",
+        ...env,
+      },
+    })
+    if (error) throw error
     return {
       status,
       stdout,
@@ -1295,12 +1285,80 @@ describe("the T1 Stop hook", () => {
     )
   })
 
+  // A pushed branch's upstream is its own remote copy, so against it a
+  // pushed ticket would look unchanged and T1 would never run.
+  it("compares against main, not the branch's upstream, after a push", () => {
+    const { dir, git } = repo()
+    const remote = mkdtempSync(join(dir, "..", "remote-"))
+    execFileSync("git", ["init", "--quiet", "--bare", remote])
+    git("remote", "add", "origin", remote)
+    writeFileSync(join(dir, "a.ts"), "export const a = 2\n")
+    git("commit", "--quiet", "--all", "--message=ticket")
+    git("push", "--quiet", "--set-upstream", "origin", "ticket")
+    expect(stop(dir).ran).toEqual([
+      `TURBO_SCM_BASE=${git("rev-parse", "main")} ${T1} --output-logs=errors-only`,
+    ])
+  })
+
+  it("falls back to origin/main when there is no local main", () => {
+    const { dir, git } = repo()
+    const remote = mkdtempSync(join(dir, "..", "remote-"))
+    execFileSync("git", ["init", "--quiet", "--bare", remote])
+    git("remote", "add", "origin", remote)
+    git("push", "--quiet", "origin", "main")
+    git("fetch", "--quiet", "origin")
+    git("branch", "--quiet", "-D", "main")
+    writeFileSync(join(dir, "a.ts"), "export const a = 2\n")
+    expect(stop(dir).ran).toEqual([
+      `TURBO_SCM_BASE=${git("rev-parse", "origin/main")} ${T1} --output-logs=errors-only`,
+    ])
+  })
+
+  it("says why it lets the turn end when no base resolves", () => {
+    const { dir, git } = repo()
+    git("branch", "--quiet", "-m", "main", "trunk")
+    writeFileSync(join(dir, "a.ts"), "export const a = 2\n")
+    const { status, ran, stderr } = stop(dir, { t1Exit: 1 })
+    expect({ status, ran }).toEqual({ status: 0, ran: [] })
+    expect(stderr).toMatch(/no base.*T1 not run/i)
+  })
+
+  it("blocks stopping when the base shares no history with HEAD", () => {
+    const { dir, git } = repo()
+    git("switch", "--quiet", "--orphan", "unrelated")
+    git("commit", "--quiet", "--allow-empty", "--message=unrelated")
+    git("switch", "--quiet", "ticket")
+    const { status, stderr } = stop(dir, {
+      env: { TURBO_SCM_BASE: "unrelated" },
+    })
+    expect(status).toBe(2)
+    expect(stderr).toMatch(/unrelated shares no history with HEAD/)
+  })
+
   it("blocks stopping while T1 fails, with T1's output as the reason", () => {
     const { dir } = repo()
     writeFileSync(join(dir, "a.ts"), "export const a = 2\n")
     const { status, stderr } = stop(dir, { t1Exit: 1 })
     expect(status).toBe(2)
     expect(stderr).toContain("T1 output: lint failed")
+  })
+
+  // SubagentStop carries the same cwd and stop_hook_active fields.
+  it("blocks a subagent from stopping the same way", () => {
+    const { dir } = repo()
+    writeFileSync(join(dir, "a.ts"), "export const a = 2\n")
+    const input = {
+      hook_event_name: "SubagentStop",
+      agent_id: "def456",
+      agent_type: "general-purpose",
+    }
+    expect(stop(dir, { t1Exit: 1, input })).toMatchObject({
+      status: 2,
+      stderr: expect.stringContaining("T1 output: lint failed"),
+    })
+    expect(
+      stop(dir, { t1Exit: 1, input: { ...input, stop_hook_active: true } })
+    ).toMatchObject({ status: 0, ran: [] })
   })
 
   it("never runs e2e or the visual baselines", () => {
@@ -1323,6 +1381,22 @@ describe("the T1 Stop hook", () => {
     ).toMatchObject({ status: 0, ran: [] })
   })
 
+  // Letting the turn end is no pass: the user is told T1 is still red.
+  it("warns the user that T1 still fails when it lets the turn end", () => {
+    const { dir } = repo()
+    writeFileSync(join(dir, "a.ts"), "export const a = 2\n")
+    stop(dir, { t1Exit: 1 })
+    const { stdout, stderr } = stop(dir, {
+      t1Exit: 1,
+      input: { stop_hook_active: true },
+    })
+    const { systemMessage } = JSON.parse(stdout) as { systemMessage: string }
+    for (const message of [systemMessage, stderr]) {
+      expect(message).toMatch(/T1 still fails/)
+      expect(message).toMatch(/not done/)
+    }
+  })
+
   it("re-runs T1 and blocks again when files changed since the block", () => {
     const { dir } = repo()
     writeFileSync(join(dir, "a.ts"), "export const a = 2\n")
@@ -1333,18 +1407,22 @@ describe("the T1 Stop hook", () => {
     ).toMatchObject({ status: 2, ran: [expect.stringContaining(T1)] })
   })
 
-  it("Claude Code runs it on Stop, from the project's settings", () => {
-    const settings = JSON.parse(read("../.claude/settings.json"))
-    const handlers = (settings.hooks?.Stop ?? []).flatMap(
-      (group: { hooks: { type: string; command: string }[] }) => group.hooks
-    )
-    expect(handlers).toEqual([
-      expect.objectContaining({
-        type: "command",
-        command: '"$CLAUDE_PROJECT_DIR"/.claude/hooks/stop-t1.sh',
-      }),
-    ])
-  })
+  // Subagents too: agents in parallel worktrees are gated like the session.
+  it.each(["Stop", "SubagentStop"])(
+    "Claude Code runs it on %s, from the project's settings",
+    (event) => {
+      const settings = JSON.parse(read("../.claude/settings.json"))
+      const handlers = (settings.hooks?.[event] ?? []).flatMap(
+        (group: { hooks: { type: string; command: string }[] }) => group.hooks
+      )
+      expect(handlers).toEqual([
+        expect.objectContaining({
+          type: "command",
+          command: '"$CLAUDE_PROJECT_DIR"/.claude/hooks/stop-t1.sh',
+        }),
+      ])
+    }
+  )
 })
 
 // The project's Claude Code settings and hooks are committed; everything

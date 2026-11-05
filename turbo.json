@@ -74,6 +74,8 @@
         "pnpm-workspace.yaml",
         "README.md",
         "scripts/e2e-affected.sh",
+        "scripts/heavy-slot.sh",
+        "AGENTS.md",
         "turbo.json",
         "apps/*/package.json",
         "apps/*/turbo.json",

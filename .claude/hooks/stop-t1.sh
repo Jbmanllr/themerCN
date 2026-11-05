@@ -1,24 +1,28 @@
 #!/usr/bin/env bash
 # Claude Code Stop and SubagentStop hook (wired in .claude/settings.json): T1
 # of AGENTS.md "Verification tiers". It keeps the turn (or the subagent) from
-# ending while the affected lint, typecheck, test (the root's repo-wide
-# checks included), build and package checks fail. It never runs e2e or the
+# ending while the changed files' formatting (Prettier, which CI checks
+# first) or the affected lint, typecheck, test (the root's repo-wide checks
+# included), build and package checks fail. The Turbo tasks run in the
+# clone's heavy slot (scripts/heavy-slot.sh). It never runs e2e or the
 # visual baselines.
 #
 # Reads the hook input on stdin and works in its `cwd`, the session's (or the
 # subagent's) worktree. The base is $TURBO_SCM_BASE, else `main`, else
 # `origin/main` (never the branch's upstream: once pushed, that is the
 # branch itself); changes are committed, staged, unstaged and untracked
-# files against the merge base with it.
+# files against the merge base with it. A tree that passed T1 against that
+# merge base is not checked again.
 #
-#   exit 0  stop: nothing changed, T1 passed, no base ref exists, or nothing
-#           changed since the last block (blocking again could never
+#   exit 0  stop: nothing changed, T1 passed (now or before, on this tree and
+#           base), no base ref exists, or nothing changed since the last block (blocking again could never
 #           resolve). That last case is no pass: a `systemMessage` on stdout
 #           tells the user T1 is still red.
 #   exit 2  block: T1 failed, or the base shares no history with HEAD; the
 #           reason (T1 output's tail) is on stderr
 set -uo pipefail
 
+hooks=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 input=$(cat)
 read_input() {
   node -e '
@@ -78,29 +82,63 @@ fi
 # The working tree as a tree object (untracked files included), to tell
 # whether anything changed since the run that last blocked.
 index=$(mktemp)
-trap 'rm -f "$index" "$index.out"' EXIT
+trap 'rm -f "$index" "$index.out" "$index.fmt"' EXIT
 cp -p "$(git rev-parse --git-path index)" "$index" 2>/dev/null || rm -f "$index"
 GIT_INDEX_FILE=$index git add --all &&
   tree=$(GIT_INDEX_FILE=$index git write-tree) || tree=unknown
 blocked=$(git rev-parse --git-path claude-stop-t1)
+passed=$(git rev-parse --git-path claude-stop-t1-passed)
+
+if [ "$tree" != unknown ] && [ "$base $tree" = "$(cat "$passed" 2>/dev/null)" ]; then
+  exit 0
+fi
 
 if [ "$continuing" = true ] && [ "$tree" = "$(cat "$blocked" 2>/dev/null)" ]; then
   give_up "T1 still fails, with nothing changed since the last block. The work is not done: don't report it done until T1 passes."
 fi
 
-if NO_COLOR=1 TURBO_SCM_BASE=$base pnpm turbo run lint lint:repo typecheck test \
-  test:repo build check:package --affected --output-logs=errors-only \
-  >"$index.out" 2>&1; then
+# The changed files that still exist: committed, staged, unstaged, untracked.
+files=()
+while IFS= read -r -d '' file; do
+  files+=("$file")
+done < <(
+  git diff --name-only -z --diff-filter=d "$base" --
+  git ls-files --others --exclude-standard -z
+)
+
+format=0
+: >"$index.fmt"
+if [ ${#files[@]} -gt 0 ]; then
+  NO_COLOR=1 pnpm exec prettier --check --ignore-unknown -- "${files[@]}" \
+    >"$index.fmt" 2>&1 || format=$?
+fi
+
+turbo=0
+NO_COLOR=1 TURBO_SCM_BASE=$base "$hooks/../../scripts/heavy-slot.sh" \
+  pnpm turbo run lint lint:repo typecheck test test:repo build check:package \
+  --affected --output-logs=errors-only >"$index.out" 2>&1 || turbo=$?
+
+if [ "$format" -eq 0 ] && [ "$turbo" -eq 0 ]; then
   rm -f "$blocked"
+  [ "$tree" != unknown ] && echo "$base $tree" >"$passed"
   exit 0
 fi
 
 echo "$tree" >"$blocked"
 {
-  echo "T1 fails (TURBO_SCM_BASE=$base pnpm turbo run lint lint:repo typecheck test" \
+  echo "T1 fails (prettier --check on the changed files, then" \
+    "TURBO_SCM_BASE=$base pnpm turbo run lint lint:repo typecheck test" \
     "test:repo build check:package --affected). Fix it before you stop;" \
-    "never edit or delete a test to get green, and don't report the work" \
-    "done while T1 is red. Last lines:"
-  tail -n 60 "$index.out"
+    "don't edit, skip or delete a test to get green unless the user asked" \
+    "for the behavior it encodes to change, and don't report the work done" \
+    "while T1 is red."
+  if [ "$format" -ne 0 ]; then
+    echo "Formatting (run pnpm exec prettier --write on these files):"
+    tail -n 30 "$index.fmt"
+  fi
+  if [ "$turbo" -ne 0 ]; then
+    echo "Turbo, last lines:"
+    tail -n 60 "$index.out"
+  fi
 } >&2
 exit 2

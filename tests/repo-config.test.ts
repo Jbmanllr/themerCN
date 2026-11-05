@@ -427,6 +427,18 @@ describe("task hashes", () => {
         changes: ["//#test:repo"],
         keeps: ["web#test", "web#build", "web#e2e"],
       },
+      // AGENTS.md's T1, which these tests compare with the hook's, and the
+      // heavy slot's script, which they run.
+      {
+        file: "AGENTS.md",
+        changes: ["//#test:repo"],
+        keeps: ["web#test", "web#build", "web#e2e"],
+      },
+      {
+        file: "scripts/heavy-slot.sh",
+        changes: ["//#test:repo"],
+        keeps: ["web#test", "web#build", "web#e2e"],
+      },
       // The build-exclusion checks read the Tailwind entries, which the
       // builds read too.
       {
@@ -727,13 +739,47 @@ describe("CI task selection", () => {
   // are the backstop: each runs the full suite.
   it("runs on pull requests, pushes to main and the backstop events", () => {
     expect(ciYml.on).toEqual({
-      pull_request: null,
+      pull_request: {
+        types: ["opened", "synchronize", "reopened", "ready_for_review"],
+      },
       push: { branches: ["main"] },
       merge_group: null,
       schedule: [{ cron: "0 4 * * 1" }],
       workflow_dispatch: null,
     })
   })
+
+  // A draft pull request (an integration branch while its tickets land)
+  // runs no job: the gate runs once, when the pull request is marked ready.
+  // The e2e job needs `changes`, so it skips with it.
+  it.each([
+    [true, false],
+    [false, true],
+  ])("a pull request with draft %s runs its jobs: %s", (draft, runs) => {
+    const github = {
+      event_name: "pull_request",
+      event: { pull_request: { draft } },
+    }
+    for (const id of ["checks", "changes", "ci-gate"]) {
+      expect({ id, runs: runsIf(ciYml.jobs[id]?.if, { github }) }).toEqual({
+        id,
+        runs,
+      })
+    }
+    expect(ciYml.jobs[e2eId!]?.needs).toBe("changes")
+  })
+
+  it.each(["push", "merge_group", "schedule", "workflow_dispatch"])(
+    "%s runs every job",
+    (event) => {
+      for (const id of ["checks", "changes", "ci-gate"]) {
+        expect({
+          id,
+          runs: runsIf(ciYml.jobs[id]?.if, { github: { event_name: event } }),
+        }).toEqual({ id, runs: true })
+      }
+    }
+  )
 
   // The step conditions this workflow uses: none, or event-name tests
   // joined by `||`.
@@ -1065,8 +1111,9 @@ describe("CI task selection", () => {
   })
 })
 
-// Runs a repo script (the e2e detector, the Stop hook) as CI or Claude Code
-// would, in scratch git repositories, with a stand-in `pnpm` first on PATH.
+// Runs a repo script (the e2e detector, the Stop hook, the heavy slot) as
+// CI, Claude Code or an agent would, in scratch git repositories, with a
+// stand-in `pnpm` first on PATH.
 // The stand-in appends the command it was given, prefixed with
 // `TURBO_SCM_BASE=<base>` when that is set, to a log; prints `stdout`; and
 // exits with `exit`.
@@ -1484,13 +1531,16 @@ describe("Playwright tiers", () => {
 })
 
 // AGENTS.md "Verification tiers": a Stop hook keeps an agent's turn from
-// ending while T1 (the affected lint, typecheck, test, build and package
-// checks) fails. Each case runs the real hook in a scratch repository, with
+// ending while T1 (the changed files' formatting, and the affected lint,
+// typecheck, test, build and package checks) fails. Each case runs the real hook in a scratch repository, with
 // a stand-in `pnpm` that records what it ran and exits as given.
 describe("the T1 Stop hook", () => {
   const HOOK = join(ROOT, ".claude/hooks/stop-t1.sh")
   const T1 =
     "turbo run lint lint:repo typecheck test test:repo build check:package --affected"
+  // Prettier on the changed files, which CI checks first.
+  const format = (...files: string[]) =>
+    `exec prettier --check --ignore-unknown -- ${files.join(" ")}`
   const sandbox = scriptSandbox("stop-hook")
 
   // A repository whose `main` holds one commit, checked out on a branch
@@ -1541,17 +1591,68 @@ describe("the T1 Stop hook", () => {
     const { status, ran } = stop(dir)
     expect(status).toBe(0)
     expect(ran).toEqual([
+      format("a.ts"),
       `TURBO_SCM_BASE=${git("rev-parse", "main")} ${T1} --output-logs=errors-only`,
     ])
   })
 
-  it("counts committed and untracked changes against the base", () => {
+  it("counts untracked changes against the base", () => {
+    const { dir } = repo()
+    writeFileSync(join(dir, "b.ts"), "export const b = 1\n")
+    expect(stop(dir).ran).toEqual([format("b.ts"), expect.stringContaining(T1)])
+  })
+
+  it("counts committed changes against the base, and leaves out deleted files", () => {
     const { dir, git } = repo()
     writeFileSync(join(dir, "b.ts"), "export const b = 1\n")
-    expect(stop(dir).ran).toHaveLength(1)
     git("add", ".")
+    git("rm", "--quiet", "a.ts")
     git("commit", "--quiet", "--message=ticket")
-    expect(stop(dir).ran).toHaveLength(1)
+    expect(stop(dir).ran).toEqual([format("b.ts"), expect.stringContaining(T1)])
+  })
+
+  // A tree that passed against this base is not gated again, whoever's
+  // turn ends on it (the session, a subagent, a later turn).
+  it("does not run T1 again on a tree that passed against the same base", () => {
+    const { dir } = repo()
+    writeFileSync(join(dir, "a.ts"), "export const a = 2\n")
+    expect(stop(dir).ran).toHaveLength(2)
+    expect(stop(dir)).toMatchObject({ status: 0, ran: [] })
+    writeFileSync(join(dir, "a.ts"), "export const a = 3\n")
+    expect(stop(dir).ran).toHaveLength(2)
+  })
+
+  it("runs T1 again on a passed tree when the base moved", () => {
+    const { dir, git } = repo()
+    writeFileSync(join(dir, "a.ts"), "export const a = 2\n")
+    expect(stop(dir).ran).toHaveLength(2)
+    git("switch", "--quiet", "main")
+    git("commit", "--quiet", "--allow-empty", "--message=main moved")
+    git("switch", "--quiet", "ticket")
+    git("merge", "--quiet", "--no-edit", "main")
+    expect(stop(dir).ran).toHaveLength(2)
+  })
+
+  it("does not count a failing tree as passed", () => {
+    const { dir } = repo()
+    writeFileSync(join(dir, "a.ts"), "export const a = 2\n")
+    expect(stop(dir, { t1Exit: 1 }).status).toBe(2)
+    expect(stop(dir, { t1Exit: 1 })).toMatchObject({ status: 2 })
+  })
+
+  // T1 builds: it waits for the clone's heavy slot (scripts/heavy-slot.sh),
+  // and blocks with the reason when the slot stays busy.
+  it("runs T1's Turbo tasks in the heavy slot", () => {
+    const { dir, git } = repo()
+    writeFileSync(join(dir, "a.ts"), "export const a = 2\n")
+    const slot = join(dir, git("rev-parse", "--git-common-dir"), "heavy-slot")
+    mkdirSync(slot)
+    writeFileSync(join(slot, "pid"), `${process.pid}\n`)
+    const { status, ran, stderr } = stop(dir, {
+      env: { HEAVY_SLOT_WAIT: "1" },
+    })
+    expect({ status, ran }).toEqual({ status: 2, ran: [format("a.ts")] })
+    expect(stderr).toMatch(/heavy slot busy/)
   })
 
   it("compares against TURBO_SCM_BASE when it is set", () => {
@@ -1576,6 +1677,7 @@ describe("the T1 Stop hook", () => {
     git("commit", "--quiet", "--all", "--message=ticket")
     git("push", "--quiet", "--set-upstream", "origin", "ticket")
     expect(stop(dir).ran).toEqual([
+      format("a.ts"),
       `TURBO_SCM_BASE=${git("rev-parse", "main")} ${T1} --output-logs=errors-only`,
     ])
   })
@@ -1590,6 +1692,7 @@ describe("the T1 Stop hook", () => {
     git("branch", "--quiet", "-D", "main")
     writeFileSync(join(dir, "a.ts"), "export const a = 2\n")
     expect(stop(dir).ran).toEqual([
+      format("a.ts"),
       `TURBO_SCM_BASE=${git("rev-parse", "origin/main")} ${T1} --output-logs=errors-only`,
     ])
   })
@@ -1644,11 +1747,14 @@ describe("the T1 Stop hook", () => {
   it("never runs e2e or the visual baselines", () => {
     const { dir } = repo()
     writeFileSync(join(dir, "a.ts"), "export const a = 2\n")
-    const [command] = stop(dir, { t1Exit: 1 }).ran
-    // Past the base SHA, whose hex digits can spell "e2e".
-    expect(command?.replace(/^TURBO_SCM_BASE=\S+ /, "")).not.toMatch(
-      /e2e|visual|smoke|playwright/
-    )
+    const { ran } = stop(dir, { t1Exit: 1 })
+    expect(ran).toHaveLength(2)
+    for (const command of ran) {
+      // Past the base SHA, whose hex digits can spell "e2e".
+      expect(command.replace(/^TURBO_SCM_BASE=\S+ /, "")).not.toMatch(
+        /e2e|visual|smoke|playwright/
+      )
+    }
   })
 
   // Claude Code sets stop_hook_active on the stop that follows a block.
@@ -1684,16 +1790,19 @@ describe("the T1 Stop hook", () => {
     writeFileSync(join(dir, "a.ts"), "export const a = 3\n")
     expect(
       stop(dir, { t1Exit: 1, input: { stop_hook_active: true } })
-    ).toMatchObject({ status: 2, ran: [expect.stringContaining(T1)] })
+    ).toMatchObject({
+      status: 2,
+      ran: [format("a.ts"), expect.stringContaining(T1)],
+    })
   })
 
-  // AGENTS.md's T1 and T3 run the same tasks the hook does, and CI's checks.
-  it.each(["T1", "T3"])("AGENTS.md's %s runs the hook's tasks", (tier) => {
+  // AGENTS.md's T1 runs the same tasks the hook does.
+  it("AGENTS.md's T1 runs the hook's tasks", () => {
     const line = read("../AGENTS.md")
       .split("\n")
-      .find((text) => text.startsWith(`- **${tier},`))
+      .find((text) => text.startsWith("- **T1,"))
     const command = line?.match(
-      /`(?:TURBO_SCM_BASE=\S+ )?pnpm (turbo run [^`]+)`/
+      /`(?:TURBO_SCM_BASE=\S+ )?(?:scripts\/heavy-slot\.sh )?pnpm (turbo run [^`]+)`/
     )
     const tasks = (text: string) =>
       text
@@ -1721,6 +1830,59 @@ describe("the T1 Stop hook", () => {
       ])
     }
   )
+})
+
+// AGENTS.md "Verification tiers": one heavy suite (a build, Playwright, the
+// Docker visual run) at a time per host. scripts/heavy-slot.sh runs a
+// command in the clone's one slot, shared by all its worktrees.
+describe("the heavy slot", () => {
+  const SLOT_SCRIPT = join(ROOT, "scripts/heavy-slot.sh")
+  const sandbox = scriptSandbox("heavy-slot")
+  const slotOf = (dir: string, git: (...args: string[]) => string) =>
+    join(dir, git("rev-parse", "--git-common-dir"), "heavy-slot")
+  const hold = (slot: string, pid: number) => {
+    mkdirSync(slot)
+    writeFileSync(join(slot, "pid"), `${pid}\n`)
+  }
+  const run = (dir: string, exit = 0) =>
+    sandbox.run(SLOT_SCRIPT, {
+      args: ["pnpm", "e2e:smoke"],
+      cwd: dir,
+      env: { HEAVY_SLOT_WAIT: "1" },
+      pnpm: { exit },
+    })
+
+  it("runs the command, exits with its status and frees the slot", () => {
+    const { dir, git } = sandbox.repo()
+    expect(run(dir, 3)).toMatchObject({ status: 3, ran: ["e2e:smoke"] })
+    expect(existsSync(slotOf(dir, git))).toBe(false)
+    expect(run(dir)).toMatchObject({ status: 0, ran: ["e2e:smoke"] })
+  })
+
+  it("does not run the command while a live process holds the slot", () => {
+    const { dir, git } = sandbox.repo()
+    hold(slotOf(dir, git), process.pid)
+    const { status, ran, stderr } = run(dir)
+    expect({ status, ran }).toEqual({ status: 75, ran: [] })
+    expect(stderr).toMatch(new RegExp(`heavy slot busy.*pid ${process.pid}`))
+  })
+
+  it("takes over a slot whose holder has exited", () => {
+    const { dir, git } = sandbox.repo()
+    const exited = spawnSync("true").pid!
+    hold(slotOf(dir, git), exited)
+    expect(run(dir)).toMatchObject({ status: 0, ran: ["e2e:smoke"] })
+  })
+
+  // Worktrees of one clone share the slot.
+  it("is shared by the clone's worktrees", () => {
+    const { dir, git } = sandbox.repo()
+    git("commit", "--quiet", "--allow-empty", "--message=base")
+    const worktree = `${dir}-worktree`
+    git("worktree", "add", "--quiet", worktree)
+    hold(slotOf(dir, git), process.pid)
+    expect(run(worktree)).toMatchObject({ status: 75, ran: [] })
+  })
 })
 
 // The project's Claude Code settings and hooks are committed; everything

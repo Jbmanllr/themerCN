@@ -8,7 +8,7 @@
 export type Status = "success" | "failure" | "cancelled"
 
 export type Context = {
-  github?: Record<string, string>
+  github?: Record<string, unknown>
   needs?: Record<string, unknown>
   steps?: Record<string, unknown>
   // The job's status so far: what success(), failure() and cancelled() see.

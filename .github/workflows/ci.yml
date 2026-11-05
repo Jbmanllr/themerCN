@@ -1,7 +1,10 @@
 name: CI
 
 on:
+  # A draft pull request (an integration branch while its tickets land) runs
+  # no job; marking it ready runs the gate once.
   pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
   push:
     branches: [main]
   # The backstop: with pushes to main, these run the full suite, with no
@@ -34,6 +37,7 @@ env:
 jobs:
   checks:
     name: Lint, typecheck, test, build, package checks
+    if: github.event_name != 'pull_request' || !github.event.pull_request.draft
     runs-on: ubuntu-latest
     steps:
       # Full history (blobs on demand): from a shallow clone, Turbo treats
@@ -102,6 +106,7 @@ jobs:
   # error, a missing base and every other event run e2e.
   changes:
     name: Detect affected e2e tasks
+    if: github.event_name != 'pull_request' || !github.event.pull_request.draft
     runs-on: ubuntu-latest
     outputs:
       e2e: ${{ steps.detect.outputs.e2e }}
@@ -217,10 +222,11 @@ jobs:
   # touching branch protection. `always()` makes it report even when a needed
   # job failed or was cancelled (a skipped required check would pass). Only
   # the e2e job may be skipped, as the detector decides; a failed detector
-  # skips it too, and fails the gate.
+  # skips it too, and fails the gate. On a draft pull request every job
+  # skips, this one too: a draft can't merge.
   ci-gate:
     name: ci-gate
-    if: always()
+    if: always() && (github.event_name != 'pull_request' || !github.event.pull_request.draft)
     needs: [checks, changes, e2e]
     runs-on: ubuntu-latest
     permissions: {}

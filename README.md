@@ -61,8 +61,9 @@ inputs the change touches, compared with the base branch. The e2e job runs on
 a pull request only when
 `turbo query` reports an affected `e2e` or `visual` task with a script (a
 docs-only change skips it; a `packages/ui` change runs both apps'), and
-whenever that query fails or has no base. `main` runs everything. Run the
-same before opening a PR.
+whenever that query fails or has no base. A draft pull request runs no job;
+marking it ready runs them. `main` runs everything. What to run locally
+before you push: [`AGENTS.md`](AGENTS.md), "Verification tiers".
 
 The e2e gate covers the Themer: opening it, editing tokens, its layouts and
 inspector, persistence, the Themer UI's accessibility and visual baselines,

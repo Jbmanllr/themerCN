@@ -8,7 +8,8 @@
 // - Row tests drive one set through the store module's actions, with each
 //   published selector subscribed, once per outcome the contract splits.
 // - The composition run drives one set with <Themer> mounted and open and
-//   every panel's selector callers mounted, with Sidebar Sync on, then off.
+//   every panel's selector callers mounted, with Sidebar Sync on, then off;
+//   with it off, its lookups are gone.
 // - Each counter has a failing seed: one extra unit of its work, which the
 //   comparison against the unseeded figure must catch, naming the row.
 import * as React from "react"
@@ -20,11 +21,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import {
   calledFrom,
   checkCounts,
+  checkReach,
+  checkSeedCaught,
   countCalls,
   countExport,
   countStorage,
   measure,
-  registerOf,
   type Counts,
 } from "../../../../tests/counting"
 import { configureExtraColors } from "../config/extra-colors"
@@ -67,6 +69,15 @@ vi.mock("../utils/color-converter", async (importOriginal) => {
       typeof value === "function" ? passThrough("colour parse", value) : value,
     ])
   )
+})
+// Sidebar Sync's lookup: the sidebar colours checked against their twins.
+vi.mock("../utils/sidebar-sync", async (importOriginal) => {
+  const { passThrough } = await import("../../../../tests/counting")
+  const real = await importOriginal<typeof import("../utils/sidebar-sync")>()
+  return {
+    ...real,
+    applySidebarSync: passThrough("sidebar sync", real.applySidebarSync),
+  }
 })
 // happy-dom overflows on the real sheet's custom properties (themer.test.tsx).
 vi.mock("../generated/themer-css", () => ({
@@ -270,6 +281,9 @@ async function mountComposition(extras: boolean) {
   await settle(editTheme)
 }
 
+// Not a register row: the work Sidebar Sync off must remove.
+const SIDEBAR_SYNC_LOOKUPS = "Sidebar Sync lookups"
+
 describe("Store action composition", () => {
   const runs = [
     { name: "Sidebar Sync on", sync: true, extras: false },
@@ -290,11 +304,17 @@ describe("Store action composition", () => {
         )
       await settle(editTheme)
 
-      const counts = await measure(counters(), () => settle(editTheme))
+      const { [SIDEBAR_SYNC_LOOKUPS]: lookups, ...counts } = await measure(
+        [...counters(), countExport(SIDEBAR_SYNC_LOOKUPS, "sidebar sync")],
+        () => settle(editTheme)
+      )
 
       const outcomes = [...THEME_EDIT, extras ? UNSET_EXTRAS : NO_EXTRAS]
       report(`composition: ${name}`, counts)
       checkCounts({ path: PATH, outcomes, counts })
+      // Sidebar Sync off removes its lookups; on, the counter sees them.
+      if (sync) expect(lookups).toBeGreaterThan(0)
+      else expect(lookups).toBe(0)
     })
   }
 
@@ -320,8 +340,6 @@ function ExtraShadowCaller() {
 }
 
 describe("Store action failing seeds", () => {
-  const outcomes = [...THEME_EDIT, NO_EXTRAS]
-
   /** The unseeded figure, then the same unit with the seed: the comparison
    *  must fail and name the seeded row. */
   async function expectSeedCaught(row: string, seed: () => Promise<void>) {
@@ -331,14 +349,7 @@ describe("Store action failing seeds", () => {
     await seed()
     const seeded = await measure(counters(), () => settle(editTheme))
 
-    expect(() =>
-      checkCounts({
-        path: PATH,
-        outcomes,
-        counts: seeded,
-        register: registerOf(PATH, unseeded),
-      })
-    ).toThrow(`${PATH}: ${row} (`)
+    checkSeedCaught({ path: PATH, row, unseeded, seeded })
   }
 
   const subscriber = (work: () => void) => async () => {
@@ -387,4 +398,11 @@ describe("Store action failing seeds", () => {
       "computed-style reads",
       subscriber(() => getComputedStyle(document.documentElement))
     ))
+})
+
+// Last: every unseeded run above has been compared with the register.
+describe("Store action reach", () => {
+  it("reaches every register figure in its unseeded runs", () => {
+    checkReach({ path: PATH })
+  })
 })

@@ -35,12 +35,14 @@ import {
 import {
   calledFrom,
   checkCounts,
+  checkReach,
+  checkSeedCaught,
   countCalls,
   countConstructions,
   countExport,
   countGetter,
+  madeBy,
   measure,
-  registerOf,
   type Counter,
   type Counts,
 } from "../../../../../../tests/counting"
@@ -125,21 +127,10 @@ const inClassMatch = () =>
 const THEMER_TREE = "[data-themer]"
 const CARD_SELECTOR = `[${INSPECTOR_CARD_ATTRIBUTE}]`
 
-// Reading a stack can itself run counted work (source maps): a call made
-// while a stack is read is the check's own, never the unit's.
-let readingStack = false
-const stackHas = (pattern: RegExp) => {
-  if (readingStack) return false
-  readingStack = true
-  try {
-    return calledFrom(pattern)
-  } finally {
-    readingStack = false
-  }
-}
-
 // A failing seed's extra work comes from the test, not from the inspector;
-// it counts as the inspector's while `seeding` is set.
+// it counts as the inspector's while `seeding` is set. Each row it seeds
+// has a figure above 0, so the file's reach check (last) still proves the
+// stack filters see the inspector's own work.
 let seeding = false
 const asSeed = (work: () => void) => {
   seeding = true
@@ -149,7 +140,7 @@ const asSeed = (work: () => void) => {
     seeding = false
   }
 }
-const inInspector = () => seeding || stackHas(USE_INSPECTOR)
+const inInspector = () => seeding || calledFrom(USE_INSPECTOR)
 
 // --- Animation frames, run by the test ---------------------------------------
 
@@ -164,7 +155,7 @@ function stubFrames() {
   vi.spyOn(window, "requestAnimationFrame").mockImplementation((callback) => {
     const id = ++nextFrame
     frames.set(id, callback)
-    if (stackHas(USE_INSPECTOR)) inspectorFrames.add(id)
+    if (calledFrom(USE_INSPECTOR)) inspectorFrames.add(id)
     return id
   })
   vi.spyOn(window, "cancelAnimationFrame").mockImplementation((id) => {
@@ -204,20 +195,6 @@ const countStoreSets = (store: {
 // happy-dom's own work, which a browser does natively (its media query
 // parser compiles regexes on every `matchMedia(...).matches`).
 const FAKE_DOM = /\/node_modules\/.*\/happy-dom\//
-
-const COUNTING = /\/tests\/counting\.ts|\/use-inspector\.count\.test\.tsx/
-
-/** Whether the code that made the current call matches `pattern`: the
- *  nearest stack frame outside the counting code. Every listener runs under
- *  the fake DOM's dispatch, so only the nearest frame tells its work apart. */
-const madeBy = (pattern: RegExp) => {
-  const limit = Error.stackTraceLimit
-  Error.stackTraceLimit = 20
-  const frames = (new Error().stack ?? "").split("\n").slice(1)
-  Error.stackTraceLimit = limit
-  const caller = frames.find((frame) => !COUNTING.test(frame))
-  return caller !== undefined && pattern.test(caller)
-}
 
 /** `new RegExp(...)` calls, except the fake DOM's own. */
 const countRegexCompiles = (): Counter => ({
@@ -691,7 +668,7 @@ function trackListeners(realms: Window[]) {
       this: EventTarget,
       ...args: Parameters<EventTarget["addEventListener"]>
     ) {
-      if (stackHas(USE_INSPECTOR)) {
+      if (calledFrom(USE_INSPECTOR)) {
         const key = name(keyOf(this, args[0], args[1], args[2]))
         bound.set(key, (bound.get(key) ?? 0) + 1)
       }
@@ -903,16 +880,8 @@ describe("Inspector pointer move composition", () => {
 // --- Failing seeds -------------------------------------------------------------
 
 /** The comparison of a seeded run with the unseeded figure fails on `row`. */
-function expectCaught(row: string, unseeded: Counts, seeded: Counts) {
-  expect(() =>
-    checkCounts({
-      path: PATH,
-      outcomes: NEW,
-      counts: seeded,
-      register: registerOf(PATH, unseeded),
-    })
-  ).toThrow(`${PATH}: ${row} (`)
-}
+const expectCaught = (row: string, unseeded: Counts, seeded: Counts) =>
+  checkSeedCaught({ path: PATH, row, unseeded, seeded })
 
 describe("Inspector pointer move failing seeds", () => {
   /** A move to a new element on a Preview tab, then the same with the seed. */
@@ -982,4 +951,11 @@ describe("Inspector pointer move failing seeds", () => {
     expectSeedCaught("overlay renders", (b) =>
       b.rerender({ onFocusColor: () => {} })
     ))
+})
+
+// Last: every unseeded run above has been compared with the register.
+describe("Inspector pointer move reach", () => {
+  it("reaches every register figure in its unseeded runs", () => {
+    checkReach({ path: PATH })
+  })
 })

@@ -5,14 +5,21 @@
 import { afterEach, describe, expect, it, vi } from "vitest"
 
 import {
+  calledFrom,
   checkCounts,
+  checkReach,
+  checkSeedCaught,
   countCalls,
   countConstructions,
   countExport,
   countGetter,
+  countMethod,
+  countSetter,
   countStorage,
+  madeBy,
   measure,
   passThrough,
+  readingStack,
   registerOf,
 } from "./counting"
 import { readRegister } from "./register"
@@ -227,6 +234,61 @@ describe("pass-through counters leave behaviour unchanged", () => {
     expect([...items.keys()]).toEqual([])
   })
 
+  it("methods: counts only the receivers and arguments `when` accepts", async () => {
+    const original = String.prototype.toLowerCase
+    let lowered: string[] = []
+    const counts = await measure(
+      [
+        countMethod(
+          "lower-cases",
+          String.prototype,
+          "toLowerCase",
+          (self) => String(self) === "Inter"
+        ),
+      ],
+      () => {
+        lowered = ["Inter".toLowerCase(), "Lora".toLowerCase()]
+      }
+    )
+
+    expect(lowered).toEqual(["inter", "lora"])
+    expect(counts).toEqual({ "lower-cases": 1 })
+    expect(String.prototype.toLowerCase).toBe(original)
+  })
+
+  it("setters: the value written, counted for the receivers `when` accepts, inherited setter restored", async () => {
+    class Sheet {
+      text = ""
+      constructor(readonly id: string) {}
+      get textContent() {
+        return this.text
+      }
+      set textContent(value: string) {
+        this.text = value
+      }
+    }
+    const restore = new Sheet("restore")
+    const other = new Sheet("other")
+    const counts = await measure(
+      [
+        countSetter(
+          "sheet writes",
+          Sheet.prototype,
+          "textContent",
+          (self) => (self as Sheet).id === "restore"
+        ),
+      ],
+      () => {
+        restore.textContent = "a"
+        other.textContent = "b"
+      }
+    )
+
+    expect([restore.textContent, other.textContent]).toEqual(["a", "b"])
+    expect(counts).toEqual({ "sheet writes": 1 })
+    expect(Object.hasOwn(Sheet.prototype, "textContent")).toBe(true)
+  })
+
   it("module exports: the wrapped export returns the real result, counted only while measured", async () => {
     const double = passThrough("double", (value: number) => value * 2)
     let result = 0
@@ -309,17 +371,9 @@ describe("checkCounts", () => {
     ).toThrow("Path A: writes: the unit names none of its outcomes")
   })
 
-  it("compares a unit naming several of a row's outcomes with the first it lists", () => {
-    // A load with entries at another version also restores nothing: the
-    // unit lists its own outcome first.
-    expect(() =>
-      checkCounts({
-        path: "Path A",
-        outcomes: ["no change", "changed"],
-        counts: { parses: 0, writes: 1, reads: 0 },
-        register,
-      })
-    ).toThrow("Path A: writes (no change): measured 1, register 0")
+  it("fails when the unit names several of a row's outcomes", () => {
+    // A cap of 0 on one outcome would not hold if the unit could pick the
+    // other one.
     expect(() =>
       checkCounts({
         path: "Path A",
@@ -327,7 +381,51 @@ describe("checkCounts", () => {
         counts: { parses: 0, writes: 1, reads: 0 },
         register,
       })
+    ).toThrow(
+      "Path A: writes: the unit names several of its outcomes (changed, no change)"
+    )
+  })
+
+  it("compares a row named in perRow with that outcome alone", () => {
+    expect(() =>
+      checkCounts({
+        path: "Path A",
+        outcomes: ["changed"],
+        perRow: { writes: "no change" },
+        counts: { parses: 0, writes: 1, reads: 0 },
+        register,
+      })
+    ).toThrow("Path A: writes (no change): measured 1, register 0")
+    expect(() =>
+      checkCounts({
+        path: "Path A",
+        outcomes: ["elsewhere"],
+        perRow: { writes: "changed" },
+        counts: { parses: 1, writes: 1, reads: 0 },
+        register,
+      })
     ).not.toThrow()
+  })
+
+  it("checks only the rows `only` keeps", () => {
+    expect(() =>
+      checkCounts({
+        path: "Path A",
+        outcomes: ["changed"],
+        counts: { parses: 1 },
+        register,
+        only: (row) => row === "parses",
+      })
+    ).not.toThrow()
+    expect(() =>
+      checkCounts({
+        path: "Path A",
+        outcomes: ["changed"],
+        counts: { parses: 1, writes: 0 },
+        register,
+        only: (row) => row === "parses",
+      })
+    ).toThrow("Path A: writes: the register has no such row")
   })
 
   it("compares with figures recorded from an earlier run (a seed's baseline)", () => {
@@ -340,5 +438,137 @@ describe("checkCounts", () => {
         register: baseline,
       })
     ).toThrow("Path A: writes (changed): measured 1, register 0")
+  })
+})
+
+describe("checkReach", () => {
+  // Each case its own path, so the counts recorded for one stay out of the
+  // others.
+  const reachRegister = (path: string) =>
+    readRegister(REGISTER.replaceAll("Path A", path))
+
+  it("passes when the unseeded runs reach every figure above 0", () => {
+    const path = "Reach passes"
+    const lookup = reachRegister(path)
+    vi.spyOn(console, "log").mockImplementation(() => {})
+    record(path, lookup, ["changed"], { parses: 1, writes: 1, reads: 0 })
+    record(path, lookup, ["no change"], { parses: 0, writes: 0, reads: 0 })
+
+    expect(() => checkReach({ path, register: lookup })).not.toThrow()
+  })
+
+  it("fails a row and outcome whose figure no unseeded run reaches", () => {
+    const path = "Reach fails"
+    const lookup = reachRegister(path)
+    vi.spyOn(console, "log").mockImplementation(() => {})
+    record(path, lookup, ["no change"], { parses: 0, writes: 0, reads: 0 })
+
+    expect(() => checkReach({ path, register: lookup })).toThrow(
+      [
+        `${path}: parses: register 1, the unseeded runs reach 0: figure stale or counter blind`,
+        `${path}: writes (changed): register 1, the unseeded runs reach 0: figure stale or counter blind`,
+      ].join("\n")
+    )
+  })
+
+  it("ignores a seed's comparison and the rows `only` drops", () => {
+    const path = "Reach seeds"
+    const lookup = reachRegister(path)
+    vi.spyOn(console, "log").mockImplementation(() => {})
+    checkCounts({
+      path,
+      outcomes: ["changed"],
+      counts: { parses: 1, writes: 1 },
+      register: registerOf(path, { parses: 1, writes: 1 }),
+    })
+    record(path, lookup, ["changed"], { writes: 1 }, (row) => row === "writes")
+
+    expect(() =>
+      checkReach({ path, register: lookup, only: (row) => row === "writes" })
+    ).not.toThrow()
+    expect(() => checkReach({ path, register: lookup })).toThrow(
+      `${path}: parses: register 1, the unseeded runs reach 0`
+    )
+  })
+})
+
+/** An unseeded run's checkCounts against `lookup`: recorded for checkReach,
+ *  as every comparison but a seed's is. */
+function record(
+  path: string,
+  lookup: ReturnType<typeof readRegister>,
+  outcomes: string[],
+  counts: Record<string, number>,
+  only?: (row: string) => boolean
+) {
+  checkCounts({ path, outcomes, counts, register: lookup, only })
+}
+
+describe("checkSeedCaught", () => {
+  it("passes when the seeded run exceeds the unseeded one on the row", () => {
+    expect(() =>
+      checkSeedCaught({
+        path: "Path A",
+        row: "writes",
+        unseeded: { parses: 1, writes: 1 },
+        seeded: { parses: 1, writes: 2 },
+      })
+    ).not.toThrow()
+  })
+
+  it("fails when the seed went uncaught, or caught on another row only", () => {
+    expect(() =>
+      checkSeedCaught({
+        path: "Path A",
+        row: "writes",
+        unseeded: { parses: 1, writes: 1 },
+        seeded: { parses: 1, writes: 1 },
+      })
+    ).toThrow("the seed for Path A: writes went uncaught")
+    expect(() =>
+      checkSeedCaught({
+        path: "Path A",
+        row: "writes",
+        unseeded: { parses: 1, writes: 1 },
+        seeded: { parses: 2, writes: 1 },
+      })
+    ).toThrow("the seed for Path A: writes went uncaught")
+  })
+})
+
+describe("stacks", () => {
+  it("calledFrom finds a function on the stack; madeBy only the nearest caller", () => {
+    function outerCaller() {
+      return innerCaller()
+    }
+    function innerCaller() {
+      return [calledFrom(/outerCaller/), madeBy(/outerCaller/)]
+    }
+
+    expect(outerCaller()).toEqual([true, false])
+  })
+
+  it("readingStack is true only while a stack is read", () => {
+    const seen: boolean[] = []
+    const target = { parse: (text: string) => text }
+    const remove = countMethod("parses", target, "parse", () => {
+      seen.push(readingStack())
+      return true
+    }).install(() => {})
+    const prepare = Error.prepareStackTrace
+    Error.prepareStackTrace = (error, frames) => {
+      target.parse("source map")
+      return prepare ? prepare(error, frames) : String(error)
+    }
+    try {
+      calledFrom(/nothing/)
+    } finally {
+      Error.prepareStackTrace = prepare
+      remove()
+    }
+    target.parse("after")
+
+    expect(seen).toEqual([true])
+    expect(readingStack()).toBe(false)
   })
 })

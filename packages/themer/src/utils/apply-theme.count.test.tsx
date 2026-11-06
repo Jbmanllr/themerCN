@@ -34,10 +34,11 @@ import {
 import {
   calledFrom,
   checkCounts,
+  checkReach,
+  checkSeedCaught,
   countCalls,
   countExport,
   measure,
-  registerOf,
   type Counter,
   type Counts,
 } from "../../../../tests/counting"
@@ -208,24 +209,10 @@ const countOverrideSheetWrites = (doc: Document): Counter => ({
   },
 })
 
-// Reading a stack can itself parse: Vitest's source-map support parses a
-// module's map (JSON.parse) the first time a stack names it. A call made
-// while a stack is read is the check's own work, never the unit's.
-let readingStack = false
-const stackHas = (pattern: RegExp) => {
-  if (readingStack) return false
-  readingStack = true
-  try {
-    return calledFrom(pattern)
-  } finally {
-    readingStack = false
-  }
-}
-
 /** The register's Theme apply counters for one document's unit. */
 function counters({ doc, caller, labels }: Unit): Counter[] {
-  const inUnit = () => !caller || stackHas(caller)
-  const inLabel = () => labels && stackHas(FONT_LABEL)
+  const inUnit = () => !caller || calledFrom(caller)
+  const inLabel = () => labels && calledFrom(FONT_LABEL)
   const root = doc.documentElement
   const classList = root.classList
   return [
@@ -234,7 +221,7 @@ function counters({ doc, caller, labels }: Unit): Counter[] {
     countExport(
       "shadow colour parses",
       "colour parse",
-      () => stackHas(APPLY_THEME) && inUnit()
+      () => calledFrom(APPLY_THEME) && inUnit()
     ),
     countCssomWalks(doc),
     countOverrideSheetWrites(doc),
@@ -629,16 +616,8 @@ describe("Theme apply composition", () => {
 // --- Failing seeds ----------------------------------------------------------
 
 /** The comparison of a seeded run with the unseeded figure fails on `row`. */
-function expectCaught(row: string, unseeded: Counts, seeded: Counts) {
-  expect(() =>
-    checkCounts({
-      path: PATH,
-      outcomes: ONE_TOKEN,
-      counts: seeded,
-      register: registerOf(PATH, unseeded),
-    })
-  ).toThrow(`${PATH}: ${row} (`)
-}
+const expectCaught = (row: string, unseeded: Counts, seeded: Counts) =>
+  checkSeedCaught({ path: PATH, row, unseeded, seeded })
 
 describe("Theme apply failing seeds", () => {
   /** A one-token edit on the Live frame, then the same with the seed. */
@@ -736,4 +715,11 @@ describe("Theme apply failing seeds", () => {
 
   it("catches a second font label's parse", () =>
     expectLabelSeedCaught("font label parses"))
+})
+
+// Last: every unseeded run above has been compared with the register.
+describe("Theme apply reach", () => {
+  it("reaches every register figure in its unseeded runs", () => {
+    checkReach({ path: PATH })
+  })
 })

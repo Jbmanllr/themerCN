@@ -17,7 +17,8 @@
 // - The composition run: a Host <Themer> with its Presets and default Preset,
 //   a saved Theme with four Google families and a saved mode that differs
 //   from the Theme's, then a switch to an empty namespace; then a load with
-//   the Theme override off.
+//   the Theme override off, which writes no restore sheet, no font link and
+//   no first apply.
 // - Each counter has a failing seed: one extra unit of its work, which the
 //   comparison against the unseeded figure must catch, naming the row.
 //
@@ -31,14 +32,18 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import {
   calledFrom,
   checkCounts,
+  checkReach,
+  checkSeedCaught,
   countCalls,
   countExport,
+  countMethod,
+  countSetter,
   measure,
-  registerOf,
+  override,
+  readingStack,
   type Counter,
   type Counts,
 } from "../../../../tests/counting"
-import { loadRegister } from "../../../../tests/register"
 import {
   EDITOR_STATE_VERSION,
   PREFERENCES_VERSION,
@@ -92,8 +97,9 @@ vi.mock("../generated/themer-css", () => ({
 ).IS_REACT_ACT_ENVIRONMENT = true
 
 const PATH = "Page load"
-// Measured by the merge-gate Playwright count, not in Vitest.
-const BROWSER_ONLY_ROWS = new Set(["frame chunk imports"])
+// Frame chunk imports are measured by the merge-gate Playwright count, not
+// in Vitest.
+const inVitest = (row: string) => row !== "frame chunk imports"
 
 // The stage of the load running now: the head-script rows count in the head
 // script's run, the hydration rows in the <Themer> mount or switch.
@@ -103,16 +109,7 @@ const inStage = (wanted: Stage) => () => stage === wanted
 
 // Formatting a stack makes the test runner parse source maps with
 // JSON.parse; those parses are the tooling's, not the load's.
-let readingStack = 0
-const stackHas = (pattern: RegExp) => {
-  readingStack++
-  try {
-    return calledFrom(pattern)
-  } finally {
-    readingStack--
-  }
-}
-const parsedIn = (wanted: Stage) => () => !readingStack && stage === wanted
+const parsedIn = (wanted: Stage) => () => !readingStack() && stage === wanted
 
 // A plain stand-in for localStorage, so a counter can wrap its methods (a
 // spy on the storage instance itself would be stored as an item).
@@ -120,73 +117,12 @@ let storage: Pick<Storage, "getItem" | "setItem" | "removeItem" | "clear">
 
 const isColourModeKey = (key: string) => key.endsWith(":color-mode")
 
-/** Counts the calls of a method, deciding on the receiver too. */
-const countMethod = <T extends object>(
-  row: string,
-  prototype: T,
-  key: keyof T & string,
-  when: (self: unknown, args: unknown[]) => boolean
-): Counter => ({
-  row,
-  install(bump) {
-    const own = Object.getOwnPropertyDescriptor(prototype, key)
-    const original = prototype[key] as (...args: unknown[]) => unknown
-    Object.defineProperty(prototype, key, {
-      configurable: true,
-      writable: true,
-      value(this: unknown, ...args: unknown[]) {
-        if (when(this, args)) bump()
-        return original.apply(this, args)
-      },
-    })
-    return () => restore(prototype, key, own)
-  },
-})
-
-/** Counts the writes of the setter `prototype[key]` (own or inherited). */
-const countSetter = (
-  row: string,
-  prototype: object,
-  key: string,
-  when: (self: unknown) => boolean
-): Counter => ({
-  row,
-  install(bump) {
-    const own = Object.getOwnPropertyDescriptor(prototype, key)
-    let found: PropertyDescriptor | undefined
-    for (let at: object | null = prototype; at && !found;) {
-      found = Object.getOwnPropertyDescriptor(at, key)
-      at = Object.getPrototypeOf(at)
-    }
-    const { get, set } = found ?? {}
-    if (!get || !set) throw new Error(`countSetter: ${key} has no setter`)
-    Object.defineProperty(prototype, key, {
-      configurable: true,
-      get,
-      set(this: unknown, value: unknown) {
-        if (when(this)) bump()
-        set.call(this, value)
-      },
-    })
-    return () => restore(prototype, key, own)
-  },
-})
-
-function restore(
-  target: object,
-  key: string,
-  own: PropertyDescriptor | undefined
-) {
-  if (own) Object.defineProperty(target, key, own)
-  else delete (target as Record<string, unknown>)[key]
-}
-
 /** Counts the sets of the persisted stores, not hydration's own. */
 const countStoreSets = (row: string): Counter => ({
   row,
   install(bump) {
     const counted = () => {
-      if (!stackHas(/\/stores\/hydrate\./)) bump()
+      if (!calledFrom(/\/stores\/hydrate\./)) bump()
     }
     const unsubscribes = [
       useEditorStore.subscribe(counted),
@@ -219,13 +155,10 @@ const countHeadAppends = (
   row,
   install(bump) {
     const head = document.head
-    const keys = ["append", "appendChild"] as const
-    const owns = keys.map((key) => Object.getOwnPropertyDescriptor(head, key))
     let depth = 0
-    for (const key of keys) {
+    const restores = (["append", "appendChild"] as const).map((key) => {
       const original = head[key] as (...nodes: unknown[]) => unknown
-      Object.defineProperty(head, key, {
-        configurable: true,
+      return override(head, key, {
         writable: true,
         value(this: unknown, ...nodes: unknown[]) {
           if (depth === 0) nodes.filter(when).forEach(() => bump())
@@ -237,8 +170,8 @@ const countHeadAppends = (
           }
         },
       })
-    }
-    return () => keys.forEach((key, index) => restore(head, key, owns[index]))
+    })
+    return () => restores.reverse().forEach((restore) => restore())
   },
 })
 
@@ -268,16 +201,13 @@ const counters = (): Counter[] => [
     "textContent",
     isRestoreSheet
   ),
-  countMethod(
-    "restore-sheet removals",
-    Element.prototype,
-    "remove",
-    isRestoreSheet
+  countMethod("restore-sheet removals", Element.prototype, "remove", (self) =>
+    isRestoreSheet(self)
   ),
   countHeadAppends("stylesheet inserts", isThemerSheet),
   countHeadAppends("font links", isFontLink),
   countExport("Preset deep compares", "deep compare", () =>
-    stackHas(/\badoptDefaultPreset\b|\brefreshUntouchedPreset\b/)
+    calledFrom(/\badoptDefaultPreset\b|\brefreshUntouchedPreset\b/)
   ),
   countStoreSets("store sets"),
   countExport(
@@ -289,22 +219,21 @@ const counters = (): Counter[] => [
     "root-class observers",
     MutationObserver.prototype,
     "observe",
-    (_self, args) => observesRootClass(args)
+    (_self, ...args) => observesRootClass(args)
   ),
 ]
 
-/** The register's Page load rows that Vitest measures. */
-function vitestRegister() {
-  const register = loadRegister()
-  return {
-    row: (path: string, name: string) => register.row(path, name),
-    rows: (path: string) =>
-      register.rows(path).filter(({ row }) => !BROWSER_ONLY_ROWS.has(row)),
-  }
-}
-
-function check(outcomes: readonly string[], counts: Counts) {
-  checkCounts({ path: PATH, outcomes, counts, register: vitestRegister() })
+/** Checks one unit: `outcome` is its outcome for every split row but the
+ *  restore sheet's, whose outcomes are only "nothing saved" and "saved
+ *  Theme": `restored` (a load at another version restores nothing). */
+function check(outcome: string, counts: Counts, restored: string) {
+  checkCounts({
+    path: PATH,
+    outcomes: [outcome],
+    perRow: { "restore-sheet writes": restored },
+    counts,
+    only: inVitest,
+  })
 }
 
 /** Prints a run's counts, labelled, for the first measurement. */
@@ -501,12 +430,14 @@ describe("Page load rows", () => {
   const cases = [
     {
       outcome: "a load with nothing saved",
-      outcomes: [NOTHING_SAVED],
+      named: NOTHING_SAVED,
+      restored: NOTHING_SAVED,
       save: () => {},
     },
     {
       outcome: "a load with a saved Theme at the current version",
-      outcomes: [SAVED_THEME],
+      named: SAVED_THEME,
+      restored: SAVED_THEME,
       save: (namespace: string) => {
         saveEditor(namespace, editedEntry())
         saveColourMode(namespace, "light")
@@ -515,7 +446,8 @@ describe("Page load rows", () => {
     {
       // The head script and the stores drop the entry: nothing is restored.
       outcome: "a load with entries saved at another version",
-      outcomes: [OTHER_VERSION, NOTHING_SAVED],
+      named: OTHER_VERSION,
+      restored: NOTHING_SAVED,
       save: (namespace: string) => {
         saveEditor(namespace, editedEntry(), EDITOR_STATE_VERSION - 1)
         savePreferences(
@@ -527,15 +459,15 @@ describe("Page load rows", () => {
     },
   ]
 
-  for (const { outcome, outcomes, save } of cases) {
+  for (const { outcome, named, restored, save } of cases) {
     it(`counts ${outcome}`, async () => {
       const namespace = freshNamespace()
       save(namespace)
 
       const counts = await measure(counters(), () => pageLoad(namespace, {}))
 
-      report(`row: ${outcomes.join(", ")}`, counts)
-      check(outcomes, counts)
+      report(`row: ${named}`, counts)
+      check(named, counts, restored)
     })
   }
 
@@ -546,9 +478,8 @@ describe("Page load rows", () => {
 
     const counts = await measure(counters(), () => switchNamespace(next, {}))
 
-    const outcomes = [NAMESPACE_SWITCH, SAVED_THEME]
-    report(`row: ${outcomes.join(", ")}`, counts)
-    check(outcomes, counts)
+    report(`row: ${NAMESPACE_SWITCH} to a ${SAVED_THEME}`, counts)
+    check(NAMESPACE_SWITCH, counts, SAVED_THEME)
   })
 })
 
@@ -565,15 +496,14 @@ describe("Page load composition", () => {
 
     const load = await measure(counters(), () => pageLoad(namespace, HOST))
     report(`composition: load, ${SAVED_THEME}`, load)
-    check([SAVED_THEME], load)
+    check(SAVED_THEME, load, SAVED_THEME)
 
     const empty = freshNamespace()
     const switched = await measure(counters(), () =>
       switchNamespace(empty, HOST)
     )
-    const outcomes = [NAMESPACE_SWITCH, NOTHING_SAVED]
-    report(`composition: ${outcomes.join(", ")}`, switched)
-    check(outcomes, switched)
+    report(`composition: ${NAMESPACE_SWITCH} to ${NOTHING_SAVED}`, switched)
+    check(NAMESPACE_SWITCH, switched, NOTHING_SAVED)
   })
 
   it("reports every row for a Host load with the Theme override off", async () => {
@@ -584,13 +514,22 @@ describe("Page load composition", () => {
     const counts = await measure(counters(), () => pageLoad(namespace, HOST))
 
     report(`composition: Theme override off, ${SAVED_THEME}`, counts)
-    check([SAVED_THEME], counts)
+    check(SAVED_THEME, counts, SAVED_THEME)
+    // The Theme override off removes the restore sheet, the head script's
+    // font links and the first apply.
+    expect({
+      "restore-sheet writes": counts["restore-sheet writes"],
+      "font links": counts["font links"],
+      "first applies": counts["first applies"],
+    }).toEqual({
+      "restore-sheet writes": 0,
+      "font links": 0,
+      "first applies": 0,
+    })
   })
 })
 
 describe("Page load failing seeds", () => {
-  const outcomes = [SAVED_THEME]
-
   /** The unseeded figure, then the same load with the seed: the comparison
    *  must fail and name the seeded row. */
   async function expectSeedCaught(
@@ -610,14 +549,7 @@ describe("Page load failing seeds", () => {
       pageLoad(second, {}, seed(second))
     )
 
-    expect(() =>
-      checkCounts({
-        path: PATH,
-        outcomes,
-        counts: seeded,
-        register: registerOf(PATH, unseeded),
-      })
-    ).toThrow(`${PATH}: ${row} (`)
+    checkSeedCaught({ path: PATH, row, unseeded, seeded })
   }
 
   it("catches a second head-script build", () =>
@@ -718,4 +650,11 @@ describe("Page load failing seeds", () => {
           attributeFilter: ["class"],
         }),
     })))
+})
+
+// Last: every unseeded run above has been compared with the register.
+describe("Page load reach", () => {
+  it("reaches every register figure in its unseeded runs", () => {
+    checkReach({ path: PATH, only: inVitest })
+  })
 })

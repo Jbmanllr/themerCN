@@ -16,7 +16,8 @@
 //   "Custom font" badge's lookup.
 // - The composition run: a font picker on the route, whose label asks the
 //   badge lookup, then opened and searched. The feature-off runs: the route
-//   disabled, and no endpoint.
+//   disabled, which loads no catalog code, and no endpoint, where no request
+//   leaves the browser.
 // - Each counter has a failing seed: one extra unit of its work, which the
 //   comparison against the unseeded figure must catch, naming the row.
 //
@@ -30,15 +31,19 @@ import { createRoot, type Root } from "react-dom/client"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import {
+  calledFrom,
   checkCounts,
+  checkReach,
+  checkSeedCaught,
   countCalls,
   countExport,
+  countMethod,
+  madeBy,
   measure,
-  registerOf,
+  readingStack,
   type Counter,
   type Counts,
 } from "../../../../tests/counting"
-import { loadPathsAdr, loadRegister } from "../../../../tests/register"
 import { FontPicker } from "../components/editor/font-picker"
 import { useFontSearch } from "../hooks/use-font-search"
 import type { FontCategory, FontInfo } from "../types/fonts"
@@ -177,48 +182,6 @@ async function stubFetch(input: RequestInfo | URL): Promise<Response> {
 
 // ---- Counters ---------------------------------------------------------------
 
-// Formatting a stack makes the test runner parse source maps with
-// JSON.parse; those parses are the tooling's, not the request's.
-let readingStack = 0
-const stackOf = () => {
-  readingStack++
-  try {
-    const limit = Error.stackTraceLimit
-    Error.stackTraceLimit = 100
-    const stack = new Error().stack ?? ""
-    Error.stackTraceLimit = limit
-    return stack
-  } finally {
-    readingStack--
-  }
-}
-
-/** Counts the calls of a method, deciding on the receiver. */
-const countMethod = <T extends object>(
-  row: string,
-  prototype: T,
-  key: keyof T & string,
-  when: (self: unknown) => boolean
-): Counter => ({
-  row,
-  install(bump) {
-    const own = Object.getOwnPropertyDescriptor(prototype, key)
-    const original = prototype[key] as (...args: unknown[]) => unknown
-    Object.defineProperty(prototype, key, {
-      configurable: true,
-      writable: true,
-      value(this: unknown, ...args: unknown[]) {
-        if (when(this)) bump()
-        return original.apply(this, args)
-      },
-    })
-    return () => {
-      if (own) Object.defineProperty(prototype, key, own)
-      else delete (prototype as Record<string, unknown>)[key]
-    }
-  },
-})
-
 const urlOf = (input: unknown) =>
   input instanceof Request ? input.url : String(input)
 const isEndpoint = (input: unknown) => urlOf(input).startsWith(ENDPOINT)
@@ -231,32 +194,21 @@ const isBadgeLookup = (input: unknown) =>
 const isFamily = (self: unknown) =>
   (typeof self === "string" || self instanceof String) &&
   FAMILIES.has(String(self))
-// The frame that called the counted method: the first one outside this file
-// and the counting helper.
-const callerOf = (stack: string) =>
-  stack
-    .split("\n")
-    .slice(1)
-    .find((line) => !/font-catalog\.count\.test|tests\/counting/.test(line)) ??
-  ""
 // A family lower-cased by the badge's label (FontValueLabel) over the loaded
 // fonts, not by the one-name helpers it calls once per render
 // (describeFontValue, isLocalFontFamily).
-const badgeLowerCase = (self: unknown) => {
-  if (!isFamily(self) || onServer()) return false
-  const stack = stackOf()
-  return (
-    /\bFontValueLabel\b/.test(stack) &&
-    !/utils\/font-names/.test(callerOf(stack))
-  )
-}
+const badgeLowerCase = (self: unknown) =>
+  isFamily(self) &&
+  !onServer() &&
+  calledFrom(/\bFontValueLabel\b/) &&
+  !madeBy(/utils\/font-names/)
 // A family lower-cased by a request: the route, or useFontSearch's query
 // over the bundled list in the browser (the picker's rows and its label are
 // not requests).
-const familyLowerCase = (self: unknown) => {
-  if (!isFamily(self) || !notAlongside()) return false
-  return onServer() || /hooks\/use-font-search/.test(stackOf())
-}
+const familyLowerCase = (self: unknown) =>
+  isFamily(self) &&
+  notAlongside() &&
+  (onServer() || calledFrom(/hooks\/use-font-search/))
 // A pass over the whole served catalog (FontInfo entries, as many as the
 // catalog has); a page of it is not one.
 const isWholeCatalog = (self: unknown) => {
@@ -281,10 +233,10 @@ const PASSES = [
 
 // happy-dom's Headers copies itself through JSON.stringify and JSON.parse;
 // undici's, which Next serves with, does not. That copy is the test
-// environment's work, not the route's.
-const byHappyDomHeaders = () =>
-  /happy-dom\/lib\/fetch\/Headers\.js/.test(callerOf(stackOf()))
-const routeJson = () => !readingStack && onServer() && !byHappyDomHeaders()
+// environment's work, not the route's. Formatting a stack parses source
+// maps: the tooling's work, not the route's either.
+const byHappyDomHeaders = () => madeBy(/happy-dom\/lib\/fetch\/Headers\.js/)
+const routeJson = () => !readingStack() && onServer() && !byHappyDomHeaders()
 
 const counters = (): Counter[] => [
   countCalls("client round trips", globalThis, "fetch", (input) =>
@@ -295,18 +247,15 @@ const counters = (): Counter[] => [
   ),
   countCalls("catalog parses", JSON, "parse", routeJson),
   countExport("catalog code loads", "catalog code load"),
-  countMethod(
-    "family lower-cases",
-    String.prototype,
-    "toLowerCase",
-    familyLowerCase
+  countMethod("family lower-cases", String.prototype, "toLowerCase", (self) =>
+    familyLowerCase(self)
   ),
   ...PASSES.map((key) =>
     countMethod(
       "whole-catalog passes",
       Array.prototype,
       key,
-      (self) => notAlongside() && isWholeCatalog(self)
+      (self: unknown) => notAlongside() && isWholeCatalog(self)
     )
   ),
   countCalls(
@@ -318,57 +267,39 @@ const counters = (): Counter[] => [
   countCalls("badge requests", globalThis, "fetch", (input) =>
     isBadgeLookup(input)
   ),
-  countMethod(
-    "badge lower-cases",
-    String.prototype,
-    "toLowerCase",
-    badgeLowerCase
+  countMethod("badge lower-cases", String.prototype, "toLowerCase", (self) =>
+    badgeLowerCase(self)
   ),
 ]
 
 // ---- Checking and reporting -------------------------------------------------
 
-/** The ADR's outcomes for each row whose cap is split by outcome. */
-const SPLIT_ROWS = new Map(
-  loadPathsAdr()
-    .caps(PATH)
-    .flatMap(({ row, cap }) =>
-      cap.kind === "outcomes" ? [[row, Object.keys(cap.values)] as const] : []
-    )
-)
-
 /**
  * Checks one run. `outcome` is the run's outcome for every split row;
  * `perRow` names another for a row that has no figure for it (a concurrent
- * request downloads once, so its parse is the uncached one). Each split row
- * gets exactly one of its ADR outcomes, so the check holds once the
- * register writes per-outcome figures.
+ * request downloads once, so its parse is the uncached one).
  */
 function check(
   outcome: string,
   counts: Counts,
   perRow: Record<string, string> = {}
 ) {
-  const register = loadRegister()
-  const outcomeOf = (row: string) => perRow[row] ?? outcome
-  for (const [row, outcomes] of SPLIT_ROWS)
-    expect(outcomes, `${row}'s outcomes`).toContain(outcomeOf(row))
-  const rows = register.rows(PATH)
-  const names = new Set([...rows.map(({ row }) => row), ...Object.keys(counts)])
-  for (const named of new Set([...names].map(outcomeOf))) {
-    const mine = (row: string) => outcomeOf(row) === named
-    checkCounts({
-      path: PATH,
-      outcomes: [named],
-      counts: Object.fromEntries(
-        Object.entries(counts).filter(([row]) => mine(row))
-      ),
-      register: {
-        row: (path, row) => register.row(path, row),
-        rows: (path) => register.rows(path).filter(({ row }) => mine(row)),
-      },
-    })
-  }
+  checkCounts({ path: PATH, outcomes: [outcome], perRow, counts })
+}
+
+// Not a register row: every browser fetch, which no endpoint must remove.
+const ANY_FETCH = "browser fetches"
+
+/** A feature-off unit's counts, and how many fetches it made at all. */
+async function measureOff(unit: () => Promise<unknown>) {
+  const { [ANY_FETCH]: fetches = 0, ...counts } = await measure(
+    [
+      ...counters(),
+      countCalls(ANY_FETCH, globalThis, "fetch", () => !onServer()),
+    ],
+    unit
+  )
+  return { counts, fetches }
 }
 
 /** Prints a run's counts, labelled, for the first measurement. */
@@ -624,25 +555,34 @@ describe("Font catalog request composition", () => {
     )
     report(`route disabled: picker badge lookup, ${CACHED}`, picker)
     check(CACHED, picker)
+    // A disabled route answers before loading any catalog code.
+    expect(
+      [served, picker].map((counts) => counts["catalog code loads"])
+    ).toEqual([0, 0])
   })
 
   it("reports every row with no endpoint", async () => {
     let picker: Awaited<ReturnType<typeof mountPicker>> | undefined
-    const badge = await measure(counters(), async () => {
+    const badge = await measureOff(async () => {
       picker = await mountPicker("Inter, sans-serif", undefined)
     })
-    report(`no endpoint: badge lookup, ${CACHED}`, badge)
-    check(CACHED, badge)
+    report(`no endpoint: badge lookup, ${CACHED}`, badge.counts)
+    check(CACHED, badge.counts)
 
-    const opened = await measure(counters(), () => openPicker(picker!))
-    report(`no endpoint: open, ${CACHED}`, opened)
-    check(CACHED, opened)
+    const opened = await measureOff(() => openPicker(picker!))
+    report(`no endpoint: open, ${CACHED}`, opened.counts)
+    check(CACHED, opened.counts)
 
-    const searched = await measure(counters(), () =>
-      typeQuery(picker!.client, "ro")
-    )
-    report(`no endpoint: search, ${CACHED}`, searched)
-    check(CACHED, searched)
+    const searched = await measureOff(() => typeQuery(picker!.client, "ro"))
+    report(`no endpoint: search, ${CACHED}`, searched.counts)
+    check(CACHED, searched.counts)
+
+    // Without an endpoint no request leaves the browser.
+    const runs = [badge, opened, searched]
+    expect(runs.map(({ counts }) => counts["client round trips"])).toEqual([
+      0, 0, 0,
+    ])
+    expect(runs.map(({ fetches }) => fetches)).toEqual([0, 0, 0])
   })
 })
 
@@ -666,14 +606,7 @@ describe("Font catalog request failing seeds", () => {
       await seed()
     })
 
-    expect(() =>
-      checkCounts({
-        path: PATH,
-        outcomes: [UNCACHED],
-        counts: seeded,
-        register: registerOf(PATH, unseeded),
-      })
-    ).toThrow(`${PATH}: ${row} (`)
+    checkSeedCaught({ path: PATH, row, unseeded, seeded })
   }
 
   const onTheRoute = (row: string, seed: () => unknown) =>
@@ -726,4 +659,15 @@ describe("Font catalog request failing seeds", () => {
     fromTheBadge("badge lower-cases", function FontValueLabel() {
       return "Inter".toLowerCase()
     }))
+})
+
+// Last: every unseeded run above has been compared with the register. The
+// badge rows' counters key on the label's request (limit 50) and its name
+// (FontValueLabel), the stringify and parse counters skip happy-dom's
+// Headers: their figures are above 0, so this proves those keys still see
+// the real code's work.
+describe("Font catalog request reach", () => {
+  it("reaches every register figure in its unseeded runs", () => {
+    checkReach({ path: PATH })
+  })
 })

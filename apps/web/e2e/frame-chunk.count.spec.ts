@@ -1,7 +1,10 @@
 import { expect, test, type Frame, type Page } from "@playwright/test"
 
-import { checkCounts, registerOf } from "../../../tests/counting"
-import { loadRegister } from "../../../tests/register"
+import {
+  checkCounts,
+  checkReach,
+  checkSeedCaught,
+} from "../../../tests/counting"
 import { hydrated } from "./page"
 import { themerTrigger } from "./themer-ui"
 
@@ -9,8 +12,9 @@ import { themerTrigger } from "./themer-ui"
 // imports; spec #119). One unit is one Live frame navigation: the Live tab
 // frames the Host page, whose own Themer loader runs again in the frame's
 // realm. The count is the requests for the Themer chunk made from that realm,
-// compared with the register's figure through the register reader; while the
-// row reads "unmeasured", checkCounts prints the count.
+// compared with the register's figure through the register reader (and
+// checkReach fails when the count falls below it: a stale figure or a blind
+// count); while the row reads "unmeasured", checkCounts prints the count.
 //
 // Tagged @count and never @smoke: it needs a production build and a real
 // browser, so it runs in CI's e2e job (T2) and stays out of T1's
@@ -94,14 +98,7 @@ const fromFrame = (requests: readonly ChunkRequest[]) =>
 
 /** The register's frame chunk row alone: the page-load count test measures
  *  every other Page load row in Vitest. */
-const frameChunkRow = () => {
-  const register = loadRegister()
-  return {
-    row: register.row,
-    rows: (path: string) =>
-      register.rows(path).filter((row) => row.row === ROW),
-  }
-}
+const frameChunkRow = (row: string) => row === ROW
 
 test.describe("frame chunk count", { tag: "@count" }, () => {
   test("a Live frame navigation imports the Themer chunk within the register's figure", async ({
@@ -116,8 +113,9 @@ test.describe("frame chunk count", { tag: "@count" }, () => {
       path: PATH,
       outcomes: OUTCOMES,
       counts: { [ROW]: fromFrame(requests) },
-      register: frameChunkRow(),
+      only: frameChunkRow,
     })
+    checkReach({ path: PATH, only: frameChunkRow })
   })
 
   test("one more import in the frame fails the comparison", async ({
@@ -145,15 +143,12 @@ test.describe("frame chunk count", { tag: "@count" }, () => {
     )
     const seeded = fromFrame(await chunks.themer())
 
-    expect(() =>
-      checkCounts({
-        path: PATH,
-        outcomes: OUTCOMES,
-        counts: { [ROW]: seeded },
-        register: registerOf(PATH, { [ROW]: unseeded }),
-      })
-    ).toThrow(
-      `${PATH}: ${ROW} (${OUTCOMES[0]}): measured ${unseeded + 1}, register ${unseeded}`
-    )
+    expect(seeded).toBe(unseeded + 1)
+    checkSeedCaught({
+      path: PATH,
+      row: ROW,
+      unseeded: { [ROW]: unseeded },
+      seeded: { [ROW]: seeded },
+    })
   })
 })

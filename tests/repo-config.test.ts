@@ -910,6 +910,31 @@ describe("CI task selection", () => {
     )
   })
 
+  // The coverage ratchet runs at the merge gate (T2) and the backstop (T3);
+  // it pools every package's coverage, so it runs whole, never --affected.
+  it.each([
+    "pull_request",
+    "push",
+    "schedule",
+    "workflow_dispatch",
+    "merge_group",
+  ])("%s runs the project coverage command", (event) => {
+    expect(scriptFor(event).split("\n")).toContain("pnpm coverage")
+    expect(JSON.parse(read("../package.json")).scripts.coverage).toMatch(
+      /^turbo run test:coverage && node (--experimental-strip-types )?tests\/coverage\.ts$/
+    )
+  })
+
+  it("keeps the coverage run out of T1", () => {
+    for (const t1 of [
+      read("../TESTING.md").match(/\*\*T1, ticket handoff:\*\*.*/)?.[0],
+      read("../.claude/hooks/stop-t1.sh"),
+    ]) {
+      expect(t1).toBeDefined()
+      expect(t1).not.toMatch(/coverage/)
+    }
+  })
+
   it.each(["pull_request", "push"])(
     "%s format-checks the whole repo",
     (event) => {

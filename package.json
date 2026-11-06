@@ -14,6 +14,7 @@
     "typecheck": "turbo typecheck",
     "test": "turbo test test:repo",
     "test:repo": "tsc -p tests && vitest run",
+    "coverage": "turbo run test:coverage && node --experimental-strip-types tests/coverage.ts",
     "e2e": "turbo e2e",
     "e2e:smoke": "turbo e2e:smoke",
     "e2e:visual": "scripts/playwright-docker.sh",

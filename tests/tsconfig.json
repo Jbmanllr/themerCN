@@ -7,6 +7,9 @@
     "moduleResolution": "Bundler",
     "allowJs": true,
     "noEmit": true,
+    // tests/coverage.ts runs under Node's type stripping (`pnpm coverage`),
+    // which needs each import's .ts extension.
+    "allowImportingTsExtensions": true,
     "types": ["node"]
   },
   "include": ["*.ts", "../vitest.config.ts"]

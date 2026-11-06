@@ -59,6 +59,11 @@
       "dependsOn": ["^build", "build:css"],
       "env": ["CI"]
     },
+    "test:coverage": {
+      "dependsOn": ["^build", "build:css"],
+      "env": ["CI"],
+      "outputs": ["coverage/**"]
+    },
     "//#test:repo": {
       "env": ["CI"],
       "inputs": [

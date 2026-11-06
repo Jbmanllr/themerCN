@@ -427,10 +427,10 @@ describe("task hashes", () => {
         changes: ["//#test:repo"],
         keeps: ["web#test", "web#build", "web#e2e"],
       },
-      // AGENTS.md's T1, which these tests compare with the hook's, and the
+      // TESTING.md's T1, which these tests compare with the hook's, and the
       // heavy slot's script, which they run.
       {
-        file: "AGENTS.md",
+        file: "TESTING.md",
         changes: ["//#test:repo"],
         keeps: ["web#test", "web#build", "web#e2e"],
       },
@@ -1530,7 +1530,7 @@ describe("Playwright tiers", () => {
   )
 })
 
-// AGENTS.md "Verification tiers": a Stop hook keeps an agent's turn from
+// TESTING.md "Verification tiers": a Stop hook keeps an agent's turn from
 // ending while T1 (the changed files' formatting, and the affected lint,
 // typecheck, test, build and package checks) fails. Each case runs the real hook in a scratch repository, with
 // a stand-in `pnpm` that records what it ran and exits as given.
@@ -1796,9 +1796,9 @@ describe("the T1 Stop hook", () => {
     })
   })
 
-  // AGENTS.md's T1 runs the same tasks the hook does.
-  it("AGENTS.md's T1 runs the hook's tasks", () => {
-    const line = read("../AGENTS.md")
+  // TESTING.md's T1 runs the same tasks the hook does.
+  it("TESTING.md's T1 runs the hook's tasks", () => {
+    const line = read("../TESTING.md")
       .split("\n")
       .find((text) => text.startsWith("- **T1,"))
     const command = line?.match(
@@ -1832,7 +1832,7 @@ describe("the T1 Stop hook", () => {
   )
 })
 
-// AGENTS.md "Verification tiers": one heavy suite (a build, Playwright, the
+// TESTING.md "Verification tiers": one heavy suite (a build, Playwright, the
 // Docker visual run) at a time per host. scripts/heavy-slot.sh runs a
 // command in the clone's one slot, shared by all its worktrees.
 describe("the heavy slot", () => {

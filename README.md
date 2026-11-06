@@ -63,7 +63,7 @@ a pull request only when
 docs-only change skips it; a `packages/ui` change runs both apps'), and
 whenever that query fails or has no base. A draft pull request runs no job;
 marking it ready runs them. `main` runs everything. What to run locally
-before you push: [`AGENTS.md`](AGENTS.md), "Verification tiers".
+before you push: [`TESTING.md`](TESTING.md), "Verification tiers".
 
 The e2e gate covers the Themer: opening it, editing tokens, its layouts and
 inspector, persistence, the Themer UI's accessibility and visual baselines,

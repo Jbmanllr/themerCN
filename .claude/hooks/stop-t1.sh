@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Claude Code Stop and SubagentStop hook (wired in .claude/settings.json): T1
-# of AGENTS.md "Verification tiers". It keeps the turn (or the subagent) from
+# of TESTING.md "Verification tiers". It keeps the turn (or the subagent) from
 # ending while the changed files' formatting (Prettier, which CI checks
 # first) or the affected lint, typecheck, test (the root's repo-wide checks
 # included), build and package checks fail. The Turbo tasks run in the

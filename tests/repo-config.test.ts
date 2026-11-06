@@ -1204,8 +1204,7 @@ const scriptSandbox = (name: string) => {
       encoding: "utf8",
       env: {
         ...inherited,
-        // The stand-in pnpm first; PATH is not an input of any task.
-        // eslint-disable-next-line turbo/no-undeclared-env-vars
+        // The stand-in pnpm first.
         PATH: `${join(scratch, "bin")}:${process.env.PATH}`,
         PNPM_ARGS: log,
         PNPM_EXIT: String(pnpm.exit ?? 0),

@@ -7,6 +7,9 @@
     "moduleResolution": "Bundler",
     "allowJs": true,
     "noEmit": true,
+    // The floor guard runs under Node's type stripping, which needs the
+    // extension on its import of the register reader.
+    "allowImportingTsExtensions": true,
     "types": ["node"]
   },
   "include": ["*.ts", "../vitest.config.ts"]

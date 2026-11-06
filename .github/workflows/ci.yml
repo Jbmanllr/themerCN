@@ -66,6 +66,13 @@ jobs:
       # or the paths ADR changes.
       - run: pnpm exec vitest run tests/register-check.test.ts
 
+      # The floor guard (TESTING.md, Quality register, Floor), outside Turbo
+      # so nothing replays it: the pull request's diff against its base, the
+      # checkout's first parent. Its trailers are the pull request's commits.
+      - name: Floor guard (pull request)
+        if: github.event_name == 'pull_request'
+        run: pnpm floor-guard --base HEAD^1
+
       # No entry has this run's key yet; the prefix restores main's latest.
       - uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:

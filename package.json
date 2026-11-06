@@ -14,6 +14,7 @@
     "typecheck": "turbo typecheck",
     "test": "turbo test test:repo",
     "test:repo": "tsc -p tests && vitest run",
+    "floor-guard": "node --experimental-strip-types --disable-warning=ExperimentalWarning --disable-warning=MODULE_TYPELESS_PACKAGE_JSON tests/floor-guard.ts",
     "e2e": "turbo e2e",
     "e2e:smoke": "turbo e2e:smoke",
     "e2e:visual": "scripts/playwright-docker.sh",

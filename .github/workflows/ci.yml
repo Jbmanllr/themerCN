@@ -60,6 +60,12 @@ jobs:
 
       - run: pnpm format:check
 
+      # The register check (TESTING.md, Quality register), outside Turbo so
+      # no cache hit replays its last pass: an exception fails on its expiry
+      # date with nothing changed. test:repo also runs it when the register
+      # or the paths ADR changes.
+      - run: pnpm exec vitest run tests/register-check.test.ts
+
       # No entry has this run's key yet; the prefix restores main's latest.
       - uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:

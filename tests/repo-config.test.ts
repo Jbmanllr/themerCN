@@ -439,6 +439,13 @@ describe("task hashes", () => {
         changes: ["//#test:repo"],
         keeps: ["web#test", "web#build", "web#e2e"],
       },
+      // The register check compares TESTING.md's register with the paths
+      // ADR.
+      {
+        file: "docs/adr/0002-shared-paths-and-cost-contracts.md",
+        changes: ["//#test:repo"],
+        keeps: ["web#test", "web#build", "web#e2e"],
+      },
       // The build-exclusion checks read the Tailwind entries, which the
       // builds read too.
       {
@@ -887,6 +894,21 @@ describe("CI task selection", () => {
       expect(scriptFor(event)).not.toContain("TURBO_SCM_BASE")
     }
   )
+
+  // An exception expires with nothing changed, so a Turbo cache hit must not
+  // replay the register check's last pass: CI runs it outside Turbo, on
+  // every event.
+  it.each([
+    "pull_request",
+    "push",
+    "schedule",
+    "workflow_dispatch",
+    "merge_group",
+  ])("%s runs the register check uncached", (event) => {
+    expect(scriptFor(event).split("\n")).toContain(
+      "pnpm exec vitest run tests/register-check.test.ts"
+    )
+  })
 
   it.each(["pull_request", "push"])(
     "%s format-checks the whole repo",

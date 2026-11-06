@@ -23,7 +23,7 @@ A Stop hook (`.claude/hooks/stop-t1.sh`, wired in `.claude/settings.json` on `St
 
 ## Quality register
 
-The project's quality bar: the Floor, the enforced limits, the measured figures and the exceptions. The caps per unit of each shared path live in the paths ADR, [`docs/adr/0002-shared-paths-and-cost-contracts.md`](docs/adr/0002-shared-paths-and-cost-contracts.md). This register holds the figures and limits, and none of them may exceed their cap. Read both before writing code on a shared path. The project has no `CONSTRAINTS.md`.
+The project's quality bar: the Floor, the enforced limits, the measured figures and the exceptions. The caps per unit of each shared path live in the paths ADR, [`docs/adr/0002-shared-paths-and-cost-contracts.md`](docs/adr/0002-shared-paths-and-cost-contracts.md). This register holds the figures and limits, and none of them may exceed their cap. Read both before writing code on a shared path. The project has no `CONSTRAINTS.md`. The gate reads both through the register reader, [`tests/register.ts`](tests/register.ts), and the register check, [`tests/register-check.test.ts`](tests/register-check.test.ts), compares them.
 
 ### Floor
 
@@ -47,13 +47,15 @@ The Floor is always enforced on the diff, and a breach is a hard violation in `c
 
 Limits that fail the merge gate.
 
+**Project**
+
 | Dimension   | Rule | Checked by                 | Runs at          |
 | ----------- | ---- | -------------------------- | ---------------- |
 | Type errors | 0    | `pnpm turbo run typecheck` | implementer done |
 
 ### Measured, not yet enforced
 
-The ratchet. Each count is per unit of its path, as the paths ADR defines the unit, and per outcome where the contract splits it. A row's figure may never exceed the cap in its path's cost contract. A row moves to Enforced, with that figure as its rule, once the gate gives it a command.
+The ratchet. Each count is per unit of its path, as the paths ADR defines the unit, and per outcome where the contract splits it. A figure is `unmeasured`, one count for every outcome (`3`), a count per outcome in the outcome names of the paths ADR's Register rows column (`1 persisted change; 0 no change`), or a percentage (`87.4 %`). A row's figure may never exceed the cap in its path's cost contract. A row moves to Enforced, with that figure as its rule, once the gate gives it a command.
 
 **Store action** (per `set`)
 
@@ -154,6 +156,6 @@ The ratchet. Each count is per unit of its path, as the paths ADR defines the un
 - **Tightening is silent; loosening is loud.** These need no approval: lowering a number, adding a row, promoting a measured row to enforced, or extending a count's input or counters to a new outcome or feature. These need the owner: raising a number (outside the contract case above), removing or demoting a row, changing a row's command or Runs at, narrowing a count's input or what its counters see, or adding or extending an exception. Raising a contract cap also needs a paths ADR change. A loosening never rides in the pull request of the feature that failed the limit.
 - **Exceptions expire.** Each has an owner and an expiry date, 90 days by default. On expiry the gate fails again, with no action from anyone.
 - **The register is the source of the numbers.** The gate's code reads the register, or a check compares the two and fails on a difference.
-- **A register check runs with the merge gate.** It fails in any of these cases: an enforced row's command does not exist, an exception has expired, a path in the paths ADR has no row, a count in a path's cost contract has no row, or a row allows more than its contract's cap.
+- **A register check runs with the merge gate.** The register check, `tests/register-check.test.ts`, runs in `test:repo` when the register or the paths ADR changes, and once more uncached in CI's checks job on every run, so an exception fails on its expiry date with nothing changed. It fails in any of these cases: an enforced row's command names a test file that does not exist or does not name the row, an exception has expired, a path in the paths ADR has no row, a count in a path's cost contract has no row (the ADR's Register rows column and the register disagree on a row name), or a row allows more than its contract's cap without an unexpired exception.
 - **Each counter proves it can fail.** A count's own tests seed one extra unit of each counted work it gates and expect a failure.
 - **A row changes in the pull request** that lowers its figure, raises it within its contract as its spec names, or amends its ADR.

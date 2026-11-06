@@ -24,6 +24,8 @@
 // (YYYY-MM-DD).
 
 import { readFileSync } from "node:fs"
+import { dirname, join } from "node:path"
+import { fileURLToPath } from "node:url"
 
 export type Figure =
   | { kind: "unmeasured" }
@@ -255,15 +257,17 @@ export const readPathsAdr = (markdown: string): PathsAdr => {
   }
 }
 
-const ROOT = new URL("../", import.meta.url)
+// A path, not a URL: under happy-dom the global URL is happy-dom's, which
+// node:fs does not accept.
+const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..")
 
 /** The paths ADR, repo-relative. */
 export const PATHS_ADR = "docs/adr/0002-shared-paths-and-cost-contracts.md"
 
 /** Reads the Quality register from the repo's TESTING.md. */
 export const loadRegister = () =>
-  readRegister(readFileSync(new URL("TESTING.md", ROOT), "utf8"))
+  readRegister(readFileSync(join(ROOT, "TESTING.md"), "utf8"))
 
 /** Reads the repo's paths ADR. */
 export const loadPathsAdr = () =>
-  readPathsAdr(readFileSync(new URL(PATHS_ADR, ROOT), "utf8"))
+  readPathsAdr(readFileSync(join(ROOT, PATHS_ADR), "utf8"))

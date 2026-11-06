@@ -250,10 +250,11 @@ export const registerOf = (path: string, counts: Counts): RowLookup => {
  * Compares a unit's counts with the register's figures for `path`. The unit
  * is described by its outcomes, in the paths ADR's outcome names; a row
  * whose figure is split by outcome is compared with the one outcome the unit
- * names. Throws one error listing each row over its figure (the row, the
- * outcome, the measured figure, the register figure), each register row of
- * the path without a count, and each count without a row. A row still
- * "unmeasured" is printed and checks nothing else.
+ * names, or the first it lists when it names several. Throws one error
+ * listing each row over its figure (the row, the outcome, the measured
+ * figure, the register figure), each register row of the path without a
+ * count, and each count without a row. A row still "unmeasured" is printed
+ * and checks nothing else.
  */
 export const checkCounts = ({
   path,
@@ -302,9 +303,11 @@ const allowedFor = (figure: Figure, outcomes: readonly string[]) => {
   if (figure.kind === "count" || figure.kind === "percent")
     return { outcome: outcomes.join(", "), value: figure.value }
   if (figure.kind !== "outcomes") return undefined
-  const named = outcomes.filter((outcome) => outcome in figure.values)
-  if (named.length !== 1) return undefined
-  return { outcome: named[0]!, value: figure.values[named[0]!]! }
+  // A unit naming several of the row's outcomes (a load at another version
+  // that restores nothing) is compared with the first it lists.
+  const named = outcomes.find((outcome) => outcome in figure.values)
+  if (named === undefined) return undefined
+  return { outcome: named, value: figure.values[named]! }
 }
 
 const findDescriptor = (

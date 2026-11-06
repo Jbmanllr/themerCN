@@ -10,10 +10,9 @@
 // - a row's figure exceeds its ADR cap for any outcome, unless an unexpired
 //   exception names that row. An outcome the cap doesn't name has no number
 //   in the contract to compare with; a cap with one count bounds every
-//   outcome.
-//
-// "Unmeasured while its path's count test exists" is left to the first
-// measurement (spec #119).
+//   outcome;
+// - a path row still reads "unmeasured" while its path's count test exists
+//   (a count test file naming the path, as its `"<path>"` string).
 
 import {
   readPathsAdr,
@@ -34,6 +33,9 @@ export type RegisterCheckInput = {
   /** Workspace package names to their repo-relative directories, to resolve
    *  a command's `--filter <name>`. */
   workspaces: Record<string, string>
+  /** The repo-relative count test files (`<name>.count.test.ts(x)`,
+   *  `<name>.count.spec.ts`). */
+  countTests: string[]
 }
 
 const PROJECT = "Project"
@@ -100,6 +102,17 @@ export const checkRegister = (input: RegisterCheckInput): string[] => {
       else if (!text.includes(unquote(row.row)))
         failures.push(`${row.path}: ${row.row}: ${file} does not name the row`)
     }
+  }
+
+  for (const row of allRows) {
+    if (row.path === PROJECT || row.figure.kind !== "unmeasured") continue
+    const tests = input.countTests.filter((file) =>
+      input.readFile(file)?.includes(JSON.stringify(row.path))
+    )
+    if (tests.length > 0)
+      failures.push(
+        `${row.path}: ${row.row}: unmeasured while its path's count test exists (${tests.join(", ")})`
+      )
   }
 
   const live = register.exceptions.filter((exception) => {

@@ -603,6 +603,12 @@ describe("Theme apply composition", () => {
         await act(async () =>
           usePreferencesStore.getState().setPreviewTab("cards")
         )
+      // The preview tabs load their examples lazily. On a loaded machine the
+      // import resolves late, and the stylesheets it adds would land in the
+      // measured edit: settle every import, then one edit that takes in the
+      // new stylesheet count, so the measured edit is a steady-state one.
+      await act(() => vi.dynamicImportSettled())
+      await settle(() => editTheme({ ...shadows, ...nextPrimary() }))
 
       const { host, live } = await measureBoth(frameDoc, () =>
         editTheme({ ...shadows, ...nextPrimary() })

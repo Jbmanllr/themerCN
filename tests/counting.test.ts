@@ -309,6 +309,27 @@ describe("checkCounts", () => {
     ).toThrow("Path A: writes: the unit names none of its outcomes")
   })
 
+  it("compares a unit naming several of a row's outcomes with the first it lists", () => {
+    // A load with entries at another version also restores nothing: the
+    // unit lists its own outcome first.
+    expect(() =>
+      checkCounts({
+        path: "Path A",
+        outcomes: ["no change", "changed"],
+        counts: { parses: 0, writes: 1, reads: 0 },
+        register,
+      })
+    ).toThrow("Path A: writes (no change): measured 1, register 0")
+    expect(() =>
+      checkCounts({
+        path: "Path A",
+        outcomes: ["changed", "no change"],
+        counts: { parses: 0, writes: 1, reads: 0 },
+        register,
+      })
+    ).not.toThrow()
+  })
+
   it("compares with figures recorded from an earlier run (a seed's baseline)", () => {
     const baseline = registerOf("Path A", { parses: 1, writes: 0 })
     expect(() =>

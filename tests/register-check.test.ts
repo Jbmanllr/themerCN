@@ -76,6 +76,7 @@ const input = (
   today: "2026-11-06",
   readFile: (path) => FILES[path],
   workspaces: { themercn: "packages/themer" },
+  countTests: [],
   ...overrides,
 })
 
@@ -246,6 +247,41 @@ describe("the register check", () => {
     })
   })
 
+  describe("a path row still unmeasured", () => {
+    const files: Record<string, string> = {
+      ...FILES,
+      "packages/themer/src/store.count.test.ts": `const PATH = "Store action"\nit("stringifies", () => {})`,
+      "packages/themer/src/page.count.test.ts": `const PATH = "Page load"`,
+      "tests/project.count.test.ts": `const PATH = "Project"`,
+    }
+    const withCountTests = (countTests: string[]) =>
+      input({ readFile: (path) => files[path], countTests })
+
+    it("fails while its path's count test exists", () => {
+      expect(
+        checkRegister(
+          withCountTests(["packages/themer/src/store.count.test.ts"])
+        )
+      ).toEqual([
+        "Store action: storage reads: unmeasured while its path's count test exists (packages/themer/src/store.count.test.ts)",
+      ])
+    })
+
+    it("passes while its path has no count test", () => {
+      expect(
+        checkRegister(
+          withCountTests(["packages/themer/src/page.count.test.ts"])
+        )
+      ).toEqual([])
+    })
+
+    it("leaves project rows to their own command", () => {
+      expect(
+        checkRegister(withCountTests(["tests/project.count.test.ts"]))
+      ).toEqual([])
+    })
+  })
+
   it("reports a register or ADR it can't read instead of throwing", () => {
     expect(checkRegister(input({ adr: "# no decision" }))).toEqual([
       "the paths ADR has no Decision table",
@@ -271,6 +307,20 @@ const workspaces = Object.fromEntries(
   )
 )
 
+// The count test files: `<name>.count.test.ts(x)` and `<name>.count.spec.ts`.
+const COUNT_TEST = /\.count\.(test|spec)\.tsx?$/
+const filesUnder = (dir: string): string[] =>
+  readdirSync(join(ROOT, dir), { withFileTypes: true }).flatMap((entry) =>
+    entry.name === "node_modules" || entry.name.startsWith(".")
+      ? []
+      : entry.isDirectory()
+        ? filesUnder(`${dir}/${entry.name}`)
+        : [`${dir}/${entry.name}`]
+  )
+const countTests = ["apps", "packages"]
+  .flatMap(filesUnder)
+  .filter((file) => COUNT_TEST.test(file))
+
 describe("the repo's register", () => {
   it("passes the register check", () => {
     expect(
@@ -280,6 +330,7 @@ describe("the repo's register", () => {
         today: new Date().toISOString().slice(0, 10),
         readFile: read,
         workspaces,
+        countTests,
       })
     ).toEqual([])
   })

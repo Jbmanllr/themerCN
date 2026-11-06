@@ -262,6 +262,10 @@ async function mountComposition(extras: boolean) {
       <CodePanelDialog open onOpenChange={() => {}} />
     </QueryClientProvider>
   )
+  // The preview tabs load their examples lazily. On a loaded machine the
+  // import resolves late, and its Suspense reveal would land in the measured
+  // set: settle every import first.
+  await act(() => vi.dynamicImportSettled())
   // One saved edit first, so the measured set is a steady-state one.
   await settle(editTheme)
 }

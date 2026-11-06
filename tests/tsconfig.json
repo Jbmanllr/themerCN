@@ -7,8 +7,9 @@
     "moduleResolution": "Bundler",
     "allowJs": true,
     "noEmit": true,
-    // The floor guard runs under Node's type stripping, which needs the
-    // extension on its import of the register reader.
+    // The floor guard and the coverage command (tests/coverage.ts) run under
+    // Node's type stripping, which needs the extension on their imports of
+    // the register reader.
     "allowImportingTsExtensions": true,
     "types": ["node"]
   },

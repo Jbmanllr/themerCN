@@ -106,6 +106,13 @@ jobs:
           pnpm turbo lint lint:repo typecheck test test:repo build
           pnpm turbo check:package
 
+      # The project coverage ratchet (TESTING.md, Quality register): every
+      # package's `test:coverage`, pooled into one line coverage, which must
+      # not fall more than 0.5 % below the register's figure. Whole, never
+      # --affected: unchanged packages replay their summary from the cache.
+      # The merge gate (ready pull requests) and the backstop; not T1.
+      - run: pnpm coverage
+
       # Only main writes the cache: no pull request's output reaches it.
       - if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0

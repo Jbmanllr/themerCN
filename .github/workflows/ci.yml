@@ -60,33 +60,19 @@ jobs:
 
       - run: pnpm format:check
 
-      # The register check (TESTING.md, Quality register), outside Turbo so
-      # no cache hit replays its last pass: an exception fails on its expiry
-      # date with nothing changed. test:repo also runs it when the register
-      # or the paths ADR changes.
-      - run: pnpm exec vitest run tests/register-check.test.ts
-
-      # The floor guard (TESTING.md, Quality register, Floor), outside Turbo
-      # so nothing replays it: the pull request's diff against its base, the
-      # checkout's first parent. Its trailers are the pull request's commits.
-      # It runs even when the register check failed, so both outputs show.
-      - name: Floor guard (pull request)
-        if: ${{ !cancelled() && github.event_name == 'pull_request' }}
-        run: pnpm floor-guard --base HEAD^1
-
-      # From here on, every step runs even when the register check failed
-      # (`!cancelled()`), and Turbo keeps running the tasks that don't depend
-      # on a failed one, so a red register check never hides the rest of the
-      # gate. The job still fails.
-      #
       # No entry has this run's key yet; the prefix restores main's latest.
-      - if: ${{ !cancelled() }}
-        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      - uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: .turbo/cache
           key: turbo-checks-${{ github.sha }}
           restore-keys: turbo-checks-
 
+      # From here on, every step runs even when an earlier one failed
+      # (`!cancelled()`), and Turbo keeps running the tasks that don't depend
+      # on a failed one, so a red register check (an over-cap row awaiting the
+      # owner, an expired exception) never hides the rest of the gate. The
+      # job still fails.
+      #
       # Lint, typecheck, test and build; then publint, attw and the
       # packed-file check against the built package, plus the Vite app's
       # off-build check (no `data-themer` in its dist).
@@ -117,6 +103,21 @@ jobs:
       # The merge gate (ready pull requests) and the backstop; not T1.
       - if: ${{ !cancelled() }}
         run: pnpm coverage
+
+      # The register check (TESTING.md, Quality register), outside Turbo so
+      # no cache hit replays its last pass: an exception fails on its expiry
+      # date with nothing changed. test:repo also runs it when the register
+      # or the paths ADR changes.
+      - if: ${{ !cancelled() }}
+        run: pnpm exec vitest run tests/register-check.test.ts
+
+      # The floor guard (TESTING.md, Quality register, Floor), outside Turbo
+      # so nothing replays it: the pull request's diff against its base, the
+      # checkout's first parent. Its trailers are the pull request's commits.
+      # It runs even when an earlier step failed, so every output shows.
+      - name: Floor guard (pull request)
+        if: ${{ !cancelled() && github.event_name == 'pull_request' }}
+        run: pnpm floor-guard --base HEAD^1
 
       # Only main writes the cache: no pull request's output reaches it.
       - if: github.event_name == 'push' && github.ref == 'refs/heads/main'

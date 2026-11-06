@@ -39,10 +39,10 @@ const TESTING = `## Quality register
 
 **Inspector pointer move** (per \`mousemove\`)
 
-| Metric                  | Today | Direction     | Runs at          |
-| ----------------------- | ----- | ------------- | ---------------- |
-| \`closest(ignore)\` calls | 1     | must not grow | implementer done |
-| measures                | 0 same element; 1 new element | must not grow | implementer done |
+| Metric                  | Today | Direction     | Checked by                                                         | Runs at          |
+| ----------------------- | ----- | ------------- | ------------------------------------------------------------------ | ---------------- |
+| \`closest(ignore)\` calls | 1     | must not grow | \`pnpm --filter themercn exec vitest run src/inspector.count.test.ts\` | implementer done |
+| measures                | 0 same element; 1 new element | must not grow | \`pnpm --filter themercn exec vitest run src/inspector.count.test.ts\` | implementer done |
 
 **Project**
 
@@ -66,6 +66,7 @@ const ADR = `## Decision
 
 const FILES: Record<string, string> = {
   "packages/themer/src/store.count.test.ts": `it("stringifies", () => {})`,
+  "packages/themer/src/inspector.count.test.ts": `"\`closest(ignore)\` calls", "measures"`,
 }
 
 const input = (
@@ -91,19 +92,42 @@ describe("the register check", () => {
     expect(checkRegister(input())).toEqual([])
   })
 
-  describe("an enforced row's command", () => {
+  describe("a row's command", () => {
     it("fails when it names a test file that doesn't exist", () => {
-      expect(checkRegister(input({ readFile: () => undefined }))).toEqual([
+      const files: Record<string, string | undefined> = {
+        ...FILES,
+        "packages/themer/src/store.count.test.ts": undefined,
+      }
+      expect(checkRegister(input({ readFile: (p) => files[p] }))).toEqual([
         "Store action: stringifies: its command names packages/themer/src/store.count.test.ts, which does not exist",
       ])
     })
 
     it("fails when its test file doesn't name the row", () => {
       const files: Record<string, string> = {
+        ...FILES,
         "packages/themer/src/store.count.test.ts": "it()",
       }
       expect(checkRegister(input({ readFile: (p) => files[p] }))).toEqual([
         "Store action: stringifies: packages/themer/src/store.count.test.ts does not name the row",
+      ])
+    })
+
+    it("fails when a measured path row's command names a test file that doesn't exist, or one that doesn't name the row", () => {
+      const files: Record<string, string> = {
+        "packages/themer/src/store.count.test.ts": `it("stringifies", () => {})`,
+        "packages/themer/src/inspector.count.test.ts": `"measures"`,
+      }
+      expect(checkRegister(input({ readFile: (p) => files[p] }))).toEqual([
+        "Inspector pointer move: `closest(ignore)` calls: packages/themer/src/inspector.count.test.ts does not name the row",
+      ])
+      const testing = TESTING.replaceAll(
+        "src/inspector.count.test.ts",
+        "src/gone.count.test.ts"
+      )
+      expect(checkRegister(input({ testing }))).toEqual([
+        "Inspector pointer move: `closest(ignore)` calls: its command names packages/themer/src/gone.count.test.ts, which does not exist",
+        "Inspector pointer move: measures: its command names packages/themer/src/gone.count.test.ts, which does not exist",
       ])
     })
 

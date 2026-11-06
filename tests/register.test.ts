@@ -37,9 +37,9 @@ const FIXTURE = `# Testing
 
 **Inspector pointer move** (per \`mousemove\`)
 
-| Metric                  | Today | Direction     | Runs at          |
-| ----------------------- | ----- | ------------- | ---------------- |
-| \`closest(ignore)\` calls | 2     | must not grow | implementer done |
+| Metric                  | Today | Direction     | Checked by               | Runs at          |
+| ----------------------- | ----- | ------------- | ------------------------ | ---------------- |
+| \`closest(ignore)\` calls | 2     | must not grow | \`vitest run b.test.ts\` | implementer done |
 
 ### Exceptions
 
@@ -107,6 +107,15 @@ describe("the register reader", () => {
     expect(
       register.row("Inspector pointer move", "`closest(ignore)` calls").figure
     ).toEqual({ kind: "count", value: 2 })
+  })
+
+  it("reads a measured row's command, and none where its table has no column", () => {
+    expect(
+      register.row("Inspector pointer move", "`closest(ignore)` calls")
+    ).toMatchObject({ table: "Measured", command: "vitest run b.test.ts" })
+    expect(register.row("Store action", "storage reads").command).toBe(
+      undefined
+    )
   })
 
   it("files a table under the bold path label above it", () => {

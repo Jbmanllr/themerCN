@@ -34,7 +34,7 @@ The Floor is always enforced on the diff, and a breach is a hard violation in `c
 - No skipped or deleted test without a `Quality-change` trailer. A test replaced at a deepened module's interface names its replacement.
 - No secret in source.
 - No register row weakened outside the rules below.
-- No edit to the gate's own files without a `Quality-change` trailer. They are the count tests (`<name>.count.test.ts(x)` next to the path's owner module, `<name>.count.spec.ts` in Playwright), the counting helper (`counting.ts`), the register reader and the register check (`tests/register*.ts`), the floor guard (`tests/floor-guard*.ts`) and the coverage command (`coverage-ratchet.ts`), with their tests. The floor guard recognises them by these names.
+- No edit to the gate's own files without a `Quality-change` trailer. They are the count tests (`<name>.count.test.ts(x)` next to the path's owner module, `<name>.count.spec.ts` in Playwright), the counting helper (`counting.ts`), the register reader and the register check (`tests/register*.ts`), the floor guard (`tests/floor-guard*.ts`) and the coverage command (`tests/coverage.ts`), with their tests. The floor guard recognises them by these names.
 
 **Prescribed forms:**
 
@@ -112,55 +112,55 @@ First measured on 2026-11-06 (spec #119) on one machine: an Apple M3 Max under m
 
 ### Measured, not yet enforced
 
-The ratchet. Each count is per unit of its path, as the paths ADR defines the unit, and per outcome where the contract splits it. A figure is `unmeasured`, one count for every outcome (`3`), a count per outcome in the outcome names of the paths ADR's Register rows column (`1 persisted change; 0 no change`), or a percentage (`87.4 %`). A row's figure may never exceed the cap in its path's cost contract. A row moves to Enforced, with that figure as its rule, once the gate gives it a command. A row measured over its cap stays here at its measured figure, and the register check fails on it until the owner adds an exception or amends the paths ADR.
+The ratchet. Each count is per unit of its path, as the paths ADR defines the unit, and per outcome where the contract splits it. A figure is `unmeasured`, one count for every outcome (`3`), a count per outcome in the outcome names of the paths ADR's Register rows column (`1 persisted change; 0 no change`), or a percentage (`87.4 %`). A row's figure may never exceed the cap in its path's cost contract. Each path row names the command that measures it in Checked by, as an enforced row does. A row moves to Enforced, with that figure as its rule, once the gate gives it a command and its figure is within its cap. A row measured over its cap stays here at its measured figure, and the register check fails on it until the owner adds an exception or amends the paths ADR.
 
 **Store action** (per `set`)
 
-| Metric                 | Today                                 | Direction     | Runs at          |
-| ---------------------- | ------------------------------------- | ------------- | ---------------- |
-| stringifies            | 1 persisted change; 1 no change       | must not grow | implementer done |
-| storage writes         | 1 persisted change; 1 no change       | must not grow | implementer done |
-| store deep compares    | 3 Theme change; 3 history-only change | must not grow | implementer done |
-| selector deep compares | 9                                     | must not grow | implementer done |
-| selector colour parses | 1                                     | must not grow | implementer done |
+| Metric                 | Today                                 | Direction     | Checked by                                                                      | Runs at          |
+| ---------------------- | ------------------------------------- | ------------- | ------------------------------------------------------------------------------- | ---------------- |
+| stringifies            | 1 persisted change; 1 no change       | must not grow | `pnpm --filter themercn exec vitest run src/stores/store-action.count.test.tsx` | implementer done |
+| storage writes         | 1 persisted change; 1 no change       | must not grow | `pnpm --filter themercn exec vitest run src/stores/store-action.count.test.tsx` | implementer done |
+| store deep compares    | 3 Theme change; 3 history-only change | must not grow | `pnpm --filter themercn exec vitest run src/stores/store-action.count.test.tsx` | implementer done |
+| selector deep compares | 9                                     | must not grow | `pnpm --filter themercn exec vitest run src/stores/store-action.count.test.tsx` | implementer done |
+| selector colour parses | 1                                     | must not grow | `pnpm --filter themercn exec vitest run src/stores/store-action.count.test.tsx` | implementer done |
 
 **Theme apply** (per apply and document)
 
-| Metric                  | Today                                                               | Direction     | Runs at          |
-| ----------------------- | ------------------------------------------------------------------- | ------------- | ---------------- |
-| property writes         | 54 one-token edit; 54 shadow-input edit; 54 stylesheet-count change | must not grow | implementer done |
-| shadow colour parses    | 1 one-token edit; 1 shadow-input edit; 1 stylesheet-count change    | must not grow | implementer done |
-| font label layout reads | 4                                                                   | must not grow | implementer done |
-| font label stringifies  | 5                                                                   | must not grow | implementer done |
+| Metric                  | Today                                                               | Direction     | Checked by                                                                    | Runs at          |
+| ----------------------- | ------------------------------------------------------------------- | ------------- | ----------------------------------------------------------------------------- | ---------------- |
+| property writes         | 54 one-token edit; 54 shadow-input edit; 54 stylesheet-count change | must not grow | `pnpm --filter themercn exec vitest run src/utils/apply-theme.count.test.tsx` | implementer done |
+| shadow colour parses    | 1 one-token edit; 1 shadow-input edit; 1 stylesheet-count change    | must not grow | `pnpm --filter themercn exec vitest run src/utils/apply-theme.count.test.tsx` | implementer done |
+| font label layout reads | 4                                                                   | must not grow | `pnpm --filter themercn exec vitest run src/utils/apply-theme.count.test.tsx` | implementer done |
+| font label stringifies  | 5                                                                   | must not grow | `pnpm --filter themercn exec vitest run src/utils/apply-theme.count.test.tsx` | implementer done |
 
 **Page load** (per load; hydration rows also per `storageNamespace` switch)
 
-| Metric               | Today                                                               | Direction     | Runs at          |
-| -------------------- | ------------------------------------------------------------------- | ------------- | ---------------- |
-| head-script builds   | 3                                                                   | must not grow | implementer done |
-| storage writes       | 1 nothing saved; 1 saved Theme; 3 other version; 2 namespace switch | must not grow | implementer done |
-| font links           | 7                                                                   | must not grow | implementer done |
-| Preset deep compares | 4                                                                   | must not grow | implementer done |
-| first applies        | 3                                                                   | must not grow | implementer done |
-| frame chunk imports  | 1                                                                   | must not grow | merge gate       |
-| root-class observers | 2                                                                   | must not grow | implementer done |
+| Metric               | Today                                                               | Direction     | Checked by                                                                                | Runs at          |
+| -------------------- | ------------------------------------------------------------------- | ------------- | ----------------------------------------------------------------------------------------- | ---------------- |
+| head-script builds   | 3                                                                   | must not grow | `pnpm --filter themercn exec vitest run src/components/page-load.count.test.tsx`          | implementer done |
+| storage writes       | 1 nothing saved; 1 saved Theme; 3 other version; 2 namespace switch | must not grow | `pnpm --filter themercn exec vitest run src/components/page-load.count.test.tsx`          | implementer done |
+| font links           | 7                                                                   | must not grow | `pnpm --filter themercn exec vitest run src/components/page-load.count.test.tsx`          | implementer done |
+| Preset deep compares | 4                                                                   | must not grow | `pnpm --filter themercn exec vitest run src/components/page-load.count.test.tsx`          | implementer done |
+| first applies        | 3                                                                   | must not grow | `pnpm --filter themercn exec vitest run src/components/page-load.count.test.tsx`          | implementer done |
+| frame chunk imports  | 1                                                                   | must not grow | `pnpm --filter web exec playwright test --project=chromium e2e/frame-chunk.count.spec.ts` | merge gate       |
+| root-class observers | 2                                                                   | must not grow | `pnpm --filter themercn exec vitest run src/components/page-load.count.test.tsx`          | implementer done |
 
 **Inspector pointer move** (per `mousemove`, and per measure where named)
 
-| Metric                  | Today                                       | Direction     | Runs at          |
-| ----------------------- | ------------------------------------------- | ------------- | ---------------- |
-| `closest(ignore)` calls | 2                                           | must not grow | implementer done |
-| other DOM queries       | 1 same element; 1 new element; 2 card shown | must not grow | implementer done |
+| Metric                  | Today                                       | Direction     | Checked by                                                                                             | Runs at          |
+| ----------------------- | ------------------------------------------- | ------------- | ------------------------------------------------------------------------------------------------------ | ---------------- |
+| `closest(ignore)` calls | 2                                           | must not grow | `pnpm --filter themercn exec vitest run src/components/preview/inspector/use-inspector.count.test.tsx` | implementer done |
+| other DOM queries       | 1 same element; 1 new element; 2 card shown | must not grow | `pnpm --filter themercn exec vitest run src/components/preview/inspector/use-inspector.count.test.tsx` | implementer done |
 
 **Font catalog request** (per request)
 
-| Metric               | Today | Direction     | Runs at          |
-| -------------------- | ----- | ------------- | ---------------- |
-| client round trips   | 2     | must not grow | implementer done |
-| family lower-cases   | 132   | must not grow | implementer done |
-| response stringifies | 2     | must not grow | implementer done |
-| badge requests       | 2     | must not grow | implementer done |
-| badge lower-cases    | 6     | must not grow | implementer done |
+| Metric               | Today | Direction     | Checked by                                                                   | Runs at          |
+| -------------------- | ----- | ------------- | ---------------------------------------------------------------------------- | ---------------- |
+| client round trips   | 2     | must not grow | `pnpm --filter themercn exec vitest run src/api/font-catalog.count.test.tsx` | implementer done |
+| family lower-cases   | 132   | must not grow | `pnpm --filter themercn exec vitest run src/api/font-catalog.count.test.tsx` | implementer done |
+| response stringifies | 2     | must not grow | `pnpm --filter themercn exec vitest run src/api/font-catalog.count.test.tsx` | implementer done |
+| badge requests       | 2     | must not grow | `pnpm --filter themercn exec vitest run src/api/font-catalog.count.test.tsx` | implementer done |
+| badge lower-cases    | 6     | must not grow | `pnpm --filter themercn exec vitest run src/api/font-catalog.count.test.tsx` | implementer done |
 
 ### Exceptions
 
@@ -178,6 +178,6 @@ The ratchet. Each count is per unit of its path, as the paths ADR defines the un
 - **Tightening is silent; loosening is loud.** These need no approval: lowering a number, adding a row, promoting a measured row to enforced, or extending a count's input or counters to a new outcome or feature. These need the owner: raising a number (outside the contract case above), removing or demoting a row, changing a row's command or Runs at, narrowing a count's input or what its counters see, or adding or extending an exception. Raising a contract cap also needs a paths ADR change. A loosening never rides in the pull request of the feature that failed the limit.
 - **Exceptions expire.** Each has an owner and an expiry date, 90 days by default. On expiry the gate fails again, with no action from anyone.
 - **The register is the source of the numbers.** The gate's code reads the register, or a check compares the two and fails on a difference.
-- **A register check runs with the merge gate.** The register check, `tests/register-check.test.ts`, runs in `test:repo` when the register or the paths ADR changes, and once more uncached in CI's checks job on every run, so an exception fails on its expiry date with nothing changed. It fails in any of these cases: an enforced row's command names a test file that does not exist or does not name the row, an exception has expired, a path in the paths ADR has no row, a count in a path's cost contract has no row (the ADR's Register rows column and the register disagree on a row name), a row allows more than its contract's cap without an unexpired exception, or a path row still reads `unmeasured` while its path's count test exists.
-- **Each counter proves it can fail.** A count's own tests seed one extra unit of each counted work it gates and expect a failure.
+- **A register check runs with the merge gate.** The register check, `tests/register-check.test.ts`, runs in `test:repo` when the register or the paths ADR changes, and once more uncached in CI's checks job on every run, so an exception fails on its expiry date with nothing changed. It fails in any of these cases: an enforced row's command, or a measured path row's, names a test file that does not exist or does not name the row, an exception has expired, a path in the paths ADR has no row, a count in a path's cost contract has no row (the ADR's Register rows column and the register disagree on a row name), a row allows more than its contract's cap without an unexpired exception, or a path row still reads `unmeasured` while its path's count test exists.
+- **Each counter proves it can fail.** A count's own tests seed one extra unit of each counted work it gates and expect a failure. Each count test file ends with a reach check: for each row and outcome whose figure is above 0, its unseeded runs must reach the figure, or the row fails as a stale figure or a blind counter. A feature-off run asserts that the work the feature removes counts 0.
 - **A row changes in the pull request** that lowers its figure, raises it within its contract as its spec names, or amends its ADR.

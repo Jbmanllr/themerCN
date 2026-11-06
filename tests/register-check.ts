@@ -2,8 +2,8 @@
 // paths ADR and the repo, by the register's rules (TESTING.md, "Rules"), and
 // returns one reason per failure. It fails when:
 //
-// - an enforced row's command names a test file that doesn't exist, or one
-//   that doesn't name the row;
+// - a row's command (an enforced row's, or a measured path row's) names a
+//   test file that doesn't exist, or one that doesn't name the row;
 // - an exception has expired (on its expiry date);
 // - a path in the paths ADR has no section in the register;
 // - the ADR's Register rows column and the register disagree on a row name;
@@ -42,6 +42,10 @@ const PROJECT = "Project"
 const TEST_FILE = /[\w./@-]+\.(?:test|spec)\.[cm]?[jt]sx?/g
 
 const unquote = (name: string) => name.replaceAll("`", "")
+/** Whether a test file names the row: as the register writes it, backticks
+ *  and all, or without them. */
+const namesRow = (text: string, row: string) =>
+  text.includes(row) || text.includes(unquote(row))
 
 /** The test files a command names, repo-relative: under the `--filter`
  *  workspace's directory when it names one. */
@@ -92,14 +96,17 @@ export const checkRegister = (input: RegisterCheckInput): string[] => {
   const failures: string[] = []
 
   const allRows = register.paths().flatMap((path) => register.rows(path))
-  for (const row of allRows.filter((row) => row.table === "Enforced")) {
+  const commanded = allRows.filter(
+    (row) => row.table === "Enforced" || row.path !== PROJECT
+  )
+  for (const row of commanded) {
     for (const file of testFilesOf(row.command ?? "", input.workspaces)) {
       const text = input.readFile(file)
       if (text === undefined)
         failures.push(
           `${row.path}: ${row.row}: its command names ${file}, which does not exist`
         )
-      else if (!text.includes(unquote(row.row)))
+      else if (!namesRow(text, row.row))
         failures.push(`${row.path}: ${row.row}: ${file} does not name the row`)
     }
   }

@@ -5,4 +5,15 @@
 import { config } from "./packages/eslint-config/base.js"
 
 /** @type {import("eslint").Linter.Config[]} */
-export default [...config, { ignores: ["apps/**", "packages/**"] }]
+export default [
+  ...config,
+  { ignores: ["apps/**", "packages/**"] },
+  {
+    // The repo tests put stand-in tools first on PATH for the scripts they
+    // run. PATH is an input of no task, so it stays out of turbo.json.
+    files: ["tests/**"],
+    rules: {
+      "turbo/no-undeclared-env-vars": ["error", { allowList: ["^PATH$"] }],
+    },
+  },
+]

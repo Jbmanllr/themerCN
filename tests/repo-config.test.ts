@@ -439,6 +439,13 @@ describe("task hashes", () => {
         changes: ["//#test:repo"],
         keeps: ["web#test", "web#build", "web#e2e"],
       },
+      // The register check compares TESTING.md's register with the paths
+      // ADR.
+      {
+        file: "docs/adr/0002-shared-paths-and-cost-contracts.md",
+        changes: ["//#test:repo"],
+        keeps: ["web#test", "web#build", "web#e2e"],
+      },
       // The build-exclusion checks read the Tailwind entries, which the
       // builds read too.
       {
@@ -724,6 +731,7 @@ const turboCommandsOf = (step: CiStep) =>
           .filter((word) => word !== "run" && !word.startsWith("-")),
         affected: words.slice(0, end).includes("--affected"),
         args: words.slice(end + 1).join(" "),
+        raw: line,
         gating: step["continue-on-error"] !== true,
       }
     })
@@ -887,6 +895,91 @@ describe("CI task selection", () => {
       expect(scriptFor(event)).not.toContain("TURBO_SCM_BASE")
     }
   )
+
+  // A red register check (an over-cap row awaiting the owner, an expired
+  // exception) must not hide the rest of the gate: every check still runs
+  // and reports after a failed step, and one failing Turbo task doesn't
+  // cancel the tasks that don't depend on it.
+  it.each([
+    "pull_request",
+    "push",
+    "schedule",
+    "workflow_dispatch",
+    "merge_group",
+  ])("%s runs every check after a failed step", (event) => {
+    const commands = commandsFor(event, "checks", "failure")
+    expect(
+      [...new Set(commands.flatMap((command) => command.tasks))].sort()
+    ).toEqual(CHECK_TASKS)
+    expect(
+      stepsFor(event, "checks", "failure").map((step) => step.run)
+    ).toContain("pnpm coverage")
+    for (const command of commands) {
+      expect(command.raw).toContain("--continue=dependencies-successful")
+    }
+  })
+
+  // An exception expires with nothing changed, so a Turbo cache hit must not
+  // replay the register check's last pass: CI runs it outside Turbo, on
+  // every event.
+  it.each([
+    "pull_request",
+    "push",
+    "schedule",
+    "workflow_dispatch",
+    "merge_group",
+  ])("%s runs the register check uncached", (event) => {
+    expect(scriptFor(event).split("\n")).toContain(
+      "pnpm exec vitest run tests/register-check.test.ts"
+    )
+  })
+
+  // A reviewer reads both outputs: the floor guard runs on a pull request
+  // even after the register check failed, but not in a cancelled job.
+  it.each(["success", "failure"] as const)(
+    "pull_request runs the floor guard after a %s",
+    (status) => {
+      expect(
+        stepsFor("pull_request", "checks", status).map((step) => step.run)
+      ).toContain("pnpm floor-guard --base HEAD^1")
+    }
+  )
+
+  it("the floor guard runs on pull requests only, and not in a cancelled job", () => {
+    const runs = (event: string, status: Status) =>
+      stepsFor(event, "checks", status).map((step) => step.run)
+    expect(runs("pull_request", "cancelled")).not.toContain(
+      "pnpm floor-guard --base HEAD^1"
+    )
+    expect(runs("push", "failure")).not.toContain(
+      "pnpm floor-guard --base HEAD^1"
+    )
+  })
+
+  // The coverage ratchet runs at the merge gate (T2) and the backstop (T3);
+  // it pools every package's coverage, so it runs whole, never --affected.
+  it.each([
+    "pull_request",
+    "push",
+    "schedule",
+    "workflow_dispatch",
+    "merge_group",
+  ])("%s runs the project coverage command", (event) => {
+    expect(scriptFor(event).split("\n")).toContain("pnpm coverage")
+    expect(JSON.parse(read("../package.json")).scripts.coverage).toMatch(
+      /^turbo run test:coverage && node (--[\w=-]+ )*tests\/coverage\.ts$/
+    )
+  })
+
+  it("keeps the coverage run out of T1", () => {
+    for (const t1 of [
+      read("../TESTING.md").match(/\*\*T1, ticket handoff:\*\*.*/)?.[0],
+      read("../.claude/hooks/stop-t1.sh"),
+    ]) {
+      expect(t1).toBeDefined()
+      expect(t1).not.toMatch(/coverage/)
+    }
+  })
 
   it.each(["pull_request", "push"])(
     "%s format-checks the whole repo",
@@ -1182,8 +1275,7 @@ const scriptSandbox = (name: string) => {
       encoding: "utf8",
       env: {
         ...inherited,
-        // The stand-in pnpm first; PATH is not an input of any task.
-        // eslint-disable-next-line turbo/no-undeclared-env-vars
+        // The stand-in pnpm first.
         PATH: `${join(scratch, "bin")}:${process.env.PATH}`,
         PNPM_ARGS: log,
         PNPM_EXIT: String(pnpm.exit ?? 0),

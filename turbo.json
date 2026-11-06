@@ -59,6 +59,11 @@
       "dependsOn": ["^build", "build:css"],
       "env": ["CI"]
     },
+    "test:coverage": {
+      "dependsOn": ["^build", "build:css"],
+      "env": ["CI"],
+      "outputs": ["coverage/**"]
+    },
     "//#test:repo": {
       "env": ["CI"],
       "inputs": [
@@ -76,6 +81,7 @@
         "scripts/e2e-affected.sh",
         "scripts/heavy-slot.sh",
         "TESTING.md",
+        "docs/adr/0002-shared-paths-and-cost-contracts.md",
         "turbo.json",
         "apps/*/package.json",
         "apps/*/turbo.json",

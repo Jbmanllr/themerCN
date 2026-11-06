@@ -47,6 +47,21 @@
         "$TURBO_ROOT$/apps/web/components/themer/playground-themer.tsx",
         "$TURBO_ROOT$/apps/web/lib/themer.ts",
         "$TURBO_ROOT$/apps/vite/src/main.tsx",
+        "$TURBO_ROOT$/apps/vite/vite.config.ts",
+        "$TURBO_ROOT$/TESTING.md",
+        "$TURBO_ROOT$/tests/counting.ts",
+        "$TURBO_ROOT$/tests/register.ts"
+      ]
+    },
+    "test:coverage": {
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "$TURBO_ROOT$/.github/workflows/*.yml",
+        "$TURBO_ROOT$/apps/web/app/layout.tsx",
+        "$TURBO_ROOT$/apps/web/app/api/themer/fonts/route.ts",
+        "$TURBO_ROOT$/apps/web/components/themer/playground-themer.tsx",
+        "$TURBO_ROOT$/apps/web/lib/themer.ts",
+        "$TURBO_ROOT$/apps/vite/src/main.tsx",
         "$TURBO_ROOT$/apps/vite/vite.config.ts"
       ]
     },

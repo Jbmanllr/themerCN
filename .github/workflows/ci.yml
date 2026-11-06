@@ -67,6 +67,12 @@ jobs:
           key: turbo-checks-${{ github.sha }}
           restore-keys: turbo-checks-
 
+      # From here on, every step runs even when an earlier one failed
+      # (`!cancelled()`), and Turbo keeps running the tasks that don't depend
+      # on a failed one, so a red register check (an over-cap row awaiting the
+      # owner, an expired exception) never hides the rest of the gate. The
+      # job still fails.
+      #
       # Lint, typecheck, test and build; then publint, attw and the
       # packed-file check against the built package, plus the Vite app's
       # off-build check (no `data-themer` in its dist).
@@ -76,22 +82,42 @@ jobs:
       # base branch tip its merge commit was built on: the checkout's first
       # parent. base.sha is logged beside it; it can lag, which over-selects.
       - name: Affected tasks (pull request)
-        if: github.event_name == 'pull_request'
+        if: ${{ !cancelled() && github.event_name == 'pull_request' }}
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
         run: |
           TURBO_SCM_BASE=$(git rev-parse HEAD^1)
           export TURBO_SCM_BASE
           echo "HEAD^1: $TURBO_SCM_BASE, pull_request.base.sha: $BASE_SHA"
-          pnpm turbo lint lint:repo typecheck test test:repo build --affected
-          pnpm turbo check:package --affected
+          pnpm turbo lint lint:repo typecheck test test:repo build check:package --affected --continue=dependencies-successful
 
       # Every other event runs everything.
       - name: All tasks
-        if: github.event_name != 'pull_request'
-        run: |
-          pnpm turbo lint lint:repo typecheck test test:repo build
-          pnpm turbo check:package
+        if: ${{ !cancelled() && github.event_name != 'pull_request' }}
+        run: pnpm turbo lint lint:repo typecheck test test:repo build check:package --continue=dependencies-successful
+
+      # The project coverage ratchet (TESTING.md, Quality register): every
+      # package's `test:coverage`, pooled into one line coverage, which must
+      # not fall more than 0.5 % below the register's figure. Whole, never
+      # --affected: unchanged packages replay their summary from the cache.
+      # The merge gate (ready pull requests) and the backstop; not T1.
+      - if: ${{ !cancelled() }}
+        run: pnpm coverage
+
+      # The register check (TESTING.md, Quality register), outside Turbo so
+      # no cache hit replays its last pass: an exception fails on its expiry
+      # date with nothing changed. test:repo also runs it when the register
+      # or the paths ADR changes.
+      - if: ${{ !cancelled() }}
+        run: pnpm exec vitest run tests/register-check.test.ts
+
+      # The floor guard (TESTING.md, Quality register, Floor), outside Turbo
+      # so nothing replays it: the pull request's diff against its base, the
+      # checkout's first parent. Its trailers are the pull request's commits.
+      # It runs even when an earlier step failed, so every output shows.
+      - name: Floor guard (pull request)
+        if: ${{ !cancelled() && github.event_name == 'pull_request' }}
+        run: pnpm floor-guard --base HEAD^1
 
       # Only main writes the cache: no pull request's output reaches it.
       - if: github.event_name == 'push' && github.ref == 'refs/heads/main'

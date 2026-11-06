@@ -11,6 +11,7 @@
     "format": "prettier --write . --ignore-path ../../.gitignore --ignore-path ../../.prettierignore",
     "typecheck": "next typegen && tsc --noEmit",
     "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
     "e2e": "playwright test",
     "visual": "playwright test --project=visual",
     "e2e:smoke": "playwright test --project=chromium --grep @smoke --workers=2 --max-failures=1 && playwright test --project=a11y --workers=2 --max-failures=1"
@@ -37,6 +38,7 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@vitest/coverage-v8": "^5.0.4",
     "@workspace/eslint-config": "workspace:^",
     "@workspace/typescript-config": "workspace:*",
     "culori": "4.0.2",

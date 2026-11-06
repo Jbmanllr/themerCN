@@ -444,6 +444,8 @@ describe("floor guard", { timeout: 30_000 }, () => {
       "packages/themer/src/test/counting.ts",
       "packages/themer/src/stores/store-action.count.test.ts",
       "apps/web/e2e/frame-chunk.count.spec.ts",
+      "tests/coverage.ts",
+      "tests/coverage.test.ts",
     ])("%s", (file) => {
       const { dir, write, commit } = repo()
       write(file, "export {}\n")

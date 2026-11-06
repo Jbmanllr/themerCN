@@ -34,12 +34,12 @@ const REGISTER_FILE = "TESTING.md"
 // The gate's own files: the register reader, the register check, the floor
 // guard, the counting helper (`counting.ts`), the count tests
 // (`<path>.count.test.ts(x)`, `<name>.count.spec.ts`), the coverage command
-// (`coverage-ratchet.ts`), and their tests.
+// (`tests/coverage.ts`), and their tests.
 const GATE_FILES = [
   /^tests\/register(-check)?(\.test)?\.ts$/,
   /^tests\/floor-guard(\.test)?\.ts$/,
   /(^|\/)counting(\.test)?\.tsx?$/,
-  /(^|\/)coverage-ratchet(\.test)?\.[cm]?[jt]s$/,
+  /^tests\/coverage(\.test)?\.ts$/,
   /\.count\.(test|spec)\.tsx?$/,
 ]
 

@@ -74,8 +74,14 @@ jobs:
         if: ${{ !cancelled() && github.event_name == 'pull_request' }}
         run: pnpm floor-guard --base HEAD^1
 
+      # From here on, every step runs even when the register check failed
+      # (`!cancelled()`), and Turbo keeps running the tasks that don't depend
+      # on a failed one, so a red register check never hides the rest of the
+      # gate. The job still fails.
+      #
       # No entry has this run's key yet; the prefix restores main's latest.
-      - uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      - if: ${{ !cancelled() }}
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: .turbo/cache
           key: turbo-checks-${{ github.sha }}
@@ -90,29 +96,27 @@ jobs:
       # base branch tip its merge commit was built on: the checkout's first
       # parent. base.sha is logged beside it; it can lag, which over-selects.
       - name: Affected tasks (pull request)
-        if: github.event_name == 'pull_request'
+        if: ${{ !cancelled() && github.event_name == 'pull_request' }}
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
         run: |
           TURBO_SCM_BASE=$(git rev-parse HEAD^1)
           export TURBO_SCM_BASE
           echo "HEAD^1: $TURBO_SCM_BASE, pull_request.base.sha: $BASE_SHA"
-          pnpm turbo lint lint:repo typecheck test test:repo build --affected
-          pnpm turbo check:package --affected
+          pnpm turbo lint lint:repo typecheck test test:repo build check:package --affected --continue=dependencies-successful
 
       # Every other event runs everything.
       - name: All tasks
-        if: github.event_name != 'pull_request'
-        run: |
-          pnpm turbo lint lint:repo typecheck test test:repo build
-          pnpm turbo check:package
+        if: ${{ !cancelled() && github.event_name != 'pull_request' }}
+        run: pnpm turbo lint lint:repo typecheck test test:repo build check:package --continue=dependencies-successful
 
       # The project coverage ratchet (TESTING.md, Quality register): every
       # package's `test:coverage`, pooled into one line coverage, which must
       # not fall more than 0.5 % below the register's figure. Whole, never
       # --affected: unchanged packages replay their summary from the cache.
       # The merge gate (ready pull requests) and the backstop; not T1.
-      - run: pnpm coverage
+      - if: ${{ !cancelled() }}
+        run: pnpm coverage
 
       # Only main writes the cache: no pull request's output reaches it.
       - if: github.event_name == 'push' && github.ref == 'refs/heads/main'

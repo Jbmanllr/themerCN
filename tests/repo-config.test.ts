@@ -731,6 +731,7 @@ const turboCommandsOf = (step: CiStep) =>
           .filter((word) => word !== "run" && !word.startsWith("-")),
         affected: words.slice(0, end).includes("--affected"),
         args: words.slice(end + 1).join(" "),
+        raw: line,
         gating: step["continue-on-error"] !== true,
       }
     })
@@ -894,6 +895,29 @@ describe("CI task selection", () => {
       expect(scriptFor(event)).not.toContain("TURBO_SCM_BASE")
     }
   )
+
+  // A red register check (an over-cap row awaiting the owner, an expired
+  // exception) must not hide the rest of the gate: every check still runs
+  // and reports after a failed step, and one failing Turbo task doesn't
+  // cancel the tasks that don't depend on it.
+  it.each([
+    "pull_request",
+    "push",
+    "schedule",
+    "workflow_dispatch",
+    "merge_group",
+  ])("%s runs every check after a failed step", (event) => {
+    const commands = commandsFor(event, "checks", "failure")
+    expect(
+      [...new Set(commands.flatMap((command) => command.tasks))].sort()
+    ).toEqual(CHECK_TASKS)
+    expect(
+      stepsFor(event, "checks", "failure").map((step) => step.run)
+    ).toContain("pnpm coverage")
+    for (const command of commands) {
+      expect(command.raw).toContain("--continue=dependencies-successful")
+    }
+  })
 
   // An exception expires with nothing changed, so a Turbo cache hit must not
   // replay the register check's last pass: CI runs it outside Turbo, on

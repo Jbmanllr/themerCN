@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Runs a heavy suite (a build, Playwright, the Docker visual run) in the
-# clone's one heavy slot, shared by all its worktrees: AGENTS.md
+# clone's one heavy slot, shared by all its worktrees: TESTING.md
 # "Verification tiers", one heavy suite per host at a time. The T1 Stop hook
 # runs its Turbo tasks through it.
 #

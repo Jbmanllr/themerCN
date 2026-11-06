@@ -27,21 +27,21 @@ The project's quality bar: the Floor, the enforced limits, the measured figures 
 
 ### Floor
 
-The Floor is always enforced on the diff, and a breach is a hard violation in `code-review`. Until the gate's floor guard exists, `code-review` enforces it.
+The Floor is always enforced on the diff, and a breach is a hard violation in `code-review`. The floor guard, [`tests/floor-guard.ts`](tests/floor-guard.ts), checks it: CI's checks job runs it on every pull request, uncached, against the pull request's base, and `pnpm floor-guard [--base <ref>]` runs it locally (default base `origin/main`). It exits 0 when clean, 1 on a violation and 2 when it cannot run.
 
 - No new suppression comment, except a prescribed form listed below. A listed form never expires.
 - No unimplemented stub, or empty catch, standing in for the work.
 - No skipped or deleted test without a `Quality-change` trailer. A test replaced at a deepened module's interface names its replacement.
 - No secret in source.
 - No register row weakened outside the rules below.
-- No edit to the gate's own files (benchmarks, floor guard, register check) without a `Quality-change` trailer.
+- No edit to the gate's own files without a `Quality-change` trailer. They are the count tests (`<name>.count.test.ts(x)` next to the path's owner module, `<name>.count.spec.ts` in Playwright), the counting helper (`counting.ts`), the register reader and the register check (`tests/register*.ts`), the floor guard (`tests/floor-guard*.ts`) and the coverage command (`coverage-ratchet.ts`), with their tests. The floor guard recognises them by these names.
 
 **Prescribed forms:**
 
 - In the vendored shadcn example pages under `packages/themer/src/components/preview/examples/`, a single-rule `eslint-disable-next-line <rule> -- <reason>` that keeps the code as the shadcn example wrote it.
 - At the top of a visual-baseline spec, `test.skip(<platform condition>, <reason>)`, which skips on platforms whose renders the baselines don't cover.
 
-**Recorded changes.** A change the Floor would flag but the rules allow carries a `Quality-change: <file or row>: <reason>` commit trailer. Examples: a test removed with its replacement named, a row raised within its contract, an edit to the gate's own files. The floor guard accepts a flagged change that a trailer names. `code-review` checks each trailer against the spec and the paths ADR.
+**Recorded changes.** A change the Floor would flag but the rules allow carries a `Quality-change: <file or row>: <reason>` commit trailer. Examples: a test removed with its replacement named, a row raised within its contract, an edit to the gate's own files. The floor guard accepts a flagged change that a trailer, on a commit since the merge base, names: a file by its repo path, a register row as `<path>: <row>` (`Store action: stringifies`), an exception as `Exceptions: <ID>`, and a paths ADR cap as `<ADR file>: <path>: <row>`. `code-review` checks each trailer against the spec and the paths ADR.
 
 ### Enforced
 

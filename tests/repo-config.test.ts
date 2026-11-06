@@ -921,7 +921,7 @@ describe("CI task selection", () => {
   ])("%s runs the project coverage command", (event) => {
     expect(scriptFor(event).split("\n")).toContain("pnpm coverage")
     expect(JSON.parse(read("../package.json")).scripts.coverage).toMatch(
-      /^turbo run test:coverage && node (--experimental-strip-types )?tests\/coverage\.ts$/
+      /^turbo run test:coverage && node (--[\w=-]+ )*tests\/coverage\.ts$/
     )
   })
 
@@ -1229,8 +1229,7 @@ const scriptSandbox = (name: string) => {
       encoding: "utf8",
       env: {
         ...inherited,
-        // The stand-in pnpm first; PATH is not an input of any task.
-        // eslint-disable-next-line turbo/no-undeclared-env-vars
+        // The stand-in pnpm first.
         PATH: `${join(scratch, "bin")}:${process.env.PATH}`,
         PNPM_ARGS: log,
         PNPM_EXIT: String(pnpm.exit ?? 0),

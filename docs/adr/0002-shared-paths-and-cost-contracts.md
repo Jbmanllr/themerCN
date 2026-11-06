@@ -6,13 +6,13 @@ A cost contract is a set of counts of counted work per unit (parses, compiles, s
 
 ## Decision
 
-| Path                   | Unit                                                                                                                                                                              | Owner module           | Cost contract (counted work per unit) | Benchmark             | Register rows                                                                                       |
-| ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------- | ------------------------------------- | --------------------- | --------------------------------------------------------------------------------------------------- |
-| Store action           | one `set` on the editor store or the preferences store                                                                                                                            | the store module       | see Store action below                | none (owner decision) | stringifies, storage writes, store deep compares, selector deep compares, selector colour parses    |
-| Theme apply            | one `themeState` change written onto one document's `<html>`; the Host page and the Live frame each count as a unit                                                               | the apply-theme module | see Theme apply below                 | none (owner decision) | property writes, shadow colour parses, CSSOM walks, font label layout reads, font label stringifies |
-| Page load              | one HTML load, Host page or Live frame navigation, from the pre-paint head script to the first Theme apply; a `storageNamespace` switch is a second entry point for the same unit | Owner to be decided    | to be decided                         | to be decided         | to be decided                                                                                       |
-| Inspector pointer move | one `mousemove` over the inspected surface while the inspector is on, plus one measured frame; scroll and resize schedule the same measure                                        | Owner to be decided    | to be decided                         | to be decided         | to be decided                                                                                       |
-| Font catalog request   | one catalog page request: the server route, a client fetch (including the "Custom font" badge lookup), or the in-browser fallback over the bundled fonts                          | Owner to be decided    | to be decided                         | to be decided         | to be decided                                                                                       |
+| Path                   | Unit                                                                                                                                                                              | Owner module                | Cost contract (counted work per unit) | Benchmark             | Register rows                                                                                                                                                                           |
+| ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------- | ------------------------------------- | --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Store action           | one `set` on the editor store or the preferences store                                                                                                                            | the store module            | see Store action below                | none (owner decision) | stringifies, storage writes, store deep compares, selector deep compares, selector colour parses                                                                                        |
+| Theme apply            | one `themeState` change written onto one document's `<html>`; the Host page and the Live frame each count as a unit                                                               | the apply-theme module      | see Theme apply below                 | none (owner decision) | property writes, shadow colour parses, CSSOM walks, font label layout reads, font label stringifies                                                                                     |
+| Page load              | one HTML load, Host page or Live frame navigation, from the pre-paint head script to the first Theme apply; a `storageNamespace` switch is a second entry point for the same unit | the Themer's mount sequence | see Page load below                   | none (owner decision) | head-script builds, storage reads, storage writes, restore-sheet writes, stylesheet inserts, font links, Preset deep compares, first applies, frame chunk imports, root-class observers |
+| Inspector pointer move | one `mousemove` over the inspected surface while the inspector is on, plus one measured frame; scroll and resize schedule the same measure                                        | Owner to be decided         | to be decided                         | to be decided         | to be decided                                                                                                                                                                           |
+| Font catalog request   | one catalog page request: the server route, a client fetch (including the "Custom font" badge lookup), or the in-browser fallback over the bundled fonts                          | Owner to be decided         | to be decided                         | to be decided         | to be decided                                                                                                                                                                           |
 
 For each path, the plug-in rule, what is built once and at which scope, and what a switched-off feature removes are decided with its owner module. Until then, "Owner to be decided" is an open question that blocks the tickets extending that path.
 
@@ -36,6 +36,29 @@ For each path, the plug-in rule, what is built once and at which scope, and what
 - **Benchmark:** none. The product doesn't need one for this path.
 - **Debt today:** every apply writes all 46 properties, 54 with own shadows, even for a one-token edit. The property map and the shadow colour parse run once per document and apply, so twice with Workspace on the Live tab, even when the shadow inputs didn't change. The CSSOM walk also reads the Themer's own sheet, about 250 kB. The font families are derived on the Host and again on each Live frame apply. A font label reads `getComputedStyle` once per `var()` hop, up to 4.
 
+### Page load
+
+- **Owner module:** the Themer's mount sequence, `<Themer>` and its provider's mount effects. It owns the stage order: the pre-paint head script, the Themer chunk import, store hydration, the Preset adopt and refresh, the first Theme apply, then the font links. The head script stays an isolated stage that imports only constants: the storage keys, the versions and the restore sheet's id. Store hydration belongs to the store module and the first apply to the Theme apply path.
+- **Plug-in rule:** a feature that needs work at page load adds a stage to the mount sequence, and that stage reads the hydrated stores. It never reads storage itself. The head script reads only what the stores persist, and it gains a read only for something that must be right before first paint.
+- **Cost contract per load:**
+  - Storage: the head script does at most 3 `localStorage.getItem` and 2 `JSON.parse`; hydration does at most 2 of each, on a load or on a `storageNamespace` switch. No storage write when the stored values are current. At most 1 write per store whose entry is at another version. At most 1 colour-mode write, only when the saved mode differs, or when an entry exists while the mode is controlled.
+  - DOM: at most 1 restore-sheet write, only with a saved Theme and the override on. At most 1 Themer stylesheet insert per Host page, none in a Live frame. At most 1 font `<link>` per Google family per document, for at most 4 families.
+  - Store: at most 3 Theme deep compares across the Preset adopt and refresh, and at most 2 store sets (adopt or refresh, and the mode sync).
+  - Theme apply: exactly 1 first apply per Host page load, then 1 restore-sheet removal.
+  - Live frame: no Themer chunk import.
+  - Durations and the Themer stylesheet's size stay targets.
+- **Built once:** the head-script string once per `storageNamespace` in each JS realm; its font-name lists and declaration patterns once per script run; the Themer chunk and its stylesheet once per Host page; the Preset id order once per Preset registry; one `<html>` class observer per document, shared by every subscriber.
+- **Switched off:** the Themer off removes the import, the stylesheet, the hydration and the observers, and leaves the head script, which changes nothing when nothing is saved. The Theme override off removes the restore sheet, the head script's font links and the first apply. A controlled colour mode removes the colour-mode write, except to clear an existing entry.
+- **Benchmark:** none. The product doesn't need one for this path; the existing count tests stay.
+- **Debt today:**
+  - Next builds the head-script string 3 times per load (server render, hydration render, post-hydration render). The script rebuilds its font-name lists on each call, and its 2 patterns for each declaration.
+  - The colour mode is written on every load.
+  - The font loader adds a second `<link>` for each family the head script already linked: up to 7 links for 4 families.
+  - The first apply runs twice when the saved mode differs from the page's.
+  - Every Live frame navigation imports the Themer chunk only to render nothing.
+  - Every `useColorMode` caller and every font label adds its own `<html>` observer.
+  - Each Preset picker mount re-sorts the Preset ids.
+
 ## Considered Options
 
 These candidates are not shared paths:
@@ -49,3 +72,5 @@ These candidates are not shared paths:
 - **Build-time CSS and the package checks:** build time, not a runtime unit.
 
 Keeping the pre-paint head script as its own path was rejected: it shares its unit and its saved-Theme reads with the Themer's mount and hydration, so it is one stage of the page load.
+
+Handing the head script's parsed entries to the stores, through a global, was rejected: it would break the head-script entry's isolation from Themer code to save two parses per load.

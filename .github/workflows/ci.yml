@@ -69,8 +69,9 @@ jobs:
       # The floor guard (TESTING.md, Quality register, Floor), outside Turbo
       # so nothing replays it: the pull request's diff against its base, the
       # checkout's first parent. Its trailers are the pull request's commits.
+      # It runs even when the register check failed, so both outputs show.
       - name: Floor guard (pull request)
-        if: github.event_name == 'pull_request'
+        if: ${{ !cancelled() && github.event_name == 'pull_request' }}
         run: pnpm floor-guard --base HEAD^1
 
       # No entry has this run's key yet; the prefix restores main's latest.

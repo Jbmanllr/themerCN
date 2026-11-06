@@ -910,6 +910,28 @@ describe("CI task selection", () => {
     )
   })
 
+  // A reviewer reads both outputs: the floor guard runs on a pull request
+  // even after the register check failed, but not in a cancelled job.
+  it.each(["success", "failure"] as const)(
+    "pull_request runs the floor guard after a %s",
+    (status) => {
+      expect(
+        stepsFor("pull_request", "checks", status).map((step) => step.run)
+      ).toContain("pnpm floor-guard --base HEAD^1")
+    }
+  )
+
+  it("the floor guard runs on pull requests only, and not in a cancelled job", () => {
+    const runs = (event: string, status: Status) =>
+      stepsFor(event, "checks", status).map((step) => step.run)
+    expect(runs("pull_request", "cancelled")).not.toContain(
+      "pnpm floor-guard --base HEAD^1"
+    )
+    expect(runs("push", "failure")).not.toContain(
+      "pnpm floor-guard --base HEAD^1"
+    )
+  })
+
   // The coverage ratchet runs at the merge gate (T2) and the backstop (T3);
   // it pools every package's coverage, so it runs whole, never --affected.
   it.each([

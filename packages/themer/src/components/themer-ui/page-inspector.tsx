@@ -7,7 +7,7 @@
 // A layout mounts two pieces:
 // - <PageInspector />, once, inside its root (beside the Toolbar's bar, not in
 //   it): passes the Host document to useInspectorSession
-//   (hooks/use-inspector-session.ts, where the session rules live: mode,
+//   (preview/inspector/use-inspector-session.ts, where the session rules live: mode,
 //   pick, Ctrl+I, bound on every device) and renders the highlight and card
 //   in a viewport-sized layer that ignores the pointer;
 // - <PageInspectorToggle />, in its header or bar (`size="default"` beside
@@ -21,9 +21,12 @@
 //   (hooks/use-themer-layout.ts).
 
 import * as React from "react"
-import { useInspectorSession } from "../../hooks/use-inspector-session"
 import { useInspectorMode } from "../../hooks/use-themer-layout"
-import { InspectorOverlay, InspectorToggle } from "../preview/inspector"
+import {
+  InspectorOverlay,
+  InspectorToggle,
+  useInspectorSession,
+} from "../preview/inspector"
 
 /** The Themer's own tree, left alone by the page inspector. */
 const THEMER_TREE_SELECTOR = "[data-themer]"
@@ -34,7 +37,7 @@ export function PageInspector() {
   const containerRef = React.useRef<HTMLDivElement>(null)
 
   const { state, focusColor } = useInspectorSession({
-    available: true,
+    surfaceAvailable: true,
     frame: false,
     bindingKey: "page",
     hostRef,

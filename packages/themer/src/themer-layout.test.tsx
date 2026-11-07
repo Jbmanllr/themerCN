@@ -827,6 +827,24 @@ describe("Themer layout", () => {
       return bound
     }
 
+    it("turns on with Ctrl+I", async () => {
+      await mount({ layout: "overlay" })
+      await open()
+
+      await act(async () =>
+        window.dispatchEvent(
+          new KeyboardEvent("keydown", {
+            key: "i",
+            ctrlKey: true,
+            bubbles: true,
+            cancelable: true,
+          })
+        )
+      )
+
+      expect(pressed(inspectorToggle())).toBe("true")
+    })
+
     it("binds no page listener when the user switches layout with it on", async () => {
       await mount({ layout: "overlay" })
       await open()

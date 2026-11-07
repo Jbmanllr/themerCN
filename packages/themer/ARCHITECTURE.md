@@ -177,7 +177,8 @@ the Themer's portal beside the Host tree and never wrap it.
   `<PageInspector />` in its root (beside the Toolbar's bar) and `<PageInspectorToggle />` in its
   sidebar header (Overlay, Push) or its bar (Toolbar, `size="default"` to
   match the `ButtonGroup`).
-  It passes the Host document to `useInspectorSession` with
+  It passes the Host document to `useInspectorSession`
+  (components/preview/inspector/use-inspector-session.ts) with
   `ignore: "[data-themer]"`, so the Themer's own tree is never inspected and its clicks still act; the
   card renders in a fixed, pointer-transparent layer. The ThemerUIStore
   keeps `inspectorLayout`, the layout the inspector was turned on in;
@@ -641,7 +642,7 @@ go last). Only the active tab mounts; Host tabs render inside
 | `LivePreview`                       | Same-origin iframe of the Host page; the Theme is applied to its document after each load. The Host must allow same-origin framing.                                                                       |
 | `InspectorOverlay` + `useInspector` | Hover shows an element's token classes; click pins it and focuses the colour control. Off on mobile and for a cross-origin frame. `ignore` leaves a subtree alone (the page inspector's `[data-themer]`). |
 | `InspectorToggle`                   | The toggle, shared by `PreviewTabs` and `PageInspectorToggle`.                                                                                                                                            |
-| `useInspectorSession`               | The inspector's session rules, for both adapters (`PreviewTabs`, `PageInspector`): mode for the layout in force, toggle, the pick that focuses the token's colour control, and `Ctrl+I` while available.  |
+| `useInspectorSession`               | Session rules for both entry points (`PreviewTabs`, `PageInspector`), in `inspector/`: mode for the layout in force, toggle, the pick that focuses the token's colour control, `Ctrl+I` while available.  |
 | `useFullscreenSync`                 | Keeps `fullscreenPreview` in step with the Fullscreen API; CSS fallback; `Esc` exits.                                                                                                                     |
 
 ## Color System

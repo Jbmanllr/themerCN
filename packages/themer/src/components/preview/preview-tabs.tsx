@@ -12,9 +12,9 @@
 // - Host tabs render inside `previewWrapper` so they get the host's providers
 //   (the editor is portaled outside the host tree).
 // - Inspector: its session rules (mode, pick, Ctrl+I) live in
-//   useInspectorSession (hooks/use-inspector-session.ts); this adapter passes
-//   the active tab as its surface, unavailable on mobile, and renders the
-//   toggle and overlay. A cross-origin Live frame also makes it unavailable.
+//   useInspectorSession (./inspector/use-inspector-session.ts); this entry
+//   point passes the active tab as its surface, unavailable on mobile, and
+//   renders the toggle and overlay. A cross-origin Live frame also makes it unavailable.
 // - Fullscreen: this area goes `fixed` over the editor; ThemerUI unmounts
 //   the sidebar and header. The light/dark toggle (ModeToggle) shows here
 //   meanwhile, since the action bar is covered.
@@ -33,7 +33,6 @@ import {
 import { ScrollArea, ScrollBar } from "@workspace/ui/components/scroll-area"
 import { Tabs, TabsContent, TabsList } from "@workspace/ui/components/tabs"
 import { cn } from "@workspace/ui/lib/utils"
-import { useInspectorSession } from "../../hooks/use-inspector-session"
 import { useIsMobile } from "../../hooks/use-is-mobile"
 import { useThemerUIStore } from "../../stores/themer-ui-store"
 import { usePreferencesStore } from "../../stores/preferences-store"
@@ -42,7 +41,11 @@ import { useThemerContext } from "../../hooks/use-themer-context"
 import { ActionButton } from "../ui/action-button"
 import { ModeToggle } from "../ui/mode-toggle"
 import { BUILTIN_TABS } from "./builtin-tabs"
-import { InspectorOverlay, InspectorToggle } from "./inspector"
+import {
+  InspectorOverlay,
+  InspectorToggle,
+  useInspectorSession,
+} from "./inspector"
 import {
   mergePreviewTabs,
   resolveActiveTabId,
@@ -78,7 +81,7 @@ export function PreviewTabs() {
     available: inspectorAvailable,
     focusColor,
   } = useInspectorSession({
-    available: !isMobile,
+    surfaceAvailable: !isMobile,
     frame: activeTab?.frame === true,
     bindingKey: activeTabId,
     hostRef,

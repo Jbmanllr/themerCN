@@ -1,35 +1,38 @@
 "use client"
 
-// The inspector's session rules, shared by its two adapters (paths ADR:
+// The inspector's session rules, shared by its two entry points (paths ADR:
 // Workspace's PreviewTabs and the in-place layouts' PageInspector):
 // - active: the inspector mode for the Themer layout in force
 //   (useInspectorMode), and the toggle;
 // - the pick: a picked class is segmented to its token, whose colour control
 //   gets focus;
 // - Ctrl+I toggles it, bound only while the inspector is available on the
-//   adapter's surface (and not on a frame the Themer cannot read).
+//   entry point's surface (and not on a frame the Themer cannot read).
 //
-// An adapter passes its surface and whether the inspector can run there, and
-// renders the overlay and toggle. This runs per render, not per pointer move:
-// its only listener is the shortcut's, and it adds no work to a move.
+// An entry point passes its surface and whether the inspector can run there,
+// and renders the overlay and toggle. This runs per render, not per pointer
+// move: its only listener is the shortcut's, and it adds no work to a move.
 
 import * as React from "react"
-import { segmentClassName, useInspector } from "../components/preview/inspector"
-import type { InspectorState } from "../components/preview/inspector/use-inspector"
-import { useColorFocusTrigger } from "./use-color-focus"
-import { themerShortcuts, useKeyboardShortcut } from "./use-keyboard-shortcut"
-import { useInspectorMode } from "./use-themer-layout"
+import { useColorFocusTrigger } from "../../../hooks/use-color-focus"
+import {
+  themerShortcuts,
+  useKeyboardShortcut,
+} from "../../../hooks/use-keyboard-shortcut"
+import { useInspectorMode } from "../../../hooks/use-themer-layout"
+import { segmentClassName } from "./segment-classname"
+import { useInspector, type InspectorState } from "./use-inspector"
 
 export function useInspectorSession({
-  available,
+  surfaceAvailable,
   frame,
   bindingKey,
   hostRef,
   containerRef,
   ignore,
 }: {
-  /** The adapter's surface can be inspected (e.g. not on mobile). */
-  available: boolean
+  /** The entry point's surface can be inspected (e.g. not on mobile). */
+  surfaceAvailable: boolean
   /** The surface is an iframe (first `iframe` inside the host). */
   frame: boolean
   /** Changes when the inspected surface changes, so the inspector rebinds. */
@@ -43,9 +46,8 @@ export function useInspectorSession({
   /** The inspector mode is on for the Themer layout in force. */
   active: boolean
   toggle: () => void
-  /** `available`, unless the frame cannot be read. */
+  /** `surfaceAvailable`, unless the frame cannot be read. */
   available: boolean
-  frameBlocked: boolean
   focusColor: (value: string) => void
 } {
   const { active, toggle } = useInspectorMode()
@@ -60,7 +62,7 @@ export function useInspectorSession({
   )
 
   const { state, frameBlocked } = useInspector({
-    enabled: active && available,
+    enabled: active && surfaceAvailable,
     frame,
     bindingKey,
     hostRef,
@@ -68,21 +70,14 @@ export function useInspectorSession({
     ignore,
     onPick: handlePick,
   })
-  const sessionAvailable = available && !(frame && frameBlocked)
+  const available = surfaceAvailable && !(frame && frameBlocked)
 
   useKeyboardShortcut({
     key: themerShortcuts.inspector.key,
     modifiers: themerShortcuts.inspector.modifiers,
     callback: toggle,
-    enabled: sessionAvailable,
+    enabled: available,
   })
 
-  return {
-    state,
-    active,
-    toggle,
-    available: sessionAvailable,
-    frameBlocked,
-    focusColor,
-  }
+  return { state, active, toggle, available, focusColor }
 }

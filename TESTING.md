@@ -133,16 +133,16 @@ The ratchet. Each count is per unit of its path, as the paths ADR defines the un
 
 | Metric                  | Today | Direction     | Checked by                                                                    | Runs at          |
 | ----------------------- | ----- | ------------- | ----------------------------------------------------------------------------- | ---------------- |
-| font label layout reads | 2     | must not grow | `pnpm --filter themercn exec vitest run src/utils/apply-theme.count.test.tsx` | implementer done |
+| font label layout reads | 1     | must not grow | `pnpm --filter themercn exec vitest run src/utils/apply-theme.count.test.tsx` | implementer done |
 | font label stringifies  | 1     | must not grow | `pnpm --filter themercn exec vitest run src/utils/apply-theme.count.test.tsx` | implementer done |
 
 **Page load** (per load; hydration rows also per `storageNamespace` switch)
 
-| Metric               | Today                                                               | Direction     | Checked by                                                                       | Runs at          |
-| -------------------- | ------------------------------------------------------------------- | ------------- | -------------------------------------------------------------------------------- | ---------------- |
-| storage writes       | 0 nothing saved; 0 saved Theme; 2 other version; 1 namespace switch | must not grow | `pnpm --filter themercn exec vitest run src/components/page-load.count.test.tsx` | implementer done |
-| first applies        | 1                                                                   | must not grow | `pnpm --filter themercn exec vitest run src/components/page-load.count.test.tsx` | implementer done |
-| root-class observers | 1                                                                   | must not grow | `pnpm --filter themercn exec vitest run src/components/page-load.count.test.tsx` | implementer done |
+| Metric             | Today                                                               | Direction     | Checked by                                                                       | Runs at          |
+| ------------------ | ------------------------------------------------------------------- | ------------- | -------------------------------------------------------------------------------- | ---------------- |
+| storage writes     | 0 nothing saved; 0 saved Theme; 2 other version; 1 namespace switch | must not grow | `pnpm --filter themercn exec vitest run src/components/page-load.count.test.tsx` | implementer done |
+| first applies      | 1                                                                   | must not grow | `pnpm --filter themercn exec vitest run src/components/page-load.count.test.tsx` | implementer done |
+| `<html>` observers | 1                                                                   | must not grow | `pnpm --filter themercn exec vitest run src/components/page-load.count.test.tsx` | implementer done |
 
 **Font catalog request** (per request)
 
@@ -154,11 +154,8 @@ The ratchet. Each count is per unit of its path, as the paths ADR defines the un
 
 ### Exceptions
 
-| ID  | Rule                    | Path        | Reason                                                                                                                                | Owner                    | Expires    |
-| --- | ----------------------- | ----------- | ------------------------------------------------------------------------------------------------------------------------------------- | ------------------------ | ---------- |
-| E8  | font label layout reads | Theme apply | Debt: "A font label reads `getComputedStyle` once per `var()` hop, up to 4"; remediation map #111                                     | Jbmanllr (project owner) | 2027-02-04 |
-| E9  | font label stringifies  | Theme apply | No debt line. Measured cause: 4 `getSnapshot` runs under React's development build, plus react-query's key hash; remediation map #111 | Jbmanllr (project owner) | 2027-02-04 |
-| E16 | root-class observers    | Page load   | Debt: "Every `useColorMode` caller and every font label adds its own `<html>` observer"; remediation map #111                         | Jbmanllr (project owner) | 2027-02-04 |
+| ID  | Rule | Path | Reason | Owner | Expires |
+| --- | ---- | ---- | ------ | ----- | ------- |
 
 ### Rules
 

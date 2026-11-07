@@ -177,8 +177,8 @@ the Themer's portal beside the Host tree and never wrap it.
   `<PageInspector />` in its root (beside the Toolbar's bar) and `<PageInspectorToggle />` in its
   sidebar header (Overlay, Push) or its bar (Toolbar, `size="default"` to
   match the `ButtonGroup`).
-  `useInspector` binds to the Host document with `ignore: "[data-themer]"`,
-  so the Themer's own tree is never inspected and its clicks still act; the
+  It passes the Host document to `useInspectorSession` with
+  `ignore: "[data-themer]"`, so the Themer's own tree is never inspected and its clicks still act; the
   card renders in a fixed, pointer-transparent layer. The ThemerUIStore
   keeps `inspectorLayout`, the layout the inspector was turned on in;
   `useInspectorMode` (hooks/use-themer-layout.ts) derives "active" from it
@@ -641,6 +641,7 @@ go last). Only the active tab mounts; Host tabs render inside
 | `LivePreview`                       | Same-origin iframe of the Host page; the Theme is applied to its document after each load. The Host must allow same-origin framing.                                                                       |
 | `InspectorOverlay` + `useInspector` | Hover shows an element's token classes; click pins it and focuses the colour control. Off on mobile and for a cross-origin frame. `ignore` leaves a subtree alone (the page inspector's `[data-themer]`). |
 | `InspectorToggle`                   | The toggle, shared by `PreviewTabs` and `PageInspectorToggle`.                                                                                                                                            |
+| `useInspectorSession`               | The inspector's session rules, for both adapters (`PreviewTabs`, `PageInspector`): mode for the layout in force, toggle, the pick that focuses the token's colour control, and `Ctrl+I` while available.  |
 | `useFullscreenSync`                 | Keeps `fullscreenPreview` in step with the Fullscreen API; CSS fallback; `Esc` exits.                                                                                                                     |
 
 ## Color System
@@ -691,8 +692,9 @@ ignored. Every shortcut is defined once in `SHORTCUTS`; bindings read it
 parsed (`themerShortcuts`) and tooltips format it. Toggle (`shortcut`,
 default `SHORTCUTS.toggle` = `ctrl+shift+e`), undo and redo in
 `ThemerProvider` (undo and redo only while the Themer UI is open); `Ctrl+I`
-(`inspector`) in `PreviewTabs` (Workspace) and `PageInspector` (in-place
-layouts). Outside `SHORTCUTS`, `Esc` exits the fallback fullscreen preview
+(`inspector`) in `useInspectorSession`, for `PreviewTabs` (Workspace: not on
+mobile or a cross-origin Live frame) and `PageInspector` (in-place layouts:
+every device). Outside `SHORTCUTS`, `Esc` exits the fallback fullscreen preview
 (`subscribeFullscreen`) and hides the inspector card (`useInspector`; a
 pinned card takes the key first). The Themer binds no sidebar shortcut: the
 stock Ctrl/Cmd+B is off in `ThemerSidebarProvider`. A shortcut string

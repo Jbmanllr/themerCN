@@ -6,9 +6,10 @@
 //
 // A layout mounts two pieces:
 // - <PageInspector />, once, inside its root (beside the Toolbar's bar, not in
-//   it): binds useInspector to the Host
-//   document, renders the highlight and card in a viewport-sized layer that
-//   ignores the pointer, and registers Ctrl+I;
+//   it): passes the Host document to useInspectorSession
+//   (hooks/use-inspector-session.ts, where the session rules live: mode,
+//   pick, Ctrl+I, bound on every device) and renders the highlight and card
+//   in a viewport-sized layer that ignores the pointer;
 // - <PageInspectorToggle />, in its header or bar (`size="default"` beside
 //   icon Buttons, as in the Toolbar's ButtonGroup).
 //
@@ -20,51 +21,25 @@
 //   (hooks/use-themer-layout.ts).
 
 import * as React from "react"
-import { useColorFocusTrigger } from "../../hooks/use-color-focus"
-import {
-  themerShortcuts,
-  useKeyboardShortcut,
-} from "../../hooks/use-keyboard-shortcut"
+import { useInspectorSession } from "../../hooks/use-inspector-session"
 import { useInspectorMode } from "../../hooks/use-themer-layout"
-import {
-  InspectorOverlay,
-  InspectorToggle,
-  segmentClassName,
-  useInspector,
-} from "../preview/inspector"
+import { InspectorOverlay, InspectorToggle } from "../preview/inspector"
 
 /** The Themer's own tree, left alone by the page inspector. */
 const THEMER_TREE_SELECTOR = "[data-themer]"
 
 export function PageInspector() {
-  const { active: inspectorMode, toggle: toggleInspector } = useInspectorMode()
-  const { focusColor } = useColorFocusTrigger()
   // The Themer renders only on a hydrated client, so the document exists.
   const hostRef = React.useRef<HTMLElement>(document.documentElement)
   const containerRef = React.useRef<HTMLDivElement>(null)
 
-  const handlePick = React.useCallback(
-    (className: string) => {
-      const { value } = segmentClassName(className)
-      if (value) focusColor(value)
-    },
-    [focusColor]
-  )
-
-  const { state } = useInspector({
-    enabled: inspectorMode,
+  const { state, focusColor } = useInspectorSession({
+    available: true,
     frame: false,
     bindingKey: "page",
     hostRef,
     containerRef,
     ignore: THEMER_TREE_SELECTOR,
-    onPick: handlePick,
-  })
-
-  useKeyboardShortcut({
-    key: themerShortcuts.inspector.key,
-    modifiers: themerShortcuts.inspector.modifiers,
-    callback: toggleInspector,
   })
 
   return (

@@ -138,12 +138,13 @@ const isThemerSheet = (node: unknown) =>
   node instanceof HTMLStyleElement && node.hasAttribute(THEMER_STYLE_ATTRIBUTE)
 const isFontLink = (node: unknown) =>
   node instanceof HTMLLinkElement && node.rel === "stylesheet"
-const observesRootClass = (args: unknown[]) => {
+/** An observer of any <html> attribute: a filter naming any attributes, or
+ *  none (`attributeFilter` alone implies `attributes`). */
+const observesHtmlAttributes = (args: unknown[]) => {
   const [target, options] = args as [Node, MutationObserverInit | undefined]
   return (
     target === document.documentElement &&
-    options?.attributes === true &&
-    (!options.attributeFilter || options.attributeFilter.includes("class"))
+    (options?.attributes === true || options?.attributeFilter !== undefined)
   )
 }
 /** Counts the nodes `when` matches appended to <head>, by append or
@@ -216,10 +217,10 @@ const counters = (): Counter[] => [
     (_state: unknown, element: unknown) => element === document.documentElement
   ),
   countMethod(
-    "root-class observers",
+    "`<html>` observers",
     MutationObserver.prototype,
     "observe",
-    (_self, ...args) => observesRootClass(args)
+    (_self, ...args) => observesHtmlAttributes(args)
   ),
 ]
 
@@ -651,12 +652,20 @@ describe("Page load failing seeds", () => {
         ),
     })))
 
-  it("catches a second root-class observer", () =>
-    expectSeedCaught("root-class observers", () => ({
+  it("catches a second <html> observer of another attribute", () =>
+    expectSeedCaught("`<html>` observers", () => ({
       mount: () =>
         new MutationObserver(() => {}).observe(document.documentElement, {
           attributes: true,
-          attributeFilter: ["class"],
+          attributeFilter: ["dir"],
+        }),
+    })))
+
+  it("catches a second <html> observer with no attribute filter", () =>
+    expectSeedCaught("`<html>` observers", () => ({
+      mount: () =>
+        new MutationObserver(() => {}).observe(document.documentElement, {
+          attributes: true,
         }),
     })))
 })

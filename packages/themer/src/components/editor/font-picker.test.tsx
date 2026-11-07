@@ -137,6 +137,42 @@ describe("FontPicker trigger", () => {
       "Sans-serif"
     )
   })
+
+  // A Host theme or mode class can move the root font variables with no
+  // inline style change: the label must follow it, through nested var().
+  it("names the family a Host variable resolves to, after a Host class change", async () => {
+    const hostSheet = document.createElement("style")
+    hostSheet.textContent = `
+      :root { --font-host: var(--font-body); --font-body: Inter, sans-serif; }
+      :root.alt { --font-body: Lora, serif; }
+    `
+    document.head.append(hostSheet)
+    try {
+      container = document.createElement("div")
+      document.body.append(container)
+      root = createRoot(container)
+      await act(async () =>
+        root?.render(
+          <FontPicker
+            value="var(--font-host), sans-serif"
+            onChange={onChange}
+            category="sans"
+            label="Sans-serif"
+          />
+        )
+      )
+      const label = () =>
+        container.querySelector('[role="combobox"]')?.textContent
+      expect(label()).toContain("Inter")
+
+      await act(async () => document.documentElement.classList.add("alt"))
+
+      expect(label()).toContain("Lora")
+    } finally {
+      document.documentElement.classList.remove("alt")
+      hostSheet.remove()
+    }
+  })
 })
 
 describe("FontPicker selection", () => {

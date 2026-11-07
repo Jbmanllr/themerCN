@@ -301,9 +301,16 @@ and below the Themer UI.
   `colorMode`; the toggle calls `onColorModeChange`; the Host (for example
   `next-themes`) sets the class. No mode is saved (a saved one is removed).
 - **Uncontrolled**: the class is the mode. The toggle flips it and
-  re-renders the provider at once, and a `MutationObserver` follows changes
-  made by anyone else. The mode is saved
+  re-renders the provider at once, and the shared `<html>` observer follows
+  changes made by anyone else. The mode is saved
   under `<ns>:color-mode` so the head script restores the class on reload.
+
+The Themer's readers of `<html>` (the `.dark` class, the Host's `dir` for
+Host preview tabs, and the root font variables for font labels through
+`class` and `style`) share one `MutationObserver` per document
+([html-attribute-observer.ts](src/hooks/html-attribute-observer.ts)): built
+on the first subscriber, disconnected after the last, and a mutation wakes
+only the subscribers of the attribute that changed.
 
 The key is written only when the mode differs from what is stored, and
 removed (controlled) only when an entry exists. The provider learns what is
@@ -331,6 +338,10 @@ the switch inside a View Transition
 ([theme-transition.ts](src/utils/theme-transition.ts)) with a circular reveal where supported;
 an uncontrolled switch, the mode sync and the one apply land in the
 transition's synchronous commit, so the reveal shows the new mode's Theme.
+Without a View Transition (unsupported, or reduced motion) the switch is
+still committed synchronously, so the `.dark` class switch and the apply's
+style writes reach the shared `<html>` observer in one batch, and a font
+label reads `<html>` once per toggle.
 
 ## Persistence and the head script
 

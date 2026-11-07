@@ -238,6 +238,36 @@ describe("generateThemeScript", () => {
     expect(getComputedStyle(document.body).display).not.toBe("none")
   })
 
+  it("drops each unsafe key and value in both modes, keeping the rest", () => {
+    saveEditor({
+      currentMode: "light",
+      styles: {
+        light: {
+          primary: "red} body{display:none",
+          secondary: "blue/* x */",
+          accent: "#123456",
+          "bad key": "#000000",
+          muted: "#222222",
+        },
+        dark: { primary: "#eeeeee", border: "x;y", ring: "#333333" },
+      },
+    })
+    runScript()
+    expect([primary(), rootVar("--secondary"), rootVar("--accent")]).toEqual([
+      "",
+      "",
+      "#123456",
+    ])
+    expect(rootVar("--muted")).toBe("#222222")
+
+    setDark(true)
+    expect([primary(), rootVar("--border"), rootVar("--ring")]).toEqual([
+      "#eeeeee",
+      "",
+      "#333333",
+    ])
+  })
+
   it("skips the generic and CSS-wide values the font loader skips", () => {
     saveEditor({
       currentMode: "light",

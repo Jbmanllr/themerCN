@@ -155,20 +155,19 @@ createRoot(document.getElementById("root")!).render(
 The condition is static, so a build with `VITE_THEMER` unset drops the import
 and ships no Themer code. In `vite.config.ts`, a `transformIndexHtml` plugin
 inlines the head script under the same condition
-(`import { getThemerHeadScript } from "themercn/head-script"`):
+(`import { getThemerHeadScript } from "themercn/head-script"`). It builds the
+string once, when the plugin is created, and returns it on every request:
 
 <!-- recipe: apps/vite/vite.config.ts -->
 
 ```ts
 function themerHeadScript(): Plugin {
+  // Built once, with the plugin, not on every request.
+  const script = getThemerHeadScript()
   return {
     name: "themer-head-script",
     transformIndexHtml: () => [
-      {
-        tag: "script",
-        children: getThemerHeadScript(),
-        injectTo: "head-prepend",
-      },
+      { tag: "script", children: script, injectTo: "head-prepend" },
     ],
   }
 }
@@ -186,7 +185,8 @@ export default defineConfig(({ mode }) => {
 
 Any other React setup works the same way: render the loader (or `<Themer>`
 itself) beside your tree, and put `getThemerHeadScript()` in an inline
-`<script>` at the top of `<head>`.
+`<script>` at the top of `<head>`. The string depends only on
+`storageNamespace`: build it once and reuse it rather than on every request.
 
 ## Entry points
 

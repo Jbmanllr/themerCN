@@ -373,8 +373,11 @@ the switch inside a View Transition
   applies the Theme itself. It embeds what it needs with `JSON.stringify` and
   imports constants only. A change to the persisted shape is a change to this
   script.
-- `getThemerHeadScript` (`themercn/head-script`) returns that string;
-  `<ThemerHeadScript>` (`themercn/next`) renders it as a raw `<script>` (not
+- `getThemerHeadScript` (`themercn/head-script`) returns that string,
+  uncached; its callers build it once per `storageNamespace` and reuse it.
+  `<ThemerHeadScript>` (`themercn/next`) keeps one string per namespace at
+  module level, so its server, hydration and post-hydration renders build it
+  once, and renders it as a raw `<script>` (not
   `next/script`, whose inline `beforeInteractive` need not run before first
   paint) and, once hydrated, as `type="application/json"` so a client
   re-render of the document (Next's not-found under `next dev`) neither warns

@@ -16,10 +16,26 @@
 //   which React accepts and the browser never runs (next-themes does the
 //   same). The hydration flag is false for the server HTML and during
 //   hydration, so the hydrated markup matches the server's.
+// - The string is built once per `storageNamespace` for the module's life
+//   (once in the server realm, once in the browser's), so the server,
+//   hydration and post-hydration renders share it (the paths ADR's Page load
+//   contract). getThemerHeadScript stays uncached: the cache lives here.
 // - No CSP nonce or next.config helper: CSP is the Host app's job.
 
 import { getThemerHeadScript } from "../head-script"
 import { useHydrated } from "../hooks/use-hydrated"
+
+// One head-script string per `storageNamespace` (undefined: the default).
+const headScripts = new Map<string | undefined, string>()
+
+function headScriptFor(storageNamespace: string | undefined): string {
+  let script = headScripts.get(storageNamespace)
+  if (script === undefined) {
+    script = getThemerHeadScript({ storageNamespace })
+    headScripts.set(storageNamespace, script)
+  }
+  return script
+}
 
 /** Props of `<ThemerHeadScript>`. */
 export interface ThemerHeadScriptProps {
@@ -36,7 +52,7 @@ export function ThemerHeadScript({ storageNamespace }: ThemerHeadScriptProps) {
   return (
     <script
       dangerouslySetInnerHTML={{
-        __html: getThemerHeadScript({ storageNamespace }),
+        __html: headScriptFor(storageNamespace),
       }}
       id="themer-head-script"
       type={hydrated ? "application/json" : undefined}

@@ -137,7 +137,7 @@ The ratchet. Each count is per unit of its path, as the paths ADR defines the un
 
 | Metric               | Today                                                               | Direction     | Checked by                                                                                | Runs at          |
 | -------------------- | ------------------------------------------------------------------- | ------------- | ----------------------------------------------------------------------------------------- | ---------------- |
-| head-script builds   | 3                                                                   | must not grow | `pnpm --filter themercn exec vitest run src/components/page-load.count.test.tsx`          | implementer done |
+| head-script builds   | 1                                                                   | must not grow | `pnpm --filter themercn exec vitest run src/components/page-load.count.test.tsx`          | implementer done |
 | storage writes       | 1 nothing saved; 1 saved Theme; 3 other version; 2 namespace switch | must not grow | `pnpm --filter themercn exec vitest run src/components/page-load.count.test.tsx`          | implementer done |
 | font links           | 7                                                                   | must not grow | `pnpm --filter themercn exec vitest run src/components/page-load.count.test.tsx`          | implementer done |
 | Preset deep compares | 4                                                                   | must not grow | `pnpm --filter themercn exec vitest run src/components/page-load.count.test.tsx`          | implementer done |

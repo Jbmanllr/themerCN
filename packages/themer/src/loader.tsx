@@ -15,6 +15,10 @@
 // - Loads after hydration in an effect, not through lazy() + Suspense: under
 //   server rendering Suspense streamed the page twice (a fallback copy plus
 //   the Themer's copy in a hidden segment).
+// - Never loads inside a frame (`window.self !== window.top`, the test
+//   `<Themer>` uses, which works across origins): the Live tab frames the
+//   Host page, and a frame would import the Themer chunk only to render
+//   nothing. `<Themer>` keeps its own check for Hosts that skip the loader.
 // - A load that resolves after the loader unmounted is dropped.
 // - A load that rejects (a chunk missing after a deploy, a network error) is
 //   logged once as a `[themercn]` console error; the Themer stays absent and
@@ -32,10 +36,10 @@ export interface ThemerModule {
 
 /**
  * Returns a component that renders `<Themer>` once `load` has resolved after
- * hydration, or nothing at all when `load` is `null`. Create it once, at
- * module level, and render it beside (never around) your app tree. A load
- * that rejects is logged once as a `[themercn]` console error and the Themer
- * stays absent.
+ * hydration, or nothing at all when `load` is `null` or the page runs inside
+ * a frame. Create it once, at module level, and render it beside (never
+ * around) your app tree. A load that rejects is logged once as a
+ * `[themercn]` console error and the Themer stays absent.
  *
  * @example
  * ```tsx
@@ -63,6 +67,8 @@ export function createThemerLoader(
     )
 
     useEffect(() => {
+      // Same test as <Themer>; reading `top` works across origins.
+      if (window.self !== window.top) return
       let active = true
       load().then(
         (module) => {

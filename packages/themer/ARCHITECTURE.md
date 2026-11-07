@@ -85,7 +85,7 @@ What each entry ships:
 
 ```
 Host tree                         <ThemerLoader {...props} />   (themercn/loader)
-                                     │ after hydration: import("themercn")
+                                     │ after hydration, top window only: import("themercn")
                                      ▼
                                   <Themer>                       components/themer.tsx
                                      │ null on the server, during hydration, in an iframe
@@ -102,15 +102,15 @@ Host tree                         <ThemerLoader {...props} />   (themercn/loader
 
 ### Core Entry Points
 
-| Module                                                            | Responsibility                                                                                                                                                                                                                                                                                                                                                                              |
-| ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [loader.tsx](src/loader.tsx)                                      | `createThemerLoader(load \| null)`: a component that loads the Themer once in an effect after hydration and renders it beside the Host tree. Never `lazy()` + Suspense (server rendering streamed the page twice); never around the Host tree (the page would remount when the Themer arrives). A rejected load logs one `[themercn]` console error and renders nothing; there is no retry. |
-| [themer.tsx](src/components/themer.tsx)                           | `<Themer>`: flat props, no children. Skips the server, hydration and frames (`window.self !== window.top`: the Live preview frames the Host page, whose own Themer must not stack). Hydrates the stores, injects the CSS, owns a QueryClient separate from the Host's.                                                                                                                      |
-| [color-mode.tsx](src/components/color-mode.tsx)                   | Who owns light/dark (see [Colour mode](#colour-mode)).                                                                                                                                                                                                                                                                                                                                      |
-| [themer-provider.tsx](src/components/themer-provider.tsx)         | Registers Host Presets and extra colours during render, applies the Theme to `<html>`, binds the shortcuts, removes everything when the override goes off or it unmounts.                                                                                                                                                                                                                   |
-| [themer-root.tsx](src/components/themer-root.tsx)                 | Portals the trigger and the Themer UI into `ThemerScope` on `<body>`; the mobile scroll lock, and the Lenis pause while the open Themer UI hides the page (the drawer, a layout with `coversPage`).                                                                                                                                                                                         |
-| [themer-ui/themer-ui.tsx](src/components/themer-ui/themer-ui.tsx) | The Themer UI: on desktop the component of the [Themer layout](#themer-layouts) in force (`LAYOUT_COMPONENTS`); below 1280 px a bottom drawer without preview, whatever the layout ([use-is-mobile.ts](src/hooks/use-is-mobile.ts); the shadcn Sidebar becomes a Sheet below 768 px, so the breakpoint must stay above it).                                                                 |
-| [themer-trigger.tsx](src/components/themer-trigger.tsx)           | The floating button (`showTrigger`).                                                                                                                                                                                                                                                                                                                                                        |
+| Module                                                            | Responsibility                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| [loader.tsx](src/loader.tsx)                                      | `createThemerLoader(load \| null)`: a component that loads the Themer once in an effect after hydration and renders it beside the Host tree. Never loads inside a frame (the same `window.self !== window.top` test as `<Themer>`, which works across origins), so a Live frame navigation imports no Themer chunk. Never `lazy()` + Suspense (server rendering streamed the page twice); never around the Host tree (the page would remount when the Themer arrives). A rejected load logs one `[themercn]` console error and renders nothing; there is no retry. |
+| [themer.tsx](src/components/themer.tsx)                           | `<Themer>`: flat props, no children. Skips the server, hydration and frames (`window.self !== window.top`: the Live preview frames the Host page, whose own Themer must not stack). Hydrates the stores, injects the CSS, owns a QueryClient separate from the Host's.                                                                                                                                                                                                                                                                                             |
+| [color-mode.tsx](src/components/color-mode.tsx)                   | Who owns light/dark (see [Colour mode](#colour-mode)).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| [themer-provider.tsx](src/components/themer-provider.tsx)         | Registers Host Presets and extra colours during render, applies the Theme to `<html>`, binds the shortcuts, removes everything when the override goes off or it unmounts.                                                                                                                                                                                                                                                                                                                                                                                          |
+| [themer-root.tsx](src/components/themer-root.tsx)                 | Portals the trigger and the Themer UI into `ThemerScope` on `<body>`; the mobile scroll lock, and the Lenis pause while the open Themer UI hides the page (the drawer, a layout with `coversPage`).                                                                                                                                                                                                                                                                                                                                                                |
+| [themer-ui/themer-ui.tsx](src/components/themer-ui/themer-ui.tsx) | The Themer UI: on desktop the component of the [Themer layout](#themer-layouts) in force (`LAYOUT_COMPONENTS`); below 1280 px a bottom drawer without preview, whatever the layout ([use-is-mobile.ts](src/hooks/use-is-mobile.ts); the shadcn Sidebar becomes a Sheet below 768 px, so the breakpoint must stay above it).                                                                                                                                                                                                                                        |
+| [themer-trigger.tsx](src/components/themer-trigger.tsx)           | The floating button (`showTrigger`).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
 
 ## Themer layouts
 
@@ -373,8 +373,11 @@ the switch inside a View Transition
   applies the Theme itself. It embeds what it needs with `JSON.stringify` and
   imports constants only. A change to the persisted shape is a change to this
   script.
-- `getThemerHeadScript` (`themercn/head-script`) returns that string;
-  `<ThemerHeadScript>` (`themercn/next`) renders it as a raw `<script>` (not
+- `getThemerHeadScript` (`themercn/head-script`) returns that string,
+  uncached; its callers build it once per `storageNamespace` and reuse it.
+  `<ThemerHeadScript>` (`themercn/next`) keeps one string per namespace at
+  module level, so its server, hydration and post-hydration renders build it
+  once, and renders it as a raw `<script>` (not
   `next/script`, whose inline `beforeInteractive` need not run before first
   paint) and, once hydrated, as `type="application/json"` so a client
   re-render of the document (Next's not-found under `next dev`) neither warns
@@ -563,6 +566,18 @@ link removed by someone else is recreated. `setThemeFonts(doc, families)`
 diffs against what the Theme holds; `clearThemeFonts` releases all. A failed
 link retries once with the default weight. A stack starting with a system
 family or `var(...)` names no Google family.
+
+The head script links the saved sans, serif and mono families before first
+paint, with the same URLs and the same once-only retry, and marks each with
+`data-tcn-head-font`. A family's first acquire in a document adopts a marked
+link (matched by its full or its default-weight href) instead of adding a
+second one; a Host's own link with the same href is unmarked and stays the
+Host's, beside the registry's link. The adopted link gets
+`data-themer-font`, is held and released like the registry's own, and goes
+with the last release or when the Theme override goes off. Its readiness
+settles at once when its stylesheet already loaded, else at its next load or
+error; a link that already failed both URLs leaves `waitForFont` to its own
+timeout. So each Google family has one `<link>` per document.
 
 #### Font Picker Positioning and Scroll Ownership
 

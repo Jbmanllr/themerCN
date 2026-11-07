@@ -8,14 +8,31 @@
 // element (next/script's inline `beforeInteractive` need not run before first
 // paint), if its body drifts from getThemerHeadScript for the given
 // namespace, or if a client render brings back React's "Encountered a script
-// tag" warning.
+// tag" warning. The string is built once per namespace for the module's
+// life (the paths ADR's Page load contract), so the build counts fail if a
+// render builds it again, or if two namespaces share one string.
 import { act } from "react"
 import { createRoot, hydrateRoot, type Root } from "react-dom/client"
 import { renderToString } from "react-dom/server"
 import { afterEach, beforeEach, expect, it, vi } from "vitest"
 
+import * as headScript from "../head-script"
 import { getThemerHeadScript } from "../head-script"
 import { ThemerHeadScript } from "./index"
+
+vi.mock("../head-script", async (importOriginal) => {
+  const real = await importOriginal<typeof import("../head-script")>()
+  return { ...real, getThemerHeadScript: vi.fn(real.getThemerHeadScript) }
+})
+
+/** Builds of the head-script string for `storageNamespace` since the spy
+ *  was last cleared, by any caller. */
+const builds = (storageNamespace?: string) =>
+  vi
+    .mocked(headScript.getThemerHeadScript)
+    .mock.calls.filter(
+      ([options]) => options?.storageNamespace === storageNamespace
+    ).length
 
 ;(
   globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT: boolean }
@@ -35,7 +52,7 @@ afterEach(async () => {
   await act(async () => root?.unmount())
   root = null
   container.remove()
-  vi.restoreAllMocks()
+  consoleError.mockRestore()
 })
 
 it("puts the restore code in the server HTML as a raw inline script", () => {
@@ -69,4 +86,52 @@ it("renders an inert data block, without a warning, when drawn on the client", a
 
   expect(container.querySelector("script")?.type).toBe("application/json")
   expect(consoleError).not.toHaveBeenCalled()
+})
+
+it("builds the string once for every render of one namespace", async () => {
+  const namespace = "once"
+  vi.mocked(headScript.getThemerHeadScript).mockClear()
+
+  container.innerHTML = renderToString(
+    <ThemerHeadScript storageNamespace={namespace} />
+  )
+  await act(async () => {
+    root = hydrateRoot(
+      container,
+      <ThemerHeadScript storageNamespace={namespace} />
+    )
+  })
+  await act(async () =>
+    root?.render(<ThemerHeadScript storageNamespace={namespace} />)
+  )
+
+  expect(builds(namespace)).toBe(1)
+  expect(container.querySelector("script")?.textContent).toBe(
+    getThemerHeadScript({ storageNamespace: namespace })
+  )
+})
+
+it("builds the default namespace's string once, named or not", async () => {
+  // A fresh module, so no earlier test's string is cached.
+  vi.resetModules()
+  const fresh = await import("./index")
+  const { getThemerHeadScript: build } = await import("../head-script")
+
+  const unnamed = renderToString(<fresh.ThemerHeadScript />)
+  const named = renderToString(
+    <fresh.ThemerHeadScript storageNamespace="themercn" />
+  )
+
+  expect(vi.mocked(build)).toHaveBeenCalledTimes(1)
+  expect(named).toBe(unnamed)
+})
+
+it("gives each namespace its own string", () => {
+  const first = renderToString(<ThemerHeadScript storageNamespace="first" />)
+  const second = renderToString(<ThemerHeadScript storageNamespace="second" />)
+
+  expect(first).toContain(JSON.stringify("first:editor"))
+  expect(first).not.toContain("second:")
+  expect(second).toContain(JSON.stringify("second:editor"))
+  expect(second).not.toContain("first:")
 })

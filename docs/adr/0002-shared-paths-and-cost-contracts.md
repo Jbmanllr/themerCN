@@ -50,11 +50,8 @@ Each path section below states its plug-in rule, what is built once and at which
 - **Switched off:** the Themer off removes the import, the stylesheet, the hydration and the observers, and leaves the head script, which changes nothing when nothing is saved. The Theme override off removes the restore sheet, the head script's font links and the first apply. A controlled colour mode removes the colour-mode write, except to clear an existing entry.
 - **Benchmark:** the page-load count test, whose composition run mounts the Themer, switches its `storageNamespace`, then runs with the Theme override off; the merge-gate frame chunk count measures frame chunk imports in a real browser. The existing count tests stay.
 - **Debt today:**
-  - Next builds the head-script string 3 times per load (server render, hydration render, post-hydration render). The script rebuilds its font-name lists on each call, and its 2 patterns for each declaration.
   - The colour mode is written on every load.
-  - The font loader adds a second `<link>` for each family the head script already linked: up to 7 links for 4 families.
   - The first apply runs twice when the saved mode differs from the page's.
-  - Every Live frame navigation imports the Themer chunk only to render nothing.
   - Every `useColorMode` caller and every font label adds its own `<html>` observer.
   - Each Preset picker mount re-sorts the Preset ids.
 

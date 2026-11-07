@@ -2,8 +2,11 @@
 // per document and removed with its last holder, host `var(...)` and system
 // stacks never reach Google, previews are text subsets, a rejected weight
 // retries once at the default weight, theme fonts follow the theme, and
-// waitForFont waits for the stylesheet (and its retry) before the face.
+// waitForFont waits for the stylesheet (and its retry) before the face, and
+// a link the head script already added for a family is adopted, not doubled,
+// while a Host's own link with the same URL is left to the Host.
 import { afterEach, describe, expect, it, vi } from "vitest"
+import { HEAD_FONT_LINK_ATTRIBUTE } from "../config/constants"
 import { FakeDocument } from "./fake-document.test-helper"
 import {
   FONT_LINK_ATTRIBUTE,
@@ -89,6 +92,97 @@ describe("link registry", () => {
     expect(link?.getAttribute("href")).toBe(
       "https://fonts.googleapis.com/css2?family=Bebas%20Neue&display=swap"
     )
+  })
+})
+
+const INTER_FULL =
+  "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+const INTER_FALLBACK =
+  "https://fonts.googleapis.com/css2?family=Inter&display=swap"
+
+/** A Host's own stylesheet link: neither marker. */
+function hostLink(doc: FakeDocument, href: string) {
+  const link = doc.createElement("link")
+  link.setAttribute("rel", "stylesheet")
+  link.setAttribute("href", href)
+  doc.head.appendChild(link)
+  return link
+}
+
+/** A link as the head script adds it: its marker, no registry attribute. */
+function headScriptLink(doc: FakeDocument, href: string) {
+  const link = hostLink(doc, href)
+  link.setAttribute(HEAD_FONT_LINK_ATTRIBUTE, "Inter")
+  return link
+}
+
+describe("head-script links", () => {
+  it("adopts the head script's link by its full or its fallback href", () => {
+    for (const href of [INTER_FULL, INTER_FALLBACK]) {
+      const doc = new FakeDocument()
+      const link = headScriptLink(doc, href)
+      acquireGoogleFont("Inter", { doc: doc.asDocument })
+
+      expect(links(doc)).toEqual([link])
+      expect(link.getAttribute(FONT_LINK_ATTRIBUTE)).toBe("Inter")
+    }
+  })
+
+  it("counts holders on an adopted link and removes it with the last", () => {
+    const doc = new FakeDocument()
+    headScriptLink(doc, INTER_FULL)
+    const first = acquireGoogleFont("Inter", { doc: doc.asDocument })
+    const second = acquireGoogleFont("Inter", { doc: doc.asDocument })
+
+    first()
+    expect(links(doc)).toHaveLength(1)
+    second()
+    expect(links(doc)).toHaveLength(0)
+  })
+
+  it("removes an adopted theme font when the Theme override goes off", () => {
+    const doc = new FakeDocument()
+    headScriptLink(doc, INTER_FULL)
+    setThemeFonts(doc.asDocument, ["Inter", "Lora"])
+    expect(familiesIn(doc)).toEqual(["Inter", "Lora"])
+
+    clearThemeFonts(doc.asDocument)
+    expect(links(doc)).toHaveLength(0)
+  })
+
+  it("adds a fresh link after an adopted one was removed", () => {
+    const doc = new FakeDocument()
+    const adopted = headScriptLink(doc, INTER_FULL)
+    acquireGoogleFont("Inter", { doc: doc.asDocument })
+    adopted.remove()
+
+    acquireGoogleFont("Inter", { doc: doc.asDocument })
+    const [fresh] = links(doc)
+    expect(fresh).not.toBe(adopted)
+    expect(fresh?.getAttribute("href")).toBe(INTER_FULL)
+  })
+
+  it("leaves a Host's own link with the same URL to the Host", () => {
+    const doc = new FakeDocument()
+    const own = hostLink(doc, INTER_FULL)
+    setThemeFonts(doc.asDocument, ["Inter"])
+
+    const added = links(doc).filter((link) => link !== own)
+    expect(added).toHaveLength(1)
+    expect(added[0]?.getAttribute(FONT_LINK_ATTRIBUTE)).toBe("Inter")
+    expect(own.getAttribute(FONT_LINK_ATTRIBUTE)).toBeNull()
+
+    clearThemeFonts(doc.asDocument)
+    expect(links(doc)).toEqual([own])
+  })
+
+  it("shares an adopted family link with a preview", () => {
+    const doc = new FakeDocument()
+    headScriptLink(doc, INTER_FULL)
+    acquireGoogleFont("Inter", { doc: doc.asDocument })
+    acquireFontPreview("Inter", { doc: doc.asDocument })
+
+    expect(links(doc)).toHaveLength(1)
   })
 })
 
@@ -188,6 +282,53 @@ describe("waitForFont", () => {
     link?.dispatch("error")
     await expect(result).resolves.toBe(false)
     expect(load).toHaveBeenCalledOnce()
+  })
+
+  it("settles at once for an adopted link that already loaded", async () => {
+    vi.useFakeTimers()
+    const doc = new FakeDocument()
+    const load = vi.fn(() => Promise.resolve([]))
+    doc.fonts = { check: () => true, load }
+    headScriptLink(doc, INTER_FULL).sheet = {}
+    acquireGoogleFont("Inter", { doc: doc.asDocument })
+
+    await expect(
+      waitForFont("Inter", "400", 3000, doc.asDocument)
+    ).resolves.toBe(true)
+    expect(load).toHaveBeenCalledOnce()
+  })
+
+  it("waits for an adopted link's load, through the head script's retry", async () => {
+    vi.useFakeTimers()
+    const doc = new FakeDocument()
+    const load = vi.fn(() => Promise.resolve([]))
+    doc.fonts = { check: () => true, load }
+    const link = headScriptLink(doc, INTER_FULL)
+    acquireGoogleFont("Inter", { doc: doc.asDocument })
+
+    const result = waitForFont("Inter", "400", 3000, doc.asDocument)
+    // The head script's own listener switches to the fallback href.
+    link.setAttribute("href", INTER_FALLBACK)
+    link.dispatch("error")
+    await vi.advanceTimersByTimeAsync(1000)
+    expect(load).not.toHaveBeenCalled()
+
+    link.dispatch("load")
+    await expect(result).resolves.toBe(true)
+  })
+
+  it("leaves an adopted link that failed both URLs to the wait's timeout", async () => {
+    vi.useFakeTimers()
+    const doc = new FakeDocument()
+    doc.fonts = { check: () => true, load: () => Promise.resolve([]) }
+    // Failed both URLs before the registry saw it: no sheet, no more events.
+    headScriptLink(doc, INTER_FALLBACK)
+    acquireGoogleFont("Inter", { doc: doc.asDocument })
+
+    const result = waitForFont("Inter", "400", 3000, doc.asDocument)
+    await vi.advanceTimersByTimeAsync(3000)
+    await expect(result).resolves.toBe(false)
+    expect(links(doc)).toHaveLength(1)
   })
 
   it("gives up when the family's stylesheet never loads", async () => {

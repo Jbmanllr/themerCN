@@ -81,13 +81,7 @@ export function getStorageKeys(namespace: string = DEFAULT_STORAGE_NAMESPACE) {
   } as const
 }
 
-/**
- * Name of the `window` property where the head script records the colour
- * mode it read, per colour-mode storage key: the saved value, or null when
- * nothing is saved. The colour-mode provider (components/color-mode.tsx)
- * compares the mode with it, so a load writes the key only when it is stale
- * and adds no storage read.
- */
+/** `window` key of the head script's colour-mode record (color-mode.tsx). */
 export const COLOR_MODE_RECORD = "__themercnColorMode"
 
 /** `window` as the holder of the colour-mode record, typed. */

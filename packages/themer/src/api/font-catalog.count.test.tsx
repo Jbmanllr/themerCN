@@ -168,11 +168,19 @@ const serve = (query: string, context: Context = "server") =>
     )
   )
 
+// How the endpoint answers: through the route, or as a Host route that fails
+// with a 5xx, or not at all (a network error).
+let endpointAnswer: "route" | "5xx" | "network error" = "route"
+
 // The browser's fetch: the endpoint is answered by the route, Google by its
 // stub. Nothing else is fetched.
 async function stubFetch(input: RequestInfo | URL): Promise<Response> {
   const url = input instanceof Request ? input.url : String(input)
   if (isGoogle(url)) return google(url)
+  if (url.startsWith(ENDPOINT) && endpointAnswer === "5xx")
+    return new Response("unavailable", { status: 503 })
+  if (url.startsWith(ENDPOINT) && endpointAnswer === "network error")
+    throw new TypeError("Failed to fetch")
   if (url.startsWith(ENDPOINT))
     return requestContext.run("server", () =>
       route.GET(new Request(`http://localhost${url}`))
@@ -427,6 +435,7 @@ async function typeQuery(client: QueryClient, query: string) {
 beforeEach(async () => {
   newProcess()
   googleFails = false
+  endpointAnswer = "route"
   googleFontsApiKey = undefined
   vi.stubGlobal("fetch", stubFetch)
   vi.spyOn(console, "warn").mockImplementation(() => undefined)
@@ -559,7 +568,23 @@ describe("Font catalog request composition", () => {
     expect(
       [served, picker].map((counts) => counts["catalog code loads"])
     ).toEqual([0, 0])
+    // Its 404 is final: the badge lookup asks once, with no retry.
+    expect(picker["badge requests"]).toBe(1)
   })
+
+  // A failure that a second try can fix is retried once, then given up.
+  it.each(["5xx", "network error"] as const)(
+    "reports every row when the endpoint fails with a %s",
+    async (failure) => {
+      endpointAnswer = failure
+      const counts = await measure(counters(), () =>
+        mountPicker("Inter, sans-serif", ENDPOINT)
+      )
+      report(`endpoint ${failure}: picker badge lookup, ${CACHED}`, counts)
+      check(CACHED, counts)
+      expect(counts["badge requests"]).toBe(2)
+    }
+  )
 
   it("reports every row with no endpoint", async () => {
     let picker: Awaited<ReturnType<typeof mountPicker>> | undefined

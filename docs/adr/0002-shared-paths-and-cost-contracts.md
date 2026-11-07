@@ -24,7 +24,6 @@ Each path section below states its plug-in rule, what is built once and at which
 - **Built once:** whether the Theme is on its Preset, and what persists, once per Theme state; the shadow colour parse once per value.
 - **Switched off:** Sidebar Sync off removes its lookups.
 - **Benchmark:** the store-action count test, whose composition run drives a store action with every selector caller mounted, with Sidebar Sync on and then off.
-- **Debt today:** history-only sets run 2 store deep compares, every `useIsOnPreset` caller runs its own, and the Shadow control's selector parses the shadow colour on every set.
 
 ### Theme apply
 

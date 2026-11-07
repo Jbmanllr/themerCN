@@ -8,6 +8,10 @@ export default defineConfig({
     // DOM tests render whole editor surfaces; under a parallel run the first
     // render of a file can exceed the 5s default.
     testTimeout: 20_000,
+    // The clone's test slots (tests/test-slot.ts, TESTING.md): two runs at
+    // a time, each on half the cores.
+    globalSetup: ["../../tests/test-slot.ts"],
+    maxWorkers: "50%",
     // `test:coverage` (`pnpm coverage`, the project coverage ratchet): every
     // source file counts, whether a test loads it or not.
     coverage: {

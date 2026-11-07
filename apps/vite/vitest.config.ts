@@ -8,6 +8,10 @@ import viteConfig from "./vite.config"
 export default defineConfig((env) =>
   mergeConfig(viteConfig(env), {
     test: {
+      // The clone's test slots (tests/test-slot.ts, TESTING.md): two runs at
+      // a time, each on half the cores.
+      globalSetup: ["../../tests/test-slot.ts"],
+      maxWorkers: "50%",
       coverage: {
         provider: "v8",
         include: ["src/**/*.{ts,tsx}"],

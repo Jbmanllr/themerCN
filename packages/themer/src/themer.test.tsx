@@ -358,6 +358,93 @@ describe("Themer", () => {
         expect(fontLinks("Inter")).toHaveLength(1)
         expect(fontLinks("Lora")).toHaveLength(1)
       })
+
+      describe("on a pick through the font picker", () => {
+        const family = "Inter"
+        /** The family's stylesheet link, not a picker row's `&text=` preview. */
+        const isStylesheet = (node: Node) =>
+          node instanceof HTMLLinkElement &&
+          node.href.includes(`family=${encodeURIComponent(family)}`) &&
+          !node.href.includes("text=")
+
+        /** Records each append and removal of the family's stylesheet link. */
+        function watchStylesheet() {
+          const changes: string[] = []
+          const record = (records: MutationRecord[]) => {
+            for (const { addedNodes, removedNodes } of records) {
+              addedNodes.forEach((node) => {
+                if (isStylesheet(node)) changes.push("append")
+              })
+              removedNodes.forEach((node) => {
+                if (isStylesheet(node)) changes.push("remove")
+              })
+            }
+          }
+          const observer = new MutationObserver(record)
+          observer.observe(document.head, { childList: true })
+          return () => {
+            record(observer.takeRecords())
+            observer.disconnect()
+            return changes
+          }
+        }
+
+        /** Picks `family` in the Sans-serif slot and waits for the commit. */
+        async function pickSans() {
+          await openThemer()
+          const typography = document.querySelector<HTMLElement>(
+            '[role="tab"][aria-label="Typography"]'
+          )
+          await act(async () => typography?.click())
+          const sansTrigger = [
+            ...document.querySelectorAll<HTMLElement>('[role="combobox"]'),
+          ].find(
+            (trigger) =>
+              document.getElementById(
+                trigger.getAttribute("aria-labelledby") ?? ""
+              )?.textContent === "Sans-serif"
+          )
+          if (!sansTrigger) throw new Error("no Sans-serif picker")
+          await act(async () => sansTrigger.click())
+          const row = await vi.waitFor(() => {
+            const item = document.querySelector<HTMLElement>(
+              `[cmdk-item][data-value="${family}"]`
+            )
+            if (!item) throw new Error(`no row for ${family}`)
+            return item
+          })
+          await act(async () => row.click())
+          await vi.waitFor(() =>
+            expect(
+              useEditorStore.getState().themeState.styles.light["font-sans"]
+            ).toContain(family)
+          )
+        }
+
+        it("keeps the family's link continuously, with no timer", async () => {
+          await mount()
+          const stop = watchStylesheet()
+
+          await pickSans()
+
+          expect(rootVar("--font-sans")).toContain(family)
+          expect(stop()).toEqual(["append"])
+          expect(fontLinks(family).filter(isStylesheet)).toHaveLength(1)
+        })
+
+        it("drops the family's link right after the pick while the Theme override is off", async () => {
+          await mount()
+          await act(async () =>
+            usePreferencesStore.getState().setThemeOverrideEnabled(false)
+          )
+          const stop = watchStylesheet()
+
+          await pickSans()
+
+          expect(stop()).toEqual(["append", "remove"])
+          expect(fontLinks(family).filter(isStylesheet)).toHaveLength(0)
+        })
+      })
     })
 
     describe("switching storageNamespace", () => {

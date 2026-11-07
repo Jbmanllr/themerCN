@@ -4,8 +4,8 @@
 // open and the other rows stay clickable. The last pick must win: an earlier,
 // slower load that finishes after a newer pick used to overwrite it and clear
 // its spinner. A superseded pick must also drop its own hold on the family's
-// stylesheet, and an applied pick keeps its hold for 2 s (FONT_HANDOFF_MS) so
-// the theme's font slot can take its own reference first.
+// stylesheet, and an applied pick drops its hold right after committing: the
+// Theme's font slot takes its own reference in that same store commit.
 import { act } from "react"
 import { createRoot, type Root } from "react-dom/client"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
@@ -200,8 +200,10 @@ describe("FontPicker selection", () => {
     expect(onChange).toHaveBeenCalledExactlyOnceWith(
       buildFontFamily(second.family, second.category)
     )
-    // The overtaken pick gives its hold back at once.
+    // The overtaken pick gives its hold back at once, and the applied one
+    // right after its commit.
     expect(holdOf(first.family).release).toHaveBeenCalledOnce()
+    expect(holdOf(second.family).release).toHaveBeenCalledOnce()
   })
 
   it("does not let an earlier load clear the newer pick's wait when it finishes first", async () => {
@@ -224,20 +226,14 @@ describe("FontPicker selection", () => {
     )
   })
 
-  it("keeps its hold on the applied family until the theme slot has taken its own", async () => {
+  it("releases its hold on the applied family right after committing the pick", async () => {
     await openPicker()
     await pick(first.family)
-    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] })
-    try {
-      await act(async () => waitFor(first.family).settle(true))
-      expect(holdOf(first.family).release).not.toHaveBeenCalled()
+    expect(holdOf(first.family).release).not.toHaveBeenCalled()
 
-      await act(async () => vi.advanceTimersByTime(1999))
-      expect(holdOf(first.family).release).not.toHaveBeenCalled()
-      await act(async () => vi.advanceTimersByTime(1))
-      expect(holdOf(first.family).release).toHaveBeenCalledOnce()
-    } finally {
-      vi.useRealTimers()
-    }
+    await act(async () => waitFor(first.family).settle(true))
+
+    expect(onChange).toHaveBeenCalledOnce()
+    expect(holdOf(first.family).release).toHaveBeenCalledOnce()
   })
 })

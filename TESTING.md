@@ -160,7 +160,7 @@ The ratchet. Each count is per unit of its path, as the paths ADR defines the un
 | family lower-cases   | 0     | must not grow | `pnpm --filter themercn exec vitest run src/api/font-catalog.count.test.tsx` | implementer done |
 | response stringifies | 1     | must not grow | `pnpm --filter themercn exec vitest run src/api/font-catalog.count.test.tsx` | implementer done |
 | badge requests       | 2     | must not grow | `pnpm --filter themercn exec vitest run src/api/font-catalog.count.test.tsx` | implementer done |
-| badge lower-cases    | 6     | must not grow | `pnpm --filter themercn exec vitest run src/api/font-catalog.count.test.tsx` | implementer done |
+| badge lower-cases    | 0     | must not grow | `pnpm --filter themercn exec vitest run src/api/font-catalog.count.test.tsx` | implementer done |
 
 ### Exceptions
 
@@ -185,10 +185,7 @@ The ratchet. Each count is per unit of its path, as the paths ADR defines the un
 | E17 | `closest(ignore)` calls | Inspector pointer move | Debt: "every move runs `closest(ignore)` twice, once on the surface and once in the outside-move check"; remediation map #111                                           | Jbmanllr (project owner) | 2027-02-04 |
 | E18 | other DOM queries       | Inspector pointer move | No debt line. Measured cause: the outside-move check's `contains` runs on every move while a card is current; remediation map #111                                      | Jbmanllr (project owner) | 2027-02-04 |
 | E19 | client round trips      | Font catalog request   | No debt line. Measured cause: with the route disabled, the 404 plus the Themer's `retry: 1` asks twice; remediation map #111                                            | Jbmanllr (project owner) | 2027-02-04 |
-| E20 | family lower-cases      | Font catalog request   | Debt: "every request with a query lower-cases every family name in the catalog"; remediation map #111                                                                   | Jbmanllr (project owner) | 2027-02-04 |
-| E21 | response stringifies    | Font catalog request   | No debt line. Measured cause: with the route disabled, the 404 body is stringified twice because of the retry; remediation map #111                                     | Jbmanllr (project owner) | 2027-02-04 |
 | E22 | badge requests          | Font catalog request   | No debt line. Measured cause: the same retry as E19; remediation map #111                                                                                               | Jbmanllr (project owner) | 2027-02-04 |
-| E23 | badge lower-cases       | Font catalog request   | Debt: "every `FontValueLabel` render lower-cases up to 2 names per loaded font"; remediation map #111                                                                   | Jbmanllr (project owner) | 2027-02-04 |
 
 ### Rules
 

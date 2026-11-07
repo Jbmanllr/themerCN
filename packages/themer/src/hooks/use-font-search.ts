@@ -1,4 +1,4 @@
-import { useInfiniteQuery } from "@tanstack/react-query"
+import { infiniteQueryOptions, useInfiniteQuery } from "@tanstack/react-query"
 import type { FilterFontCategory, PaginatedFontsResponse } from "../types/fonts"
 import {
   FALLBACK_CATALOG,
@@ -41,25 +41,20 @@ function retryCatalogFailure(failureCount: number, error: unknown) {
 }
 
 /**
- * Searches the font catalog for the font picker. With an `endpoint` (the
- * Host's `fontCatalogEndpoint`) it pages through
- * `GET ?q=&category=&limit=&offset=` → `{ fonts, total, offset, limit, hasMore }`;
- * the Host's route owns API keys and gating. Without one it searches the
- * bundled list (FALLBACK_CATALOG, prepared once per module load) in the
- * browser, with the same paging.
- * A failed request is retried once for a network error or a 5xx answer, never
- * for a 4xx.
+ * The font catalog query behind useFontSearch, for a caller that derives its
+ * own answer from the same cached pages (the badge lookup,
+ * use-catalog-lacks-family.ts).
  */
-export function useFontSearch({
+export function fontSearchQuery({
   endpoint,
   query,
   category = "all",
   limit = 20,
   enabled = true,
 }: UseFontSearchParams) {
-  return useInfiniteQuery({
+  return infiniteQueryOptions({
     queryKey: ["themer-fonts", endpoint, query, category, limit],
-    queryFn: async ({ pageParam }) => {
+    queryFn: async ({ pageParam }): Promise<PaginatedFontsResponse> => {
       if (!endpoint) {
         return filterAndPaginateFonts(FALLBACK_CATALOG, {
           query,
@@ -98,4 +93,18 @@ export function useFontSearch({
     retry: retryCatalogFailure,
     enabled,
   })
+}
+
+/**
+ * Searches the font catalog for the font picker. With an `endpoint` (the
+ * Host's `fontCatalogEndpoint`) it pages through
+ * `GET ?q=&category=&limit=&offset=` → `{ fonts, total, offset, limit, hasMore }`;
+ * the Host's route owns API keys and gating. Without one it searches the
+ * bundled list (FALLBACK_CATALOG, prepared once per module load) in the
+ * browser, with the same paging.
+ * A failed request is retried once for a network error or a 5xx answer, never
+ * for a 4xx.
+ */
+export function useFontSearch(params: UseFontSearchParams) {
+  return useInfiniteQuery(fontSearchQuery(params))
 }

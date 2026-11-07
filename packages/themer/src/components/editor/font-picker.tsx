@@ -53,6 +53,7 @@ import {
 } from "@workspace/ui/components/select"
 import { Separator } from "@workspace/ui/components/separator"
 import { Spinner } from "@workspace/ui/components/spinner"
+import { useCatalogLacksFamily } from "../../hooks/use-catalog-lacks-family"
 import { useFontSearch } from "../../hooks/use-font-search"
 import { useEditorStore } from "../../stores/editor-store"
 import { useOptionalThemerContext } from "../../hooks/use-themer-context"
@@ -243,29 +244,16 @@ function FontValueLabel({
   endpoint,
 }: Readonly<{ value: string; endpoint: string | undefined }>) {
   const description = useFontValueDescription(value)
-  const family =
-    description.kind === "family" || description.kind === "variable"
-      ? description.family
-      : null
   const checkCatalog =
     description.kind === "family" && !isLocalFontFamily(description.family)
-  // One cached catalog lookup per family (react-query, 24 h stale time).
-  const catalog = useFontSearch({
+  const catalogLacksFamily = useCatalogLacksFamily(
     endpoint,
-    query: checkCatalog ? description.family : "",
-    limit: 50,
-    enabled: checkCatalog,
-  })
-  const inCatalog = catalog.data?.pages.some((page) =>
-    page.fonts.some(
-      (font) => font.family.toLowerCase() === family?.toLowerCase()
-    )
+    checkCatalog ? description.family : null
   )
 
   const isCustom =
     description.kind === "variable" ||
-    (description.kind === "family" &&
-      (!checkCatalog || (catalog.isSuccess && !inCatalog)))
+    (description.kind === "family" && (!checkCatalog || catalogLacksFamily))
 
   let name: string
   switch (description.kind) {

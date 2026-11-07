@@ -202,9 +202,11 @@ const isBadgeLookup = (input: unknown) =>
 const isFamily = (self: unknown) =>
   (typeof self === "string" || self instanceof String) &&
   FAMILIES.has(String(self))
-// A family lower-cased by the badge's label (FontValueLabel) over the loaded
-// fonts, not by the one-name helpers it calls once per render
-// (describeFontValue, isLocalFontFamily).
+// A family lower-cased while the badge's label (FontValueLabel) renders,
+// itself or through its badge lookup (useCatalogLacksFamily), not by the
+// one-name helpers it calls once per render (describeFontValue,
+// isLocalFontFamily). The lookup's match runs once per response, when the
+// response arrives, outside any render; a match redone on a render counts.
 const badgeLowerCase = (self: unknown) =>
   isFamily(self) &&
   !onServer() &&

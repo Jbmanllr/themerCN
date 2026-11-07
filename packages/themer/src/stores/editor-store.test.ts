@@ -55,7 +55,44 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.useRealTimers()
+  vi.unstubAllGlobals()
 })
+
+/**
+ * Hydrates the editor store from empty storage under the default namespace,
+ * keeping the state set in beforeEach: persist writes nothing before a
+ * hydration, so a test of what a set stores starts here.
+ */
+function hydrateEmpty() {
+  const { themeState } = store.getState()
+  localStorage.clear()
+  hydrateThemerStores("themercn")
+  store.setState({ themeState })
+}
+
+/**
+ * Counts localStorage.setItem calls from here on, through a stand-in for
+ * localStorage that forwards every call (a spy on the storage instance would
+ * be stored as an item).
+ */
+function countStorageWrites(): () => number {
+  const real = globalThis.localStorage
+  let count = 0
+  vi.stubGlobal("localStorage", {
+    getItem: (key: string) => real.getItem(key),
+    setItem: (key: string, value: string) => {
+      count++
+      real.setItem(key, value)
+    },
+    removeItem: (key: string) => real.removeItem(key),
+    clear: () => real.clear(),
+    key: (index: number) => real.key(index),
+    get length() {
+      return real.length
+    },
+  })
+  return () => count
+}
 
 describe("undo history", () => {
   it("batches changes within the debounce window into one entry", () => {
@@ -114,12 +151,13 @@ describe("undo history", () => {
   })
 
   it("records a history-only set without touching the stored entry", () => {
+    hydrateEmpty()
     setRadius("1rem")
     vi.advanceTimersByTime(HISTORY_DEBOUNCE_MS)
     setRadius("2rem")
     store.getState().undo()
     const { themeState, history } = store.getState()
-    const setItem = vi.spyOn(Storage.prototype, "setItem")
+    const writes = countStorageWrites()
 
     store.getState().setThemeState((prev) => prev)
 
@@ -127,7 +165,17 @@ describe("undo history", () => {
     expect(state.themeState).toBe(themeState)
     expect(state.history).toHaveLength(history.length + 1)
     expect(state.future).toEqual([])
-    expect(setItem).not.toHaveBeenCalled()
+    expect(writes()).toBe(0)
+  })
+
+  it("stores a new Theme state equal in content to the last, once", () => {
+    hydrateEmpty()
+    setRadius("1rem")
+    const writes = countStorageWrites()
+
+    store.getState().setThemeState((prev) => ({ ...prev }))
+
+    expect(writes()).toBe(1)
   })
 
   it("keeps the current mode when undoing", () => {

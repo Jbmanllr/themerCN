@@ -34,7 +34,7 @@ Each path section below states its plug-in rule, what is built once and at which
 - **Built once:** the property map once per Theme state and mode, shared by every themed document; the shadow colour parse once per shadow input value; the Theme font families once per Theme state, from the store module.
 - **Switched off:** Theme override off removes both subscriptions and everything they wrote. Workspace off the Live tab removes the Live frame's unit. A Theme without its own shadows removes the shadow parse, the CSSOM walk and the override sheet.
 - **Benchmark:** the Theme-apply count test, whose composition run mounts the Themer with Workspace on the Live tab, then runs with the Theme override off, with Workspace off the Live tab, and with a Theme without its own shadows.
-- **Debt today:** every apply writes all 46 properties, 54 with own shadows, even for a one-token edit. The property map and the shadow colour parse run once per document and apply, so twice with Workspace on the Live tab, even when the shadow inputs didn't change. The CSSOM walk also reads the Themer's own sheet, about 250 kB. The font families are derived on the Host and again on each Live frame apply. A font label reads `getComputedStyle` once per `var()` hop, up to 4.
+- **Debt today:** every apply writes all 46 properties, 54 with own shadows, even for a one-token edit. The property map and the shadow colour parse run once per document and apply, so twice with Workspace on the Live tab, even when the shadow inputs didn't change. The font families are derived on the Host and again on each Live frame apply. A font label reads `getComputedStyle` once per `var()` hop, up to 4.
 
 ### Page load
 

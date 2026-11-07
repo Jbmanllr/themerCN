@@ -6,6 +6,7 @@
 // ordinary keys.
 import { afterEach, describe, expect, it } from "vitest"
 import { defaultThemeState } from "../config/defaults"
+import { THEMER_STYLE_ATTRIBUTE } from "../config/constants"
 import { configureExtraColors } from "../config/extra-colors"
 import type { ThemeEditorState } from "../types"
 import {
@@ -262,6 +263,28 @@ describe("applyThemeToElement / removeThemeFromElement", () => {
     expect(sheets).toHaveLength(1)
     expect(sheets[0]!.textContent).toBe(
       `${SHADOW_OVERRIDE_CSS}\n${active} { --tw-shadow: var(--shadow) !important; }`
+    )
+  })
+  // The Themer's own sheet holds variant shadow rules scoped to its UI; on a
+  // stylesheet-count change only the Host's sheets are read.
+  it("mirrors a variant shadow rule from a Host sheet but not the same rule from the Themer's own sheet", () => {
+    const doc = new FakeDocument()
+    const active = String.raw`.data-active\:shadow-sm[data-active]`
+    const ownerWith = (attribute: string | null) => ({
+      hasAttribute: (name: string) => name === attribute,
+    })
+    doc.styleSheets = [
+      {
+        ownerNode: ownerWith(THEMER_STYLE_ATTRIBUTE),
+        cssRules: [shadowRule(active)],
+      },
+      { ownerNode: ownerWith(null), cssRules: [shadowRule(active)] },
+    ]
+
+    applyThemeToElement(themeWith({ "shadow-opacity": "0.3" }), root(doc))
+
+    expect(doc.headChildren("style")[0]!.textContent).toBe(
+      `${SHADOW_OVERRIDE_CSS}\n${active} { --tw-shadow: var(--shadow-sm) !important; }`
     )
   })
 })

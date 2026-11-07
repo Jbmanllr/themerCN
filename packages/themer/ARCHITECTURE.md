@@ -495,7 +495,7 @@ document (the Host's `<html>` and the Live frame's, through the same code).
   [utils/shadows.ts](src/utils/shadows.ts)) and one
   `<style data-themer-overrides>` per document pointing each utility's
   `--tw-shadow` at its variable (`!important`, with the Host's state variants
-  mirrored). Written only when the shadow inputs differ from the defaults,
+  mirrored; the walk skips the Themer's own sheets). Written only when the shadow inputs differ from the defaults,
   so a Preset without shadows keeps the Host's scale.
 - **Tracking of written properties.** A `WeakMap` per element records what
   was set, so a re-apply drops keys the new Theme lost and removal takes away

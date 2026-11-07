@@ -17,7 +17,8 @@
 //   Its rules are `!important`, so the host's own variant shadow rules
 //   (`hover:shadow-md`, `data-active:shadow-sm`) are mirrored into it too, and
 //   the sheet is written again when the document's stylesheet count changes
-//   (a CSS chunk that loaded later).
+//   (a CSS chunk that loaded later). The walk skips the Themer's own sheets
+//   (the override sheet and `<style data-themer-style>`).
 //   Written only when the shadow inputs differ from the library defaults (a
 //   preset that declares shadows, or an edit): a preset without shadows, such
 //   as a host brand preset, keeps the host's own Tailwind shadow scale.
@@ -32,7 +33,7 @@
 // removing the theme removes the sheet with it.
 //
 // See: packages/themer/ARCHITECTURE.md ("Applying a theme").
-import { RESTORE_STYLE_ID } from "../config/constants"
+import { RESTORE_STYLE_ID, THEMER_STYLE_ATTRIBUTE } from "../config/constants"
 import { defaultLightStyles } from "../config/defaults"
 import { getExtraColorKeys } from "../config/extra-colors"
 import type { ThemeEditorState, ThemeMode } from "../types"
@@ -97,6 +98,21 @@ const SHADOW_STATE_VARIANTS = [
 ] as const
 
 /**
+ * Variant shadow rules of the Themer's own sheet that sit on an element with
+ * a base size, as `[selector, size]`. The CSSOM walk skips that sheet, so
+ * without these the base size's `!important` would win. The Dashboard
+ * preview's section cards: Card's `shadow-md` under the grid's
+ * `*:data-[slot=card]:shadow-xs`. The Themer's other variant shadows sit on
+ * elements without a base size, or are `shadow-none!`.
+ */
+const THEMER_VARIANT_SHADOWS = [
+  [
+    String.raw`:is(.\*\:data-\[slot\=card\]\:shadow-xs > *)[data-slot=card]`,
+    "shadow-xs",
+  ],
+] as const
+
+/**
  * The override sheet's fixed part: it reads the `--shadow-*` variables set on
  * the root, so a shadow change only rewrites variables, never the sheet.
  * `!important` beats the utility's own `--tw-shadow` regardless of layer.
@@ -110,6 +126,10 @@ export const SHADOW_OVERRIDE_CSS = [
       (name) =>
         `.${variant}\\:${name}${pseudo} { --tw-shadow: var(--${name}) !important; }`
     )
+  ),
+  ...THEMER_VARIANT_SHADOWS.map(
+    ([selector, name]) =>
+      `${selector} { --tw-shadow: var(--${name}) !important; }`
   ),
 ].join("\n")
 
@@ -241,23 +261,31 @@ function mirrorShadowRules(rules: ArrayLike<CssRuleLike>, out: string[]) {
 }
 
 /**
+ * A sheet the Themer wrote: the override sheet itself, or the Themer's own
+ * CSS (about 250 kB, whose variant shadow rules are its UI's, not the Host's).
+ */
+function isThemerSheet(owner: CSSStyleSheet["ownerNode"]): boolean {
+  return (
+    !!owner &&
+    "hasAttribute" in owner &&
+    (owner.hasAttribute(THEMER_OVERRIDES_ATTRIBUTE) ||
+      owner.hasAttribute(THEMER_STYLE_ATTRIBUTE))
+  )
+}
+
+/**
  * The host's variant shadow rules (`hover:shadow-md` inside its @media,
  * `data-active:shadow-sm`), pointed at the theme's variables like the fixed
  * part. Tailwind inlines shadow values, so without these a compound or
  * variant-only class would show the stock shadow, or lose to the base
  * size's `!important`. Base classes, `shadow-none`, arbitrary values and
- * opacity modifiers are left alone; a cross-origin sheet cannot be read.
+ * opacity modifiers are left alone; a cross-origin sheet cannot be read,
+ * and the Themer's own sheets are skipped.
  */
 function collectVariantShadowRules(doc: Document): string {
   const out: string[] = []
   for (const sheet of Array.from(doc.styleSheets)) {
-    const owner = sheet.ownerNode
-    if (
-      owner &&
-      "hasAttribute" in owner &&
-      owner.hasAttribute(THEMER_OVERRIDES_ATTRIBUTE)
-    )
-      continue
+    if (isThemerSheet(sheet.ownerNode)) continue
     let rules: ArrayLike<CssRuleLike>
     try {
       rules = sheet.cssRules

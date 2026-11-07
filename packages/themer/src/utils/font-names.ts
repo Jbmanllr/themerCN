@@ -9,8 +9,11 @@
 // Contract: never treat as a Google family a value that starts with
 // `var(...)` (a host font the host already loads), a generic keyword or an OS
 // family (Google answers 400 for those). theme-script.ts embeds
-// GENERIC_FONT_FAMILIES and LOCAL_FONT_FAMILY_NAMES, so the inline script and
-// the link registry (font-links.ts) skip the same names.
+// GENERIC_FONT_FAMILIES, LOCAL_FONT_FAMILY_NAMES, GOOGLE_FONTS_CSS_URL and
+// DEFAULT_FONT_WEIGHTS, so the inline script and the link registry
+// (font-links.ts) skip the same names and link the same URLs; its ES5 copy of
+// getGoogleFontFamily is held to this one by theme-script.test.ts's parity
+// table.
 import type { FontCategory } from "../types/fonts"
 import { THEME_FONT_KEYS, type ThemeFontKey } from "../types/theme"
 

@@ -220,9 +220,17 @@ export function useInspector({
       ignore !== undefined &&
       Boolean((target as Element | null)?.closest?.(ignore))
 
+    // The last move the surface's handler inspected. The surface's listener
+    // runs before the document's on the same move, and a framed surface's
+    // moves never reach the editor's document, so any other move reaching
+    // the outside-move check is outside the inspected tree.
+    let inspected: Event | null = null
+
     // Hover inside the inspected tree.
     const handleMove = (event: Event) => {
-      if (!pinned && !isIgnored(event.target)) select(event.target)
+      if (pinned || isIgnored(event.target)) return
+      inspected = event
+      select(event.target)
     }
 
     // Swallow presses so the preview does not act; a click pins and picks.
@@ -241,13 +249,11 @@ export function useInspector({
 
     // Pointer elsewhere in the editor: hide unless pinned or on the card.
     const handleOutsideMove = (event: Event) => {
-      if (pinned || !current) return
-      const target = event.target as Node | null
-      if (target && (iframe ?? host).contains(target) && !isIgnored(target)) {
-        return
-      }
+      if (pinned || !current || event === inspected) return
       if (
-        (target as Element | null)?.closest?.(`[${INSPECTOR_CARD_ATTRIBUTE}]`)
+        (event.target as Element | null)?.closest?.(
+          `[${INSPECTOR_CARD_ATTRIBUTE}]`
+        )
       ) {
         return
       }
@@ -324,6 +330,7 @@ export function useInspector({
 
     return () => {
       if (raf) window.cancelAnimationFrame(raf)
+      inspected = null
       iframe?.removeEventListener("load", bindFrame)
       unbindFrame?.()
       unbindHost?.()

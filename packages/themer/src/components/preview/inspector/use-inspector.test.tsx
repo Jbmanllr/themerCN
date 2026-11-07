@@ -9,7 +9,11 @@ import { createRoot, type Root } from "react-dom/client"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import { subscribeFullscreen } from "../../../utils/fullscreen"
-import { useInspector, type InspectorState } from "./use-inspector"
+import {
+  INSPECTOR_CARD_ATTRIBUTE,
+  useInspector,
+  type InspectorState,
+} from "./use-inspector"
 
 ;(
   globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT: boolean }
@@ -21,10 +25,13 @@ let target: HTMLButtonElement
 
 type Exposed = { state: InspectorState | null }
 
-async function mount(onPick: (className: string) => void = () => {}) {
+async function mount(
+  onPick: (className: string) => void = () => {},
+  { surface = host, ignore }: { surface?: HTMLElement; ignore?: string } = {}
+) {
   const exposed: Exposed = { state: null }
-  const hostRef = { current: host }
-  const containerRef = { current: host }
+  const hostRef = { current: surface }
+  const containerRef = { current: surface }
   function Harness({ enabled }: { enabled: boolean }) {
     exposed.state = useInspector({
       enabled,
@@ -32,6 +39,7 @@ async function mount(onPick: (className: string) => void = () => {}) {
       bindingKey: "cards",
       hostRef,
       containerRef,
+      ignore,
       onPick,
     }).state
     return null
@@ -55,10 +63,33 @@ function key(name: string) {
   return event
 }
 
-const hover = () =>
+const moveOnto = (element: Element) =>
   act(() => {
-    target.dispatchEvent(new MouseEvent("mousemove", { bubbles: true }))
+    element.dispatchEvent(new MouseEvent("mousemove", { bubbles: true }))
   })
+
+const hover = () => moveOnto(target)
+
+/** Hovers `element` and waits one frame, so a measure it scheduled has run. */
+async function showCardFor(element: Element) {
+  moveOnto(element)
+  await act(
+    () => new Promise<void>((resolve) => requestAnimationFrame(() => resolve()))
+  )
+}
+
+const outside: Element[] = []
+
+/** An element of the editor outside the inspected surface. */
+function editorElement(attributes: Record<string, string> = {}) {
+  const element = document.createElement("div")
+  for (const [name, value] of Object.entries(attributes)) {
+    element.setAttribute(name, value)
+  }
+  document.body.append(element)
+  outside.push(element)
+  return element
+}
 
 const click = () => {
   const event = new MouseEvent("click", { bubbles: true, cancelable: true })
@@ -80,6 +111,7 @@ afterEach(async () => {
   await act(async () => root?.unmount())
   root = null
   host.remove()
+  for (const element of outside.splice(0)) element.remove()
 })
 
 describe("useInspector", () => {
@@ -187,5 +219,75 @@ describe("useInspector", () => {
     const event = click()
     expect(event.defaultPrevented).toBe(false)
     expect(key("Escape").defaultPrevented).toBe(false)
+  })
+  it("hides a hovered card on a move into the editor outside the surface", async () => {
+    const { exposed } = await mount()
+    await showCardFor(target)
+    expect(exposed.state?.rect).not.toBeNull()
+
+    moveOnto(editorElement())
+
+    expect(exposed.state).toMatchObject({ rect: null, classes: [] })
+  })
+
+  it("keeps a hovered card on a move onto the card", async () => {
+    const { exposed } = await mount()
+    await showCardFor(target)
+
+    moveOnto(editorElement({ [INSPECTOR_CARD_ATTRIBUTE]: "" }))
+
+    expect(exposed.state?.rect).not.toBeNull()
+    expect(exposed.state?.classes).toEqual([
+      "bg-primary",
+      "text-primary-foreground",
+    ])
+  })
+
+  it("keeps a pinned card on any move outside the surface", async () => {
+    const { exposed } = await mount()
+    click()
+
+    moveOnto(editorElement())
+
+    expect(exposed.state).toMatchObject({
+      pinned: true,
+      classes: ["bg-primary", "text-primary-foreground"],
+    })
+    expect(exposed.state?.rect).not.toBeNull()
+  })
+
+  describe("on the document root, with the Themer's tree ignored", () => {
+    let themerControl: HTMLButtonElement
+
+    beforeEach(() => {
+      const themer = editorElement({ "data-themer": "" })
+      themerControl = document.createElement("button")
+      themerControl.className = "bg-secondary text-secondary-foreground"
+      themer.append(themerControl)
+    })
+
+    const mountOnPage = () =>
+      mount(() => {}, {
+        surface: document.documentElement,
+        ignore: "[data-themer]",
+      })
+
+    it("hides a hovered card on a move onto the ignored tree", async () => {
+      const { exposed } = await mountOnPage()
+      await showCardFor(target)
+      expect(exposed.state?.rect).not.toBeNull()
+
+      moveOnto(themerControl)
+
+      expect(exposed.state).toMatchObject({ rect: null, classes: [] })
+    })
+
+    it("never shows a card for a hover on the ignored tree", async () => {
+      const { exposed } = await mountOnPage()
+
+      await showCardFor(themerControl)
+
+      expect(exposed.state).toMatchObject({ rect: null, classes: [] })
+    })
   })
 })

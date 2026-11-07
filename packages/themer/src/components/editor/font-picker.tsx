@@ -192,10 +192,6 @@ function useDebouncedValue(value: string, delay: number) {
   return debouncedValue
 }
 
-function readRootVariable(name: string): string {
-  return getComputedStyle(document.documentElement).getPropertyValue(name)
-}
-
 // The root font variables are the Host's (and the Themer's own CSS
 // variables): they change through <html>'s class (a Host theme or mode
 // class) and inline style, so the label follows both through the shared
@@ -209,29 +205,71 @@ function subscribeToRootStyle(onChange: () => void) {
   }
 }
 
+function sameDescription(
+  a: FontValueDescription,
+  b: FontValueDescription
+): boolean {
+  switch (a.kind) {
+    case "empty":
+      return b.kind === "empty"
+    case "system":
+      return b.kind === "system" && a.generic === b.generic
+    case "family":
+      return b.kind === "family" && a.family === b.family
+    case "variable":
+      return (
+        b.kind === "variable" &&
+        a.variable === b.variable &&
+        a.family === b.family
+      )
+  }
+}
+
 /**
- * describeFontValue with any `var()` resolved against <html>'s current
- * variables. The snapshot is serialised so a root style change that leaves
- * the description as it was (every theme edit writes one) does not re-render
- * the label.
+ * The label's snapshot of describeFontValue for one value, cached against
+ * the <html> `class` and `style` it was described under. React reads the
+ * snapshot several times per apply (more under its development build), so a
+ * read for the same attributes returns the cached description with no layout
+ * read. New attributes are described once, every `var()` hop read from one
+ * computed style, and a description equal to the previous one returns the
+ * previous object, so the label does not re-render.
  */
+function createFontValueSnapshot(value: string) {
+  let classValue: string | null | undefined
+  let styleValue: string | null | undefined
+  let description: FontValueDescription | undefined
+  return () => {
+    const html = document.documentElement
+    const nextClass = html.getAttribute("class")
+    const nextStyle = html.getAttribute("style")
+    if (description && nextClass === classValue && nextStyle === styleValue) {
+      return description
+    }
+    classValue = nextClass
+    styleValue = nextStyle
+    const computed = getComputedStyle(html)
+    const next = describeFontValue(value, (name) =>
+      computed.getPropertyValue(name)
+    )
+    if (!description || !sameDescription(description, next)) {
+      description = next
+    }
+    return description
+  }
+}
+
+/** describeFontValue with any `var()` resolved against <html>'s current
+ *  variables; on the server, the value's own description. */
 function useFontValueDescription(value: string): FontValueDescription {
-  const getSnapshot = React.useCallback(
-    () => JSON.stringify(describeFontValue(value, readRootVariable)),
+  const getSnapshot = React.useMemo(
+    () => createFontValueSnapshot(value),
     [value]
   )
-  const getServerSnapshot = React.useCallback(
-    () => JSON.stringify(describeFontValue(value)),
-    [value]
-  )
-  const snapshot = React.useSyncExternalStore(
+  const serverSnapshot = React.useMemo(() => describeFontValue(value), [value])
+  return React.useSyncExternalStore(
     subscribeToRootStyle,
     getSnapshot,
-    getServerSnapshot
-  )
-  return React.useMemo(
-    () => JSON.parse(snapshot) as FontValueDescription,
-    [snapshot]
+    () => serverSnapshot
   )
 }
 

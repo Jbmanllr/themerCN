@@ -798,17 +798,28 @@ describe("Theme apply failing seeds", () => {
       after((doc) => acquireGoogleFont("Seed Sans", { doc: doc.asDocument }))
     ))
 
-  /** A font edit the label shows, then the same with a second label. */
-  async function expectLabelSeedCaught(row: string) {
+  /** A font edit the label shows, then the same with the seed (by default a
+   *  second label) in place. `seed` returns the function that removes it. */
+  async function expectLabelSeedCaught(
+    row: string,
+    seed: () => Promise<() => void> = async () => {
+      await renderFontLabels()
+      return () => {}
+    }
+  ) {
     await startLabels()
     const plain = await measure(counters(hostUnit()), () =>
       settle(() => applyToPage(nextHeadingFont()))
     )
-    await renderFontLabels()
-    const withSeed = await measure(counters(hostUnit()), () =>
-      settle(() => applyToPage(nextHeadingFont()))
-    )
-    expectCaught(row, plain, withSeed)
+    const removeSeed = await seed()
+    try {
+      const withSeed = await measure(counters(hostUnit()), () =>
+        settle(() => applyToPage(nextHeadingFont()))
+      )
+      expectCaught(row, plain, withSeed)
+    } finally {
+      removeSeed()
+    }
   }
 
   it("catches a second font label's layout read", () =>
@@ -817,8 +828,19 @@ describe("Theme apply failing seeds", () => {
   it("catches a second font label's stringify", () =>
     expectLabelSeedCaught("font label stringifies"))
 
-  it("catches a second font label's parse", () =>
-    expectLabelSeedCaught("font label parses"))
+  // A label parses nothing, so a second label adds no parse: the seed is a
+  // label whose layout read parses, as the JSON round trip once did.
+  it("catches a font label's parse", () =>
+    expectLabelSeedCaught("font label parses", async () => {
+      const read = globalThis.getComputedStyle
+      globalThis.getComputedStyle = (...args) => {
+        JSON.parse("{}")
+        return read(...args)
+      }
+      return () => {
+        globalThis.getComputedStyle = read
+      }
+    }))
 })
 
 // Last: every unseeded run above has been compared with the register.

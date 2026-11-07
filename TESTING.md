@@ -80,7 +80,7 @@ First measured on 2026-11-06 (spec #119) on one machine: an Apple M3 Max under m
 | class toggles           | 0                                                                                | must not grow | `pnpm --filter themercn exec vitest run src/utils/apply-theme.count.test.tsx` | implementer done |
 | Live frame font updates | 1                                                                                | must not grow | `pnpm --filter themercn exec vitest run src/utils/apply-theme.count.test.tsx` | implementer done |
 | font link appends       | 1                                                                                | must not grow | `pnpm --filter themercn exec vitest run src/utils/apply-theme.count.test.tsx` | implementer done |
-| font label parses       | 1                                                                                | must not grow | `pnpm --filter themercn exec vitest run src/utils/apply-theme.count.test.tsx` | implementer done |
+| font label parses       | 0                                                                                | must not grow | `pnpm --filter themercn exec vitest run src/utils/apply-theme.count.test.tsx` | implementer done |
 
 **Page load** (per load; hydration rows also per `storageNamespace` switch)
 
@@ -133,8 +133,8 @@ The ratchet. Each count is per unit of its path, as the paths ADR defines the un
 
 | Metric                  | Today | Direction     | Checked by                                                                    | Runs at          |
 | ----------------------- | ----- | ------------- | ----------------------------------------------------------------------------- | ---------------- |
-| font label layout reads | 4     | must not grow | `pnpm --filter themercn exec vitest run src/utils/apply-theme.count.test.tsx` | implementer done |
-| font label stringifies  | 5     | must not grow | `pnpm --filter themercn exec vitest run src/utils/apply-theme.count.test.tsx` | implementer done |
+| font label layout reads | 2     | must not grow | `pnpm --filter themercn exec vitest run src/utils/apply-theme.count.test.tsx` | implementer done |
+| font label stringifies  | 1     | must not grow | `pnpm --filter themercn exec vitest run src/utils/apply-theme.count.test.tsx` | implementer done |
 
 **Page load** (per load; hydration rows also per `storageNamespace` switch)
 

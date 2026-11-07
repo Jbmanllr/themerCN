@@ -476,7 +476,18 @@ describe("adoptDefaultPreset", () => {
     const state = store.getState()
     expect(state.themeState.preset).toBe("neo-brutalism")
     expect(state.history).toHaveLength(0)
+    expect(state.themeCheckpoint).toBe(state.themeState)
+    expect(state.presetBaseline).toEqual({
+      preset: "neo-brutalism",
+      styles: state.themeState.styles,
+    })
     expect(hasUnsavedChanges(state)).toBe(false)
+  })
+
+  it("leaves a fresh store alone for an unknown Preset id", () => {
+    const before = store.getState()
+    store.getState().adoptDefaultPreset("no-such-preset")
+    expect(store.getState()).toBe(before)
   })
 
   it("leaves a restored or edited store alone", () => {

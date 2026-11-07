@@ -80,7 +80,10 @@ import {
 } from "../config/constants"
 import { isDeepEqual } from "../utils/deep-equal"
 import { applySidebarSync } from "../utils/sidebar-sync"
-import { isUntouchedPreset } from "../selectors/editor-selectors"
+import {
+  isUntouchedPreset,
+  shouldAdoptPreset,
+} from "../selectors/editor-selectors"
 import { usePreferencesStore } from "./preferences-store"
 import { dropOtherVersion, guardedLocalStorage } from "./persist-options"
 
@@ -385,13 +388,13 @@ export const useEditorStore = create<EditorStore>()(
       adoptDefaultPreset: (presetId) => {
         const { restoredFromStorage, history, themeState } = get()
         if (restoredFromStorage || history.length > 0) return
-        if (themeState.preset !== defaultThemeState.preset) return
         if (!hasPreset(presetId)) return
-        // The same id is adopted again when a Host Preset replaced it (a Host
-        // "default"): the fresh state still holds the built-in styles.
         if (
-          presetId === themeState.preset &&
-          isDeepEqual(themeState.styles, resolvePresetStyles(presetId))
+          !shouldAdoptPreset(
+            themeState,
+            presetId,
+            resolvePresetStyles(presetId)
+          )
         ) {
           return
         }

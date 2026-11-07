@@ -1,12 +1,13 @@
-// Proves the untouched rule (isUntouchedPreset) on plain inputs: no Preset
-// registry and no store. The caller passes the resolved Preset styles, already
-// Sidebar-synced while Sync is on.
+// Proves the untouched rule (isUntouchedPreset) and the should-adopt rule
+// (shouldAdoptPreset) on plain inputs: no Preset registry and no store. The
+// caller passes the resolved Preset styles, already Sidebar-synced while Sync
+// is on for the untouched rule.
 import { describe, expect, it } from "vitest"
 
 import { defaultHSLAdjustments, defaultThemeState } from "../config/defaults"
 import type { PresetBaseline, ThemeEditorState, ThemeStyles } from "../types"
 import { applySidebarSync } from "../utils/sidebar-sync"
-import { isUntouchedPreset } from "./editor-selectors"
+import { isUntouchedPreset, shouldAdoptPreset } from "./editor-selectors"
 
 const brandStyles: ThemeStyles = {
   light: {
@@ -167,6 +168,52 @@ describe("isUntouchedPreset", () => {
       expect(isUntouchedPreset(themeState, baseline, presetStyles)).toBe(
         untouched
       )
+    }
+  )
+})
+
+const adoptCases: [
+  name: string,
+  themeState: ThemeEditorState,
+  presetId: string,
+  presetStyles: ThemeStyles,
+  adopt: boolean,
+][] = [
+  [
+    "a fresh default Theme and another Preset id",
+    defaultThemeState,
+    "brand",
+    brandStyles,
+    true,
+  ],
+  [
+    "a Theme on another Preset than the built-in default",
+    theme(brandStyles),
+    "plain",
+    defaultThemeState.styles,
+    false,
+  ],
+  [
+    "the same id whose resolved styles equal the Theme's",
+    defaultThemeState,
+    "default",
+    structuredClone(defaultThemeState.styles),
+    false,
+  ],
+  [
+    "a Host Preset replacing default: the same id, other styles",
+    defaultThemeState,
+    "default",
+    hostDefault,
+    true,
+  ],
+]
+
+describe("shouldAdoptPreset", () => {
+  it.each(adoptCases)(
+    "%s",
+    (_name, themeState, presetId, presetStyles, adopt) => {
+      expect(shouldAdoptPreset(themeState, presetId, presetStyles)).toBe(adopt)
     }
   )
 })

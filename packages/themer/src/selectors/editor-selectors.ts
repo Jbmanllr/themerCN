@@ -16,7 +16,7 @@ import type {
   ThemeStyles,
 } from "../types"
 import { resolvePresetStyles } from "../config/presets"
-import { defaultHSLAdjustments } from "../config/defaults"
+import { defaultHSLAdjustments, defaultThemeState } from "../config/defaults"
 import { isDeepEqual } from "../utils/deep-equal"
 import { applySidebarSync } from "../utils/sidebar-sync"
 import { isIdentityHslAdjustment } from "../utils/hsl-adjust"
@@ -109,6 +109,25 @@ export function isUntouchedPreset(
   return (
     themeState.styles === baseline.styles ||
     isDeepEqual(themeState.styles, baseline.styles)
+  )
+}
+
+/**
+ * The "should adopt" rule: a fresh Theme takes the Host's default Preset
+ * `presetId` unless it is already that Preset. Only a Theme on the built-in
+ * default Preset id adopts; on the same id it adopts only when `presetStyles`,
+ * the resolved Preset, differ from its styles (a Host Preset replacing
+ * "default"). Freshness (no restore, no history) is the caller's check.
+ */
+export function shouldAdoptPreset(
+  themeState: ThemeEditorState,
+  presetId: string,
+  presetStyles: ThemeStyles
+): boolean {
+  if (themeState.preset !== defaultThemeState.preset) return false
+  return (
+    presetId !== themeState.preset ||
+    !isDeepEqual(themeState.styles, presetStyles)
   )
 }
 

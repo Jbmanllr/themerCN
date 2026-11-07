@@ -13,8 +13,9 @@
 //   superseded load gives its stylesheet hold back and leaves the state to the
 //   newer pick.
 // - After a commit the picker keeps its stylesheet hold for FONT_HANDOFF_MS so
-//   the theme's own font slot (DynamicFontLoader) takes its reference before
-//   ours drops; releasing first would remove and refetch the link.
+//   the theme's own font slot (the Host page's Theme apply) takes its
+//   reference before ours drops; releasing first would remove and refetch
+//   the link.
 //
 // See: packages/themer/ARCHITECTURE.md (Font Catalog Flow, Font Picker
 // Positioning and Scroll Ownership).
@@ -96,8 +97,9 @@ type FontItemProps = {
 
 /**
  * How long the picker keeps its own hold on a chosen family after onChange:
- * the theme's font slot (DynamicFontLoader) takes its reference once the
- * change renders, and releasing ours first would drop and refetch the link.
+ * the theme's font slot (the Host page's Theme apply) takes its reference
+ * once the change commits, and releasing ours first would drop and refetch
+ * the link.
  */
 const FONT_HANDOFF_MS = 2000
 

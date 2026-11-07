@@ -266,6 +266,100 @@ describe("Themer", () => {
       expect(document.getElementById("themercn-restore")).toBeNull()
     })
 
+    describe("the Host page's Theme fonts", () => {
+      /** The <head> links loading `family`, the head script's included. */
+      const fontLinks = (family: string) =>
+        [...document.head.querySelectorAll("link")].filter((link) =>
+          link.href.includes(`family=${encodeURIComponent(family)}`)
+        )
+
+      function editStyles(styles: Partial<ThemeStyles["light"]>) {
+        useEditorStore.getState().setThemeState((prev) => ({
+          ...prev,
+          styles: {
+            light: { ...prev.styles.light, ...styles },
+            dark: { ...prev.styles.dark, ...styles },
+          },
+        }))
+      }
+
+      /** Everything the Themer writes on the Host page is gone. */
+      function expectHostPageClear() {
+        expect(document.documentElement.style.length).toBe(0)
+        expect(document.head.querySelectorAll("link")).toHaveLength(0)
+        expect(document.querySelector("[data-themer-overrides]")).toBeNull()
+      }
+
+      afterEach(() => {
+        document.head.querySelectorAll("link").forEach((link) => link.remove())
+      })
+
+      it("loads with the Theme and are removed with it when the override goes off", async () => {
+        await mount()
+        await act(async () =>
+          editStyles({
+            "font-sans": "Inter, sans-serif",
+            "shadow-offset-x": "3px",
+          })
+        )
+        expect(rootVar("--font-sans")).toBe("Inter, sans-serif")
+        expect(fontLinks("Inter")).toHaveLength(1)
+
+        await act(async () =>
+          usePreferencesStore.getState().setThemeOverrideEnabled(false)
+        )
+
+        expectHostPageClear()
+      })
+
+      it("are removed with the Theme when the Themer unmounts", async () => {
+        await mount()
+        await act(async () => editStyles({ "font-sans": "Inter, sans-serif" }))
+
+        await act(async () => root?.unmount())
+        root = null
+
+        expectHostPageClear()
+      })
+
+      it("keep one link per family through edits, the head script's included", async () => {
+        const namespace = "host-fonts"
+        const themeState = {
+          ...defaultThemeState,
+          styles: {
+            light: {
+              ...defaultThemeState.styles.light,
+              "font-sans": "Inter, sans-serif",
+            },
+            dark: {
+              ...defaultThemeState.styles.dark,
+              "font-sans": "Inter, sans-serif",
+            },
+          },
+        }
+        localStorage.setItem(
+          `${namespace}:editor`,
+          JSON.stringify({
+            state: {
+              themeState,
+              themeCheckpoint: themeState,
+              presetBaseline: null,
+            },
+            version: EDITOR_STATE_VERSION,
+          })
+        )
+        runHeadScript(namespace)
+        expect(fontLinks("Inter")).toHaveLength(1)
+
+        await mount({ storageNamespace: namespace })
+        await act(async () => editStyles({ primary: "#123456" }))
+        await act(async () => editStyles({ "font-heading": "Lora, serif" }))
+
+        expect(fontLinks("Inter")).toHaveLength(1)
+        expect(fontLinks("Lora")).toHaveLength(1)
+      })
+    })
+
     describe("switching storageNamespace", () => {
       // Their own namespaces: <Themer> hydrates once per namespace.
       async function rerender(props: ThemerProps) {

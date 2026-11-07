@@ -64,15 +64,6 @@ type ApplyThemeOptions = {
   mode?: ThemeMode
 }
 
-type ApplyThemeToDocumentOptions = ApplyThemeOptions & {
-  /**
-   * Also load the theme's Google fonts into this document. Fonts are per
-   * document, so an iframe needs its own links; the host page gets them from
-   * DynamicFontLoader instead.
-   */
-  loadFonts?: boolean
-}
-
 /**
  * The non-colour keys a theme writes as `--key` (fonts, radius, spacing,
  * letter spacing). Read only by the fallback cleanup list; applying writes
@@ -167,8 +158,6 @@ const shadowScales: Partial<
 const overrideStyles = new WeakMap<Document, HTMLStyleElement>()
 /** How many stylesheets the document had when its override was written. */
 const overrideSheetCounts = new WeakMap<Document, number>()
-/** Documents whose theme fonts this module loaded (applyThemeToDocument). */
-const documentsWithThemeFonts = new WeakSet<Document>()
 
 function trackingBase(letterSpacing: string): string {
   // `normal` is a keyword calc() cannot take; it equals zero tracking.
@@ -469,40 +458,21 @@ export function removeThemeFromElement(
 
 /**
  * Apply the theme to a whole document: variables on its <html>, the shadow
- * override sheet in its <head> and, with `loadFonts`, the theme's Google
- * fonts. The head script's restore sheet (RESTORE_STYLE_ID) in that document
- * is removed: the theme applied here replaces it. Works for a same-origin iframe's `contentDocument`; call again on
- * every theme change and once more after the frame navigates (a new
- * document).
+ * override sheet in its <head> and the theme's Google fonts (fonts are per
+ * document, so a frame needs its own links). The head script's restore sheet
+ * (RESTORE_STYLE_ID) in that document is removed: the theme applied here
+ * replaces it. next-themes owns the `dark` class, so it is never toggled.
  */
-export function applyThemeToDocument(
-  doc: Document,
-  themeState: ThemeEditorState,
-  options: ApplyThemeToDocumentOptions = {}
-): string[] {
-  const { loadFonts = false, ...applyOptions } = options
-  const keys = applyThemeToElement(
-    themeState,
-    doc.documentElement,
-    applyOptions
-  )
+function applyThemeToDocument(doc: Document, themeState: ThemeEditorState) {
+  applyThemeToElement(themeState, doc.documentElement, { updateClass: false })
   doc.getElementById(RESTORE_STYLE_ID)?.remove()
-
-  if (loadFonts) {
-    setThemeFonts(doc, getThemeFonts(themeState.styles).families)
-    documentsWithThemeFonts.add(doc)
-  }
-
-  return keys
+  setThemeFonts(doc, getThemeFonts(themeState.styles).families)
 }
 
 /** Undo applyThemeToDocument: variables, override sheet and its fonts. */
-export function removeThemeFromDocument(doc: Document): void {
+function removeThemeFromDocument(doc: Document): void {
   removeThemeFromElement(doc.documentElement)
-  if (documentsWithThemeFonts.has(doc)) {
-    clearThemeFonts(doc)
-    documentsWithThemeFonts.delete(doc)
-  }
+  clearThemeFonts(doc)
 }
 
 /** The part of the editor store a themed document reads. */
@@ -517,8 +487,10 @@ type ThemeStateSource = Pick<
  * sheet), then again on every Theme state change. The returned stop ends the
  * subscription and removes the Theme, the shadow override sheet and the
  * Theme fonts from the document. The caller decides when it runs (while the
- * Theme override is on); one instance themes one document. next-themes owns
- * the `dark` class in every themed document, so it is never toggled here.
+ * Theme override is on); one instance themes one document: the provider runs
+ * one on the Host page, the Live view one per Live frame document.
+ * next-themes owns the `dark` class in every themed document, so it is never
+ * toggled here.
  *
  * A document that goes away mid-navigation throws on its next apply: that
  * apply is skipped, and the caller starts a new instance on the new document.
@@ -528,10 +500,7 @@ export function startThemedDocument(
   store: ThemeStateSource
 ): () => void {
   const apply = (themeState: ThemeEditorState) =>
-    applyThemeToDocument(doc, themeState, {
-      loadFonts: true,
-      updateClass: false,
-    })
+    applyThemeToDocument(doc, themeState)
 
   apply(store.getState().themeState)
   const unsubscribe = store.subscribe((next, previous) => {

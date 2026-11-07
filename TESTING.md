@@ -71,17 +71,17 @@ First measured on 2026-11-06 (spec #119) on one machine: an Apple M3 Max under m
 
 **Theme apply** (per apply and document)
 
-| Metric                  | Rule                                                                             | Direction     | Checked by                                                                    | Runs at          |
-| ----------------------- | -------------------------------------------------------------------------------- | ------------- | ----------------------------------------------------------------------------- | ---------------- |
-| property writes         | 1 one-token edit; 8 shadow-input edit; 1 stylesheet-count change; 25 mode toggle | must not grow | `pnpm --filter themercn exec vitest run src/utils/apply-theme.count.test.tsx` | implementer done |
-| shadow colour parses    | 0 one-token edit; 1 shadow-input edit; 0 stylesheet-count change; 1 mode toggle  | must not grow | `pnpm --filter themercn exec vitest run src/utils/apply-theme.count.test.tsx` | implementer done |
-| CSSOM walks             | 0 one-token edit; 0 shadow-input edit; 1 stylesheet-count change                 | must not grow | `pnpm --filter themercn exec vitest run src/utils/apply-theme.count.test.tsx` | implementer done |
-| override sheet writes   | 0 one-token edit; 0 shadow-input edit; 1 stylesheet-count change                 | must not grow | `pnpm --filter themercn exec vitest run src/utils/apply-theme.count.test.tsx` | implementer done |
-| restore-sheet lookups   | 1                                                                                | must not grow | `pnpm --filter themercn exec vitest run src/utils/apply-theme.count.test.tsx` | implementer done |
-| class toggles           | 0                                                                                | must not grow | `pnpm --filter themercn exec vitest run src/utils/apply-theme.count.test.tsx` | implementer done |
-| Live frame font updates | 1                                                                                | must not grow | `pnpm --filter themercn exec vitest run src/utils/apply-theme.count.test.tsx` | implementer done |
-| font link appends       | 1                                                                                | must not grow | `pnpm --filter themercn exec vitest run src/utils/apply-theme.count.test.tsx` | implementer done |
-| font label parses       | 0                                                                                | must not grow | `pnpm --filter themercn exec vitest run src/utils/apply-theme.count.test.tsx` | implementer done |
+| Metric                | Rule                                                                             | Direction     | Checked by                                                                    | Runs at          |
+| --------------------- | -------------------------------------------------------------------------------- | ------------- | ----------------------------------------------------------------------------- | ---------------- |
+| property writes       | 1 one-token edit; 8 shadow-input edit; 1 stylesheet-count change; 25 mode toggle | must not grow | `pnpm --filter themercn exec vitest run src/utils/apply-theme.count.test.tsx` | implementer done |
+| shadow colour parses  | 0 one-token edit; 1 shadow-input edit; 0 stylesheet-count change; 1 mode toggle  | must not grow | `pnpm --filter themercn exec vitest run src/utils/apply-theme.count.test.tsx` | implementer done |
+| CSSOM walks           | 0 one-token edit; 0 shadow-input edit; 1 stylesheet-count change                 | must not grow | `pnpm --filter themercn exec vitest run src/utils/apply-theme.count.test.tsx` | implementer done |
+| override sheet writes | 0 one-token edit; 0 shadow-input edit; 1 stylesheet-count change                 | must not grow | `pnpm --filter themercn exec vitest run src/utils/apply-theme.count.test.tsx` | implementer done |
+| restore-sheet lookups | 1                                                                                | must not grow | `pnpm --filter themercn exec vitest run src/utils/apply-theme.count.test.tsx` | implementer done |
+| class toggles         | 0                                                                                | must not grow | `pnpm --filter themercn exec vitest run src/utils/apply-theme.count.test.tsx` | implementer done |
+| Theme font updates    | 1                                                                                | must not grow | `pnpm --filter themercn exec vitest run src/utils/apply-theme.count.test.tsx` | implementer done |
+| font link appends     | 1                                                                                | must not grow | `pnpm --filter themercn exec vitest run src/utils/apply-theme.count.test.tsx` | implementer done |
+| font label parses     | 0                                                                                | must not grow | `pnpm --filter themercn exec vitest run src/utils/apply-theme.count.test.tsx` | implementer done |
 
 **Page load** (per load; hydration rows also per `storageNamespace` switch)
 

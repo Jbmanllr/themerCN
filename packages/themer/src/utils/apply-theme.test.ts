@@ -13,10 +13,8 @@ import type { ThemeEditorState } from "../types"
 import {
   SHADOW_OVERRIDE_CSS,
   THEMER_OVERRIDES_ATTRIBUTE,
-  applyThemeToDocument,
   applyThemeToElement,
   computeThemeProperties,
-  removeThemeFromDocument,
   removeThemeFromElement,
   startThemedDocument,
 } from "./apply-theme"
@@ -161,7 +159,8 @@ describe("applyThemeToElement / removeThemeFromElement", () => {
     const frame = new FakeDocument()
     const before = themeWith({ "shadow-offset-x": "2px" })
     applyThemeToElement(before, root(host))
-    applyThemeToDocument(frame.asDocument, before)
+    const store = createStore(() => ({ themeState: before }))
+    const stop = startThemedDocument(frame.asDocument, store)
     const after = themeWith({
       "shadow-offset-x": "2px",
       primary: "oklch(0.5 0.1 42)",
@@ -171,32 +170,37 @@ describe("applyThemeToElement / removeThemeFromElement", () => {
       const style = doc.documentElement.style
       const set = vi.spyOn(style, "setProperty")
       const remove = vi.spyOn(style, "removeProperty")
-      const keys =
-        doc === host
-          ? applyThemeToElement(after, root(doc))
-          : applyThemeToDocument(doc.asDocument, after)
+      if (doc === host) {
+        // The returned list is still every property the Theme writes.
+        expect(applyThemeToElement(after, root(doc))).toEqual(
+          Object.keys(computeThemeProperties(after))
+        )
+      } else store.setState({ themeState: after })
 
       expect(set.mock.calls).toEqual([["--primary", "oklch(0.5 0.1 42)"]])
       expect(remove).not.toHaveBeenCalled()
-      // The returned list is still every property the Theme writes.
-      expect(keys).toEqual(Object.keys(computeThemeProperties(after)))
       for (const [key, value] of Object.entries(computeThemeProperties(after)))
         expect(style.getPropertyValue(key)).toBe(value)
     }
+    stop()
   })
 
   it("writes the whole Theme onto a document it has no record of", () => {
     const old = new FakeDocument()
     const theme = themeWith({ primary: "#123456" })
-    applyThemeToDocument(old.asDocument, theme)
+    const store = createStore(() => ({ themeState: theme }))
+    const stopOld = startThemedDocument(old.asDocument, store)
 
     // The Live frame navigated: a new document, same Theme state.
     const navigated = new FakeDocument()
-    const keys = applyThemeToDocument(navigated.asDocument, theme)
+    const stop = startThemedDocument(navigated.asDocument, store)
 
+    const keys = Object.keys(computeThemeProperties(theme))
     const style = navigated.documentElement.style
     expect(keys.length).toBeGreaterThan(0)
     expect([...style.values.keys()].sort()).toEqual([...keys].sort())
+    stop()
+    stopOld()
   })
 
   it("writes the whole Theme again after it was removed from the element", () => {
@@ -361,29 +365,6 @@ function shadowRule(selectorText: string) {
   }
 }
 
-describe("applyThemeToDocument", () => {
-  it("loads the theme's Google fonts into that document and releases them", () => {
-    const doc = new FakeDocument()
-    const theme = themeWith({
-      "font-sans": "Inter, ui-sans-serif, sans-serif",
-      "font-heading": '"Source Serif 4", ui-serif, serif',
-      "font-serif": "var(--font-fraunces), ui-serif, Georgia, serif",
-      "font-mono": "ui-monospace, monospace",
-    })
-
-    applyThemeToDocument(doc.asDocument, theme, { loadFonts: true })
-    applyThemeToDocument(doc.asDocument, theme, { loadFonts: true })
-    const families = doc
-      .headChildren("link")
-      .map((link) => link.getAttribute("data-themer-font"))
-    expect(families.sort()).toEqual(["Inter", "Source Serif 4"])
-
-    removeThemeFromDocument(doc.asDocument)
-    expect(doc.head.children).toEqual([])
-    expect(doc.documentElement.style.length).toBe(0)
-  })
-})
-
 describe("startThemedDocument", () => {
   const OWN_SHADOWS = { "shadow-offset-x": "4px" }
 
@@ -442,6 +423,24 @@ describe("startThemedDocument", () => {
     stop()
   })
 
+  it("keeps one link per Google family through re-applies, skipping host and system fonts", () => {
+    const doc = new FakeDocument()
+    const fonts = {
+      "font-sans": "Inter, ui-sans-serif, sans-serif",
+      "font-heading": '"Source Serif 4", ui-serif, serif',
+      "font-serif": "var(--font-fraunces), ui-serif, Georgia, serif",
+      "font-mono": "ui-monospace, monospace",
+    }
+    const store = createStore(() => ({ themeState: themeWith(fonts) }))
+    const stop = startThemedDocument(doc.asDocument, store)
+
+    store.setState({ themeState: themeWith({ ...fonts, primary: "#abcdef" }) })
+
+    expect(fontLinks(doc).sort()).toEqual(["Inter", "Source Serif 4"])
+    stop()
+    expect(doc.head.children).toEqual([])
+  })
+
   it("on stop, removes everything it wrote and no longer follows the store", () => {
     const doc = new FakeDocument()
     const store = createStore(() => ({
@@ -457,20 +456,6 @@ describe("startThemedDocument", () => {
 
     expect(doc.documentElement.style.length).toBe(0)
     expect(doc.head.children).toEqual([])
-  })
-})
-
-describe("applyThemeToDocument over the head script", () => {
-  it("replaces the head script's restore sheet in that document", () => {
-    const doc = new FakeDocument()
-    const restore = doc.createElement("style")
-    restore.setAttribute("id", "themercn-restore")
-    doc.head.appendChild(restore)
-
-    applyThemeToDocument(doc.asDocument, themeWith({ primary: "#123456" }))
-
-    expect(doc.getElementById("themercn-restore")).toBeNull()
-    expect(root(doc).style.getPropertyValue("--primary")).toBe("#123456")
   })
 })
 

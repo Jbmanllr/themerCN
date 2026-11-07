@@ -254,8 +254,8 @@ function slotsOf(styles: ThemeFontModeStyles): ThemeFontSlots {
 }
 
 // Keyed by the Theme's styles object: the store replaces it on every Theme
-// change, so the Host page's font loader and the Live frame apply of one
-// Theme state share one derivation.
+// change, so the Host page's and the Live frame's applies of one Theme state
+// share one derivation.
 const themeFontsByStyles = new WeakMap<ThemeFontStyles, ThemeFonts>()
 
 /**

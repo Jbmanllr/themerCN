@@ -6,15 +6,16 @@
 // with `pnpm --filter themercn exec vitest run src/utils/apply-theme.count.test.tsx`.
 //
 // - Row tests drive one apply through the apply-theme interface on the fake
-//   document, once per outcome the contract splits, for the Host page apply
-//   (applyThemeToElement, as the provider calls it) and the Live frame apply
-//   (a store edit reaching startThemedDocument, as the Live view starts it).
+//   document, once per outcome the contract splits: a store edit reaching
+//   startThemedDocument, as the provider starts it on the Host page and the
+//   Live view on each Live frame document.
 // - A themed document's work is told apart by its document, not its caller:
 //   its applies run under the store's subscription, whose stack names no
 //   caller of the document's own. The startThemedDocument export is wrapped
 //   to record which document's instance is running.
-// - Font label tests mount one font label on the real document and apply to
-//   its <html>, which the label observes.
+// - Font label tests mount one font label on the real document and theme it
+//   with startThemedDocument, as the provider does; the label observes its
+//   <html>.
 // - The composition run mounts <Themer> (Workspace) on the Live tab, with one
 //   font label, and counts one store edit on the Host page and on the Live
 //   frame, each its own unit, and asserts one derivation of the Theme's font
@@ -62,9 +63,7 @@ import type { ThemeEditorState } from "../types"
 import type { ThemeStyleProps } from "../types/theme"
 import {
   THEMER_OVERRIDES_ATTRIBUTE,
-  applyThemeToElement,
   computeThemeProperties,
-  removeThemeFromElement,
   startThemedDocument,
 } from "./apply-theme"
 import { FakeDocument, type FakeStyleSheet } from "./fake-document.test-helper"
@@ -107,16 +106,13 @@ const theming = vi.hoisted(() => {
     },
   }
 })
-// The Host page apply, counted per call for the mode toggle's exactly-1.
 // Each themed document's start and store-driven applies run marked with
 // its document.
 vi.mock("./apply-theme", async (importOriginal) => {
-  const { passThrough } = await import("../../../../tests/counting")
   const real = await importOriginal<typeof import("./apply-theme")>()
   type Store = Parameters<typeof real.startThemedDocument>[1]
   return {
     ...real,
-    applyThemeToElement: passThrough("theme apply", real.applyThemeToElement),
     startThemedDocument: (doc: Document, store: Store) =>
       theming.during(doc, () =>
         real.startThemedDocument(doc, {
@@ -154,10 +150,9 @@ const MODE_TOGGLE = {
   "shadow colour parses": "mode toggle",
 } as const
 
-// Stacks that tell the work apart: the apply-theme module itself, the Host
-// page's caller in the composition, and a font label.
+// Stacks that tell the work apart: the apply-theme module itself and a font
+// label.
 const APPLY_THEME = /\/utils\/apply-theme\.ts/
-const HOST_CALLER = /\/components\/themer-provider\.tsx/
 const FONT_LABEL = /\/components\/editor\/font-picker\.tsx/
 // The colour mode's own switch of the `.dark` class (setRootClassMode).
 const COLOUR_MODE_SWITCH = /\/hooks\/use-color-mode\.ts/
@@ -178,21 +173,12 @@ type Unit = {
   labels: boolean
 }
 
-/** The Host page's unit in the composition: the provider's apply. Its mode
- *  sync sets the store's mode, so on a mode toggle the Live frame's apply
- *  also runs under the provider's frame: a running themed document marks
- *  that apply as its own. */
-const HOST_PAGE = (): Unit => ({
-  doc: document,
-  marks: () => calledFrom(HOST_CALLER) && theming.current() === null,
-  labels: true,
-})
-
-/** A themed document's unit: its themed-document instance's work. */
+/** A themed document's unit: its themed-document instance's work, and on
+ *  the Host page its font labels'. */
 const THEMED_DOCUMENT = (doc: Document): Unit => ({
   doc,
   marks: () => theming.current() === doc,
-  labels: false,
+  labels: doc === document,
 })
 
 const isTag = (node: unknown, tag: string) =>
@@ -333,7 +319,7 @@ function counters({ doc, marks, outcomeToggle, labels }: Unit): Counter[] {
         )
       ),
     countExport(
-      "Live frame font updates",
+      "Theme font updates",
       "theme font update",
       (target: Document | undefined) => target === doc
     ),
@@ -406,23 +392,14 @@ type Start = (
   first: ThemeEditorState
 ) => (theme: ThemeEditorState) => void
 
-/** The Host page's apply, as the provider calls it. */
-const startHost: Start = (doc, first) => {
-  const apply = (theme: ThemeEditorState) => {
-    applyThemeToElement(theme, doc.documentElement as unknown as HTMLElement, {
-      updateClass: false,
-    })
-  }
-  apply(first)
-  return apply
-}
-/** The Live frame's themed document, as the Live view starts it: a next
- *  Theme is a store edit. */
-const startLive: Start = (doc, first) => {
+/** A themed document, as the provider starts it on the Host page and the
+ *  Live view on a Live frame document: a next Theme is a store edit. */
+function themeDocument(doc: Document, first: ThemeEditorState) {
   const store = createStore(() => ({ themeState: first }))
-  cleanups.push(startThemedDocument(doc.asDocument, store))
-  return (theme) => store.setState({ themeState: theme })
+  cleanups.push(startThemedDocument(doc, store))
+  return (theme: ThemeEditorState) => store.setState({ themeState: theme })
 }
+const startThemed: Start = (doc, first) => themeDocument(doc.asDocument, first)
 
 const fakeUnit = (doc: FakeDocument): Unit => ({
   doc: doc.asDocument,
@@ -454,26 +431,19 @@ describe("Theme apply rows", () => {
       sheetLoaded: true,
     },
   ]
-  const documents = [
-    { name: "Host page", start: startHost },
-    { name: "Live frame", start: startLive },
-  ]
+  for (const { outcome, outcomes, edit, sheetLoaded } of cases) {
+    it(`counts ${outcome} on a themed document`, async () => {
+      const doc = new FakeDocument()
+      const apply = startThemed(doc, themeWith(OWN_SHADOWS))
+      if (sheetLoaded) doc.styleSheets = [...doc.styleSheets, VARIANT_SHEET]
 
-  for (const { name, start } of documents) {
-    for (const { outcome, outcomes, edit, sheetLoaded } of cases) {
-      it(`counts ${outcome} on the ${name}`, async () => {
-        const doc = new FakeDocument()
-        const apply = start(doc, themeWith(OWN_SHADOWS))
-        if (sheetLoaded) doc.styleSheets = [...doc.styleSheets, VARIANT_SHEET]
+      const counts = await measure(counters(fakeUnit(doc)), () =>
+        apply(themeWith(edit()))
+      )
 
-        const counts = await measure(counters(fakeUnit(doc)), () =>
-          apply(themeWith(edit()))
-        )
-
-        report(`row: ${name}, ${outcome}`, counts)
-        checkCounts({ path: PATH, outcomes, counts })
-      })
-    }
+      report(`row: themed document, ${outcome}`, counts)
+      checkCounts({ path: PATH, outcomes, counts })
+    })
   }
 })
 
@@ -520,18 +490,21 @@ const renderFontLabels = (count = 1) =>
 
 const hostUnit = (): Unit => ({ doc: document, marks: null, labels: true })
 
-/** The Host page's apply to the real <html>, which font labels observe. */
-const applyToPage = (styles: Styles) =>
-  applyThemeToElement(themeWith(styles), document.documentElement, {
-    updateClass: false,
-  })
+/** The Host page's apply to the real <html>, which font labels observe: a
+ *  store edit reaching the page's themed document, which startLabels starts. */
+let applyToPage: (styles: Styles) => void = () => {
+  throw new Error("the Host page is not themed: call startLabels first")
+}
 
 /** A label mounted and settled on a first Theme, so the edit is steady state. */
 async function startLabels(count = 1) {
-  cleanups.push(() => removeThemeFromElement(document.documentElement))
-  await settle(() =>
-    applyToPage({ ...OWN_SHADOWS, "font-heading": "Lora, serif" })
-  )
+  await settle(() => {
+    const apply = themeDocument(
+      document,
+      themeWith({ ...OWN_SHADOWS, "font-heading": "Lora, serif" })
+    )
+    applyToPage = (styles) => apply(themeWith(styles))
+  })
   await renderFontLabels(count)
 }
 
@@ -682,7 +655,7 @@ async function measureBoth(frameDoc: Document, edit: () => void) {
   let live: Counts = {}
   let host: Counts = {}
   const shared = await measure([countFontFamilyDerivations()], async () => {
-    host = await measure(counters(HOST_PAGE()), async () => {
+    host = await measure(counters(THEMED_DOCUMENT(document)), async () => {
       live = await measure(counters(THEMED_DOCUMENT(frameDoc)), () =>
         settle(edit)
       )
@@ -692,31 +665,21 @@ async function measureBoth(frameDoc: Document, edit: () => void) {
 }
 
 /** A light/dark toggle through the Themer's mode toggle, counted on the
- *  Host page: its counts, and exactly 1 Host page apply (once applies are
- *  diffed, a second apply in the same mode writes no property, so the
- *  property writes alone would not see it). */
+ *  Host page: its counts, and exactly 1 Host page apply, seen as its 1 Theme
+ *  font update (once applies are diffed, a second apply in the same mode
+ *  writes no property, so the property writes alone would not see it). */
 async function expectOneApplyPerModeToggle(name: string) {
   const toggle = document.querySelector<HTMLElement>(
     '[aria-label="Switch to dark mode"]'
   )
   if (!toggle) throw new Error("the mode toggle did not render")
-  let applies: Counts = {}
   // The toggle's one switch of the `.dark` class is the outcome, not its
   // work; any other class toggle on the toggle's path still counts.
-  const unit = { ...HOST_PAGE(), outcomeToggle: COLOUR_MODE_SWITCH }
-  const host = await measure(counters(unit), async () => {
-    applies = await measure(
-      [
-        countExport(
-          "Host page applies",
-          "theme apply",
-          (_state: unknown, element: unknown) =>
-            element === document.documentElement
-        ),
-      ],
-      () => settle(() => toggle.click())
-    )
-  })
+  const unit = {
+    ...THEMED_DOCUMENT(document),
+    outcomeToggle: COLOUR_MODE_SWITCH,
+  }
+  const host = await measure(counters(unit), () => settle(() => toggle.click()))
 
   report(`composition: ${name}, mode toggle, Host page`, host)
   expect(document.documentElement.classList.contains("dark")).toBe(true)
@@ -726,7 +689,8 @@ async function expectOneApplyPerModeToggle(name: string) {
     perRow: MODE_TOGGLE,
     counts: host,
   })
-  expect(applies["Host page applies"]).toBe(1)
+  // Each apply of a themed document updates its Theme fonts once.
+  expect(host["Theme font updates"]).toBe(1)
 }
 
 describe("Theme apply composition", () => {
@@ -762,8 +726,9 @@ describe("Theme apply composition", () => {
       report(`composition: ${name}, Host page`, host)
       report(`composition: ${name}, Live frame`, live)
       // A colour edit is a new Theme state: its families are derived once,
-      // for the Host page and the Live frame together.
-      expect(derivations).toBe(1)
+      // for the Host page and the Live frame together; with the override off
+      // no document is themed, so none.
+      expect(derivations).toBe(overrideOff ? 0 : 1)
       checkCounts({ path: PATH, outcomes: ONE_TOKEN, counts: host })
       checkCounts({ path: PATH, outcomes: ONE_TOKEN, counts: live })
       if (overrideOff || liveOff) {
@@ -791,7 +756,7 @@ describe("Theme apply failing seeds", () => {
 
   async function expectSeedCaught(row: string, seeded: Seeded) {
     const doc = new FakeDocument()
-    const apply = startLive(doc, themeWith(OWN_SHADOWS))
+    const apply = startThemed(doc, themeWith(OWN_SHADOWS))
     const plain = await measure(counters(fakeUnit(doc)), () =>
       apply(themeWith({ ...OWN_SHADOWS, ...nextPrimary() }))
     )
@@ -856,7 +821,7 @@ describe("Theme apply failing seeds", () => {
 
   it("catches a second Theme font update", () =>
     expectSeedCaught(
-      "Live frame font updates",
+      "Theme font updates",
       after((doc) => setThemeFonts(doc.asDocument, []))
     ))
 

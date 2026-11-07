@@ -4,8 +4,9 @@
 // (the sheet also mirrors the host's variant shadow rules), a re-apply or a
 // removal touches exactly what was written, and Host extra colours are
 // ordinary keys.
-import { afterEach, describe, expect, it } from "vitest"
+import { afterEach, describe, expect, it, vi } from "vitest"
 import { defaultThemeState } from "../config/defaults"
+import { THEMER_STYLE_ATTRIBUTE } from "../config/constants"
 import { configureExtraColors } from "../config/extra-colors"
 import type { ThemeEditorState } from "../types"
 import {
@@ -153,6 +154,63 @@ describe("applyThemeToElement / removeThemeFromElement", () => {
     expect(doc.documentElement.style.getPropertyValue("--chart-9")).toBe("")
   })
 
+  it("writes only the changed property on a one-token edit, on each document", () => {
+    const host = new FakeDocument()
+    const frame = new FakeDocument()
+    const before = themeWith({ "shadow-offset-x": "2px" })
+    applyThemeToElement(before, root(host))
+    applyThemeToDocument(frame.asDocument, before)
+    const after = themeWith({
+      "shadow-offset-x": "2px",
+      primary: "oklch(0.5 0.1 42)",
+    })
+
+    for (const doc of [host, frame]) {
+      const style = doc.documentElement.style
+      const set = vi.spyOn(style, "setProperty")
+      const remove = vi.spyOn(style, "removeProperty")
+      const keys =
+        doc === host
+          ? applyThemeToElement(after, root(doc))
+          : applyThemeToDocument(doc.asDocument, after)
+
+      expect(set.mock.calls).toEqual([["--primary", "oklch(0.5 0.1 42)"]])
+      expect(remove).not.toHaveBeenCalled()
+      // The returned list is still every property the Theme writes.
+      expect(keys).toEqual(Object.keys(computeThemeProperties(after)))
+      for (const [key, value] of Object.entries(computeThemeProperties(after)))
+        expect(style.getPropertyValue(key)).toBe(value)
+    }
+  })
+
+  it("writes the whole Theme onto a document it has no record of", () => {
+    const old = new FakeDocument()
+    const theme = themeWith({ primary: "#123456" })
+    applyThemeToDocument(old.asDocument, theme)
+
+    // The Live frame navigated: a new document, same Theme state.
+    const navigated = new FakeDocument()
+    const keys = applyThemeToDocument(navigated.asDocument, theme)
+
+    const style = navigated.documentElement.style
+    expect(keys.length).toBeGreaterThan(0)
+    expect([...style.values.keys()].sort()).toEqual([...keys].sort())
+  })
+
+  it("writes the whole Theme again after it was removed from the element", () => {
+    const doc = new FakeDocument()
+    const html = root(doc)
+    const theme = themeWith({ primary: "#123456" })
+    applyThemeToElement(theme, html)
+    removeThemeFromElement(html)
+
+    const keys = applyThemeToElement(theme, html)
+
+    expect([...doc.documentElement.style.values.keys()].sort()).toEqual(
+      [...keys].sort()
+    )
+  })
+
   it("toggles the dark class unless the host owns it", () => {
     const doc = new FakeDocument()
     const html = root(doc)
@@ -262,6 +320,28 @@ describe("applyThemeToElement / removeThemeFromElement", () => {
     expect(sheets).toHaveLength(1)
     expect(sheets[0]!.textContent).toBe(
       `${SHADOW_OVERRIDE_CSS}\n${active} { --tw-shadow: var(--shadow) !important; }`
+    )
+  })
+  // The Themer's own sheet holds variant shadow rules scoped to its UI; on a
+  // stylesheet-count change only the Host's sheets are read.
+  it("mirrors a variant shadow rule from a Host sheet but not the same rule from the Themer's own sheet", () => {
+    const doc = new FakeDocument()
+    const active = String.raw`.data-active\:shadow-sm[data-active]`
+    const ownerWith = (attribute: string | null) => ({
+      hasAttribute: (name: string) => name === attribute,
+    })
+    doc.styleSheets = [
+      {
+        ownerNode: ownerWith(THEMER_STYLE_ATTRIBUTE),
+        cssRules: [shadowRule(active)],
+      },
+      { ownerNode: ownerWith(null), cssRules: [shadowRule(active)] },
+    ]
+
+    applyThemeToElement(themeWith({ "shadow-opacity": "0.3" }), root(doc))
+
+    expect(doc.headChildren("style")[0]!.textContent).toBe(
+      `${SHADOW_OVERRIDE_CSS}\n${active} { --tw-shadow: var(--shadow-sm) !important; }`
     )
   })
 })

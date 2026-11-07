@@ -649,10 +649,16 @@ describe("Theme apply failing seeds", () => {
       after((doc) => doc.documentElement.style.setProperty("--seed", "1"))
     ))
 
+  // The shadow scale is memoised on its inputs, so the seed's second
+  // property step is for a shadow input the memo has not seen.
   it("catches a second property step that parses the shadow colour", () =>
     expectSeedCaught(
       "shadow colour parses",
-      after((_doc, theme) => computeThemeProperties(theme))
+      after(() =>
+        computeThemeProperties(
+          themeWith({ ...OWN_SHADOWS, "shadow-blur": `${++edits}px` })
+        )
+      )
     ))
 
   it("catches a CSSOM walk on an apply whose stylesheet count changed", () =>

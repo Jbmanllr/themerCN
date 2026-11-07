@@ -100,6 +100,14 @@ export const PREFERENCES_VERSION = 1
 export const RESTORE_STYLE_ID = "themercn-restore"
 
 /**
+ * Attribute on the <style> that carries the Themer's own CSS
+ * (components/themer-scope.tsx). apply-theme's CSSOM walk skips a sheet
+ * whose owner node carries it: only the Host's variant shadow rules are
+ * mirrored into the shadow override sheet.
+ */
+export const THEMER_STYLE_ATTRIBUTE = "data-themer-style"
+
+/**
  * WCAG contrast ratio thresholds that utils/contrast-checker.ts grades a
  * foreground and background pair against.
  */

@@ -72,6 +72,8 @@ First measured on 2026-11-06 (spec #119) on one machine: an Apple M3 Max under m
 
 | Metric                  | Rule                                                             | Direction     | Checked by                                                                    | Runs at          |
 | ----------------------- | ---------------------------------------------------------------- | ------------- | ----------------------------------------------------------------------------- | ---------------- |
+| property writes         | 1 one-token edit; 8 shadow-input edit; 1 stylesheet-count change | must not grow | `pnpm --filter themercn exec vitest run src/utils/apply-theme.count.test.tsx` | implementer done |
+| shadow colour parses    | 0 one-token edit; 1 shadow-input edit; 0 stylesheet-count change | must not grow | `pnpm --filter themercn exec vitest run src/utils/apply-theme.count.test.tsx` | implementer done |
 | CSSOM walks             | 0 one-token edit; 0 shadow-input edit; 1 stylesheet-count change | must not grow | `pnpm --filter themercn exec vitest run src/utils/apply-theme.count.test.tsx` | implementer done |
 | override sheet writes   | 0 one-token edit; 0 shadow-input edit; 1 stylesheet-count change | must not grow | `pnpm --filter themercn exec vitest run src/utils/apply-theme.count.test.tsx` | implementer done |
 | restore-sheet lookups   | 1                                                                | must not grow | `pnpm --filter themercn exec vitest run src/utils/apply-theme.count.test.tsx` | implementer done |
@@ -124,12 +126,10 @@ The ratchet. Each count is per unit of its path, as the paths ADR defines the un
 
 **Theme apply** (per apply and document)
 
-| Metric                  | Today                                                               | Direction     | Checked by                                                                    | Runs at          |
-| ----------------------- | ------------------------------------------------------------------- | ------------- | ----------------------------------------------------------------------------- | ---------------- |
-| property writes         | 54 one-token edit; 54 shadow-input edit; 54 stylesheet-count change | must not grow | `pnpm --filter themercn exec vitest run src/utils/apply-theme.count.test.tsx` | implementer done |
-| shadow colour parses    | 1 one-token edit; 1 shadow-input edit; 1 stylesheet-count change    | must not grow | `pnpm --filter themercn exec vitest run src/utils/apply-theme.count.test.tsx` | implementer done |
-| font label layout reads | 4                                                                   | must not grow | `pnpm --filter themercn exec vitest run src/utils/apply-theme.count.test.tsx` | implementer done |
-| font label stringifies  | 5                                                                   | must not grow | `pnpm --filter themercn exec vitest run src/utils/apply-theme.count.test.tsx` | implementer done |
+| Metric                  | Today | Direction     | Checked by                                                                    | Runs at          |
+| ----------------------- | ----- | ------------- | ----------------------------------------------------------------------------- | ---------------- |
+| font label layout reads | 4     | must not grow | `pnpm --filter themercn exec vitest run src/utils/apply-theme.count.test.tsx` | implementer done |
+| font label stringifies  | 5     | must not grow | `pnpm --filter themercn exec vitest run src/utils/apply-theme.count.test.tsx` | implementer done |
 
 **Page load** (per load; hydration rows also per `storageNamespace` switch)
 
@@ -154,23 +154,21 @@ The ratchet. Each count is per unit of its path, as the paths ADR defines the un
 
 ### Exceptions
 
-| ID  | Rule                    | Path                 | Reason                                                                                                                                                 | Owner                    | Expires    |
-| --- | ----------------------- | -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------ | ---------- |
-| E6  | property writes         | Theme apply          | Debt: "every apply writes all 46 properties, 54 with own shadows, even for a one-token edit"; remediation map #111                                     | Jbmanllr (project owner) | 2027-02-04 |
-| E7  | shadow colour parses    | Theme apply          | Debt: "The property map and the shadow colour parse run once per document and apply … even when the shadow inputs didn't change"; remediation map #111 | Jbmanllr (project owner) | 2027-02-04 |
-| E8  | font label layout reads | Theme apply          | Debt: "A font label reads `getComputedStyle` once per `var()` hop, up to 4"; remediation map #111                                                      | Jbmanllr (project owner) | 2027-02-04 |
-| E9  | font label stringifies  | Theme apply          | No debt line. Measured cause: 4 `getSnapshot` runs under React's development build, plus react-query's key hash; remediation map #111                  | Jbmanllr (project owner) | 2027-02-04 |
-| E10 | head-script builds      | Page load            | Debt: "Next builds the head-script string 3 times per load (server render, hydration render, post-hydration render)"; remediation map #111             | Jbmanllr (project owner) | 2027-02-04 |
-| E11 | storage writes          | Page load            | No debt line. Measured cause: the refresh's baseline write, and the mode-sync set persists `currentMode`; remediation map #111                         | Jbmanllr (project owner) | 2027-02-04 |
-| E12 | font links              | Page load            | Debt: "The font loader adds a second `<link>` for each family the head script already linked: up to 7 links for 4 families"; remediation map #111      | Jbmanllr (project owner) | 2027-02-04 |
-| E14 | first applies           | Page load            | Debt: "The first apply runs twice when the saved mode differs from the page's" (3 measured on a switch to an empty namespace); remediation map #111    | Jbmanllr (project owner) | 2027-02-04 |
-| E15 | frame chunk imports     | Page load            | Debt: "Every Live frame navigation imports the Themer chunk only to render nothing"; remediation map #111                                              | Jbmanllr (project owner) | 2027-02-04 |
-| E16 | root-class observers    | Page load            | Debt: "Every `useColorMode` caller and every font label adds its own `<html>` observer"; remediation map #111                                          | Jbmanllr (project owner) | 2027-02-04 |
-| E19 | client round trips      | Font catalog request | No debt line. Measured cause: with the route disabled, the 404 plus the Themer's `retry: 1` asks twice; remediation map #111                           | Jbmanllr (project owner) | 2027-02-04 |
-| E20 | family lower-cases      | Font catalog request | Debt: "every request with a query lower-cases every family name in the catalog"; remediation map #111                                                  | Jbmanllr (project owner) | 2027-02-04 |
-| E21 | response stringifies    | Font catalog request | No debt line. Measured cause: with the route disabled, the 404 body is stringified twice because of the retry; remediation map #111                    | Jbmanllr (project owner) | 2027-02-04 |
-| E22 | badge requests          | Font catalog request | No debt line. Measured cause: the same retry as E19; remediation map #111                                                                              | Jbmanllr (project owner) | 2027-02-04 |
-| E23 | badge lower-cases       | Font catalog request | Debt: "every `FontValueLabel` render lower-cases up to 2 names per loaded font"; remediation map #111                                                  | Jbmanllr (project owner) | 2027-02-04 |
+| ID  | Rule                    | Path                 | Reason                                                                                                                                              | Owner                    | Expires    |
+| --- | ----------------------- | -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------ | ---------- |
+| E8  | font label layout reads | Theme apply          | Debt: "A font label reads `getComputedStyle` once per `var()` hop, up to 4"; remediation map #111                                                   | Jbmanllr (project owner) | 2027-02-04 |
+| E9  | font label stringifies  | Theme apply          | No debt line. Measured cause: 4 `getSnapshot` runs under React's development build, plus react-query's key hash; remediation map #111               | Jbmanllr (project owner) | 2027-02-04 |
+| E10 | head-script builds      | Page load            | Debt: "Next builds the head-script string 3 times per load (server render, hydration render, post-hydration render)"; remediation map #111          | Jbmanllr (project owner) | 2027-02-04 |
+| E11 | storage writes          | Page load            | No debt line. Measured cause: the refresh's baseline write, and the mode-sync set persists `currentMode`; remediation map #111                      | Jbmanllr (project owner) | 2027-02-04 |
+| E12 | font links              | Page load            | Debt: "The font loader adds a second `<link>` for each family the head script already linked: up to 7 links for 4 families"; remediation map #111   | Jbmanllr (project owner) | 2027-02-04 |
+| E14 | first applies           | Page load            | Debt: "The first apply runs twice when the saved mode differs from the page's" (3 measured on a switch to an empty namespace); remediation map #111 | Jbmanllr (project owner) | 2027-02-04 |
+| E15 | frame chunk imports     | Page load            | Debt: "Every Live frame navigation imports the Themer chunk only to render nothing"; remediation map #111                                           | Jbmanllr (project owner) | 2027-02-04 |
+| E16 | root-class observers    | Page load            | Debt: "Every `useColorMode` caller and every font label adds its own `<html>` observer"; remediation map #111                                       | Jbmanllr (project owner) | 2027-02-04 |
+| E19 | client round trips      | Font catalog request | No debt line. Measured cause: with the route disabled, the 404 plus the Themer's `retry: 1` asks twice; remediation map #111                        | Jbmanllr (project owner) | 2027-02-04 |
+| E20 | family lower-cases      | Font catalog request | Debt: "every request with a query lower-cases every family name in the catalog"; remediation map #111                                               | Jbmanllr (project owner) | 2027-02-04 |
+| E21 | response stringifies    | Font catalog request | No debt line. Measured cause: with the route disabled, the 404 body is stringified twice because of the retry; remediation map #111                 | Jbmanllr (project owner) | 2027-02-04 |
+| E22 | badge requests          | Font catalog request | No debt line. Measured cause: the same retry as E19; remediation map #111                                                                           | Jbmanllr (project owner) | 2027-02-04 |
+| E23 | badge lower-cases       | Font catalog request | Debt: "every `FontValueLabel` render lower-cases up to 2 names per loaded font"; remediation map #111                                               | Jbmanllr (project owner) | 2027-02-04 |
 
 ### Rules
 

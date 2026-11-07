@@ -158,7 +158,7 @@ The ratchet. Each count is per unit of its path, as the paths ADR defines the un
 | -------------------- | ----- | ------------- | ---------------------------------------------------------------------------- | ---------------- |
 | client round trips   | 2     | must not grow | `pnpm --filter themercn exec vitest run src/api/font-catalog.count.test.tsx` | implementer done |
 | family lower-cases   | 132   | must not grow | `pnpm --filter themercn exec vitest run src/api/font-catalog.count.test.tsx` | implementer done |
-| response stringifies | 2     | must not grow | `pnpm --filter themercn exec vitest run src/api/font-catalog.count.test.tsx` | implementer done |
+| response stringifies | 1     | must not grow | `pnpm --filter themercn exec vitest run src/api/font-catalog.count.test.tsx` | implementer done |
 | badge requests       | 2     | must not grow | `pnpm --filter themercn exec vitest run src/api/font-catalog.count.test.tsx` | implementer done |
 | badge lower-cases    | 6     | must not grow | `pnpm --filter themercn exec vitest run src/api/font-catalog.count.test.tsx` | implementer done |
 

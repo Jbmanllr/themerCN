@@ -6,7 +6,11 @@
 // Theme in whichever mode the page is in (a Host-controlled `.dark` class may
 // be set after it runs), restore the `.dark` class only when an uncontrolled
 // Themer saved one, and ask Google only for families Google serves. The text
-// is run here the way a browser runs it.
+// is run here the way a browser runs it. Valid saved entries are written by
+// the editor and preferences stores and the colour-mode provider
+// (saved-entries.test-helper.tsx); only entries no store writes (unreadable
+// content, a value or key that could end its declaration, preferences
+// without the override) are built by hand.
 import {
   afterEach,
   beforeAll,
@@ -18,12 +22,20 @@ import {
 } from "vitest"
 
 import {
+  DEFAULT_STORAGE_NAMESPACE,
   EDITOR_STATE_VERSION,
   HEAD_FONT_LINK_ATTRIBUTE,
   PREFERENCES_VERSION,
   getStorageKeys,
 } from "../config/constants"
-import type { ThemeFontKey } from "../types/theme"
+import {
+  saveColorMode as saveColorModeOf,
+  saveThemeOverride,
+  saveThemeStyles,
+} from "../saved-entries.test-helper"
+import { useEditorStore } from "../stores/editor-store"
+import type { ImportedThemeStyles } from "../types/editor"
+import type { ThemeFontKey, ThemeMode } from "../types/theme"
 
 const STORAGE_KEYS = getStorageKeys()
 import {
@@ -35,22 +47,22 @@ import {
 import { getThemeFonts } from "./font-names"
 import { generateThemeScript } from "./theme-script"
 
-function saveEditor(themeState: unknown) {
+/** Saves `styles` as the Theme, with `mode` as the editor's mode, through
+ *  the editor store. */
+function saveTheme(styles: ImportedThemeStyles, mode: ThemeMode = "light") {
+  saveThemeStyles(DEFAULT_STORAGE_NAMESPACE, styles, mode)
+}
+
+/** Saves an uncontrolled colour mode through the colour-mode provider. */
+const saveColorMode = (mode: ThemeMode) =>
+  saveColorModeOf(DEFAULT_STORAGE_NAMESPACE, mode)
+
+/** Writes an editor entry by hand, for a Theme no store saves. */
+function saveEditorByHand(themeState: unknown) {
   localStorage.setItem(
     STORAGE_KEYS.editor,
     JSON.stringify({ state: { themeState }, version: EDITOR_STATE_VERSION })
   )
-}
-
-function savePreferences(state: unknown) {
-  localStorage.setItem(
-    STORAGE_KEYS.preferences,
-    JSON.stringify({ state, version: PREFERENCES_VERSION })
-  )
-}
-
-function saveColorMode(mode: string) {
-  localStorage.setItem(STORAGE_KEYS.colorMode, mode)
 }
 
 /** A variable of the page, as the cascade resolves it on <html>. */
@@ -110,7 +122,7 @@ afterEach(() => {
 
 describe("generateThemeScript", () => {
   it("paints the saved Theme in the mode the page is in, whatever mode was saved", () => {
-    saveEditor({ currentMode: "dark", styles })
+    saveTheme(styles, "dark")
     runScript()
     expect(primary()).toBe("#111111")
 
@@ -124,35 +136,32 @@ describe("generateThemeScript", () => {
 
   it("paints the dark tokens on a page that is already dark", () => {
     setDark(true)
-    saveEditor({ currentMode: "light", styles })
+    saveTheme(styles)
     runScript()
     expect(primary()).toBe("#eeeeee")
   })
 
-  it("restores the mode an uncontrolled Themer saved", () => {
-    saveColorMode("dark")
+  it("restores the mode an uncontrolled Themer saved", async () => {
+    await saveColorMode("dark")
     runScript()
     expect(document.documentElement.classList.contains("dark")).toBe(true)
 
-    saveColorMode("light")
+    await saveColorMode("light")
     runScript()
     expect(document.documentElement.classList.contains("dark")).toBe(false)
   })
 
-  it("restores the saved mode even without a saved Theme", () => {
-    saveColorMode("dark")
+  it("restores the saved mode even without a saved Theme", async () => {
+    await saveColorMode("dark")
     runScript()
     expect(document.documentElement.classList.contains("dark")).toBe(true)
     expect(primary()).toBe("")
   })
 
   it("runs again without stacking a second restore", () => {
-    saveEditor({ currentMode: "light", styles })
+    saveTheme(styles)
     runScript()
-    saveEditor({
-      currentMode: "light",
-      styles: { light: { primary: "#222222" }, dark: {} },
-    })
+    saveTheme({ light: { primary: "#222222" }, dark: {} })
     runScript()
     expect(primary()).toBe("#222222")
     expect(document.head.querySelectorAll("style")).toHaveLength(1)
@@ -167,34 +176,39 @@ describe("generateThemeScript", () => {
   })
 
   it("leaves the host's own CSS alone when the theme override is off", () => {
-    saveEditor({ currentMode: "light", styles })
-    savePreferences({ themeOverrideEnabled: false })
+    saveTheme(styles)
+    saveThemeOverride(DEFAULT_STORAGE_NAMESPACE, false)
     runScript()
     expect(primary()).toBe("")
     expect(fontLinks()).toEqual([])
   })
 
   it("applies the edit when preferences say nothing about the override", () => {
-    saveEditor({ currentMode: "light", styles })
-    savePreferences({})
+    saveTheme(styles)
+    // Hand-built: the preferences store always saves the override.
+    localStorage.setItem(
+      STORAGE_KEYS.preferences,
+      JSON.stringify({ state: {}, version: PREFERENCES_VERSION })
+    )
     runScript()
     expect(primary()).toBe("#111111")
   })
 
   it("leaves the dark class alone when no mode is saved (a Host-controlled mode)", () => {
     document.documentElement.classList.add("dark")
-    saveEditor({ currentMode: "light", styles })
+    saveTheme(styles)
     runScript()
     expect(document.documentElement.classList.contains("dark")).toBe(true)
 
     document.documentElement.classList.remove("dark")
-    saveEditor({ currentMode: "dark", styles })
+    saveTheme(styles, "dark")
     runScript()
     expect(document.documentElement.classList.contains("dark")).toBe(false)
   })
 
   it("survives unreadable storage content without touching the page", () => {
     vi.spyOn(console, "warn").mockImplementation(() => undefined)
+    // Hand-built: no store writes unreadable content.
     localStorage.setItem(STORAGE_KEYS.editor, "{not json")
     expect(runScript).not.toThrow()
     expect(primary()).toBe("")
@@ -202,7 +216,7 @@ describe("generateThemeScript", () => {
   })
 
   it("switches a font link to the family's default weight once, on error", () => {
-    saveEditor({ currentMode: "light", styles })
+    saveTheme(styles)
     runScript()
     const [link] = document.head.querySelectorAll("link")
     link?.dispatchEvent(new Event("error"))
@@ -224,7 +238,8 @@ describe("generateThemeScript", () => {
   })
 
   it("drops a saved value that would break out of its declaration", () => {
-    saveEditor({
+    // Hand-built: no store writes a value that could end its declaration.
+    saveEditorByHand({
       currentMode: "light",
       styles: {
         light: { primary: "red} body{display:none", accent: "#123456" },
@@ -238,7 +253,9 @@ describe("generateThemeScript", () => {
   })
 
   it("drops each unsafe key and value in both modes, keeping the rest", () => {
-    saveEditor({
+    // Hand-built: no store writes a key or value that could end its
+    // declaration.
+    saveEditorByHand({
       currentMode: "light",
       styles: {
         light: {
@@ -272,8 +289,9 @@ describe("generateThemeScript", () => {
 // code), so each row runs the real script on a saved Theme and the Theme fonts
 // module over the same font values: both must name the row's families, and
 // the script must link the URLs the font link registry builds, which the
-// registry then adopts (one link per family). The store keeps the dark fonts
-// equal to the light ones, so the saved Theme does too.
+// registry then adopts (one link per family). Each row saves its fonts in
+// light through the editor store, which keeps the dark fonts equal to them
+// and fills the unset slots with the default Preset's system families.
 type FontRow = {
   name: string
   fonts: Partial<Record<ThemeFontKey, string>>
@@ -367,7 +385,7 @@ describe("head script font links match the Theme fonts module", () => {
   })
 
   it.each(FONT_ROWS)("$name", ({ fonts, families }) => {
-    saveEditor({ currentMode: "light", styles: { light: fonts, dark: fonts } })
+    saveTheme({ light: fonts })
     runScript()
     runScript()
 
@@ -376,7 +394,9 @@ describe("head script font links match the Theme fonts module", () => {
       family: link.getAttribute(HEAD_FONT_LINK_ATTRIBUTE),
       href: link.getAttribute("href"),
     }))
-    const themeFonts = getThemeFonts({ light: fonts, dark: fonts }).families
+    const themeFonts = getThemeFonts(
+      useEditorStore.getState().themeState.styles
+    ).families
     expect(themeFonts).toEqual(families)
     expect(linked).toEqual(
       themeFonts.map((family) => ({ family, href: buildFontCssUrl(family) }))

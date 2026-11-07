@@ -8,70 +8,34 @@
 // fresh document sharing that localStorage, as the browser does on reload,
 // and checks what that page shows: its restore sheet, `.dark` class and font
 // links. A store or the provider changing the shape, key or version it saves
-// without the head script following fails here. Hand-built entries (malformed
-// data, other versions) stay in utils/theme-script.test.ts.
-import { act } from "react"
-import { createRoot, type Root } from "react-dom/client"
-import { afterEach, beforeEach, expect, it } from "vitest"
+// without the head script following fails here. The saving is shared with the
+// head-script tests (saved-entries.test-helper.tsx); hand-built entries
+// (malformed data, other versions, unsafe values) stay in
+// utils/theme-script.test.ts.
+import { beforeEach, expect, it } from "vitest"
 
-import { ColorModeProvider } from "./components/color-mode"
 import {
   COLOR_MODE_RECORD,
   colorModeRecordHost,
-  getStorageKeys,
   HEAD_FONT_LINK_ATTRIBUTE,
   RESTORE_STYLE_ID,
 } from "./config/constants"
 import { getThemerHeadScript } from "./head-script"
-import { useColorMode } from "./hooks/use-color-mode"
-import { useEditorStore } from "./stores/editor-store"
-import { hydrateThemerStores } from "./stores/hydrate"
-import { usePreferencesStore } from "./stores/preferences-store"
+import {
+  saveColorMode,
+  saveThemeOverride,
+  saveThemeStyles,
+} from "./saved-entries.test-helper"
 import type { ThemerColorMode } from "./types"
-
-;(
-  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT: boolean }
-).IS_REACT_ACT_ENVIRONMENT = true
-
-let root: Root | null = null
 
 beforeEach(() => {
   localStorage.clear()
   delete colorModeRecordHost()[COLOR_MODE_RECORD]
 })
 
-afterEach(async () => {
-  await act(async () => root?.unmount())
-  root = null
-  document.body.innerHTML = ""
-  document.documentElement.className = ""
-})
-
 // The stores hydrate once per namespace, so each test saves under its own.
 let namespaceCount = 0
 const nextNamespace = (name: string) => `${name}-${++namespaceCount}`
-
-/** Switches an uncontrolled colour mode through the provider, as the Themer's
- *  toggle does, and lets the provider save it. */
-async function saveColorMode(namespace: string, mode: ThemerColorMode) {
-  let setMode: ((mode: ThemerColorMode) => void) | undefined
-  function Switch() {
-    setMode = useColorMode().setMode
-    return null
-  }
-  await act(async () => root?.unmount())
-  const container = document.createElement("div")
-  document.body.append(container)
-  root = createRoot(container)
-  await act(async () =>
-    root?.render(
-      <ColorModeProvider storageKey={getStorageKeys(namespace).colorMode}>
-        <Switch />
-      </ColorModeProvider>
-    )
-  )
-  await act(async () => setMode?.(mode))
-}
 
 interface SavedTheme {
   namespace: string
@@ -88,9 +52,8 @@ async function saveTheme({
   mode,
   themeOverrideEnabled = true,
 }: SavedTheme) {
-  hydrateThemerStores(namespace, "light")
-  usePreferencesStore.getState().setThemeOverrideEnabled(themeOverrideEnabled)
-  useEditorStore.getState().importThemeStyles({
+  saveThemeOverride(namespace, themeOverrideEnabled)
+  saveThemeStyles(namespace, {
     light: {
       primary: primary.light,
       background: "oklch(1 0 0)",

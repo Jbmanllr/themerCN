@@ -5,27 +5,17 @@
 // These checks fail if the string reads another namespace's saved Theme than
 // the one the Host's <Themer> writes, or if it carries the `data-themer`
 // marker the Vite smoke app greps for to prove nothing of the Themer shipped.
-// What the script does with a saved edit is covered in
-// utils/theme-script.test.ts.
+// Each Theme and colour mode is saved through the stores and the
+// colour-mode provider (saved-entries.test-helper.tsx). What the script does
+// with a saved edit is covered in utils/theme-script.test.ts.
 import { beforeEach, expect, it } from "vitest"
 
-import {
-  COLOR_MODE_RECORD,
-  colorModeRecordHost,
-  EDITOR_STATE_VERSION,
-} from "./config/constants"
+import { COLOR_MODE_RECORD, colorModeRecordHost } from "./config/constants"
 import { getThemerHeadScript } from "./head-script"
+import { saveColorMode, saveThemeStyles } from "./saved-entries.test-helper"
 
 function save(namespace: string, primary: string) {
-  localStorage.setItem(
-    `${namespace}:editor`,
-    JSON.stringify({
-      state: {
-        themeState: { currentMode: "light", styles: { light: { primary } } },
-      },
-      version: EDITOR_STATE_VERSION,
-    })
-  )
+  saveThemeStyles(namespace, { light: { primary } })
 }
 
 const primary = () =>
@@ -57,8 +47,8 @@ it("restores the default namespace's Theme when given none", () => {
 
 const colourModeRecord = () => colorModeRecordHost()[COLOR_MODE_RECORD]
 
-it("records the saved colour mode it read, under its storage key", () => {
-  localStorage.setItem("shop:color-mode", "dark")
+it("records the saved colour mode it read, under its storage key", async () => {
+  await saveColorMode("shop", "dark")
 
   new Function(getThemerHeadScript({ storageNamespace: "shop" }))()
 

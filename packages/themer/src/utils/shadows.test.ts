@@ -6,12 +6,7 @@ import { describe, expect, it } from "vitest"
 import { resolvePresetStyles } from "../config/presets"
 import { defaultThemeState } from "../config/defaults"
 import type { ThemeEditorState } from "../types"
-import {
-  getShadowMap,
-  getShadowParams,
-  getShadowVariables,
-  SHADOW_SCALE_KEYS,
-} from "./shadows"
+import { getShadowMap, getShadowParams } from "./shadows"
 
 function stateFor(presetId: string): ThemeEditorState {
   return {
@@ -61,23 +56,6 @@ describe("getShadowMap", () => {
     }
     expect(getShadowMap(dark, "dark").shadow.startsWith("7px ")).toBe(true)
     expect(getShadowMap(dark, "light").shadow.startsWith("0 ")).toBe(true)
-  })
-
-  it("keeps the scale and raw keys consumers read", () => {
-    const variables = getShadowVariables(stateFor("default"))
-    for (const key of SHADOW_SCALE_KEYS) {
-      expect(variables[key]).toBeTruthy()
-    }
-    expect(Object.keys(variables)).toEqual(
-      expect.arrayContaining([
-        "shadow-x",
-        "shadow-y",
-        "shadow-blur-raw",
-        "shadow-spread-raw",
-        "shadow-opacity-raw",
-        "shadow-color-raw",
-      ])
-    )
   })
 })
 

@@ -38,6 +38,7 @@ import {
 
 import type { ThemerConfig, ThemerProps } from "../types"
 import { DEFAULT_STORAGE_NAMESPACE, getStorageKeys } from "../config/constants"
+import { getRootClassMode } from "../hooks/use-color-mode"
 import { useHydrated } from "../hooks/use-hydrated"
 import { isProduction } from "../utils/is-production"
 import {
@@ -91,9 +92,12 @@ function ThemerApp({
     getHydratedNamespace,
     getHydratedNamespace
   )
+  // Hydration takes the colour mode the tree will render with (the
+  // controlled `colorMode`, else the `.dark` class the head script
+  // restored), so the hydrated Theme already holds it.
   useLayoutEffect(() => {
-    hydrateThemerStores(storageNamespace)
-  }, [storageNamespace])
+    hydrateThemerStores(storageNamespace, colorMode ?? getRootClassMode())
+  }, [storageNamespace, colorMode])
   // Another mounted <Themer> on another namespace took the stores: this one
   // now renders nothing. The live value, not the render's: during this
   // instance's own switch the render still holds the previous namespace.

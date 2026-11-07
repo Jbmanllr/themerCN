@@ -1,20 +1,25 @@
 // Google's font catalogues, fetched on the server and transformed to the
 // picker's FontInfo: the developer API (with a key) and the public metadata
-// behind fonts.google.com (without one). api/font-catalog.ts serves them.
+// behind fonts.google.com (without one). Each transform prepares the
+// catalogue, building its lower-cased names in the same pass.
+// api/font-catalog.ts serves them.
 import type {
   FontCategory,
-  FontInfo,
   GoogleFont,
   GoogleFontsAPIResponse,
 } from "../types/fonts"
+import {
+  prepareFontCatalog,
+  type PreparedFontCatalog,
+} from "../utils/font-catalog-data"
 
 export const GOOGLE_FONTS_API_URL =
   "https://www.googleapis.com/webfonts/v1/webfonts"
 
 export function transformGoogleFontsResponse(
   response: GoogleFontsAPIResponse
-): FontInfo[] {
-  return response.items.map((font: GoogleFont) => ({
+): PreparedFontCatalog {
+  return prepareFontCatalog(response.items, (font: GoogleFont) => ({
     family: font.family,
     category: font.category,
     variants: font.variants,
@@ -39,7 +44,7 @@ type FontFetchOptions = RequestInit & {
 export async function fetchGoogleFontsCatalog(
   googleFontsApiKey: string,
   options?: FontFetchOptions
-): Promise<FontInfo[]> {
+): Promise<PreparedFontCatalog> {
   if (!googleFontsApiKey) {
     throw new Error("Google Fonts API key is required.")
   }
@@ -81,8 +86,8 @@ const METADATA_CATEGORIES: Record<string, FontCategory> = {
 
 export function transformGoogleFontsMetadata(
   metadata: GoogleFontsMetadata
-): FontInfo[] {
-  return metadata.familyMetadataList.map((font) => ({
+): PreparedFontCatalog {
+  return prepareFontCatalog(metadata.familyMetadataList, (font) => ({
     family: font.family,
     category: METADATA_CATEGORIES[font.category.toLowerCase()] ?? "sans-serif",
     // Keys are "400", "400i", "700"...: keep the upright weights, the
@@ -98,7 +103,7 @@ export function transformGoogleFontsMetadata(
  */
 export async function fetchGoogleFontsMetadataCatalog(
   options?: FontFetchOptions
-): Promise<FontInfo[]> {
+): Promise<PreparedFontCatalog> {
   const response = await fetch(GOOGLE_FONTS_METADATA_URL, options)
   if (!response.ok) {
     throw new Error(`Google Fonts metadata error: ${response.status}`)

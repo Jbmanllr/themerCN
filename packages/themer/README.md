@@ -155,20 +155,19 @@ createRoot(document.getElementById("root")!).render(
 The condition is static, so a build with `VITE_THEMER` unset drops the import
 and ships no Themer code. In `vite.config.ts`, a `transformIndexHtml` plugin
 inlines the head script under the same condition
-(`import { getThemerHeadScript } from "themercn/head-script"`):
+(`import { getThemerHeadScript } from "themercn/head-script"`). It builds the
+string once, when the plugin is created, and returns it on every request:
 
 <!-- recipe: apps/vite/vite.config.ts -->
 
 ```ts
 function themerHeadScript(): Plugin {
+  // Built once, with the plugin, not on every request.
+  const script = getThemerHeadScript()
   return {
     name: "themer-head-script",
     transformIndexHtml: () => [
-      {
-        tag: "script",
-        children: getThemerHeadScript(),
-        injectTo: "head-prepend",
-      },
+      { tag: "script", children: script, injectTo: "head-prepend" },
     ],
   }
 }
@@ -186,17 +185,18 @@ export default defineConfig(({ mode }) => {
 
 Any other React setup works the same way: render the loader (or `<Themer>`
 itself) beside your tree, and put `getThemerHeadScript()` in an inline
-`<script>` at the top of `<head>`.
+`<script>` at the top of `<head>`. The string depends only on
+`storageNamespace`: build it once and reuse it rather than on every request.
 
 ## Entry points
 
-| Import                 | Exports                                                                                                                                                                | Notes                                                                        |
-| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
-| `themercn`             | `Themer`; types `ThemerProps`, `ThemePreset`, `PartialThemeStyles`, `ThemerExtraColorGroup`, `ThemerExtraColor`, `ThemerLayout`, `ThemerColorMode`, `ThemerPreviewTab` | The Themer itself (client only). Usually loaded through the loader.          |
-| `themercn/loader`      | `createThemerLoader`, type `ThemerModule`                                                                                                                              | About 1 kB. Reaches no Themer code; with `null` nothing of the Themer ships. |
-| `themercn/head-script` | `getThemerHeadScript`, type `ThemerHeadScriptOptions`                                                                                                                  | A string generator with no imports: safe in a build config or on a server.   |
-| `themercn/next`        | `ThemerHeadScript`, type `ThemerHeadScriptProps`                                                                                                                       | Client component for the root layout's `<head>`.                             |
-| `themercn/next/server` | `createFontCatalogRoute`, type `FontCatalogRouteOptions`                                                                                                               | Route handler for an App Router `route.ts`.                                  |
+| Import                 | Exports                                                                                                                                                                | Notes                                                                                                                         |
+| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| `themercn`             | `Themer`; types `ThemerProps`, `ThemePreset`, `PartialThemeStyles`, `ThemerExtraColorGroup`, `ThemerExtraColor`, `ThemerLayout`, `ThemerColorMode`, `ThemerPreviewTab` | The Themer itself (client only). Usually loaded through the loader.                                                           |
+| `themercn/loader`      | `createThemerLoader`, type `ThemerModule`                                                                                                                              | About 1 kB. Reaches no Themer code; with `null` nothing of the Themer ships. Inside a frame it loads nothing.                 |
+| `themercn/head-script` | `getThemerHeadScript`, type `ThemerHeadScriptOptions`                                                                                                                  | A string generator with no imports: safe in a build config or on a server. Build it once per `storageNamespace` and reuse it. |
+| `themercn/next`        | `ThemerHeadScript`, type `ThemerHeadScriptProps`                                                                                                                       | Client component for the root layout's `<head>`.                                                                              |
+| `themercn/next/server` | `createFontCatalogRoute`, type `FontCatalogRouteOptions`                                                                                                               | Route handler for an App Router `route.ts`.                                                                                   |
 
 ESM only. Every export carries TSDoc, so your editor shows these docs on
 hover.

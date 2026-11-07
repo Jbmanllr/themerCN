@@ -56,7 +56,18 @@ export function isOnPreset(
   themeState: ThemeEditorState,
   sidebarSync: boolean
 ): boolean {
-  const presetStyles = resolvePresetStyles(themeState.preset ?? "default")
+  return onPreset(
+    themeState,
+    sidebarSync,
+    resolvePresetStyles(themeState.preset ?? "default")
+  )
+}
+
+function onPreset(
+  themeState: ThemeEditorState,
+  sidebarSync: boolean,
+  presetStyles: ThemeStyles
+): boolean {
   return (
     isDeepEqual(
       themeState.styles,
@@ -66,14 +77,50 @@ export function isOnPreset(
   )
 }
 
+// isOnPreset's answer, built once per Theme state object and shared by every
+// caller. The store keeps the Theme state object while the Theme is unchanged
+// (a history-only set), so the answer holds until the next Theme change. An
+// answer also records the resolved Preset styles it was computed against: a
+// Host Preset re-registration replaces that object, so the answer is
+// recomputed. One slot per Sidebar Sync setting.
+interface OnPresetAnswer {
+  presetStyles: ThemeStyles
+  onPreset: boolean
+}
+const onPresetAnswers = new WeakMap<
+  ThemeEditorState,
+  { synced?: OnPresetAnswer; unsynced?: OnPresetAnswer }
+>()
+
+function sharedIsOnPreset(
+  themeState: ThemeEditorState,
+  sidebarSync: boolean
+): boolean {
+  const presetStyles = resolvePresetStyles(themeState.preset ?? "default")
+  let answers = onPresetAnswers.get(themeState)
+  if (!answers) {
+    answers = {}
+    onPresetAnswers.set(themeState, answers)
+  }
+  const slot = sidebarSync ? "synced" : "unsynced"
+  const answer = answers[slot]
+  if (answer?.presetStyles === presetStyles) return answer.onPreset
+  const result = onPreset(themeState, sidebarSync, presetStyles)
+  answers[slot] = { presetStyles, onPreset: result }
+  return result
+}
+
 /**
  * Selector factory over isOnPreset, given the Sidebar Sync preference
  * (preferences store). False drives the unsaved mark and enables Reset.
+ * Every caller shares one answer per Theme state, Sidebar Sync setting and
+ * resolved Preset, so a Theme change costs one deep compare whatever the
+ * number of callers.
  */
 export const selectIsOnPreset =
   (sidebarSync: boolean) =>
   (state: EditorStore): boolean =>
-    isOnPreset(state.themeState, sidebarSync)
+    sharedIsOnPreset(state.themeState, sidebarSync)
 
 // A store action: a stable reference for the store's lifetime, so a component
 // that selects it never re-renders because of it.

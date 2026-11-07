@@ -81,6 +81,18 @@ export function getStorageKeys(namespace: string = DEFAULT_STORAGE_NAMESPACE) {
   } as const
 }
 
+/** `window` key of the head script's colour-mode record (color-mode.tsx). */
+export const COLOR_MODE_RECORD = "__themercnColorMode"
+
+/** `window` as the holder of the colour-mode record, typed. */
+export type ColorModeRecordHost = {
+  [COLOR_MODE_RECORD]?: Record<string, string | null>
+}
+
+/** The page's `window`, typed as the colour-mode record's holder. */
+export const colorModeRecordHost = (): ColorModeRecordHost =>
+  window as ColorModeRecordHost
+
 /**
  * Versions of the persisted stores' entries (zustand persist `version`):
  * editor-store.ts and preferences-store.ts persist at them, and the
@@ -98,6 +110,20 @@ export const PREFERENCES_VERSION = 1
  * ThemerProvider removes it once it applies the Theme itself.
  */
 export const RESTORE_STYLE_ID = "themercn-restore"
+
+// Marks the font links the pre-hydration script adds: the font link registry
+// (utils/font-links.ts) adopts only marked links, never a Host's own. Not a
+// `data-themer` name, which the head-script string never contains. A line
+// comment, not TSDoc, so the size-budgeted `next` entry doesn't carry it.
+export const HEAD_FONT_LINK_ATTRIBUTE = "data-tcn-head-font"
+
+/**
+ * Attribute on the <style> that carries the Themer's own CSS
+ * (components/themer-scope.tsx). apply-theme's CSSOM walk skips a sheet
+ * whose owner node carries it: only the Host's variant shadow rules are
+ * mirrored into the shadow override sheet.
+ */
+export const THEMER_STYLE_ATTRIBUTE = "data-themer-style"
 
 /**
  * WCAG contrast ratio thresholds that utils/contrast-checker.ts grades a

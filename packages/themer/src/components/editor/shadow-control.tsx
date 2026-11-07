@@ -4,7 +4,8 @@
 // colour); opacity, blur, spread and offsets are shared by both modes and go
 // through updateCommonStyle, as in tweakcn. Every write is a functional
 // store update. The preview uses the computed `shadow` value from
-// getShadowMap, i.e. exactly what the theme exports for this mode.
+// getShadowMap, i.e. exactly what the theme exports for this mode, memoised
+// on the six current-mode shadow inputs.
 
 import * as React from "react"
 import { useShallow } from "zustand/react/shallow"
@@ -12,6 +13,8 @@ import { SliderWithInput } from "./slider-with-input"
 import { ColorPicker } from "./color-picker"
 import { useEditorStore } from "../../stores/editor-store"
 import { CONTROL_RANGES } from "../../config/constants"
+import { defaultThemeState } from "../../config/defaults"
+import { selectCurrentMode } from "../../selectors"
 import type { CommonStyleKey } from "../../types"
 import { getShadowMap, getShadowParams } from "../../utils/shadows"
 
@@ -48,8 +51,20 @@ export function ShadowControl() {
       }
     })
   )
-  const previewShadow = useEditorStore(
-    (state) => getShadowMap(state.themeState).shadow
+  const mode = useEditorStore(selectCurrentMode)
+  // Derived in render from the six inputs, not in a selector: a set that
+  // changes no shadow input parses nothing.
+  const previewShadow = React.useMemo(
+    () =>
+      getShadowMap({
+        ...defaultThemeState,
+        currentMode: mode,
+        styles: {
+          ...defaultThemeState.styles,
+          [mode]: { ...defaultThemeState.styles[mode], ...shadowStyles },
+        },
+      }).shadow,
+    [mode, shadowStyles]
   )
   const setThemeState = useEditorStore((state) => state.setThemeState)
   const updateCommonStyle = useEditorStore((state) => state.updateCommonStyle)

@@ -48,6 +48,11 @@ vi.mock("../../hooks/use-font-search", async () => {
   }
 })
 
+// The trigger's "Custom font" badge asks the catalog too; not under test here.
+vi.mock("../../hooks/use-catalog-lacks-family", () => ({
+  useCatalogLacksFamily: () => false,
+}))
+
 import { POPULAR_FONTS } from "../../utils/font-catalog-data"
 import { buildFontFamily } from "../../utils/font-names"
 import { FontPicker } from "./font-picker"
@@ -131,6 +136,42 @@ describe("FontPicker trigger", () => {
     expect(document.getElementById(labelId ?? "")?.textContent).toBe(
       "Sans-serif"
     )
+  })
+
+  // A Host theme or mode class can move the root font variables with no
+  // inline style change: the label must follow it, through nested var().
+  it("names the family a Host variable resolves to, after a Host class change", async () => {
+    const hostSheet = document.createElement("style")
+    hostSheet.textContent = `
+      :root { --font-host: var(--font-body); --font-body: Inter, sans-serif; }
+      :root.alt { --font-body: Lora, serif; }
+    `
+    document.head.append(hostSheet)
+    try {
+      container = document.createElement("div")
+      document.body.append(container)
+      root = createRoot(container)
+      await act(async () =>
+        root?.render(
+          <FontPicker
+            value="var(--font-host), sans-serif"
+            onChange={onChange}
+            category="sans"
+            label="Sans-serif"
+          />
+        )
+      )
+      const label = () =>
+        container.querySelector('[role="combobox"]')?.textContent
+      expect(label()).toContain("Inter")
+
+      await act(async () => document.documentElement.classList.add("alt"))
+
+      expect(label()).toContain("Lora")
+    } finally {
+      document.documentElement.classList.remove("alt")
+      hostSheet.remove()
+    }
   })
 })
 

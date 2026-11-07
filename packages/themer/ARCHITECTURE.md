@@ -605,8 +605,11 @@ diffs against what the Theme holds; `clearThemeFonts` releases all. A failed
 link retries once with the default weight. A stack starting with a system
 family or `var(...)` names no Google family.
 
-The head script links the saved sans, serif and mono families before first
-paint, with the same URLs and the same once-only retry, and marks each with
+The head script links the saved Theme's families for all four font slots
+(sans, heading, serif, mono) before first paint, with the same URLs (the
+weights and CSS API embedded from the Theme fonts module,
+`utils/font-names.ts`; its ES5 extractor is checked against the module by
+one table-driven parity test) and the same once-only retry, and marks each with
 `data-tcn-head-font`. A family's first acquire in a document adopts a marked
 link (matched by its full or its default-weight href) instead of adding a
 second one; a Host's own link with the same href is unmarked and stays the

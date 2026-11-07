@@ -19,12 +19,20 @@ import {
 
 import {
   EDITOR_STATE_VERSION,
+  HEAD_FONT_LINK_ATTRIBUTE,
   PREFERENCES_VERSION,
   getStorageKeys,
 } from "../config/constants"
+import type { ThemeFontKey } from "../types/theme"
 
 const STORAGE_KEYS = getStorageKeys()
-import { acquireGoogleFont, buildFontCssUrl } from "./font-links"
+import {
+  acquireGoogleFont,
+  clearThemeFonts,
+  buildFontCssUrl,
+  setThemeFonts,
+} from "./font-links"
+import { getThemeFonts } from "./font-names"
 import { generateThemeScript } from "./theme-script"
 
 function saveEditor(themeState: unknown) {
@@ -193,49 +201,6 @@ describe("generateThemeScript", () => {
     expect(document.documentElement.className).toBe("")
   })
 
-  it("loads only the families Google serves, once each", () => {
-    saveEditor({
-      currentMode: "light",
-      styles: {
-        light: {
-          "font-sans": "DM Sans, sans-serif",
-          // The host's next/font families, already on the page.
-          "font-serif": "var(--font-fraunces), serif",
-          // OS families: Google would answer 400.
-          "font-mono": "Menlo, monospace",
-        },
-        dark: {},
-      },
-    })
-    runScript()
-    runScript()
-    expect(fontLinks()).toEqual([
-      "https://fonts.googleapis.com/css2?family=DM Sans:wght@400;500;600;700&display=swap",
-    ])
-
-    document.head.innerHTML = ""
-    saveEditor({
-      currentMode: "light",
-      styles: {
-        light: { "font-sans": "Georgia, serif", "font-mono": "ui-monospace" },
-        dark: {},
-      },
-    })
-    runScript()
-    expect(fontLinks()).toEqual([])
-  })
-
-  it("links the URL the font link registry builds, so the registry adopts it", () => {
-    saveEditor({ currentMode: "light", styles })
-    runScript()
-    const [link] = document.head.querySelectorAll("link")
-    expect(link?.getAttribute("href")).toBe(buildFontCssUrl("Inter"))
-
-    const release = acquireGoogleFont("Inter", { doc: document })
-    expect(document.head.querySelectorAll("link")).toHaveLength(1)
-    release()
-  })
-
   it("switches a font link to the family's default weight once, on error", () => {
     saveEditor({ currentMode: "light", styles })
     runScript()
@@ -301,20 +266,126 @@ describe("generateThemeScript", () => {
       "#333333",
     ])
   })
+})
 
-  it("skips the generic and CSS-wide values the font loader skips", () => {
-    saveEditor({
-      currentMode: "light",
-      styles: {
-        light: {
-          "font-sans": "inherit",
-          "font-serif": "emoji, serif",
-          "font-mono": "fangsong",
-        },
-        dark: {},
-      },
-    })
+// The head script keeps its own ES5 family extractor (it cannot import Themer
+// code), so each row runs the real script on a saved Theme and the Theme fonts
+// module over the same font values: both must name the row's families, and
+// the script must link the URLs the font link registry builds, which the
+// registry then adopts (one link per family). The store keeps the dark fonts
+// equal to the light ones, so the saved Theme does too.
+type FontRow = {
+  name: string
+  fonts: Partial<Record<ThemeFontKey, string>>
+  families: string[]
+}
+
+const FONT_ROWS: FontRow[] = [
+  {
+    name: "links the URL the font link registry builds",
+    fonts: { "font-sans": "Inter, sans-serif" },
+    families: ["Inter"],
+  },
+  {
+    name: "a quoted name",
+    fonts: { "font-sans": '"DM Sans", sans-serif' },
+    families: ["DM Sans"],
+  },
+  {
+    name: "a quoted name with inner spaces, trimmed after removing its quotes",
+    fonts: {
+      "font-sans": '" Inter ", sans-serif',
+      "font-mono": "' Fira Code'",
+    },
+    families: ["Inter", "Fira Code"],
+  },
+  {
+    name: "system families",
+    fonts: {
+      "font-sans": "ui-sans-serif, system-ui",
+      "font-serif": "Georgia, serif",
+      "font-mono": "Menlo, monospace",
+      "font-heading": "inherit",
+    },
+    families: [],
+  },
+  {
+    name: "upper-case generic keywords",
+    fonts: {
+      "font-sans": "SYSTEM-UI, sans-serif",
+      "font-serif": "Serif",
+      "font-mono": "MONOSPACE",
+      "font-heading": "Sans-Serif",
+    },
+    families: [],
+  },
+  {
+    name: "a var(...) stack",
+    fonts: { "font-sans": "var(--font-dm-sans), sans-serif" },
+    families: [],
+  },
+  {
+    name: "empty values",
+    fonts: { "font-sans": "", "font-heading": "", "font-mono": '""' },
+    families: [],
+  },
+  {
+    name: "mixed stacks",
+    fonts: {
+      "font-sans": "DM Sans, sans-serif",
+      "font-serif": "var(--font-fraunces), serif",
+      "font-mono": "fangsong",
+      "font-heading": "emoji, serif",
+    },
+    families: ["DM Sans"],
+  },
+  {
+    name: "the heading font set",
+    fonts: {
+      "font-sans": "Inter, sans-serif",
+      "font-heading": "Playfair Display, serif",
+      "font-serif": "Lora, serif",
+      "font-mono": "Fira Code, monospace",
+    },
+    families: ["Inter", "Playfair Display", "Lora", "Fira Code"],
+  },
+  {
+    name: "the heading font unset",
+    fonts: { "font-sans": "Inter, sans-serif", "font-serif": "Lora, serif" },
+    families: ["Inter", "Lora"],
+  },
+  {
+    name: "the heading font naming the sans family, linked once",
+    fonts: { "font-sans": "Inter, sans-serif", "font-heading": "Inter" },
+    families: ["Inter"],
+  },
+]
+
+describe("head script font links match the Theme fonts module", () => {
+  afterEach(() => {
+    clearThemeFonts(document)
+  })
+
+  it.each(FONT_ROWS)("$name", ({ fonts, families }) => {
+    saveEditor({ currentMode: "light", styles: { light: fonts, dark: fonts } })
     runScript()
-    expect(fontLinks()).toEqual([])
+    runScript()
+
+    const links = [...document.head.querySelectorAll("link")]
+    const linked = links.map((link) => ({
+      family: link.getAttribute(HEAD_FONT_LINK_ATTRIBUTE),
+      href: link.getAttribute("href"),
+    }))
+    const themeFonts = getThemeFonts({ light: fonts, dark: fonts }).families
+    expect(themeFonts).toEqual(families)
+    expect(linked).toEqual(
+      themeFonts.map((family) => ({ family, href: buildFontCssUrl(family) }))
+    )
+
+    // The Themer loads: the registry adopts every head-script link.
+    setThemeFonts(document, themeFonts)
+    const adopted = [...document.head.querySelectorAll("link")]
+    expect(adopted).toHaveLength(links.length)
+    adopted.forEach((link, index) => expect(link).toBe(links[index]))
   })
 })

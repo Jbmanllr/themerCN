@@ -1,17 +1,25 @@
+// @vitest-environment happy-dom
 // Proves the editor store's contract: the undo rules (MAX_HISTORY_COUNT
 // entries, HISTORY_DEBOUNCE_MS batching, mode-only changes not recorded,
 // redo dropped on any recorded edit), preset apply and reset, the
 // shared-style and CSS import actions, default-preset adoption,
-// refreshUntouchedPreset and Host extra colours in the theme.
+// refreshUntouchedPreset, Host extra colours in the theme, and the stored
+// entry.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import { defaultHSLAdjustments, defaultThemeState } from "../config/defaults"
-import { MAX_HISTORY_COUNT, HISTORY_DEBOUNCE_MS } from "../config/constants"
+import {
+  EDITOR_STATE_VERSION,
+  HISTORY_DEBOUNCE_MS,
+  MAX_HISTORY_COUNT,
+  getStorageKeys,
+} from "../config/constants"
 import { configurePresets, resolvePresetStyles } from "../config/presets"
 import { isOnPreset } from "../selectors/editor-selectors"
 import { isSidebarSynced } from "../utils/sidebar-sync"
 import type { EditorStore, ThemeEditorState } from "../types"
 import { useEditorStore } from "./editor-store"
+import { hydrateThemerStores } from "./hydrate"
 import { usePreferencesStore } from "./preferences-store"
 
 const store = useEditorStore
@@ -103,6 +111,23 @@ describe("undo history", () => {
     }))
     store.getState().setCurrentMode("light")
     expect(store.getState().history).toHaveLength(0)
+  })
+
+  it("records a history-only set without touching the stored entry", () => {
+    setRadius("1rem")
+    vi.advanceTimersByTime(HISTORY_DEBOUNCE_MS)
+    setRadius("2rem")
+    store.getState().undo()
+    const { themeState, history } = store.getState()
+    const setItem = vi.spyOn(Storage.prototype, "setItem")
+
+    store.getState().setThemeState((prev) => prev)
+
+    const state = store.getState()
+    expect(state.themeState).toBe(themeState)
+    expect(state.history).toHaveLength(history.length + 1)
+    expect(state.future).toEqual([])
+    expect(setItem).not.toHaveBeenCalled()
   })
 
   it("keeps the current mode when undoing", () => {
@@ -571,5 +596,96 @@ describe("refreshUntouchedPreset", () => {
     const { light } = store.getState().themeState.styles
     expect(light.primary).toBe("#000000")
     expect(light.radius).toBe("2rem")
+  })
+})
+
+describe("the stored entry", () => {
+  const brand = {
+    id: "brand",
+    label: "Brand",
+    styles: { light: { primary: "#111111" }, dark: {} },
+  }
+
+  /** The keys of the stored entry's state under `namespace`. */
+  function storedKeys(namespace = "themercn") {
+    const raw = localStorage.getItem(getStorageKeys(namespace).editor)
+    return raw === null ? null : Object.keys(JSON.parse(raw).state)
+  }
+
+  function seed(namespace: string, themeState: ThemeEditorState) {
+    localStorage.setItem(
+      getStorageKeys(namespace).editor,
+      JSON.stringify({ state: { themeState }, version: EDITOR_STATE_VERSION })
+    )
+  }
+
+  beforeEach(() => {
+    configurePresets({ presets: [brand] })
+  })
+
+  afterEach(() => {
+    usePreferencesStore.setState({ sidebarColorSync: false })
+    localStorage.clear()
+  })
+
+  it("stores the Theme alone after each action that puts a Preset on it", () => {
+    store.getState().adoptDefaultPreset("neo-brutalism")
+    expect(storedKeys()).toEqual(["themeState"])
+
+    store.getState().applyThemePreset("brand")
+    expect(storedKeys()).toEqual(["themeState"])
+
+    store.getState().updateCommonStyle("radius", "2rem")
+    store.getState().resetToCurrentPreset()
+    expect(storedKeys()).toEqual(["themeState"])
+
+    configurePresets({
+      presets: [
+        { ...brand, styles: { light: { primary: "#222222" }, dark: {} } },
+      ],
+    })
+    store.getState().refreshUntouchedPreset()
+    expect(store.getState().themeState.styles.light.primary).toBe("#222222")
+    expect(storedKeys()).toEqual(["themeState"])
+  })
+
+  it("stores the Theme alone once a stored Theme gets its baseline", () => {
+    store.setState({
+      themeState: {
+        ...defaultThemeState,
+        preset: "brand",
+        styles: structuredClone(resolvePresetStyles("brand")),
+      },
+    })
+    store.getState().saveThemeCheckpoint()
+
+    store.getState().refreshUntouchedPreset()
+
+    expect(store.getState().presetBaseline?.preset).toBe("brand")
+    expect(storedKeys()).toEqual(["themeState"])
+  })
+
+  it("restores a Theme stored alone so the next set stores it alone again", () => {
+    usePreferencesStore.setState({ sidebarColorSync: true })
+    const themeState: ThemeEditorState = {
+      ...defaultThemeState,
+      preset: "brand",
+      styles: structuredClone(resolvePresetStyles("brand")),
+    }
+    seed("first", themeState)
+    seed("second", themeState)
+
+    // A load, then a storageNamespace switch.
+    for (const namespace of ["first", "second"]) {
+      hydrateThemerStores(namespace)
+      const restored = store.getState()
+      expect(restored.themeCheckpoint).toBe(restored.themeState)
+      expect(restored.presetBaseline?.styles).toBe(restored.themeState.styles)
+
+      // The first write after a hydration always reaches storage.
+      store.getState().setThemeState((prev) => prev)
+
+      expect(storedKeys(namespace)).toEqual(["themeState"])
+    }
   })
 })

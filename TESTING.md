@@ -70,35 +70,35 @@ First measured on 2026-11-06 (spec #119) on one machine: an Apple M3 Max under m
 
 **Theme apply** (per apply and document)
 
-| Metric                  | Rule                                                             | Direction     | Checked by                                                                    | Runs at          |
-| ----------------------- | ---------------------------------------------------------------- | ------------- | ----------------------------------------------------------------------------- | ---------------- |
-| property writes         | 1 one-token edit; 8 shadow-input edit; 1 stylesheet-count change | must not grow | `pnpm --filter themercn exec vitest run src/utils/apply-theme.count.test.tsx` | implementer done |
-| shadow colour parses    | 0 one-token edit; 1 shadow-input edit; 0 stylesheet-count change | must not grow | `pnpm --filter themercn exec vitest run src/utils/apply-theme.count.test.tsx` | implementer done |
-| CSSOM walks             | 0 one-token edit; 0 shadow-input edit; 1 stylesheet-count change | must not grow | `pnpm --filter themercn exec vitest run src/utils/apply-theme.count.test.tsx` | implementer done |
-| override sheet writes   | 0 one-token edit; 0 shadow-input edit; 1 stylesheet-count change | must not grow | `pnpm --filter themercn exec vitest run src/utils/apply-theme.count.test.tsx` | implementer done |
-| restore-sheet lookups   | 1                                                                | must not grow | `pnpm --filter themercn exec vitest run src/utils/apply-theme.count.test.tsx` | implementer done |
-| class toggles           | 0                                                                | must not grow | `pnpm --filter themercn exec vitest run src/utils/apply-theme.count.test.tsx` | implementer done |
-| Live frame font updates | 1                                                                | must not grow | `pnpm --filter themercn exec vitest run src/utils/apply-theme.count.test.tsx` | implementer done |
-| font link appends       | 1                                                                | must not grow | `pnpm --filter themercn exec vitest run src/utils/apply-theme.count.test.tsx` | implementer done |
-| font label parses       | 1                                                                | must not grow | `pnpm --filter themercn exec vitest run src/utils/apply-theme.count.test.tsx` | implementer done |
+| Metric                  | Rule                                                                             | Direction     | Checked by                                                                    | Runs at          |
+| ----------------------- | -------------------------------------------------------------------------------- | ------------- | ----------------------------------------------------------------------------- | ---------------- |
+| property writes         | 1 one-token edit; 8 shadow-input edit; 1 stylesheet-count change; 25 mode toggle | must not grow | `pnpm --filter themercn exec vitest run src/utils/apply-theme.count.test.tsx` | implementer done |
+| shadow colour parses    | 0 one-token edit; 1 shadow-input edit; 0 stylesheet-count change; 1 mode toggle  | must not grow | `pnpm --filter themercn exec vitest run src/utils/apply-theme.count.test.tsx` | implementer done |
+| CSSOM walks             | 0 one-token edit; 0 shadow-input edit; 1 stylesheet-count change                 | must not grow | `pnpm --filter themercn exec vitest run src/utils/apply-theme.count.test.tsx` | implementer done |
+| override sheet writes   | 0 one-token edit; 0 shadow-input edit; 1 stylesheet-count change                 | must not grow | `pnpm --filter themercn exec vitest run src/utils/apply-theme.count.test.tsx` | implementer done |
+| restore-sheet lookups   | 1                                                                                | must not grow | `pnpm --filter themercn exec vitest run src/utils/apply-theme.count.test.tsx` | implementer done |
+| class toggles           | 0                                                                                | must not grow | `pnpm --filter themercn exec vitest run src/utils/apply-theme.count.test.tsx` | implementer done |
+| Live frame font updates | 1                                                                                | must not grow | `pnpm --filter themercn exec vitest run src/utils/apply-theme.count.test.tsx` | implementer done |
+| font link appends       | 1                                                                                | must not grow | `pnpm --filter themercn exec vitest run src/utils/apply-theme.count.test.tsx` | implementer done |
+| font label parses       | 1                                                                                | must not grow | `pnpm --filter themercn exec vitest run src/utils/apply-theme.count.test.tsx` | implementer done |
 
 **Page load** (per load; hydration rows also per `storageNamespace` switch)
 
-| Metric                    | Rule                           | Direction     | Checked by                                                                                | Runs at          |
-| ------------------------- | ------------------------------ | ------------- | ----------------------------------------------------------------------------------------- | ---------------- |
-| head-script builds        | 1                              | must not grow | `pnpm --filter themercn exec vitest run src/components/page-load.count.test.tsx`          | implementer done |
-| head-script storage reads | 3                              | must not grow | `pnpm --filter themercn exec vitest run src/components/page-load.count.test.tsx`          | implementer done |
-| head-script parses        | 2                              | must not grow | `pnpm --filter themercn exec vitest run src/components/page-load.count.test.tsx`          | implementer done |
-| hydration storage reads   | 2                              | must not grow | `pnpm --filter themercn exec vitest run src/components/page-load.count.test.tsx`          | implementer done |
-| hydration parses          | 2                              | must not grow | `pnpm --filter themercn exec vitest run src/components/page-load.count.test.tsx`          | implementer done |
-| colour-mode writes        | 1                              | must not grow | `pnpm --filter themercn exec vitest run src/components/page-load.count.test.tsx`          | implementer done |
-| restore-sheet writes      | 0 nothing saved; 1 saved Theme | must not grow | `pnpm --filter themercn exec vitest run src/components/page-load.count.test.tsx`          | implementer done |
-| restore-sheet removals    | 1                              | must not grow | `pnpm --filter themercn exec vitest run src/components/page-load.count.test.tsx`          | implementer done |
-| stylesheet inserts        | 1                              | must not grow | `pnpm --filter themercn exec vitest run src/components/page-load.count.test.tsx`          | implementer done |
-| font links                | 4                              | must not grow | `pnpm --filter themercn exec vitest run src/components/page-load.count.test.tsx`          | implementer done |
-| store sets                | 2                              | must not grow | `pnpm --filter themercn exec vitest run src/components/page-load.count.test.tsx`          | implementer done |
-| Preset deep compares      | 2                              | must not grow | `pnpm --filter themercn exec vitest run src/components/page-load.count.test.tsx`          | implementer done |
-| frame chunk imports       | 0                              | must not grow | `pnpm --filter web exec playwright test --project=chromium e2e/frame-chunk.count.spec.ts` | merge gate       |
+| Metric                    | Rule                                                                | Direction     | Checked by                                                                                | Runs at          |
+| ------------------------- | ------------------------------------------------------------------- | ------------- | ----------------------------------------------------------------------------------------- | ---------------- |
+| head-script builds        | 1                                                                   | must not grow | `pnpm --filter themercn exec vitest run src/components/page-load.count.test.tsx`          | implementer done |
+| head-script storage reads | 3                                                                   | must not grow | `pnpm --filter themercn exec vitest run src/components/page-load.count.test.tsx`          | implementer done |
+| head-script parses        | 2                                                                   | must not grow | `pnpm --filter themercn exec vitest run src/components/page-load.count.test.tsx`          | implementer done |
+| hydration storage reads   | 2                                                                   | must not grow | `pnpm --filter themercn exec vitest run src/components/page-load.count.test.tsx`          | implementer done |
+| hydration parses          | 2                                                                   | must not grow | `pnpm --filter themercn exec vitest run src/components/page-load.count.test.tsx`          | implementer done |
+| colour-mode writes        | 1 nothing saved; 0 saved Theme; 1 other version; 1 namespace switch | must not grow | `pnpm --filter themercn exec vitest run src/components/page-load.count.test.tsx`          | implementer done |
+| restore-sheet writes      | 0 nothing saved; 1 saved Theme                                      | must not grow | `pnpm --filter themercn exec vitest run src/components/page-load.count.test.tsx`          | implementer done |
+| restore-sheet removals    | 1                                                                   | must not grow | `pnpm --filter themercn exec vitest run src/components/page-load.count.test.tsx`          | implementer done |
+| stylesheet inserts        | 1                                                                   | must not grow | `pnpm --filter themercn exec vitest run src/components/page-load.count.test.tsx`          | implementer done |
+| font links                | 4                                                                   | must not grow | `pnpm --filter themercn exec vitest run src/components/page-load.count.test.tsx`          | implementer done |
+| store sets                | 0 nothing saved; 0 saved Theme; 0 other version; 1 namespace switch | must not grow | `pnpm --filter themercn exec vitest run src/components/page-load.count.test.tsx`          | implementer done |
+| Preset deep compares      | 2                                                                   | must not grow | `pnpm --filter themercn exec vitest run src/components/page-load.count.test.tsx`          | implementer done |
+| frame chunk imports       | 0                                                                   | must not grow | `pnpm --filter web exec playwright test --project=chromium e2e/frame-chunk.count.spec.ts` | merge gate       |
 
 **Inspector pointer move** (per `mousemove`, and per measure where named)
 
@@ -140,8 +140,8 @@ The ratchet. Each count is per unit of its path, as the paths ADR defines the un
 
 | Metric               | Today                                                               | Direction     | Checked by                                                                       | Runs at          |
 | -------------------- | ------------------------------------------------------------------- | ------------- | -------------------------------------------------------------------------------- | ---------------- |
-| storage writes       | 1 nothing saved; 1 saved Theme; 3 other version; 2 namespace switch | must not grow | `pnpm --filter themercn exec vitest run src/components/page-load.count.test.tsx` | implementer done |
-| first applies        | 3                                                                   | must not grow | `pnpm --filter themercn exec vitest run src/components/page-load.count.test.tsx` | implementer done |
+| storage writes       | 0 nothing saved; 0 saved Theme; 2 other version; 1 namespace switch | must not grow | `pnpm --filter themercn exec vitest run src/components/page-load.count.test.tsx` | implementer done |
+| first applies        | 1                                                                   | must not grow | `pnpm --filter themercn exec vitest run src/components/page-load.count.test.tsx` | implementer done |
 | root-class observers | 2                                                                   | must not grow | `pnpm --filter themercn exec vitest run src/components/page-load.count.test.tsx` | implementer done |
 
 **Font catalog request** (per request)
@@ -154,13 +154,11 @@ The ratchet. Each count is per unit of its path, as the paths ADR defines the un
 
 ### Exceptions
 
-| ID  | Rule                    | Path        | Reason                                                                                                                                              | Owner                    | Expires    |
-| --- | ----------------------- | ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------ | ---------- |
-| E8  | font label layout reads | Theme apply | Debt: "A font label reads `getComputedStyle` once per `var()` hop, up to 4"; remediation map #111                                                   | Jbmanllr (project owner) | 2027-02-04 |
-| E9  | font label stringifies  | Theme apply | No debt line. Measured cause: 4 `getSnapshot` runs under React's development build, plus react-query's key hash; remediation map #111               | Jbmanllr (project owner) | 2027-02-04 |
-| E11 | storage writes          | Page load   | No debt line. Measured cause: the refresh's baseline write, and the mode-sync set persists `currentMode`; remediation map #111                      | Jbmanllr (project owner) | 2027-02-04 |
-| E14 | first applies           | Page load   | Debt: "The first apply runs twice when the saved mode differs from the page's" (3 measured on a switch to an empty namespace); remediation map #111 | Jbmanllr (project owner) | 2027-02-04 |
-| E16 | root-class observers    | Page load   | Debt: "Every `useColorMode` caller and every font label adds its own `<html>` observer"; remediation map #111                                       | Jbmanllr (project owner) | 2027-02-04 |
+| ID  | Rule                    | Path        | Reason                                                                                                                                | Owner                    | Expires    |
+| --- | ----------------------- | ----------- | ------------------------------------------------------------------------------------------------------------------------------------- | ------------------------ | ---------- |
+| E8  | font label layout reads | Theme apply | Debt: "A font label reads `getComputedStyle` once per `var()` hop, up to 4"; remediation map #111                                     | Jbmanllr (project owner) | 2027-02-04 |
+| E9  | font label stringifies  | Theme apply | No debt line. Measured cause: 4 `getSnapshot` runs under React's development build, plus react-query's key hash; remediation map #111 | Jbmanllr (project owner) | 2027-02-04 |
+| E16 | root-class observers    | Page load   | Debt: "Every `useColorMode` caller and every font label adds its own `<html>` observer"; remediation map #111                         | Jbmanllr (project owner) | 2027-02-04 |
 
 ### Rules
 

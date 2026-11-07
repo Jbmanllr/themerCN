@@ -37,7 +37,7 @@ Each path section below states its plug-in rule, what is built once and at which
 
 ### Page load
 
-- **Owner module:** the Themer's mount sequence, `<Themer>` and its provider's mount effects. It owns the stage order: the pre-paint head script, the Themer chunk import, store hydration, the Preset adopt and refresh, the first Theme apply, then the font links. The head script stays an isolated stage that imports only constants: the storage keys, the versions and the restore sheet's id. Store hydration belongs to the store module and the first apply to the Theme apply path.
+- **Owner module:** the Themer's mount sequence, `<Themer>` and its provider's mount effects. It owns the stage order: the pre-paint head script, the Themer chunk import, store hydration, the Preset adopt and refresh, the first Theme apply, then the font links. The head script stays an isolated stage that imports only constants: the storage keys, the versions, the restore sheet's id and the colour-mode record's name. Store hydration belongs to the store module and the first apply to the Theme apply path.
 - **Plug-in rule:** a feature that needs work at page load adds a stage to the mount sequence, and that stage reads the hydrated stores. It never reads storage itself. The head script reads only what the stores persist, and it gains a read only for something that must be right before first paint.
 - **Cost contract per load:**
   - Storage: the head script does at most 3 `localStorage.getItem` and 2 `JSON.parse`; hydration does at most 2 of each, on a load or on a `storageNamespace` switch. No storage write when the stored values are current. At most 1 write per store whose entry is at another version. At most 1 colour-mode write, only when the saved mode differs, or when an entry exists while the mode is controlled.
@@ -50,8 +50,6 @@ Each path section below states its plug-in rule, what is built once and at which
 - **Switched off:** the Themer off removes the import, the stylesheet, the hydration and the observers, and leaves the head script, which changes nothing when nothing is saved. The Theme override off removes the restore sheet, the head script's font links and the first apply. A controlled colour mode removes the colour-mode write, except to clear an existing entry.
 - **Benchmark:** the page-load count test, whose composition run mounts the Themer, switches its `storageNamespace`, then runs with the Theme override off; the merge-gate frame chunk count measures frame chunk imports in a real browser. The existing count tests stay.
 - **Debt today:**
-  - The colour mode is written on every load.
-  - The first apply runs twice when the saved mode differs from the page's.
   - Every `useColorMode` caller and every font label adds its own `<html>` observer.
   - Each Preset picker mount re-sorts the Preset ids.
 

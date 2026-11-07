@@ -236,6 +236,12 @@ function check(outcome: string, counts: Counts, restored: string) {
   })
 }
 
+/** The contract's "exactly 1 first apply": equality, so a load or switch
+ *  that applies nothing fails as well as one that applies twice. */
+function expectOneFirstApply(counts: Counts) {
+  expect(counts["first applies"]).toBe(1)
+}
+
 /** Prints a run's counts, labelled, for the first measurement. */
 function report(run: string, counts: Counts) {
   console.log(`${PATH} [${run}]: ${JSON.stringify(counts)}`)
@@ -480,6 +486,7 @@ describe("Page load rows", () => {
 
     report(`row: ${NAMESPACE_SWITCH} to a ${SAVED_THEME}`, counts)
     check(NAMESPACE_SWITCH, counts, SAVED_THEME)
+    expectOneFirstApply(counts)
   })
 })
 
@@ -497,6 +504,7 @@ describe("Page load composition", () => {
     const load = await measure(counters(), () => pageLoad(namespace, HOST))
     report(`composition: load, ${SAVED_THEME}`, load)
     check(SAVED_THEME, load, SAVED_THEME)
+    expectOneFirstApply(load)
 
     const empty = freshNamespace()
     const switched = await measure(counters(), () =>
@@ -504,6 +512,7 @@ describe("Page load composition", () => {
     )
     report(`composition: ${NAMESPACE_SWITCH} to ${NOTHING_SAVED}`, switched)
     check(NAMESPACE_SWITCH, switched, NOTHING_SAVED)
+    expectOneFirstApply(switched)
   })
 
   it("reports every row for a Host load with the Theme override off", async () => {

@@ -167,7 +167,7 @@ const roots: Root[] = []
 /** Hydrated stores on a fresh namespace, one edit already saved, so the
  *  measured set is a steady-state one. */
 function startStores() {
-  hydrateThemerStores(`store-action-count-${++namespace}`)
+  hydrateThemerStores(`store-action-count-${++namespace}`, "light")
   editTheme()
 }
 

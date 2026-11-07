@@ -539,8 +539,8 @@ load (in Google's transform, and at module load for the bundled
 `FALLBACK_CATALOG`), so a search lower-cases only its query. The package reads no
 environment. The picker also asks the catalog whether a Theme's family is a
 Google font (its "Custom font" badge): `useCatalogLacksFamily`
-(`hooks/use-catalog-lacks-family.ts`) runs the same cached query as
-`useFontSearch` and matches the family, ignoring case, once per response.
+(`hooks/use-catalog-lacks-family.ts`) asks `useFontSearch` and matches the
+family, ignoring case, once per response (in its `select`).
 
 #### Font link registry (`utils/font-links.ts`)
 

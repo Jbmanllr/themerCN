@@ -8,8 +8,8 @@
 //   catalog behind fonts.google.com. The key is never part of the response
 //   body.
 // - The route always answers. A Google request that takes over 5 seconds is
-//   aborted. If Google fails either way, the bundled FALLBACK_FONTS answer,
-//   so the picker works offline.
+//   aborted. If Google fails either way, the bundled FALLBACK_CATALOG
+//   answers, so the picker works offline.
 // - The transformed catalog, prepared with its lower-cased family names, is
 //   held in this module's memory for a day, per key, so a keystroke neither
 //   downloads, parses nor lower-cases it again. After a failure the bundled

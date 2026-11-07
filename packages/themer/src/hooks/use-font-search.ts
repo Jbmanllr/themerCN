@@ -1,4 +1,8 @@
-import { infiniteQueryOptions, useInfiniteQuery } from "@tanstack/react-query"
+import {
+  useInfiniteQuery,
+  type InfiniteData,
+  type UseInfiniteQueryResult,
+} from "@tanstack/react-query"
 import type { FilterFontCategory, PaginatedFontsResponse } from "../types/fonts"
 import {
   FALLBACK_CATALOG,
@@ -40,19 +44,37 @@ function retryCatalogFailure(failureCount: number, error: unknown) {
   return error instanceof FontCatalogResponseError && error.status >= 500
 }
 
+type FontSearchPages = InfiniteData<PaginatedFontsResponse, number>
+
 /**
- * The font catalog query behind useFontSearch, for a caller that derives its
- * own answer from the same cached pages (the badge lookup,
- * use-catalog-lacks-family.ts).
+ * Searches the font catalog for the font picker. With an `endpoint` (the
+ * Host's `fontCatalogEndpoint`) it pages through
+ * `GET ?q=&category=&limit=&offset=` → `{ fonts, total, offset, limit, hasMore }`;
+ * the Host's route owns API keys and gating. Without one it searches the
+ * bundled list (FALLBACK_CATALOG, prepared once per module load) in the
+ * browser, with the same paging.
+ * A failed request is retried once for a network error or a 5xx answer, never
+ * for a 4xx.
+ *
+ * `select` derives a caller's answer from the cached pages (the badge
+ * lookup, use-catalog-lacks-family.ts). react-query re-runs it only when the
+ * pages or the function change, so pass a stable function.
  */
-export function fontSearchQuery({
+export function useFontSearch<TData>(
+  params: UseFontSearchParams & { select: (pages: FontSearchPages) => TData }
+): UseInfiniteQueryResult<TData>
+export function useFontSearch(
+  params: UseFontSearchParams
+): UseInfiniteQueryResult<FontSearchPages>
+export function useFontSearch<TData>({
   endpoint,
   query,
   category = "all",
   limit = 20,
   enabled = true,
-}: UseFontSearchParams) {
-  return infiniteQueryOptions({
+  select,
+}: UseFontSearchParams & { select?: (pages: FontSearchPages) => TData }) {
+  return useInfiniteQuery({
     queryKey: ["themer-fonts", endpoint, query, category, limit],
     queryFn: async ({ pageParam }): Promise<PaginatedFontsResponse> => {
       if (!endpoint) {
@@ -92,19 +114,6 @@ export function fontSearchQuery({
     staleTime: 1000 * 60 * 60 * 24,
     retry: retryCatalogFailure,
     enabled,
+    select,
   })
-}
-
-/**
- * Searches the font catalog for the font picker. With an `endpoint` (the
- * Host's `fontCatalogEndpoint`) it pages through
- * `GET ?q=&category=&limit=&offset=` → `{ fonts, total, offset, limit, hasMore }`;
- * the Host's route owns API keys and gating. Without one it searches the
- * bundled list (FALLBACK_CATALOG, prepared once per module load) in the
- * browser, with the same paging.
- * A failed request is retried once for a network error or a 5xx answer, never
- * for a 4xx.
- */
-export function useFontSearch(params: UseFontSearchParams) {
-  return useInfiniteQuery(fontSearchQuery(params))
 }

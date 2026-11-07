@@ -2,7 +2,11 @@
 // The "Custom font" badge's question: does the font catalog lack the
 // theme's family? Asked of the bundled list here (no endpoint); the match
 // ignores case, so "inter" is the catalog's "Inter".
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
+import {
+  QueryClient,
+  QueryClientProvider,
+  useQueryClient,
+} from "@tanstack/react-query"
 import { act } from "react"
 import { createRoot, type Root } from "react-dom/client"
 import { afterEach, describe, expect, it, vi } from "vitest"
@@ -13,35 +17,39 @@ import { useCatalogLacksFamily } from "./use-catalog-lacks-family"
   globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }
 ).IS_REACT_ACT_ENVIRONMENT = true
 
-let root: Root | null = null
+const roots: Root[] = []
 
 /** The hook's answer once its lookup has settled. */
 async function lacks(family: string | null) {
-  const seen: { current: boolean | null } = { current: null }
+  const seen = { current: null as boolean | null, answered: false }
   function Probe() {
     seen.current = useCatalogLacksFamily(undefined, family)
+    // Read while rendering: true once this render saw the catalog's answer.
+    seen.answered = useQueryClient()
+      .getQueryCache()
+      .getAll()
+      .some((query) => query.state.status === "success")
     return null
   }
   const client = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   })
-  root = createRoot(document.createElement("div"))
+  const root = createRoot(document.createElement("div"))
+  roots.push(root)
   await act(async () =>
-    root?.render(
+    root.render(
       <QueryClientProvider client={client}>
         <Probe />
       </QueryClientProvider>
     )
   )
-  await vi.waitFor(() => expect(client.isFetching()).toBe(0))
-  // react-query notifies its observers on a timer.
-  await act(() => new Promise((resolve) => setTimeout(resolve, 20)))
+  if (family === null) expect(client.isFetching()).toBe(0)
+  else await vi.waitFor(() => expect(seen.answered).toBe(true))
   return seen.current
 }
 
 afterEach(async () => {
-  await act(async () => root?.unmount())
-  root = null
+  for (const root of roots.splice(0)) await act(async () => root.unmount())
 })
 
 describe("useCatalogLacksFamily", () => {

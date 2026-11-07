@@ -15,12 +15,14 @@
 //   variables (next-themes applies the class in an effect, flushed with the
 //   sync render) before the browser takes the "new" snapshot. flushSync must
 //   not run during a render: call this from event handlers only.
-// - No View Transitions API, or prefers-reduced-motion: the update runs
-//   directly, with no animation.
+// - No View Transitions API, or prefers-reduced-motion: no animation, but the
+//   update is still committed with flushSync, so the `.dark` class switch and
+//   the apply's style writes on <html> land in one MutationObserver batch and
+//   the <html> observers (font labels) wake once, as under the reveal.
 //
 // See: packages/themer/ARCHITECTURE.md ("Colour mode").
 
-// react-doctor-disable-next-line react-doctor/no-flush-sync -- flushSync runs only inside document.startViewTransition's update callback, from event handlers: it is what puts the committed mode in the browser's "new" snapshot (next-themes sets the class in an effect React's <ViewTransition> does not capture)
+// react-doctor-disable-next-line react-doctor/no-flush-sync -- flushSync runs only from event handlers: inside document.startViewTransition's update callback it puts the committed mode in the browser's "new" snapshot (next-themes sets the class in an effect React's <ViewTransition> does not capture); without a transition it commits the class switch and the apply's style writes in one MutationObserver batch
 import { flushSync } from "react-dom"
 
 export interface TransitionOrigin {
@@ -92,7 +94,8 @@ export function transitionOriginPercent(
 
 /**
  * Run `update` (a light/dark switch) behind the circular reveal when the
- * browser supports it and the user allows motion; otherwise run it directly.
+ * browser supports it and the user allows motion; otherwise commit it
+ * synchronously with no animation.
  * Returns whether a view transition was started.
  */
 export function runThemeTransition(
@@ -106,7 +109,8 @@ export function runThemeTransition(
     typeof startViewTransition !== "function" ||
     environment.window.matchMedia(REDUCED_MOTION_QUERY).matches
   ) {
-    update()
+    if (environment) environment.flush(update)
+    else update()
     return false
   }
 

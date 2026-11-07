@@ -1,9 +1,9 @@
 // A minimal DOM for the apply-theme and font-links tests. Component and hook
 // tests opt into happy-dom per file; these two modules only touch inline
 // style, classList, attributes, <head> children, link "load" and "error"
-// events, document.fonts and the rules of document.styleSheets, so this fake
-// covers exactly that surface and lets their tests control every rule and
-// event. A module under test that reaches for anything else needs this fake
+// events, a link's loaded `sheet`, document.fonts and the rules of
+// document.styleSheets, so this fake covers exactly that surface and lets
+// their tests control every rule and event. A module under test that reaches for anything else needs this fake
 // extended, or its own happy-dom test.
 
 type Listener = () => void
@@ -60,6 +60,8 @@ export class FakeElement {
   readonly attributes = new Map<string, string>()
   readonly listeners = new Map<string, Listener[]>()
   textContent = ""
+  /** A link's stylesheet: set by a test once the link has loaded. */
+  sheet: unknown = null
   parent: FakeHead | null = null
 
   constructor(

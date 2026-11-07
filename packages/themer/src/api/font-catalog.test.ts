@@ -191,6 +191,33 @@ describe("fontCatalogResponse", () => {
     expect(body.total).toBeLessThan(FALLBACK_FONTS.length)
   })
 
+  it("filters by query, whatever its case, and category together, paging the matches", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new TypeError("offline")))
+    vi.spyOn(console, "warn").mockImplementation(() => undefined)
+
+    const body = await (
+      await fontCatalogResponse(
+        url("q=%20MONO%20&category=monospace&limit=2&offset=1"),
+        undefined
+      )
+    ).json()
+
+    const matches = FALLBACK_FONTS.filter(
+      (font) => font.category === "monospace" && /mono/iu.test(font.family)
+    ).map((font) => font.family)
+    expect(matches.length).toBeGreaterThan(3)
+    expect(body).toEqual({
+      fonts: expect.any(Array),
+      total: matches.length,
+      offset: 1,
+      limit: 2,
+      hasMore: true,
+    })
+    expect(body.fonts.map((font: { family: string }) => font.family)).toEqual(
+      matches.slice(1, 3)
+    )
+  })
+
   it("uses Google's catalog when the key works, sending the key only to Google", async () => {
     const fetch = vi.fn().mockResolvedValue(Response.json(googleCatalog))
     vi.stubGlobal("fetch", fetch)

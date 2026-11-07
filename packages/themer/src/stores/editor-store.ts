@@ -19,9 +19,12 @@
 //   of the preference) aligns the Theme when it turns it on.
 // - Only themeState, themeCheckpoint and presetBaseline persist; history and
 //   future do not. The checkpoint and baseline are stored only when they
-//   differ from themeState (PersistedEditorState). Writes go through
-//   guardedLocalStorage (stores/persist-options.ts): a storage error never
-//   reaches an action, and an unchanged slice is not written.
+//   are not the Theme's own objects (PersistedEditorState): persistence
+//   decides by identity, never by a deep compare. A set whose updater
+//   returns the stored Theme keeps that object, so it writes nothing.
+//   Writes go through guardedLocalStorage (stores/persist-options.ts): a
+//   storage error never reaches an action, and an unchanged slice is not
+//   written.
 //   The persisted shape is versioned by EDITOR_STATE_VERSION
 //   (config/constants.ts) with no migrations (pre-release): a stored state of
 //   another version is dropped without an error and the key rewritten
@@ -42,7 +45,10 @@
 //   the preset's current source: refreshUntouchedPreset, run by ThemerProvider
 //   once Host Presets are registered, so a token change in the Host app reaches
 //   the page instead of the stored copy. A restored theme with no baseline
-//   gets one only when it already equals its preset.
+//   gets one only when it already equals its preset. A fresh store starts
+//   with its default Theme's own baseline, so the refresh sets nothing.
+// - Hydration (mergeEditorState) puts the page's colour mode on the hydrated
+//   Theme; the stored currentMode is not read at load.
 //
 // See: packages/themer/ARCHITECTURE.md (EditorStore)
 
@@ -57,6 +63,7 @@ import type {
   SetThemeStateArg,
   ThemeStyles,
   ThemeStyleProps,
+  ThemeMode,
 } from "../types"
 import { COMMON_STYLE_KEYS, THEME_FONT_KEYS } from "../types/theme"
 import { defaultThemeState, defaultHSLAdjustments } from "../config/defaults"
@@ -79,13 +86,21 @@ import { dropOtherVersion, guardedLocalStorage } from "./persist-options"
 
 /**
  * The stored editor entry. The checkpoint and the baseline are left out
- * while they equal the Theme (the usual case: on a Preset, before any HSL
- * adjustment), so the entry holds one copy of the styles instead of three;
- * left out means "the Theme", while `null` means none.
+ * while they are the Theme's own objects (the usual case: on a Preset,
+ * before any HSL adjustment), so the entry holds one copy of the styles
+ * instead of three; left out means "the Theme", while `null` means none.
  */
 type PersistedEditorState = Pick<EditorStoreState, "themeState"> &
   Partial<Pick<EditorStoreState, "themeCheckpoint" | "presetBaseline">>
 
+/**
+ * Whether `baseline` is the Theme's own: its Preset, on the Theme's styles
+ * object. Decided by identity, never by a deep compare: every action that
+ * puts a Preset on the Theme builds the baseline on the new Theme's styles
+ * (baselineOf), and styles are never mutated in place. A baseline equal to
+ * the Theme but a separate object is stored; restoring it gives the same
+ * state.
+ */
 function isBaselineOf(
   baseline: PresetBaseline | null,
   themeState: ThemeEditorState
@@ -93,7 +108,7 @@ function isBaselineOf(
   return (
     baseline !== null &&
     baseline.preset === themeState.preset &&
-    isDeepEqual(baseline.styles, themeState.styles)
+    baseline.styles === themeState.styles
   )
 }
 
@@ -103,7 +118,8 @@ function toPersisted({
   presetBaseline,
 }: EditorStoreState): PersistedEditorState {
   const persisted: PersistedEditorState = { themeState }
-  if (!isDeepEqual(themeCheckpoint, themeState)) {
+  // By identity too: the checkpoint is left out when it is the Theme itself.
+  if (themeCheckpoint !== themeState) {
     persisted.themeCheckpoint = themeCheckpoint
   }
   if (!isBaselineOf(presetBaseline, themeState)) {
@@ -181,9 +197,16 @@ function presetThemeState(
   })
 }
 
-/** The baseline for a theme just put on `presetId`. */
-function baselineOf(presetId: string, styles: ThemeStyles): PresetBaseline {
-  return { preset: presetId, styles: copyStyles(styles) }
+/**
+ * The baseline for a Theme just put on `presetId`: built on that Theme
+ * state's own styles object, not a copy, so the stored entry leaves it out
+ * (isBaselineOf).
+ */
+function baselineOf(
+  presetId: string,
+  themeState: ThemeEditorState
+): PresetBaseline {
+  return { preset: presetId, styles: themeState.styles }
 }
 
 /**
@@ -196,7 +219,12 @@ export const useEditorStore = create<EditorStore>()(
       // State
       themeState: defaultThemeState,
       themeCheckpoint: null,
-      presetBaseline: null,
+      // The default Theme is its own Preset, untouched: with its baseline,
+      // the refresh of a fresh store has nothing to set.
+      presetBaseline: baselineOf(
+        defaultThemeState.preset ?? "default",
+        defaultThemeState
+      ),
       history: [],
       future: [],
       restoredFromStorage: false,
@@ -209,10 +237,16 @@ export const useEditorStore = create<EditorStore>()(
           typeof stateOrUpdater === "function"
             ? stateOrUpdater(oldThemeState)
             : stateOrUpdater
-        const newState = withSidebarSync({
-          ...updatedState,
-          styles: copyStyles(updatedState.styles),
-        })
+        // The stored Theme returned unchanged is kept as it is (it is already
+        // in sync, with copied styles), so the persisted slice is left as it
+        // was. The set still records its undo entry and clears redo.
+        const newState =
+          updatedState === oldThemeState
+            ? oldThemeState
+            : withSidebarSync({
+                ...updatedState,
+                styles: copyStyles(updatedState.styles),
+              })
         let currentHistory = get().history
 
         // A change of light/dark mode only is not an edit: no undo entry and
@@ -224,6 +258,7 @@ export const useEditorStore = create<EditorStore>()(
         const newStateWithoutMode = { ...newState, currentMode: undefined }
 
         if (
+          newState !== oldThemeState &&
           isDeepEqual(oldStateWithoutMode, newStateWithoutMode) &&
           oldThemeState.currentMode !== newState.currentMode
         ) {
@@ -273,7 +308,7 @@ export const useEditorStore = create<EditorStore>()(
         set({
           themeState: newThemeState,
           themeCheckpoint: newThemeState,
-          presetBaseline: baselineOf(preset, newThemeState.styles),
+          presetBaseline: baselineOf(preset, newThemeState),
           history: pushHistory(get().history, currentThemeState),
           future: [],
         })
@@ -297,7 +332,7 @@ export const useEditorStore = create<EditorStore>()(
         set({
           themeState: newThemeState,
           themeCheckpoint: newThemeState,
-          presetBaseline: baselineOf(presetId, newThemeState.styles),
+          presetBaseline: baselineOf(presetId, newThemeState),
           history: [],
           future: [],
         })
@@ -365,7 +400,7 @@ export const useEditorStore = create<EditorStore>()(
         set({
           themeState: newThemeState,
           themeCheckpoint: newThemeState,
-          presetBaseline: baselineOf(presetId, newThemeState.styles),
+          presetBaseline: baselineOf(presetId, newThemeState),
         })
       },
 
@@ -384,19 +419,26 @@ export const useEditorStore = create<EditorStore>()(
         // edited): it can only be trusted when it already is its preset.
         if (!presetBaseline) {
           if (isDeepEqual(themeState.styles, newThemeState.styles)) {
-            set({ presetBaseline: baselineOf(presetId, newThemeState.styles) })
+            set({ presetBaseline: baselineOf(presetId, themeState) })
           }
           return
         }
 
         if (presetBaseline.preset !== presetId) return
-        if (!isDeepEqual(themeState.styles, presetBaseline.styles)) return
+        // A baseline built on this Theme's own styles (baselineOf) is
+        // untouched without a compare.
+        if (
+          themeState.styles !== presetBaseline.styles &&
+          !isDeepEqual(themeState.styles, presetBaseline.styles)
+        ) {
+          return
+        }
         if (isDeepEqual(newThemeState.styles, presetBaseline.styles)) return
 
         set({
           themeState: newThemeState,
           themeCheckpoint: newThemeState,
-          presetBaseline: baselineOf(presetId, newThemeState.styles),
+          presetBaseline: baselineOf(presetId, newThemeState),
         })
       },
 
@@ -467,31 +509,9 @@ export const useEditorStore = create<EditorStore>()(
       skipHydration: true,
       version: EDITOR_STATE_VERSION,
       migrate: dropOtherVersion,
-      // Called with `undefined` when nothing (or a state of another version)
-      // is stored; the flag lets adoptDefaultPreset tell a fresh store from a
-      // restored one. Built on the initial state, never the current one, so
-      // a namespace switch (stores/hydrate.ts) carries no Theme or undo
-      // history over from the previous namespace.
-      // The Theme it restores (or starts from) is put in sync with the
-      // preference, already restored (stores/hydrate.ts), so a Theme saved
-      // with Sync off (another tab) holds the rule too. Nothing is written
-      // until the next action.
-      merge: (persistedState): EditorStore => {
-        const initialState = useEditorStore.getInitialState()
-        const persisted = persistedState as PersistedEditorState | undefined
-        if (!persisted?.themeState) {
-          const themeState = withSidebarSync(initialState.themeState)
-          return { ...initialState, themeState }
-        }
-        return {
-          ...initialState,
-          ...fromPersisted({
-            ...persisted,
-            themeState: withSidebarSync(persisted.themeState),
-          }),
-          restoredFromStorage: true,
-        }
-      },
+      // No merge here: hydration is the only rehydrate, and it sets the
+      // merge (mergeEditorState) for the page's colour mode
+      // (stores/hydrate.ts).
       // history and future stay out of localStorage (quota): undo and redo
       // start empty after a reload. A change to them alone writes nothing
       // (guardedLocalStorage skips a slice equal to the last write).
@@ -500,3 +520,47 @@ export const useEditorStore = create<EditorStore>()(
     }
   )
 )
+
+/**
+ * The editor state hydrated from `persistedState` (undefined when nothing,
+ * or an entry at another version, is stored), on the page's colour `mode`:
+ * the hydrated Theme already holds the mode the mount renders with, so the
+ * mode sync has nothing to set. A fresh store keeps its default Theme's
+ * baseline (in sync, as the Theme), so the refresh sets nothing. Writes
+ * nothing.
+ *
+ * Built on the initial state, never the current one, so a namespace switch
+ * carries no Theme or undo history over; `restoredFromStorage` lets
+ * adoptDefaultPreset tell a fresh store from a restored one. The Theme is
+ * put in sync with the preference, already restored (stores/hydrate.ts), so
+ * a Theme saved with Sync off (another tab) holds the rule too.
+ */
+export function mergeEditorState(
+  persistedState: unknown,
+  mode: ThemeMode
+): EditorStore {
+  const initialState = useEditorStore.getInitialState()
+  const persisted = persistedState as PersistedEditorState | undefined
+  if (!persisted?.themeState) {
+    const themeState = withSidebarSync({
+      ...initialState.themeState,
+      currentMode: mode,
+    })
+    const presetBaseline =
+      themeState.styles === initialState.themeState.styles
+        ? initialState.presetBaseline
+        : baselineOf(themeState.preset ?? "default", themeState)
+    return { ...initialState, themeState, presetBaseline }
+  }
+  return {
+    ...initialState,
+    ...fromPersisted({
+      ...persisted,
+      themeState: withSidebarSync({
+        ...persisted.themeState,
+        currentMode: mode,
+      }),
+    }),
+    restoredFromStorage: true,
+  }
+}

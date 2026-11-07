@@ -48,6 +48,7 @@ import {
   EDITOR_STATE_VERSION,
   PREFERENCES_VERSION,
   RESTORE_STYLE_ID,
+  THEMER_STYLE_ATTRIBUTE,
 } from "../config/constants"
 import { defaultThemeState } from "../config/defaults"
 import { configureExtraColors } from "../config/extra-colors"
@@ -60,7 +61,6 @@ import { usePreferencesStore } from "../stores/preferences-store"
 import { useThemerUIStore } from "../stores/themer-ui-store"
 import type { ThemePreset, ThemerProps } from "../types"
 import { applyThemeToElement } from "../utils/apply-theme"
-import { THEMER_STYLE_ATTRIBUTE } from "./themer-scope"
 
 // Work that crosses no platform boundary is counted on its module export.
 vi.mock("../head-script", async (importOriginal) => {
@@ -138,12 +138,13 @@ const isThemerSheet = (node: unknown) =>
   node instanceof HTMLStyleElement && node.hasAttribute(THEMER_STYLE_ATTRIBUTE)
 const isFontLink = (node: unknown) =>
   node instanceof HTMLLinkElement && node.rel === "stylesheet"
-const observesRootClass = (args: unknown[]) => {
+/** An observer of any <html> attribute: a filter naming any attributes, or
+ *  none (`attributeFilter` alone implies `attributes`). */
+const observesHtmlAttributes = (args: unknown[]) => {
   const [target, options] = args as [Node, MutationObserverInit | undefined]
   return (
     target === document.documentElement &&
-    options?.attributes === true &&
-    (!options.attributeFilter || options.attributeFilter.includes("class"))
+    (options?.attributes === true || options?.attributeFilter !== undefined)
   )
 }
 /** Counts the nodes `when` matches appended to <head>, by append or
@@ -216,10 +217,10 @@ const counters = (): Counter[] => [
     (_state: unknown, element: unknown) => element === document.documentElement
   ),
   countMethod(
-    "root-class observers",
+    "`<html>` observers",
     MutationObserver.prototype,
     "observe",
-    (_self, ...args) => observesRootClass(args)
+    (_self, ...args) => observesHtmlAttributes(args)
   ),
 ]
 
@@ -234,6 +235,12 @@ function check(outcome: string, counts: Counts, restored: string) {
     counts,
     only: inVitest,
   })
+}
+
+/** The contract's "exactly 1 first apply": equality, so a load or switch
+ *  that applies nothing fails as well as one that applies twice. */
+function expectOneFirstApply(counts: Counts) {
+  expect(counts["first applies"]).toBe(1)
 }
 
 /** Prints a run's counts, labelled, for the first measurement. */
@@ -480,6 +487,7 @@ describe("Page load rows", () => {
 
     report(`row: ${NAMESPACE_SWITCH} to a ${SAVED_THEME}`, counts)
     check(NAMESPACE_SWITCH, counts, SAVED_THEME)
+    expectOneFirstApply(counts)
   })
 })
 
@@ -497,6 +505,7 @@ describe("Page load composition", () => {
     const load = await measure(counters(), () => pageLoad(namespace, HOST))
     report(`composition: load, ${SAVED_THEME}`, load)
     check(SAVED_THEME, load, SAVED_THEME)
+    expectOneFirstApply(load)
 
     const empty = freshNamespace()
     const switched = await measure(counters(), () =>
@@ -504,6 +513,7 @@ describe("Page load composition", () => {
     )
     report(`composition: ${NAMESPACE_SWITCH} to ${NOTHING_SAVED}`, switched)
     check(NAMESPACE_SWITCH, switched, NOTHING_SAVED)
+    expectOneFirstApply(switched)
   })
 
   it("reports every row for a Host load with the Theme override off", async () => {
@@ -642,12 +652,20 @@ describe("Page load failing seeds", () => {
         ),
     })))
 
-  it("catches a second root-class observer", () =>
-    expectSeedCaught("root-class observers", () => ({
+  it("catches a second <html> observer of another attribute", () =>
+    expectSeedCaught("`<html>` observers", () => ({
       mount: () =>
         new MutationObserver(() => {}).observe(document.documentElement, {
           attributes: true,
-          attributeFilter: ["class"],
+          attributeFilter: ["dir"],
+        }),
+    })))
+
+  it("catches a second <html> observer with no attribute filter", () =>
+    expectSeedCaught("`<html>` observers", () => ({
+      mount: () =>
+        new MutationObserver(() => {}).observe(document.documentElement, {
+          attributes: true,
         }),
     })))
 })

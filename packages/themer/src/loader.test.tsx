@@ -5,8 +5,8 @@
 // load: a counter went back to zero, a typed value was dropped, and every
 // element was replaced. These checks fail if the page is remounted, if the
 // Themer lands around the page instead of beside it, if it renders before the
-// load resolves, if `null` loads or renders anything, or if a late load lands
-// after the page has gone.
+// load resolves, if `null` loads or renders anything, if a frame loads the
+// Themer, or if a late load lands after the page has gone.
 import { act, StrictMode, useState } from "react"
 import { createRoot, type Root } from "react-dom/client"
 import { renderToString } from "react-dom/server"
@@ -136,6 +136,16 @@ describe("the Themer loader", () => {
 
     expect(themer.load).toHaveBeenCalledTimes(1)
     expect(container.querySelector('[data-testid="themer"]')).toBe(aside)
+  })
+
+  it("loads nothing and renders nothing inside a frame", async () => {
+    // A Live frame shows the Host page; the Themer stays on the top page.
+    vi.spyOn(window, "top", "get").mockReturnValue({} as Window)
+    const themer = deferredLoad()
+    await mount(themer.load)
+
+    expect(themer.load).not.toHaveBeenCalled()
+    expect(container.innerHTML).toBe(container.querySelector("main")?.outerHTML)
   })
 
   it("renders nothing for null", async () => {

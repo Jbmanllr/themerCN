@@ -9,6 +9,7 @@
 import * as React from "react"
 
 import type { ThemeMode } from "../types"
+import { subscribeToHtmlAttribute } from "./html-attribute-observer"
 
 export interface ColorModeValue {
   mode: ThemeMode
@@ -17,16 +18,11 @@ export interface ColorModeValue {
 
 export const ColorModeContext = React.createContext<ColorModeValue | null>(null)
 
-function subscribeToRootClass(onChange: () => void) {
-  const observer = new MutationObserver(onChange)
-  observer.observe(document.documentElement, {
-    attributes: true,
-    attributeFilter: ["class"],
-  })
-  return () => observer.disconnect()
-}
+const subscribeToRootClass = (onChange: () => void) =>
+  subscribeToHtmlAttribute("class", onChange)
 
-function getRootClassMode(): ThemeMode {
+/** The mode the `.dark` class on <html> says now. */
+export function getRootClassMode(): ThemeMode {
   return document.documentElement.classList.contains("dark") ? "dark" : "light"
 }
 

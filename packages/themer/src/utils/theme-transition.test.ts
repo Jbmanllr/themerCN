@@ -1,8 +1,9 @@
-// Proves runThemeTransition through an injected environment: the update runs
-// directly without animation when the View Transitions API is missing or the
-// user prefers reduced motion; otherwise the reveal starts at the click point
-// (the centre without one) and commits the update synchronously; and an older
-// transition finishing never clears a newer one's origin.
+// Proves runThemeTransition through an injected environment: the update is
+// committed synchronously, unanimated, when the View Transitions API is
+// missing or the user prefers reduced motion; otherwise the reveal starts at
+// the click point (the centre without one) and commits the update
+// synchronously; and an older transition finishing never clears a newer
+// one's origin.
 import { afterEach, describe, expect, it, vi } from "vitest"
 import {
   runThemeTransition,
@@ -70,23 +71,25 @@ afterEach(() => {
 })
 
 describe("runThemeTransition", () => {
-  it("updates directly when the View Transitions API is missing", () => {
+  it("commits the update synchronously, unanimated, when the View Transitions API is missing", () => {
     const env = createEnvironment({ viewTransitions: false })
     const update = vi.fn()
 
     expect(runThemeTransition(update, { x: 10, y: 10 }, env.environment)).toBe(
       false
     )
+    expect(env.flush).toHaveBeenCalledOnce()
     expect(update).toHaveBeenCalledOnce()
     expect(env.attributes.size).toBe(0)
     expect(env.properties.size).toBe(0)
   })
 
-  it("updates directly when the user prefers reduced motion", () => {
+  it("commits the update synchronously, unanimated, when the user prefers reduced motion", () => {
     const env = createEnvironment({ reducedMotion: true })
     const update = vi.fn()
 
     expect(runThemeTransition(update, undefined, env.environment)).toBe(false)
+    expect(env.flush).toHaveBeenCalledOnce()
     expect(update).toHaveBeenCalledOnce()
     expect(env.startViewTransition).not.toHaveBeenCalled()
     expect(env.attributes.size).toBe(0)

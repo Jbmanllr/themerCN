@@ -19,9 +19,8 @@
 import * as React from "react"
 import { PortalContainerContext } from "@workspace/ui/lib/portal-container"
 
+import { THEMER_STYLE_ATTRIBUTE } from "../config/constants"
 import { THEMER_CSS } from "../generated/themer-css"
-
-export const THEMER_STYLE_ATTRIBUTE = "data-themer-style"
 
 /** Injects the Themer's CSS into <head> while the caller is mounted. */
 export function useThemerStyle() {

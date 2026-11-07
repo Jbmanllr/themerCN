@@ -85,12 +85,12 @@ What each entry ships:
 
 ```
 Host tree                         <ThemerLoader {...props} />   (themercn/loader)
-                                     │ after hydration: import("themercn")
+                                     │ after hydration, top window only: import("themercn")
                                      ▼
                                   <Themer>                       components/themer.tsx
                                      │ null on the server, during hydration, in an iframe
                                      ▼
-                                  ThemerApp: hydrateThemerStores(ns) in a layout effect, useThemerStyle()
+                                  ThemerApp: hydrateThemerStores(ns, mode) in a layout effect, useThemerStyle()
                                   QueryClientProvider (its own client)
                                   └─ ColorModeProvider (colorMode / onColorModeChange), keyed by ns
                                      └─ ThemerProvider (config: presets, shortcut, …)
@@ -102,15 +102,15 @@ Host tree                         <ThemerLoader {...props} />   (themercn/loader
 
 ### Core Entry Points
 
-| Module                                                            | Responsibility                                                                                                                                                                                                                                                                                                                                                                              |
-| ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [loader.tsx](src/loader.tsx)                                      | `createThemerLoader(load \| null)`: a component that loads the Themer once in an effect after hydration and renders it beside the Host tree. Never `lazy()` + Suspense (server rendering streamed the page twice); never around the Host tree (the page would remount when the Themer arrives). A rejected load logs one `[themercn]` console error and renders nothing; there is no retry. |
-| [themer.tsx](src/components/themer.tsx)                           | `<Themer>`: flat props, no children. Skips the server, hydration and frames (`window.self !== window.top`: the Live preview frames the Host page, whose own Themer must not stack). Hydrates the stores, injects the CSS, owns a QueryClient separate from the Host's.                                                                                                                      |
-| [color-mode.tsx](src/components/color-mode.tsx)                   | Who owns light/dark (see [Colour mode](#colour-mode)).                                                                                                                                                                                                                                                                                                                                      |
-| [themer-provider.tsx](src/components/themer-provider.tsx)         | Registers Host Presets and extra colours during render, applies the Theme to `<html>`, binds the shortcuts, removes everything when the override goes off or it unmounts.                                                                                                                                                                                                                   |
-| [themer-root.tsx](src/components/themer-root.tsx)                 | Portals the trigger and the Themer UI into `ThemerScope` on `<body>`; the mobile scroll lock, and the Lenis pause while the open Themer UI hides the page (the drawer, a layout with `coversPage`).                                                                                                                                                                                         |
-| [themer-ui/themer-ui.tsx](src/components/themer-ui/themer-ui.tsx) | The Themer UI: on desktop the component of the [Themer layout](#themer-layouts) in force (`LAYOUT_COMPONENTS`); below 1280 px a bottom drawer without preview, whatever the layout ([use-is-mobile.ts](src/hooks/use-is-mobile.ts); the shadcn Sidebar becomes a Sheet below 768 px, so the breakpoint must stay above it).                                                                 |
-| [themer-trigger.tsx](src/components/themer-trigger.tsx)           | The floating button (`showTrigger`).                                                                                                                                                                                                                                                                                                                                                        |
+| Module                                                            | Responsibility                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| [loader.tsx](src/loader.tsx)                                      | `createThemerLoader(load \| null)`: a component that loads the Themer once in an effect after hydration and renders it beside the Host tree. Never loads inside a frame (the same `window.self !== window.top` test as `<Themer>`, which works across origins), so a Live frame navigation imports no Themer chunk. Never `lazy()` + Suspense (server rendering streamed the page twice); never around the Host tree (the page would remount when the Themer arrives). A rejected load logs one `[themercn]` console error and renders nothing; there is no retry. |
+| [themer.tsx](src/components/themer.tsx)                           | `<Themer>`: flat props, no children. Skips the server, hydration and frames (`window.self !== window.top`: the Live preview frames the Host page, whose own Themer must not stack). Hydrates the stores, injects the CSS, owns a QueryClient separate from the Host's.                                                                                                                                                                                                                                                                                             |
+| [color-mode.tsx](src/components/color-mode.tsx)                   | Who owns light/dark (see [Colour mode](#colour-mode)).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| [themer-provider.tsx](src/components/themer-provider.tsx)         | Registers Host Presets and extra colours during render, applies the Theme to `<html>`, binds the shortcuts, removes everything when the override goes off or it unmounts.                                                                                                                                                                                                                                                                                                                                                                                          |
+| [themer-root.tsx](src/components/themer-root.tsx)                 | Portals the trigger and the Themer UI into `ThemerScope` on `<body>`; the mobile scroll lock, and the Lenis pause while the open Themer UI hides the page (the drawer, a layout with `coversPage`).                                                                                                                                                                                                                                                                                                                                                                |
+| [themer-ui/themer-ui.tsx](src/components/themer-ui/themer-ui.tsx) | The Themer UI: on desktop the component of the [Themer layout](#themer-layouts) in force (`LAYOUT_COMPONENTS`); below 1280 px a bottom drawer without preview, whatever the layout ([use-is-mobile.ts](src/hooks/use-is-mobile.ts); the shadcn Sidebar becomes a Sheet below 768 px, so the breakpoint must stay above it).                                                                                                                                                                                                                                        |
+| [themer-trigger.tsx](src/components/themer-trigger.tsx)           | The floating button (`showTrigger`).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
 
 ## Themer layouts
 
@@ -300,25 +300,52 @@ and below the Themer UI.
 - **Controlled** (`colorMode` or `onColorModeChange` set): the mode is
   `colorMode`; the toggle calls `onColorModeChange`; the Host (for example
   `next-themes`) sets the class. No mode is saved (a saved one is removed).
-- **Uncontrolled**: the class is the mode. The toggle flips it, and a
-  `MutationObserver` follows changes made by anyone else. The mode is saved
+- **Uncontrolled**: the class is the mode. The toggle flips it and
+  re-renders the provider at once, and the shared `<html>` observer follows
+  changes made by anyone else. The mode is saved
   under `<ns>:color-mode` so the head script restores the class on reload.
+
+The Themer's readers of `<html>` (the `.dark` class, the Host's `dir` for
+Host preview tabs, and the root font variables for font labels through
+`class` and `style`) share one `MutationObserver` per document
+([html-attribute-observer.ts](src/hooks/html-attribute-observer.ts)): built
+on the first subscriber, disconnected after the last, and a mutation wakes
+only the subscribers of the attribute that changed.
+
+The key is written only when the mode differs from what is stored, and
+removed (controlled) only when an entry exists. The provider learns what is
+stored from the head script's record, `window[COLOR_MODE_RECORD]` keyed by
+storage key (the value read, or `null`), and updates it on each write, so a
+load adds no storage read; with no record (no head script, or a namespace it
+never saw) it writes or removes once.
 
 The mode controls (the toggle, its menu item, the contrast panel's starting
 mode) read `useColorMode()` directly, so a Host `.dark` flip updates them in
 the commit that themes the page. The store's `themeState.currentMode` (which
-the style controls read) is written by the toggle's handler and by
-`ThemerProvider`'s Theme-apply effect, which also puts it back on the colour
-mode whenever the two differ (a controlling Host may decline the toggle's
-switch), and applies the Theme from a store subscription (an edit never re-renders the provider) and writes variables,
-never the class (`applyThemeToElement(..., { updateClass: false })`).
+the style controls read) mirrors the colour mode: hydration puts the colour
+mode the mount renders with on the hydrated Theme, and after that only
+`ThemerProvider`'s mode sync (a layout effect after the Preset adopt and
+refresh) writes it, when the colour mode differs from it. The toggle only
+switches the colour mode, so a switch a controlling Host declines changes
+nothing, and one it commits later themes the page when it commits. The
+mode sync never applies: `ThemerProvider`'s Theme-apply layout effect,
+keyed on the Theme override only, applies the Theme in the store's mode once,
+then from a store subscription on each Theme state change, a mode change
+included (an edit never re-renders the provider). It writes variables, never
+the class (`applyThemeToElement(..., { updateClass: false })`).
 `useToggleMode` ([hooks/use-themer.ts](src/hooks/use-themer.ts)) runs
 the switch inside a View Transition
-([theme-transition.ts](src/utils/theme-transition.ts)) with a circular reveal where supported.
+([theme-transition.ts](src/utils/theme-transition.ts)) with a circular reveal where supported;
+an uncontrolled switch, the mode sync and the one apply land in the
+transition's synchronous commit, so the reveal shows the new mode's Theme.
+Without a View Transition (unsupported, or reduced motion) the switch is
+still committed synchronously, so the `.dark` class switch and the apply's
+style writes reach the shared `<html>` observer in one batch, and a font
+label reads `<html>` once per toggle.
 
 ## Persistence and the head script
 
-- Stores use `skipHydration: true`; `hydrateThemerStores(ns)`
+- Stores use `skipHydration: true`; `hydrateThemerStores(ns, mode)`
   ([stores/hydrate.ts](src/stores/hydrate.ts)) points them at
   `getStorageKeys(ns)` (`<ns>:editor`, `<ns>:preferences`, plus
   `<ns>:color-mode` written by an uncontrolled `ColorModeProvider`;
@@ -336,7 +363,9 @@ the switch inside a View Transition
   `setState` persists at once (zustand 5), overwriting the new namespace's
   entry or wiping the old one. The tree from `ColorModeProvider` down is
   keyed by namespace, so ThemerProvider's mount-time default-Preset adoption
-  runs again and the colour mode is read from the new key.
+  runs again and the colour mode is read from the new key. The outgoing
+  tree's apply subscription ends in the commit that unmounts it, before the
+  stores rehydrate, so the switch's only first apply is the incoming tree's.
 - The `<ns>:color-mode` key amends Jbmanllr/themerCN#15 and
   Jbmanllr/themerCN#18, which named only `<ns>:editor` and
   `<ns>:preferences`: an uncontrolled Themer must restore `.dark` before
@@ -361,7 +390,8 @@ the switch inside a View Transition
 - [utils/theme-script.ts](src/utils/theme-script.ts) generates the head
   script string. It sets `.dark` from `<ns>:color-mode` when an uncontrolled
   Themer saved one (otherwise the Host owns the class, and its script may
-  run later). It writes both modes of the saved Theme into one
+  run later), and records the value it read on `window[COLOR_MODE_RECORD]`
+  for the colour-mode provider (no DOM write). It writes both modes of the saved Theme into one
   `<style id="themercn-restore">` (`RESTORE_STYLE_ID`) as
   `html:root:not(.dark)` and `html:root.dark` rules, which outrank the Host's
   `:root` and `.dark`, so the first paint has the right tokens whichever mode
@@ -373,8 +403,11 @@ the switch inside a View Transition
   applies the Theme itself. It embeds what it needs with `JSON.stringify` and
   imports constants only. A change to the persisted shape is a change to this
   script.
-- `getThemerHeadScript` (`themercn/head-script`) returns that string;
-  `<ThemerHeadScript>` (`themercn/next`) renders it as a raw `<script>` (not
+- `getThemerHeadScript` (`themercn/head-script`) returns that string,
+  uncached; its callers build it once per `storageNamespace` and reuse it.
+  `<ThemerHeadScript>` (`themercn/next`) keeps one string per namespace at
+  module level, so its server, hydration and post-hydration renders build it
+  once, and renders it as a raw `<script>` (not
   `next/script`, whose inline `beforeInteractive` need not run before first
   paint) and, once hydrated, as `type="application/json"` so a client
   re-render of the document (Next's not-found under `next dev`) neither warns
@@ -391,9 +424,14 @@ Zustand stores. Two persist; two are transient.
 `<ns>:editor`, `version: EDITOR_STATE_VERSION` (0). Only `themeState`,
 `themeCheckpoint` and `presetBaseline` persist; `history`, `future` and
 `restoredFromStorage` do not. `themeCheckpoint` and `presetBaseline` are
-stored only when they differ from `themeState` (an absent key reads back as
-the Theme, `null` as none), so an entry on its Preset holds one copy of the
-styles, not three. The head script reads `themeState` only. The package is
+stored only when they are not the Theme's own objects (an absent key reads
+back as the Theme, `null` as none), so an entry on its Preset holds one copy
+of the styles, not three. Persistence decides by identity, never by a deep
+compare: the checkpoint is omitted when it is `themeState` itself, the
+baseline when it names the Theme's Preset on the Theme's own styles object,
+which every Preset action builds it on. A `setThemeState` whose updater
+returns the stored Theme keeps that object, so it records its undo entry and
+writes nothing. The head script reads `themeState` only. The package is
 pre-release: there are no
 migrations, and a stored state of another version is dropped (the store
 starts fresh, see Persistence and the head script).
@@ -420,7 +458,9 @@ starts fresh, see Persistence and the head script).
   checkpoint; resetting to the Preset clears history.
 - `updateCommonStyle` writes mode-shared keys (fonts, radius, spacing, letter
   spacing, shadow parameters) to both modes.
-- `adoptDefaultPreset` moves a fresh store to `defaultPreset` without
+- A fresh store (nothing saved, or an entry at another version) starts with
+  its default Theme's own Preset baseline, so the refresh sets nothing.
+  `adoptDefaultPreset` moves a fresh store to `defaultPreset` without
   history. `refreshUntouchedPreset` (run by `ThemerProvider` after Host
   Presets are registered) makes a restored Theme that still equals its
   `presetBaseline` follow the Preset's current source, so a Host token change
@@ -495,11 +535,21 @@ document (the Host's `<html>` and the Live frame's, through the same code).
   [utils/shadows.ts](src/utils/shadows.ts)) and one
   `<style data-themer-overrides>` per document pointing each utility's
   `--tw-shadow` at its variable (`!important`, with the Host's state variants
-  mirrored). Written only when the shadow inputs differ from the defaults,
+  mirrored; the walk skips the Themer's own sheets). Written only when the shadow inputs differ from the defaults,
   so a Preset without shadows keeps the Host's scale.
-- **Tracking of written properties.** A `WeakMap` per element records what
-  was set, so a re-apply drops keys the new Theme lost and removal takes away
-  exactly those.
+- **Diffed write.** A `WeakMap` per element records the value last written
+  for each property, so an apply calls `setProperty` only for a value that
+  changed and `removeProperty` only for a key the new Theme dropped, and
+  removal takes away exactly what was set. An element without a record (a
+  first apply, a new Live frame document after navigation, a record lost to
+  a hot reload) gets the whole Theme. Accepted trade-off: an outside write to
+  a Theme property on `<html>` persists until that value changes, the Theme
+  is removed, or the document is new, since an unchanged value is never
+  written again.
+- **Shared map and shadow memo.** The property map is built once per mode's
+  styles object and shared, read-only, by the Host page and the Live frame.
+  The shadow scale, the only step that parses a colour, is memoised per mode
+  on its shadow inputs, so an edit that touches no shadow input parses none.
 - **Fonts.** `setThemeFonts` loads the Theme's Google families (see
   [Font link registry](#font-link-registry-utilsfont-linksts));
   `DynamicFontLoader` does it for the Host page.
@@ -527,15 +577,20 @@ FontPicker opens ─► useFontSearch (TanStack infinite query, own QueryClient)
    │          └─ fontCatalogResponse (src/api/font-catalog.ts)
    │               ├─ googleFontsApiKey: Fonts Developer API (memory, 1 day)
    │               ├─ no key: fonts.google.com/metadata/fonts (memory, 1 day)
-   │               └─ Google fails or takes > 5 s: FALLBACK_FONTS (60 s back-off)
-   └─ no endpoint: filterAndPaginateFonts(FALLBACK_FONTS) in the browser
+   │               └─ Google fails or takes > 5 s: FALLBACK_CATALOG (60 s back-off)
+   └─ no endpoint: filterAndPaginateFonts(FALLBACK_CATALOG) in the browser
 User picks a family ─► acquireGoogleFont + waitForFont ─► font-* written as a full stack
 ```
 
 The response is `{ fonts, total, offset, limit, hasMore }`; paging is clamped
-by `filterAndPaginateFonts` (limit 1–100, default 50). The package reads no
+by `filterAndPaginateFonts` (limit 1–100, default 50). It searches a prepared
+catalog: the fonts and their lower-cased family names, built once per catalog
+load (in Google's transform, and at module load for the bundled
+`FALLBACK_CATALOG`), so a search lower-cases only its query. The package reads no
 environment. The picker also asks the catalog whether a Theme's family is a
-Google font (its "Custom font" badge).
+Google font (its "Custom font" badge): `useCatalogLacksFamily`
+(`hooks/use-catalog-lacks-family.ts`) asks `useFontSearch` and matches the
+family, ignoring case, once per response (in its `select`).
 
 #### Font link registry (`utils/font-links.ts`)
 
@@ -548,6 +603,18 @@ link removed by someone else is recreated. `setThemeFonts(doc, families)`
 diffs against what the Theme holds; `clearThemeFonts` releases all. A failed
 link retries once with the default weight. A stack starting with a system
 family or `var(...)` names no Google family.
+
+The head script links the saved sans, serif and mono families before first
+paint, with the same URLs and the same once-only retry, and marks each with
+`data-tcn-head-font`. A family's first acquire in a document adopts a marked
+link (matched by its full or its default-weight href) instead of adding a
+second one; a Host's own link with the same href is unmarked and stays the
+Host's, beside the registry's link. The adopted link gets
+`data-themer-font`, is held and released like the registry's own, and goes
+with the last release or when the Theme override goes off. Its readiness
+settles at once when its stylesheet already loaded, else at its next load or
+error; a link that already failed both URLs leaves `waitForFont` to its own
+timeout. So each Google family has one `<link>` per document.
 
 #### Font Picker Positioning and Scroll Ownership
 

@@ -24,6 +24,7 @@ import {
 } from "../config/constants"
 
 const STORAGE_KEYS = getStorageKeys()
+import { acquireGoogleFont, buildFontCssUrl } from "./font-links"
 import { generateThemeScript } from "./theme-script"
 
 function saveEditor(themeState: unknown) {
@@ -224,6 +225,39 @@ describe("generateThemeScript", () => {
     expect(fontLinks()).toEqual([])
   })
 
+  it("links the URL the font link registry builds, so the registry adopts it", () => {
+    saveEditor({ currentMode: "light", styles })
+    runScript()
+    const [link] = document.head.querySelectorAll("link")
+    expect(link?.getAttribute("href")).toBe(buildFontCssUrl("Inter"))
+
+    const release = acquireGoogleFont("Inter", { doc: document })
+    expect(document.head.querySelectorAll("link")).toHaveLength(1)
+    release()
+  })
+
+  it("switches a font link to the family's default weight once, on error", () => {
+    saveEditor({ currentMode: "light", styles })
+    runScript()
+    const [link] = document.head.querySelectorAll("link")
+    link?.dispatchEvent(new Event("error"))
+    expect(link?.getAttribute("href")).toBe(
+      "https://fonts.googleapis.com/css2?family=Inter&display=swap"
+    )
+    link?.setAttribute("href", "kept")
+    link?.dispatchEvent(new Event("error"))
+    expect(link?.getAttribute("href")).toBe("kept")
+    link?.setAttribute(
+      "href",
+      "https://fonts.googleapis.com/css2?family=Inter&display=swap"
+    )
+
+    // The registry recognises the fallback href too.
+    const release = acquireGoogleFont("Inter", { doc: document })
+    expect(document.head.querySelectorAll("link")).toHaveLength(1)
+    release()
+  })
+
   it("drops a saved value that would break out of its declaration", () => {
     saveEditor({
       currentMode: "light",
@@ -236,6 +270,36 @@ describe("generateThemeScript", () => {
     expect(primary()).toBe("")
     expect(rootVar("--accent")).toBe("#123456")
     expect(getComputedStyle(document.body).display).not.toBe("none")
+  })
+
+  it("drops each unsafe key and value in both modes, keeping the rest", () => {
+    saveEditor({
+      currentMode: "light",
+      styles: {
+        light: {
+          primary: "red} body{display:none",
+          secondary: "blue/* x */",
+          accent: "#123456",
+          "bad key": "#000000",
+          muted: "#222222",
+        },
+        dark: { primary: "#eeeeee", border: "x;y", ring: "#333333" },
+      },
+    })
+    runScript()
+    expect([primary(), rootVar("--secondary"), rootVar("--accent")]).toEqual([
+      "",
+      "",
+      "#123456",
+    ])
+    expect(rootVar("--muted")).toBe("#222222")
+
+    setDark(true)
+    expect([primary(), rootVar("--border"), rootVar("--ring")]).toEqual([
+      "#eeeeee",
+      "",
+      "#333333",
+    ])
   })
 
   it("skips the generic and CSS-wide values the font loader skips", () => {

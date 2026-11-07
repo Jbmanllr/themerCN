@@ -841,9 +841,41 @@ export const POPULAR_FONTS: Record<FontCategory, FontInfo[]> = {
   ],
 }
 
+/**
+ * A catalogue ready to search: its fonts and, at the same index, each
+ * family's lower-cased name, built once per catalogue load so a search
+ * lower-cases only its query.
+ */
+export type PreparedFontCatalog = {
+  readonly fonts: readonly FontInfo[]
+  readonly families: readonly string[]
+}
+
+/**
+ * Builds a prepared catalogue in one pass over `items`, each turned into a
+ * font by `toFont`: the transform that builds a catalogue builds its names.
+ */
+export function prepareFontCatalog<Item>(
+  items: Iterable<Item>,
+  toFont: (item: Item) => FontInfo
+): PreparedFontCatalog {
+  const fonts: FontInfo[] = []
+  const families: string[] = []
+  for (const item of items) {
+    const font = toFont(item)
+    fonts.push(font)
+    families.push(font.family.toLowerCase())
+  }
+  return { fonts, families }
+}
+
 // Pure, so a bundle that imports this module without the list drops it.
 export const FALLBACK_FONTS: FontInfo[] =
   /* @__PURE__ */ Object.values(POPULAR_FONTS).flat()
+
+/** The bundled catalogue, prepared once per module load. */
+export const FALLBACK_CATALOG: PreparedFontCatalog =
+  /* @__PURE__ */ prepareFontCatalog(FALLBACK_FONTS, (font) => font)
 
 export function getPopularFonts(
   category: ThemeFontRole | FontCategory | "all"
@@ -869,14 +901,20 @@ function normalizeCatalogOffset(value: number): number {
   return Math.max(0, Math.trunc(value))
 }
 
+/** A search's query as the prepared names are matched against it. */
+function normalizeFontQuery(query: string): string {
+  return query.trim().toLowerCase()
+}
+
 /**
- * One page of a catalogue after a case-insensitive family-name `query` and a
- * `category` filter ("all" keeps every category). `limit` is clamped to 1-100
- * (default 50, also for a non-finite value) and `offset` to 0 or more; the
- * response reports the clamped values.
+ * One page of a prepared catalogue after a case-insensitive family-name
+ * `query` and a `category` filter ("all" keeps every category), in at most
+ * one pass over the catalogue. `limit` is clamped to 1-100 (default 50, also
+ * for a non-finite value) and `offset` to 0 or more; the response reports
+ * the clamped values.
  */
 export function filterAndPaginateFonts(
-  fonts: FontInfo[],
+  catalog: PreparedFontCatalog,
   {
     query = "",
     category = "all",
@@ -889,29 +927,24 @@ export function filterAndPaginateFonts(
     offset?: number
   }
 ): PaginatedFontsResponse {
-  const normalizedQuery = query.trim().toLowerCase()
+  const normalizedQuery = normalizeFontQuery(query)
   const normalizedCategory = category.toLowerCase()
   const safeLimit = normalizeCatalogLimit(limit)
   const safeOffset = normalizeCatalogOffset(offset)
+  const anyCategory = normalizedCategory === "all"
 
-  let filteredFonts = fonts
-
-  if (normalizedQuery) {
-    filteredFonts = filteredFonts.filter((font) =>
-      font.family.toLowerCase().includes(normalizedQuery)
-    )
-  }
-
-  if (normalizedCategory !== "all") {
-    filteredFonts = filteredFonts.filter(
-      (font) => font.category === normalizedCategory
-    )
-  }
-
-  const paginatedFonts = filteredFonts.slice(safeOffset, safeOffset + safeLimit)
+  const filteredFonts =
+    !normalizedQuery && anyCategory
+      ? catalog.fonts
+      : catalog.fonts.filter(
+          (font, index) =>
+            (!normalizedQuery ||
+              catalog.families[index]?.includes(normalizedQuery)) &&
+            (anyCategory || font.category === normalizedCategory)
+        )
 
   return {
-    fonts: paginatedFonts,
+    fonts: filteredFonts.slice(safeOffset, safeOffset + safeLimit),
     total: filteredFonts.length,
     offset: safeOffset,
     limit: safeLimit,

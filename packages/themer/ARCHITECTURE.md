@@ -400,7 +400,7 @@ label reads `<html>` once per toggle.
   nothing is saved or `themeOverrideEnabled` is false, ignores an entry
   saved at another version (as the store drops it), and drops a saved
   value that could end its declaration. `ThemerProvider` (and
-  `applyThemeToDocument`, for the Live frame) removes the sheet once it
+  `startThemedDocument`, for the Live frame) removes the sheet once it
   applies the Theme itself. It embeds what it needs with `JSON.stringify` and
   imports constants only. A change to the persisted shape is a change to this
   script.
@@ -525,7 +525,11 @@ registering one picker per token re-renders nobody.
 
 [utils/apply-theme.ts](src/utils/apply-theme.ts) writes the Theme on a
 document (the Host's `<html>` and the Live frame's, through the same code).
-`ThemerProvider` re-applies on every change.
+`ThemerProvider` re-applies on every change. `startThemedDocument(doc, store)`
+themes one whole document for as long as it runs: it applies the store's
+Theme with its fonts, removes the restore sheet, follows every Theme state
+change, and its stop removes everything it wrote. The Live view runs one per
+Live frame document and restarts it when the frame loads a new document.
 
 - **Verbatim values.** Colours and common keys are written as stored; Hosts
   map `--color-x: var(--x)` in `@theme inline`, so any CSS colour works.

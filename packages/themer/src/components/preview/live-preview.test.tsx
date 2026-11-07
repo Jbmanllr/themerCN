@@ -1,5 +1,5 @@
 // @vitest-environment happy-dom
-// @vitest-environment-options { "settings": { "enableIframePageLoading": true } }
+// @vitest-environment-options { "settings": { "enableIframePageLoading": true, "disableCSSFileLoading": true, "handleDisabledFileLoadingAsSuccess": true } }
 
 // The Live tab's address bar writes the frame's src itself. React refuses a
 // javascript: URL in a src prop, so that guard is gone once the bar sets the
@@ -41,6 +41,7 @@ vi.mock("@workspace/ui/components/resizable", () => ({
 }))
 
 import { useEditorStore } from "../../stores/editor-store"
+import { usePreferencesStore } from "../../stores/preferences-store"
 import { LivePreview } from "./live-preview"
 
 ;(
@@ -261,6 +262,78 @@ describe("LivePreview address bar follows the frame", () => {
 })
 
 describe("LivePreview Theme", () => {
+  /** The frame's document once it has loaded and been themed. */
+  async function themedFrameDocument(previous?: Document) {
+    const iframe = frame()
+    const doc = await vi.waitFor(() => {
+      const current = iframe.contentDocument
+      if (!current?.documentElement || current === previous)
+        throw new Error("the frame has not loaded")
+      return current
+    })
+    await act(async () => iframe.dispatchEvent(new Event("load")))
+    return doc
+  }
+
+  const primaryOf = (doc: Document) =>
+    doc.documentElement.style.getPropertyValue("--primary")
+
+  const fontLinksOf = (doc: Document) =>
+    doc.head.querySelectorAll("link[data-themer-font]").length
+
+  async function setFonts() {
+    await act(async () =>
+      useEditorStore.getState().setThemeState((prev) => ({
+        ...prev,
+        styles: {
+          light: { ...prev.styles.light, "font-sans": "Inter, sans-serif" },
+          dark: { ...prev.styles.dark, "font-sans": "Inter, sans-serif" },
+        },
+      }))
+    )
+  }
+
+  afterEach(() => {
+    useEditorStore.setState(useEditorStore.getInitialState(), true)
+    usePreferencesStore.setState(usePreferencesStore.getInitialState(), true)
+  })
+
+  it("themes each new document after a navigation and drops the old one", async () => {
+    await setFonts()
+    const first = await themedFrameDocument()
+    expect(primaryOf(first)).not.toBe("")
+    expect(fontLinksOf(first)).toBe(1)
+
+    // A real navigation: the frame fires its own load for the new document.
+    const iframe = frame()
+    await act(async () => {
+      const loaded = new Promise((resolve) =>
+        iframe.addEventListener("load", resolve, { once: true })
+      )
+      iframe.src = "/pricing"
+      await loaded
+    })
+    const next = iframe.contentDocument
+    if (!next || next === first) throw new Error("the frame did not navigate")
+
+    expect(primaryOf(next)).not.toBe("")
+    expect(fontLinksOf(next)).toBe(1)
+    expect(primaryOf(first)).toBe("")
+    expect(fontLinksOf(first)).toBe(0)
+  })
+
+  it("removes everything it wrote once the Theme override goes off", async () => {
+    await setFonts()
+    const doc = await themedFrameDocument()
+
+    await act(async () =>
+      usePreferencesStore.getState().setThemeOverrideEnabled(false)
+    )
+
+    expect(doc.documentElement.style.length).toBe(0)
+    expect(fontLinksOf(doc)).toBe(0)
+  })
+
   // An edit restyles the framed page through a store subscription: the
   // preview (address bar, size buttons, panels) does not re-render for it.
   it("restyles the framed page on an edit without re-rendering the preview", async () => {

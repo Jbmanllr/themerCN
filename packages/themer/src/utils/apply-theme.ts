@@ -43,6 +43,7 @@
 // removing the theme removes the sheet with it.
 //
 // See: packages/themer/ARCHITECTURE.md ("Applying a theme").
+import type { StoreApi } from "zustand"
 import { RESTORE_STYLE_ID, THEMER_STYLE_ATTRIBUTE } from "../config/constants"
 import { defaultLightStyles } from "../config/defaults"
 import { getExtraColorKeys } from "../config/extra-colors"
@@ -501,5 +502,49 @@ export function removeThemeFromDocument(doc: Document): void {
   if (documentsWithThemeFonts.has(doc)) {
     clearThemeFonts(doc)
     documentsWithThemeFonts.delete(doc)
+  }
+}
+
+/** The part of the editor store a themed document reads. */
+type ThemeStateSource = Pick<
+  StoreApi<{ themeState: ThemeEditorState }>,
+  "getState" | "subscribe"
+>
+
+/**
+ * Theme one document for as long as the caller keeps it running: apply the
+ * store's current Theme with its fonts (removing the head script's restore
+ * sheet), then again on every Theme state change. The returned stop ends the
+ * subscription and removes the Theme, the shadow override sheet and the
+ * Theme fonts from the document. The caller decides when it runs (while the
+ * Theme override is on); one instance themes one document. next-themes owns
+ * the `dark` class in every themed document, so it is never toggled here.
+ *
+ * A document that goes away mid-navigation throws on its next apply: that
+ * apply is skipped, and the caller starts a new instance on the new document.
+ */
+export function startThemedDocument(
+  doc: Document,
+  store: ThemeStateSource
+): () => void {
+  const apply = (themeState: ThemeEditorState) =>
+    applyThemeToDocument(doc, themeState, {
+      loadFonts: true,
+      updateClass: false,
+    })
+
+  apply(store.getState().themeState)
+  const unsubscribe = store.subscribe((next, previous) => {
+    if (next.themeState === previous.themeState) return
+    try {
+      apply(next.themeState)
+    } catch {
+      // The document went away mid-navigation: the caller restarts on the
+      // new one.
+    }
+  })
+  return () => {
+    unsubscribe()
+    removeThemeFromDocument(doc)
   }
 }

@@ -8,7 +8,11 @@
 // - Row tests drive one apply through the apply-theme interface on the fake
 //   document, once per outcome the contract splits, for the Host page apply
 //   (applyThemeToElement, as the provider calls it) and the Live frame apply
-//   (applyThemeToDocument with its fonts, as the Live view calls it).
+//   (a store edit reaching startThemedDocument, as the Live view starts it).
+// - A themed document's work is told apart by its document, not its caller:
+//   its applies run under the store's subscription, whose stack names no
+//   caller of the document's own. The startThemedDocument export is wrapped
+//   to record which document's instance is running.
 // - Font label tests mount one font label on the real document and apply to
 //   its <html>, which the label observes.
 // - The composition run mounts <Themer> (Workspace) on the Live tab, with one
@@ -22,6 +26,7 @@ import * as React from "react"
 import { act } from "react"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { createRoot, type Root } from "react-dom/client"
+import { createStore } from "zustand/vanilla"
 import {
   afterEach,
   beforeAll,
@@ -57,10 +62,10 @@ import type { ThemeEditorState } from "../types"
 import type { ThemeStyleProps } from "../types/theme"
 import {
   THEMER_OVERRIDES_ATTRIBUTE,
-  applyThemeToDocument,
   applyThemeToElement,
   computeThemeProperties,
   removeThemeFromElement,
+  startThemedDocument,
 } from "./apply-theme"
 import { FakeDocument, type FakeStyleSheet } from "./fake-document.test-helper"
 import { acquireGoogleFont, setThemeFonts } from "./font-links"
@@ -86,13 +91,42 @@ vi.mock("./font-links", async (importOriginal) => {
     setThemeFonts: passThrough("theme font update", real.setThemeFonts),
   }
 })
+/** The document whose themed-document instance is running now, if any. */
+const theming = vi.hoisted(() => {
+  let current: Document | null = null
+  return {
+    current: () => current,
+    during<T>(doc: Document, run: () => T): T {
+      const previous = current
+      current = doc
+      try {
+        return run()
+      } finally {
+        current = previous
+      }
+    },
+  }
+})
 // The Host page apply, counted per call for the mode toggle's exactly-1.
+// Each themed document's start and store-driven applies run marked with
+// its document.
 vi.mock("./apply-theme", async (importOriginal) => {
   const { passThrough } = await import("../../../../tests/counting")
   const real = await importOriginal<typeof import("./apply-theme")>()
+  type Store = Parameters<typeof real.startThemedDocument>[1]
   return {
     ...real,
     applyThemeToElement: passThrough("theme apply", real.applyThemeToElement),
+    startThemedDocument: (doc: Document, store: Store) =>
+      theming.during(doc, () =>
+        real.startThemedDocument(doc, {
+          getState: () => store.getState(),
+          subscribe: (listener) =>
+            store.subscribe((next, previous) =>
+              theming.during(doc, () => listener(next, previous))
+            ),
+        })
+      ),
   }
 })
 // happy-dom overflows on the real sheet's custom properties (themer.test.tsx).
@@ -120,11 +154,10 @@ const MODE_TOGGLE = {
   "shadow colour parses": "mode toggle",
 } as const
 
-// Stacks that tell the work apart: the apply-theme module itself, each
-// document's caller in the composition, and a font label.
+// Stacks that tell the work apart: the apply-theme module itself, the Host
+// page's caller in the composition, and a font label.
 const APPLY_THEME = /\/utils\/apply-theme\.ts/
 const HOST_CALLER = /\/components\/themer-provider\.tsx/
-const LIVE_CALLER = /\/preview\/live-preview\.tsx/
 const FONT_LABEL = /\/components\/editor\/font-picker\.tsx/
 // The colour mode's own switch of the `.dark` class (setRootClassMode).
 const COLOUR_MODE_SWITCH = /\/hooks\/use-color-mode\.ts/
@@ -133,28 +166,33 @@ const DOM_TOKEN_LIST = /\/happy-dom\/lib\/dom\/DOMTokenList\.js/
 // derivation is one store into its memo.
 const THEME_FONTS = /\/utils\/font-names\.ts/
 
-/** One document's unit: the document applied to, the caller whose stack
- *  marks its apply (none when the test calls the interface itself), a
- *  caller whose stack marks another unit's apply even under this caller,
- *  the code whose own class toggle is the outcome itself rather than its
- *  work (a mode toggle's switch of the `.dark` class), and whether this
- *  document's font labels count. */
+/** One document's unit: the document applied to, what marks its apply
+ *  (none when the test calls the interface itself), the code whose own
+ *  class toggle is the outcome itself rather than its work (a mode toggle's
+ *  switch of the `.dark` class), and whether this document's font labels
+ *  count. */
 type Unit = {
   doc: Document
-  caller: RegExp | null
-  excludes?: RegExp
+  marks: (() => boolean) | null
   outcomeToggle?: RegExp
   labels: boolean
 }
 
-/** The Host page's unit in the composition. The provider's mode sync sets
- *  the store's mode, so on a mode toggle the Live view's apply also runs
- *  under the provider's frame: the Live caller marks it as the frame's. */
+/** The Host page's unit in the composition: the provider's apply. Its mode
+ *  sync sets the store's mode, so on a mode toggle the Live frame's apply
+ *  also runs under the provider's frame: a running themed document marks
+ *  that apply as its own. */
 const HOST_PAGE = (): Unit => ({
   doc: document,
-  caller: HOST_CALLER,
-  excludes: LIVE_CALLER,
+  marks: () => calledFrom(HOST_CALLER) && theming.current() === null,
   labels: true,
+})
+
+/** A themed document's unit: its themed-document instance's work. */
+const THEMED_DOCUMENT = (doc: Document): Unit => ({
+  doc,
+  marks: () => theming.current() === doc,
+  labels: false,
 })
 
 const isTag = (node: unknown, tag: string) =>
@@ -263,16 +301,8 @@ const switchedBy = (pattern: RegExp) =>
   madeBy(pattern) || (madeBy(DOM_TOKEN_LIST) && calledFrom(pattern))
 
 /** The register's Theme apply counters for one document's unit. */
-function counters({
-  doc,
-  caller,
-  excludes,
-  outcomeToggle,
-  labels,
-}: Unit): Counter[] {
-  const inUnit = () =>
-    !caller ||
-    (calledFrom(caller) && !(excludes !== undefined && calledFrom(excludes)))
+function counters({ doc, marks, outcomeToggle, labels }: Unit): Counter[] {
+  const inUnit = () => !marks || marks()
   const inLabel = () => labels && calledFrom(FONT_LABEL)
   const root = doc.documentElement
   const classList = root.classList
@@ -368,25 +398,35 @@ const VARIANT_SHEET: FakeStyleSheet = {
 
 // --- Row tests on the fake document -----------------------------------------
 
-type Apply = (doc: FakeDocument, theme: ThemeEditorState) => void
+const cleanups: (() => void)[] = []
+
+/** Themes a document with a first Theme; returns the apply of a next one. */
+type Start = (
+  doc: FakeDocument,
+  first: ThemeEditorState
+) => (theme: ThemeEditorState) => void
 
 /** The Host page's apply, as the provider calls it. */
-const applyHost: Apply = (doc, theme) => {
-  applyThemeToElement(theme, doc.documentElement as unknown as HTMLElement, {
-    updateClass: false,
-  })
+const startHost: Start = (doc, first) => {
+  const apply = (theme: ThemeEditorState) => {
+    applyThemeToElement(theme, doc.documentElement as unknown as HTMLElement, {
+      updateClass: false,
+    })
+  }
+  apply(first)
+  return apply
 }
-/** The Live frame's apply, as the Live view calls it. */
-const applyLive: Apply = (doc, theme) => {
-  applyThemeToDocument(doc.asDocument, theme, {
-    loadFonts: true,
-    updateClass: false,
-  })
+/** The Live frame's themed document, as the Live view starts it: a next
+ *  Theme is a store edit. */
+const startLive: Start = (doc, first) => {
+  const store = createStore(() => ({ themeState: first }))
+  cleanups.push(startThemedDocument(doc.asDocument, store))
+  return (theme) => store.setState({ themeState: theme })
 }
 
 const fakeUnit = (doc: FakeDocument): Unit => ({
   doc: doc.asDocument,
-  caller: null,
+  marks: null,
   labels: false,
 })
 
@@ -415,19 +455,19 @@ describe("Theme apply rows", () => {
     },
   ]
   const documents = [
-    { name: "Host page", apply: applyHost },
-    { name: "Live frame", apply: applyLive },
+    { name: "Host page", start: startHost },
+    { name: "Live frame", start: startLive },
   ]
 
-  for (const { name, apply } of documents) {
+  for (const { name, start } of documents) {
     for (const { outcome, outcomes, edit, sheetLoaded } of cases) {
       it(`counts ${outcome} on the ${name}`, async () => {
         const doc = new FakeDocument()
-        apply(doc, themeWith(OWN_SHADOWS))
+        const apply = start(doc, themeWith(OWN_SHADOWS))
         if (sheetLoaded) doc.styleSheets = [...doc.styleSheets, VARIANT_SHEET]
 
         const counts = await measure(counters(fakeUnit(doc)), () =>
-          apply(doc, themeWith(edit()))
+          apply(themeWith(edit()))
         )
 
         report(`row: ${name}, ${outcome}`, counts)
@@ -439,7 +479,6 @@ describe("Theme apply rows", () => {
 
 // --- Font labels on the real document ---------------------------------------
 
-const cleanups: (() => void)[] = []
 const roots: Root[] = []
 
 async function render(node: React.ReactNode) {
@@ -479,7 +518,7 @@ const renderFontLabels = (count = 1) =>
     </QueryClientProvider>
   )
 
-const hostUnit = (): Unit => ({ doc: document, caller: null, labels: true })
+const hostUnit = (): Unit => ({ doc: document, marks: null, labels: true })
 
 /** The Host page's apply to the real <html>, which font labels observe. */
 const applyToPage = (styles: Styles) =>
@@ -644,9 +683,8 @@ async function measureBoth(frameDoc: Document, edit: () => void) {
   let host: Counts = {}
   const shared = await measure([countFontFamilyDerivations()], async () => {
     host = await measure(counters(HOST_PAGE()), async () => {
-      live = await measure(
-        counters({ doc: frameDoc, caller: LIVE_CALLER, labels: false }),
-        () => settle(edit)
+      live = await measure(counters(THEMED_DOCUMENT(frameDoc)), () =>
+        settle(edit)
       )
     })
   })
@@ -745,26 +783,29 @@ const expectCaught = (row: string, unseeded: Counts, seeded: Counts) =>
 
 describe("Theme apply failing seeds", () => {
   /** A one-token edit on the Live frame, then the same with the seed. */
-  async function expectSeedCaught(
-    row: string,
-    seeded: (doc: FakeDocument, theme: ThemeEditorState) => void
-  ) {
+  type Seeded = (
+    apply: (theme: ThemeEditorState) => void,
+    doc: FakeDocument,
+    theme: ThemeEditorState
+  ) => void
+
+  async function expectSeedCaught(row: string, seeded: Seeded) {
     const doc = new FakeDocument()
-    applyLive(doc, themeWith(OWN_SHADOWS))
+    const apply = startLive(doc, themeWith(OWN_SHADOWS))
     const plain = await measure(counters(fakeUnit(doc)), () =>
-      applyLive(doc, themeWith({ ...OWN_SHADOWS, ...nextPrimary() }))
+      apply(themeWith({ ...OWN_SHADOWS, ...nextPrimary() }))
     )
     const withSeed = await measure(counters(fakeUnit(doc)), () =>
-      seeded(doc, themeWith({ ...OWN_SHADOWS, ...nextPrimary() }))
+      seeded(apply, doc, themeWith({ ...OWN_SHADOWS, ...nextPrimary() }))
     )
     expectCaught(row, plain, withSeed)
   }
 
   const after =
-    (extra: (doc: FakeDocument, theme: ThemeEditorState) => void) =>
-    (doc: FakeDocument, theme: ThemeEditorState) => {
-      applyLive(doc, theme)
-      extra(doc, theme)
+    (extra: (doc: FakeDocument) => void): Seeded =>
+    (apply, doc, theme) => {
+      apply(theme)
+      extra(doc)
     }
 
   it("catches an extra property write", () =>
@@ -786,9 +827,9 @@ describe("Theme apply failing seeds", () => {
     ))
 
   it("catches a CSSOM walk on an apply whose stylesheet count changed", () =>
-    expectSeedCaught("CSSOM walks", (doc, theme) => {
+    expectSeedCaught("CSSOM walks", (apply, doc, theme) => {
       doc.styleSheets = [...doc.styleSheets, VARIANT_SHEET]
-      applyLive(doc, theme)
+      apply(theme)
     }))
 
   it("catches a second override sheet write", () =>
@@ -808,9 +849,10 @@ describe("Theme apply failing seeds", () => {
     ))
 
   it("catches a class toggle", () =>
-    expectSeedCaught("class toggles", (doc, theme) => {
-      applyThemeToDocument(doc.asDocument, theme, { loadFonts: true })
-    }))
+    expectSeedCaught(
+      "class toggles",
+      after((doc) => doc.documentElement.classList.toggle("dark"))
+    ))
 
   it("catches a second Theme font update", () =>
     expectSeedCaught(

@@ -5,6 +5,7 @@
 // removal touches exactly what was written, and Host extra colours are
 // ordinary keys.
 import { afterEach, describe, expect, it, vi } from "vitest"
+import { createStore } from "zustand/vanilla"
 import { defaultThemeState } from "../config/defaults"
 import { THEMER_STYLE_ATTRIBUTE } from "../config/constants"
 import { configureExtraColors } from "../config/extra-colors"
@@ -17,6 +18,7 @@ import {
   computeThemeProperties,
   removeThemeFromDocument,
   removeThemeFromElement,
+  startThemedDocument,
 } from "./apply-theme"
 import { FakeDocument } from "./fake-document.test-helper"
 
@@ -379,6 +381,82 @@ describe("applyThemeToDocument", () => {
     removeThemeFromDocument(doc.asDocument)
     expect(doc.head.children).toEqual([])
     expect(doc.documentElement.style.length).toBe(0)
+  })
+})
+
+describe("startThemedDocument", () => {
+  const OWN_SHADOWS = { "shadow-offset-x": "4px" }
+
+  /** A document holding the head script's restore sheet. */
+  function documentWithRestoreSheet() {
+    const doc = new FakeDocument()
+    const restore = doc.createElement("style")
+    restore.setAttribute("id", "themercn-restore")
+    doc.head.appendChild(restore)
+    return doc
+  }
+
+  const fontLinks = (doc: FakeDocument) =>
+    doc
+      .headChildren("link")
+      .map((link) => link.getAttribute("data-themer-font"))
+
+  it("themes the document with the store's Theme and its fonts, in place of the restore sheet", () => {
+    const doc = documentWithRestoreSheet()
+    const store = createStore(() => ({
+      themeState: themeWith({
+        ...OWN_SHADOWS,
+        primary: "#123456",
+        "font-sans": "Inter, sans-serif",
+      }),
+    }))
+
+    const stop = startThemedDocument(doc.asDocument, store)
+
+    expect(root(doc).style.getPropertyValue("--primary")).toBe("#123456")
+    expect(doc.getElementById("themercn-restore")).toBeNull()
+    expect(fontLinks(doc)).toEqual(["Inter"])
+    expect(
+      doc.head.children.filter(
+        (child) => child.getAttribute(THEMER_OVERRIDES_ATTRIBUTE) != null
+      )
+    ).toHaveLength(1)
+    stop()
+  })
+
+  it("follows every Theme state change without toggling the dark class", () => {
+    const doc = new FakeDocument()
+    const store = createStore(() => ({ themeState: themeWith({}) }))
+    const stop = startThemedDocument(doc.asDocument, store)
+
+    store.setState({
+      themeState: themeWith(
+        { primary: "#abcdef", "font-sans": "Lora, serif" },
+        "dark"
+      ),
+    })
+
+    expect(root(doc).style.getPropertyValue("--primary")).toBe("#abcdef")
+    expect(fontLinks(doc)).toEqual(["Lora"])
+    expect(doc.documentElement.classList.contains("dark")).toBe(false)
+    stop()
+  })
+
+  it("on stop, removes everything it wrote and no longer follows the store", () => {
+    const doc = new FakeDocument()
+    const store = createStore(() => ({
+      themeState: themeWith({
+        ...OWN_SHADOWS,
+        "font-sans": "Inter, sans-serif",
+      }),
+    }))
+    const stop = startThemedDocument(doc.asDocument, store)
+
+    stop()
+    store.setState({ themeState: themeWith({ primary: "#abcdef" }) })
+
+    expect(doc.documentElement.style.length).toBe(0)
+    expect(doc.head.children).toEqual([])
   })
 })
 

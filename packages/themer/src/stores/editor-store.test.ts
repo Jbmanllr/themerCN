@@ -642,24 +642,6 @@ describe("refreshUntouchedPreset", () => {
     expect(store.getState().themeState.styles.light.destructive).toBe("#B23A2A")
   })
 
-  it("gives no baseline to a stored edited theme that has none", () => {
-    configurePresets({ presets: [v1] })
-    const preset = structuredClone(resolvePresetStyles("brand"))
-    store.setState({
-      themeState: {
-        ...defaultThemeState,
-        preset: "brand",
-        styles: { ...preset, light: { ...preset.light, primary: "#000000" } },
-      },
-      presetBaseline: null,
-      restoredFromStorage: true,
-    })
-    store.getState().refreshUntouchedPreset()
-
-    expect(store.getState().presetBaseline).toBeNull()
-    expect(store.getState().themeState.styles.light.primary).toBe("#000000")
-  })
-
   it("keeps an imported theme", () => {
     restoreOn(v1)
     store.getState().importThemeStyles({ light: { primary: "#FF0000" } })

@@ -9,7 +9,12 @@
 // component each time; wrap such a selector in useShallow or derive the value
 // in the component.
 
-import type { EditorStore, ThemeEditorState, ThemeStyles } from "../types"
+import type {
+  EditorStore,
+  PresetBaseline,
+  ThemeEditorState,
+  ThemeStyles,
+} from "../types"
 import { resolvePresetStyles } from "../config/presets"
 import { defaultHSLAdjustments } from "../config/defaults"
 import { isDeepEqual } from "../utils/deep-equal"
@@ -63,6 +68,14 @@ export function isOnPreset(
   )
 }
 
+// The neutral-HSL check both Preset rules share: a missing adjustment counts
+// as the identity.
+function hasNeutralHsl(themeState: ThemeEditorState): boolean {
+  return isIdentityHslAdjustment(
+    themeState.hslAdjustments ?? defaultHSLAdjustments
+  )
+}
+
 function onPreset(
   themeState: ThemeEditorState,
   sidebarSync: boolean,
@@ -72,8 +85,30 @@ function onPreset(
     isDeepEqual(
       themeState.styles,
       sidebarSync ? sidebarSyncedPresetStyles(presetStyles) : presetStyles
-    ) &&
-    isIdentityHslAdjustment(themeState.hslAdjustments ?? defaultHSLAdjustments)
+    ) && hasNeutralHsl(themeState)
+  )
+}
+
+/**
+ * The "untouched" rule: no edit, import, AI change or undo has moved the
+ * Theme off the Preset last put on it, so a Host Preset change may refresh
+ * it. Its HSL adjustment is neutral, and its styles equal its Preset
+ * baseline at its own Preset; with no baseline (the fresh default, then
+ * edited), they must equal `presetStyles`, the resolved Preset as it would
+ * be put on (Sidebar-synced while Sync is on). A baseline built on the
+ * Theme's own styles object is untouched without a compare.
+ */
+export function isUntouchedPreset(
+  themeState: ThemeEditorState,
+  baseline: PresetBaseline | null,
+  presetStyles: ThemeStyles
+): boolean {
+  if (!hasNeutralHsl(themeState)) return false
+  if (!baseline) return isDeepEqual(themeState.styles, presetStyles)
+  if (baseline.preset !== themeState.preset) return false
+  return (
+    themeState.styles === baseline.styles ||
+    isDeepEqual(themeState.styles, baseline.styles)
   )
 }
 

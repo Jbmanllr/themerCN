@@ -79,8 +79,8 @@ import {
   getStorageKeys,
 } from "../config/constants"
 import { isDeepEqual } from "../utils/deep-equal"
-import { isIdentityHslAdjustment } from "../utils/hsl-adjust"
 import { applySidebarSync } from "../utils/sidebar-sync"
+import { isUntouchedPreset } from "../selectors/editor-selectors"
 import { usePreferencesStore } from "./preferences-store"
 import { dropOtherVersion, guardedLocalStorage } from "./persist-options"
 
@@ -408,31 +408,21 @@ export const useEditorStore = create<EditorStore>()(
         const { themeState, presetBaseline } = get()
         const presetId = themeState.preset
         if (!presetId || !hasPreset(presetId)) return
-        const neutral = isIdentityHslAdjustment(
-          themeState.hslAdjustments ?? defaultHSLAdjustments
-        )
-        if (!neutral) return
         // The preset's current source, as applyThemePreset would put it on.
         const newThemeState = presetThemeState(themeState, presetId)
-
-        // No preset was ever put on this theme (the fresh default, then
-        // edited): it can only be trusted when it already is its preset.
-        if (!presetBaseline) {
-          if (isDeepEqual(themeState.styles, newThemeState.styles)) {
-            set({ presetBaseline: baselineOf(presetId, themeState) })
-          }
-          return
-        }
-
-        if (presetBaseline.preset !== presetId) return
-        // A baseline built on this Theme's own styles (baselineOf) is
-        // untouched without a compare.
         if (
-          themeState.styles !== presetBaseline.styles &&
-          !isDeepEqual(themeState.styles, presetBaseline.styles)
+          !isUntouchedPreset(themeState, presetBaseline, newThemeState.styles)
         ) {
           return
         }
+
+        // No preset was ever put on this theme, but it already is its
+        // preset: record the baseline only.
+        if (!presetBaseline) {
+          set({ presetBaseline: baselineOf(presetId, themeState) })
+          return
+        }
+        // The preset's source has not changed since the baseline.
         if (isDeepEqual(newThemeState.styles, presetBaseline.styles)) return
 
         set({

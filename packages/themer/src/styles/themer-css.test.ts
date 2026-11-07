@@ -5,6 +5,7 @@ import postcss, { type AtRule, type Container, type Rule } from "postcss"
 import { describe, expect, it } from "vitest"
 
 import { THEMER_CSS } from "../generated/themer-css"
+import { THEMER_VARIANT_SHADOWS } from "../utils/apply-theme"
 
 const SCOPE = "([data-themer]) to ([data-themer-host])"
 const root = postcss.parse(THEMER_CSS)
@@ -131,6 +132,30 @@ describe("the Themer's CSS", () => {
 
     expect(utility(".animate-spin")["animation"]).toMatch(/\bthemer-spin\b/)
     expect(leaking).toEqual([])
+  })
+
+  // The override sheet repeats these selectors by hand (the CSSOM walk skips
+  // this sheet), so a Tailwind upgrade that compiles them differently must
+  // fail here rather than freeze the cards on their base shadow.
+  it("compiles each variant shadow the override sheet mirrors", () => {
+    const combinators = (selector: string) =>
+      selector.replace(/\s*([>+~])\s*/g, "$1")
+    for (const [selector, size] of THEMER_VARIANT_SHADOWS) {
+      const rules: Rule[] = []
+      root.walkRules((rule) => {
+        if (combinators(rule.selector) === combinators(selector))
+          rules.push(rule)
+      })
+      const shadows = rules.flatMap((rule) =>
+        rule.nodes.flatMap((n) =>
+          n.type === "decl" && n.prop === "--tw-shadow" ? [n.value] : []
+        )
+      )
+
+      expect(shadows, selector).toEqual([
+        expect.stringMatching(new RegExp(`^var\\(--${size},`)),
+      ])
+    }
   })
 
   it("carries shadcn's base border rule", () => {

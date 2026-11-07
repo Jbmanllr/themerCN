@@ -7,10 +7,8 @@
 // and blur and the spread minus 1px (`shadow` equals `shadow-sm`). Never scale
 // the user's offset, blur or spread per size: that made a preset's shadows
 // (e.g. neo-brutalism's hard offset) look unlike tweakcn's; shadows.test.ts pins
-// tweakcn's strings. Changes from tweakcn: the map is computed for an explicit mode
-// (export writes both), and getShadowVariables adds this package's raw
-// parameter keys to its result (apply-theme ignores them and writes only the
-// per-size scale).
+// tweakcn's strings. Change from tweakcn: the map is computed for an explicit
+// mode (export writes both).
 //
 // See: packages/themer/ARCHITECTURE.md ("Applying a theme").
 
@@ -76,30 +74,6 @@ export function getShadowMap(
     "shadow-lg": `${firstLayer(1.0)}, ${secondLayer("4px", "6px")}`,
     "shadow-xl": `${firstLayer(1.0)}, ${secondLayer("8px", "10px")}`,
     "shadow-2xl": firstLayer(2.5),
-  }
-}
-
-/**
- * The shadow scale plus this package's raw parameter variables
- * (`--shadow-x`, `--shadow-y`, `--shadow-*-raw`), for the current mode.
- */
-export function getShadowVariables(
-  themeState: ThemeEditorState,
-  mode: ThemeMode = themeState.currentMode
-): Record<string, string> {
-  const modeStyles = themeState.styles[mode]
-  const defaults = defaultThemeState.styles[mode]
-
-  return {
-    ...getShadowMap(themeState, mode),
-    "shadow-x": modeStyles["shadow-offset-x"] || defaults["shadow-offset-x"],
-    "shadow-y": modeStyles["shadow-offset-y"] || defaults["shadow-offset-y"],
-    "shadow-blur-raw": modeStyles["shadow-blur"] || defaults["shadow-blur"],
-    "shadow-spread-raw":
-      modeStyles["shadow-spread"] || defaults["shadow-spread"],
-    "shadow-opacity-raw":
-      modeStyles["shadow-opacity"] || defaults["shadow-opacity"],
-    "shadow-color-raw": modeStyles["shadow-color"] || defaults["shadow-color"],
   }
 }
 

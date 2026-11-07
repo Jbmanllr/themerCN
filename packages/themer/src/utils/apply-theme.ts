@@ -30,6 +30,9 @@
 //   removes only the ones the new theme dropped, and removal takes away
 //   exactly what was set. An element without a record (a first apply, a new
 //   Live frame document, a record lost to a hot reload) gets the whole theme.
+//   Accepted trade-off: an outside write to a Theme property on <html>
+//   persists until that value changes, the Theme is removed, or the document
+//   is new, since an unchanged value is never written again.
 // - The property map is built once per mode's styles object and shared by
 //   the Host page and the Live frame (read-only). The shadow scale, the only
 //   step that parses a colour, is memoised per mode on its shadow inputs, so
@@ -110,9 +113,10 @@ const SHADOW_STATE_VARIANTS = [
  * without these the base size's `!important` would win. The Dashboard
  * preview's section cards: Card's `shadow-md` under the grid's
  * `*:data-[slot=card]:shadow-xs`. The Themer's other variant shadows sit on
- * elements without a base size, or are `shadow-none!`.
+ * elements without a base size, or are `shadow-none!`. The selector is
+ * Tailwind's compiled one; themer-css.test.ts checks it is in THEMER_CSS.
  */
-const THEMER_VARIANT_SHADOWS = [
+export const THEMER_VARIANT_SHADOWS = [
   [
     String.raw`:is(.\*\:data-\[slot\=card\]\:shadow-xs > *)[data-slot=card]`,
     "shadow-xs",

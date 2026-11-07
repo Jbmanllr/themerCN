@@ -502,7 +502,10 @@ document (the Host's `<html>` and the Live frame's, through the same code).
   changed and `removeProperty` only for a key the new Theme dropped, and
   removal takes away exactly what was set. An element without a record (a
   first apply, a new Live frame document after navigation, a record lost to
-  a hot reload) gets the whole Theme.
+  a hot reload) gets the whole Theme. Accepted trade-off: an outside write to
+  a Theme property on `<html>` persists until that value changes, the Theme
+  is removed, or the document is new, since an unchanged value is never
+  written again.
 - **Shared map and shadow memo.** The property map is built once per mode's
   styles object and shared, read-only, by the Host page and the Live frame.
   The shadow scale, the only step that parses a colour, is memoised per mode

@@ -48,6 +48,11 @@ vi.mock("../../hooks/use-font-search", async () => {
   }
 })
 
+// The trigger's "Custom font" badge asks the catalog too; not under test here.
+vi.mock("../../hooks/use-catalog-lacks-family", () => ({
+  useCatalogLacksFamily: () => false,
+}))
+
 import { POPULAR_FONTS } from "../../utils/font-catalog-data"
 import { buildFontFamily } from "../../utils/font-names"
 import { FontPicker } from "./font-picker"

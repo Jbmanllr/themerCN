@@ -118,10 +118,12 @@ First measured on 2026-11-06 (spec #119) on one machine: an Apple M3 Max under m
 
 | Metric               | Rule                                           | Direction     | Checked by                                                                   | Runs at          |
 | -------------------- | ---------------------------------------------- | ------------- | ---------------------------------------------------------------------------- | ---------------- |
+| client round trips   | 1 success or 4xx; 2 retried failure            | must not grow | `pnpm --filter themercn exec vitest run src/api/font-catalog.count.test.tsx` | implementer done |
 | Google downloads     | 0 cached; 1 uncached; 0 back-off; 1 concurrent | must not grow | `pnpm --filter themercn exec vitest run src/api/font-catalog.count.test.tsx` | implementer done |
 | catalog parses       | 0 cached; 1 uncached; 0 back-off               | must not grow | `pnpm --filter themercn exec vitest run src/api/font-catalog.count.test.tsx` | implementer done |
 | catalog code loads   | 1                                              | must not grow | `pnpm --filter themercn exec vitest run src/api/font-catalog.count.test.tsx` | implementer done |
 | whole-catalog passes | 1                                              | must not grow | `pnpm --filter themercn exec vitest run src/api/font-catalog.count.test.tsx` | implementer done |
+| badge requests       | 1 success or 4xx; 2 retried failure            | must not grow | `pnpm --filter themercn exec vitest run src/api/font-catalog.count.test.tsx` | implementer done |
 
 ### Measured, not yet enforced
 
@@ -146,24 +148,17 @@ The ratchet. Each count is per unit of its path, as the paths ADR defines the un
 
 | Metric               | Today | Direction     | Checked by                                                                   | Runs at          |
 | -------------------- | ----- | ------------- | ---------------------------------------------------------------------------- | ---------------- |
-| client round trips   | 2     | must not grow | `pnpm --filter themercn exec vitest run src/api/font-catalog.count.test.tsx` | implementer done |
-| family lower-cases   | 132   | must not grow | `pnpm --filter themercn exec vitest run src/api/font-catalog.count.test.tsx` | implementer done |
-| response stringifies | 2     | must not grow | `pnpm --filter themercn exec vitest run src/api/font-catalog.count.test.tsx` | implementer done |
-| badge requests       | 2     | must not grow | `pnpm --filter themercn exec vitest run src/api/font-catalog.count.test.tsx` | implementer done |
-| badge lower-cases    | 6     | must not grow | `pnpm --filter themercn exec vitest run src/api/font-catalog.count.test.tsx` | implementer done |
+| family lower-cases   | 0     | must not grow | `pnpm --filter themercn exec vitest run src/api/font-catalog.count.test.tsx` | implementer done |
+| response stringifies | 1     | must not grow | `pnpm --filter themercn exec vitest run src/api/font-catalog.count.test.tsx` | implementer done |
+| badge lower-cases    | 0     | must not grow | `pnpm --filter themercn exec vitest run src/api/font-catalog.count.test.tsx` | implementer done |
 
 ### Exceptions
 
-| ID  | Rule                    | Path                 | Reason                                                                                                                                | Owner                    | Expires    |
-| --- | ----------------------- | -------------------- | ------------------------------------------------------------------------------------------------------------------------------------- | ------------------------ | ---------- |
-| E8  | font label layout reads | Theme apply          | Debt: "A font label reads `getComputedStyle` once per `var()` hop, up to 4"; remediation map #111                                     | Jbmanllr (project owner) | 2027-02-04 |
-| E9  | font label stringifies  | Theme apply          | No debt line. Measured cause: 4 `getSnapshot` runs under React's development build, plus react-query's key hash; remediation map #111 | Jbmanllr (project owner) | 2027-02-04 |
-| E16 | root-class observers    | Page load            | Debt: "Every `useColorMode` caller and every font label adds its own `<html>` observer"; remediation map #111                         | Jbmanllr (project owner) | 2027-02-04 |
-| E19 | client round trips      | Font catalog request | No debt line. Measured cause: with the route disabled, the 404 plus the Themer's `retry: 1` asks twice; remediation map #111          | Jbmanllr (project owner) | 2027-02-04 |
-| E20 | family lower-cases      | Font catalog request | Debt: "every request with a query lower-cases every family name in the catalog"; remediation map #111                                 | Jbmanllr (project owner) | 2027-02-04 |
-| E21 | response stringifies    | Font catalog request | No debt line. Measured cause: with the route disabled, the 404 body is stringified twice because of the retry; remediation map #111   | Jbmanllr (project owner) | 2027-02-04 |
-| E22 | badge requests          | Font catalog request | No debt line. Measured cause: the same retry as E19; remediation map #111                                                             | Jbmanllr (project owner) | 2027-02-04 |
-| E23 | badge lower-cases       | Font catalog request | Debt: "every `FontValueLabel` render lower-cases up to 2 names per loaded font"; remediation map #111                                 | Jbmanllr (project owner) | 2027-02-04 |
+| ID  | Rule                    | Path        | Reason                                                                                                                                | Owner                    | Expires    |
+| --- | ----------------------- | ----------- | ------------------------------------------------------------------------------------------------------------------------------------- | ------------------------ | ---------- |
+| E8  | font label layout reads | Theme apply | Debt: "A font label reads `getComputedStyle` once per `var()` hop, up to 4"; remediation map #111                                     | Jbmanllr (project owner) | 2027-02-04 |
+| E9  | font label stringifies  | Theme apply | No debt line. Measured cause: 4 `getSnapshot` runs under React's development build, plus react-query's key hash; remediation map #111 | Jbmanllr (project owner) | 2027-02-04 |
+| E16 | root-class observers    | Page load   | Debt: "Every `useColorMode` caller and every font label adds its own `<html>` observer"; remediation map #111                         | Jbmanllr (project owner) | 2027-02-04 |
 
 ### Rules
 

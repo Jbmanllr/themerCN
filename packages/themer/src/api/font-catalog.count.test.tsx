@@ -71,6 +71,10 @@ const CACHED = "cached"
 const UNCACHED = "uncached"
 const BACK_OFF = "back-off"
 const CONCURRENT = "concurrent"
+// How the endpoint answered a client request (client round trips, badge
+// requests): a page or a 4xx, final; or a network error or 5xx, retried once.
+const SUCCESS_OR_4XX = "success or 4xx"
+const RETRIED_FAILURE = "retried failure"
 
 // ---- Google, stubbed --------------------------------------------------------
 
@@ -168,11 +172,19 @@ const serve = (query: string, context: Context = "server") =>
     )
   )
 
+// How the endpoint answers: through the route, or as a Host route that fails
+// with a 5xx, or not at all (a network error).
+let endpointAnswer: "route" | "5xx" | "network error" = "route"
+
 // The browser's fetch: the endpoint is answered by the route, Google by its
 // stub. Nothing else is fetched.
 async function stubFetch(input: RequestInfo | URL): Promise<Response> {
   const url = input instanceof Request ? input.url : String(input)
   if (isGoogle(url)) return google(url)
+  if (url.startsWith(ENDPOINT) && endpointAnswer === "5xx")
+    return new Response("unavailable", { status: 503 })
+  if (url.startsWith(ENDPOINT) && endpointAnswer === "network error")
+    throw new TypeError("Failed to fetch")
   if (url.startsWith(ENDPOINT))
     return requestContext.run("server", () =>
       route.GET(new Request(`http://localhost${url}`))
@@ -194,9 +206,11 @@ const isBadgeLookup = (input: unknown) =>
 const isFamily = (self: unknown) =>
   (typeof self === "string" || self instanceof String) &&
   FAMILIES.has(String(self))
-// A family lower-cased by the badge's label (FontValueLabel) over the loaded
-// fonts, not by the one-name helpers it calls once per render
-// (describeFontValue, isLocalFontFamily).
+// A family lower-cased while the badge's label (FontValueLabel) renders,
+// itself or through its badge lookup (useCatalogLacksFamily), not by the
+// one-name helpers it calls once per render (describeFontValue,
+// isLocalFontFamily). The lookup's match runs once per response, when the
+// response arrives, outside any render; a match redone on a render counts.
 const badgeLowerCase = (self: unknown) =>
   isFamily(self) &&
   !onServer() &&
@@ -204,11 +218,14 @@ const badgeLowerCase = (self: unknown) =>
   !madeBy(/utils\/font-names/)
 // A family lower-cased by a request: the route, or useFontSearch's query
 // over the bundled list in the browser (the picker's rows and its label are
-// not requests).
+// not requests). Per request only: a catalog's names, built once per load
+// (prepareFontCatalog), and the request's own query (normalizeFontQuery,
+// which a family-named query such as the badge's passes) are not counted.
 const familyLowerCase = (self: unknown) =>
   isFamily(self) &&
   notAlongside() &&
-  (onServer() || calledFrom(/hooks\/use-font-search/))
+  (onServer() || calledFrom(/hooks\/use-font-search/)) &&
+  !madeBy(/\b(?:prepareFontCatalog|normalizeFontQuery)\b/)
 // A pass over the whole served catalog (FontInfo entries, as many as the
 // catalog has); a page of it is not one.
 const isWholeCatalog = (self: unknown) => {
@@ -275,16 +292,21 @@ const counters = (): Counter[] => [
 // ---- Checking and reporting -------------------------------------------------
 
 /**
- * Checks one run. `outcome` is the run's outcome for every split row;
- * `perRow` names another for a row that has no figure for it (a concurrent
- * request downloads once, so its parse is the uncached one).
+ * Checks one run. `outcome` is the run's catalog outcome for every row split
+ * by it, and `answer` how the endpoint answered, for the client rows split by
+ * that; `perRow` names another outcome for a row that has no figure for the
+ * run's (a concurrent request downloads once, so its parse is the uncached
+ * one).
  */
 function check(
   outcome: string,
   counts: Counts,
-  perRow: Record<string, string> = {}
+  {
+    answer = SUCCESS_OR_4XX,
+    perRow = {},
+  }: { answer?: string; perRow?: Record<string, string> } = {}
 ) {
-  checkCounts({ path: PATH, outcomes: [outcome], perRow, counts })
+  checkCounts({ path: PATH, outcomes: [outcome, answer], perRow, counts })
 }
 
 // Not a register row: every browser fetch, which no endpoint must remove.
@@ -427,6 +449,7 @@ async function typeQuery(client: QueryClient, query: string) {
 beforeEach(async () => {
   newProcess()
   googleFails = false
+  endpointAnswer = "route"
   googleFontsApiKey = undefined
   vi.stubGlobal("fetch", stubFetch)
   vi.spyOn(console, "warn").mockImplementation(() => undefined)
@@ -487,7 +510,7 @@ describe("Font catalog request rows, on the route", () => {
       await Promise.all([first, second])
     })
     report(`route: ${CONCURRENT} (catalog parses: ${UNCACHED})`, counts)
-    check(CONCURRENT, counts, { "catalog parses": UNCACHED })
+    check(CONCURRENT, counts, { perRow: { "catalog parses": UNCACHED } })
   })
 })
 
@@ -559,7 +582,27 @@ describe("Font catalog request composition", () => {
     expect(
       [served, picker].map((counts) => counts["catalog code loads"])
     ).toEqual([0, 0])
+    // Its 404 is final: the badge lookup asks once, with no retry.
+    expect(picker["badge requests"]).toBe(1)
   })
+
+  // A failure that a second try can fix is retried once, then given up: the
+  // retried-failure outcome of the client rows.
+  it.each(["5xx", "network error"] as const)(
+    "reports every row when the endpoint fails with a %s",
+    async (failure) => {
+      endpointAnswer = failure
+      const counts = await measure(counters(), () =>
+        mountPicker("Inter, sans-serif", ENDPOINT)
+      )
+      report(
+        `endpoint ${failure}: picker badge lookup, ${CACHED}, ${RETRIED_FAILURE}`,
+        counts
+      )
+      check(CACHED, counts, { answer: RETRIED_FAILURE })
+      expect(counts["badge requests"]).toBe(2)
+    }
+  )
 
   it("reports every row with no endpoint", async () => {
     let picker: Awaited<ReturnType<typeof mountPicker>> | undefined

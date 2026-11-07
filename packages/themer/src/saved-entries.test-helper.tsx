@@ -59,16 +59,19 @@ export async function saveColorMode(namespace: string, mode: ThemerColorMode) {
   const container = document.createElement("div")
   document.body.append(container)
   const root = createRoot(container)
-  await act(async () =>
-    root.render(
-      <ColorModeProvider storageKey={getStorageKeys(namespace).colorMode}>
-        <Switch />
-      </ColorModeProvider>
+  try {
+    await act(async () =>
+      root.render(
+        <ColorModeProvider storageKey={getStorageKeys(namespace).colorMode}>
+          <Switch />
+        </ColorModeProvider>
+      )
     )
-  )
-  await act(async () => setMode?.(mode))
-  await act(async () => root.unmount())
-  container.remove()
-  html.className = className
-  delete colorModeRecordHost()[COLOR_MODE_RECORD]
+    await act(async () => setMode?.(mode))
+  } finally {
+    await act(async () => root.unmount())
+    container.remove()
+    html.className = className
+    delete colorModeRecordHost()[COLOR_MODE_RECORD]
+  }
 }

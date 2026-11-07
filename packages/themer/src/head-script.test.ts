@@ -26,6 +26,7 @@ const primary = () =>
 beforeEach(() => {
   localStorage.clear()
   document.head.innerHTML = ""
+  document.documentElement.className = ""
 })
 
 it("restores the Theme saved under the Host's storage namespace", () => {

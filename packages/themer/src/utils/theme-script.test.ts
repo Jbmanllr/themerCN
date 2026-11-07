@@ -8,9 +8,10 @@
 // Themer saved one, and ask Google only for families Google serves. The text
 // is run here the way a browser runs it. Valid saved entries are written by
 // the editor and preferences stores and the colour-mode provider
-// (saved-entries.test-helper.tsx); only entries no store writes (unreadable
-// content, a value or key that could end its declaration, preferences
-// without the override) are built by hand.
+// (saved-entries.test-helper.tsx). Entries are built by hand only for
+// unreadable content, preferences without the override, and hostile keys and
+// values that the head script must drop itself (the editor store's import
+// action does not filter them).
 import {
   afterEach,
   beforeAll,
@@ -57,7 +58,8 @@ function saveTheme(styles: ImportedThemeStyles, mode: ThemeMode = "light") {
 const saveColorMode = (mode: ThemeMode) =>
   saveColorModeOf(DEFAULT_STORAGE_NAMESPACE, mode)
 
-/** Writes an editor entry by hand, for a Theme no store saves. */
+/** Writes an editor entry by hand, to inject hostile data the head script
+ *  must drop. */
 function saveEditorByHand(themeState: unknown) {
   localStorage.setItem(
     STORAGE_KEYS.editor,
@@ -238,7 +240,8 @@ describe("generateThemeScript", () => {
   })
 
   it("drops a saved value that would break out of its declaration", () => {
-    // Hand-built: no store writes a value that could end its declaration.
+    // Hand-built to inject a hostile value the head script must drop: the
+    // editor store's import (fed by the CSS import dialog) can save one.
     saveEditorByHand({
       currentMode: "light",
       styles: {
@@ -253,8 +256,9 @@ describe("generateThemeScript", () => {
   })
 
   it("drops each unsafe key and value in both modes, keeping the rest", () => {
-    // Hand-built: no store writes a key or value that could end its
-    // declaration.
+    // Hand-built to inject hostile keys and values the head script must
+    // drop: the editor store's import action checks neither, and the CSS
+    // import dialog can feed it such a value.
     saveEditorByHand({
       currentMode: "light",
       styles: {

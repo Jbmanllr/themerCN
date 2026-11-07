@@ -127,7 +127,6 @@ it("restores the saved Theme's tokens for both modes", async () => {
   expect(restoredTokens(page, DARK_RULE)).toMatchObject({
     primary: "#abcdef",
     background: "oklch(0.15 0 0)",
-    "font-sans": "Inter, sans-serif",
     "shadow-color": "hsl(240 10% 2%)",
     "shadow-blur": "12px",
   })

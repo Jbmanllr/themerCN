@@ -70,11 +70,15 @@ const moveOnto = (element: Element) =>
 
 const hover = () => moveOnto(target)
 
-/** Hovers `element` and lets the scheduled measure show its card. */
+/** Hovers `element` and waits one frame, so a measure it scheduled has run. */
 async function showCardFor(element: Element) {
   moveOnto(element)
-  await act(() => new Promise<void>((resolve) => setTimeout(resolve, 50)))
+  await act(
+    () => new Promise<void>((resolve) => requestAnimationFrame(() => resolve()))
+  )
 }
+
+const outside: Element[] = []
 
 /** An element of the editor outside the inspected surface. */
 function editorElement(attributes: Record<string, string> = {}) {
@@ -86,7 +90,6 @@ function editorElement(attributes: Record<string, string> = {}) {
   outside.push(element)
   return element
 }
-const outside: Element[] = []
 
 const click = () => {
   const event = new MouseEvent("click", { bubbles: true, cancelable: true })

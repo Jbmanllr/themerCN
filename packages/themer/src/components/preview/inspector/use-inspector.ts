@@ -330,7 +330,6 @@ export function useInspector({
 
     return () => {
       if (raf) window.cancelAnimationFrame(raf)
-      inspected = null
       iframe?.removeEventListener("load", bindFrame)
       unbindFrame?.()
       unbindHost?.()

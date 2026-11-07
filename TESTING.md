@@ -121,8 +121,8 @@ The ratchet. Each count is per unit of its path, as the paths ADR defines the un
 | stringifies            | 1 persisted change; 0 no change       | must not grow | `pnpm --filter themercn exec vitest run src/stores/store-action.count.test.tsx` | implementer done |
 | storage writes         | 1 persisted change; 0 no change       | must not grow | `pnpm --filter themercn exec vitest run src/stores/store-action.count.test.tsx` | implementer done |
 | store deep compares    | 1 Theme change; 0 history-only change | must not grow | `pnpm --filter themercn exec vitest run src/stores/store-action.count.test.tsx` | implementer done |
-| selector deep compares | 9                                     | must not grow | `pnpm --filter themercn exec vitest run src/stores/store-action.count.test.tsx` | implementer done |
-| selector colour parses | 1                                     | must not grow | `pnpm --filter themercn exec vitest run src/stores/store-action.count.test.tsx` | implementer done |
+| selector deep compares | 1                                     | must not grow | `pnpm --filter themercn exec vitest run src/stores/store-action.count.test.tsx` | implementer done |
+| selector colour parses | 0                                     | must not grow | `pnpm --filter themercn exec vitest run src/stores/store-action.count.test.tsx` | implementer done |
 
 **Theme apply** (per apply and document)
 

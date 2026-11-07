@@ -15,7 +15,7 @@ import {
   getStorageKeys,
 } from "../config/constants"
 import { configurePresets, resolvePresetStyles } from "../config/presets"
-import { isOnPreset } from "../selectors/editor-selectors"
+import { isOnPreset, selectIsOnPreset } from "../selectors/editor-selectors"
 import { isSidebarSynced } from "../utils/sidebar-sync"
 import type { EditorStore, ThemeEditorState } from "../types"
 import { useEditorStore } from "./editor-store"
@@ -336,6 +336,32 @@ describe("isOnPreset", () => {
         false
       )
     ).toBe(false)
+  })
+
+  it("follows a Host Preset re-registration with no Theme change", () => {
+    const brand = (primary: string) => ({
+      id: "brand",
+      label: "Brand",
+      styles: { light: { primary }, dark: {} },
+    })
+    configurePresets({ presets: [brand("#111111")] })
+    store.getState().applyThemePreset("brand")
+    expect(selectIsOnPreset(false)(store.getState())).toBe(true)
+
+    configurePresets({ presets: [brand("#222222")] })
+    expect(selectIsOnPreset(false)(store.getState())).toBe(false)
+
+    configurePresets({ presets: [brand("#111111")] })
+    expect(selectIsOnPreset(false)(store.getState())).toBe(true)
+  })
+
+  it("answers under the Sidebar Sync setting it is given", () => {
+    // neo-brutalism's sidebar colours differ from their base twins.
+    store.getState().applyThemePreset("neo-brutalism")
+    const state = store.getState()
+    expect(selectIsOnPreset(false)(state)).toBe(true)
+    expect(selectIsOnPreset(true)(state)).toBe(false)
+    expect(selectIsOnPreset(false)(state)).toBe(true)
   })
 })
 

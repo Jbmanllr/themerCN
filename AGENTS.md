@@ -1,8 +1,16 @@
 # themerCN
 
+The home of [`themercn`](packages/themer), a live editor for a shadcn Theme's design tokens, and of the Playground that exercises it. Terms are defined in [`GLOSSARY.md`](GLOSSARY.md).
+
 ## Release status
 
 `pre-release`
+
+## Testing standard
+
+Read [`TESTING.md`](TESTING.md) before you verify or hand off a change: its "Verification tiers" say which checks run at each moment (T0 to T3), and describe the Stop hook that runs T1.
+
+Before writing code on a shared path, read the paths ADR, [`docs/adr/0002-shared-paths-and-cost-contracts.md`](docs/adr/0002-shared-paths-and-cost-contracts.md), which lists the paths and their caps, and the Quality register in `TESTING.md`, which holds the limits; the project has no `CONSTRAINTS.md`. Change a limit only by the register's rules: tighten it in the same pull request, loosen it with the owner.
 
 ## Agent skills
 
@@ -18,11 +26,23 @@ Default vocabulary: `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-
 
 Single-context: one `GLOSSARY.md` and `docs/adr/` at the repo root. See `docs/agents/domain.md`.
 
-## Testing standard
+## TypeScript
 
-Read [`TESTING.md`](TESTING.md) before you verify or hand off a change: its "Verification tiers" say which checks run at each moment (T0 to T3), and describe the Stop hook that runs T1.
+- Before reading or editing `.ts` or `.tsx` files, read and follow [typescript-best-practices](/Users/jb/.agents/skills/typescript-best-practices/SKILL.md).
 
-The quality bar lives in the Quality register of `TESTING.md`; the project has no `CONSTRAINTS.md`. Read the register before writing code on a shared path. Change a limit only by the register's rules: tighten it in the same pull request, loosen it with the owner.
+## React
+
+- When writing, reviewing, or refactoring React web code, read and follow [vercel-react-best-practices](/Users/jb/.agents/skills/vercel-react-best-practices/SKILL.md).
+- When creating components or changing effects, read and follow [writing-react-effects](/Users/jb/.agents/skills/writing-react-effects/SKILL.md).
+- When designing component interfaces, compound components, or context providers, read and follow [vercel-composition-patterns](/Users/jb/.agents/skills/vercel-composition-patterns/SKILL.md).
+
+## Next.js
+
+- When writing or reviewing Next.js code, including routing, server/client boundaries, data fetching, metadata, and asset handling, read and follow [next-best-practices](/Users/jb/.agents/skills/next-best-practices/SKILL.md).
+
+## shadcn/ui
+
+- Before adding, updating, customizing, wrapping, or reviewing shadcn/ui components, forms, or registries, read and follow both [shadcn](/Users/jb/.agents/skills/shadcn/SKILL.md) and [shadcn-guardrails](/Users/jb/.agents/skills/shadcn-guardrails/SKILL.md).
 
 <!-- BEGIN:turborepo-agent-rules -->
 

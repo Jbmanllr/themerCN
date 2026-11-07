@@ -31,7 +31,7 @@ import type {
 import { colorFormatter } from "./color-converter"
 import { SHADOW_SCALE_KEYS, getShadowMap } from "./shadows"
 import { defaultThemeState } from "../config/defaults"
-import { THEME_COLOR_KEYS } from "../types/theme"
+import { THEME_COLOR_KEYS, THEME_FONT_KEYS } from "../types/theme"
 import { getThemeFonts } from "./font-names"
 
 /** The theme colours a mode block and `@theme inline` export, in order. */
@@ -461,7 +461,8 @@ export function generateLayoutCode(themeState: ThemeEditorState): string {
   // The Theme fonts module owns the slots and which families Google serves
   // (not an OS family such as Georgia, nor a `var(...)` host font).
   const lightFonts = getThemeFonts(themeState.styles).light
-  for (const [key, fontFamily] of Object.entries(lightFonts)) {
+  for (const key of THEME_FONT_KEYS) {
+    const fontFamily = lightFonts[key]
     if (!fontFamily) continue
 
     googleFonts.push({

@@ -243,12 +243,14 @@ export type ThemeFontStyles = {
   readonly dark?: ThemeFontModeStyles
 }
 
+// A literal over the slots, so the compiler rejects a missing one.
 function slotsOf(styles: ThemeFontModeStyles): ThemeFontSlots {
-  const slots: Partial<Record<ThemeFontKey, string | null>> = {}
-  for (const key of THEME_FONT_KEYS) {
-    slots[key] = getGoogleFontFamily(styles?.[key])
+  return {
+    "font-sans": getGoogleFontFamily(styles?.["font-sans"]),
+    "font-heading": getGoogleFontFamily(styles?.["font-heading"]),
+    "font-serif": getGoogleFontFamily(styles?.["font-serif"]),
+    "font-mono": getGoogleFontFamily(styles?.["font-mono"]),
   }
-  return slots as ThemeFontSlots
 }
 
 // Keyed by the Theme's styles object: the store replaces it on every Theme

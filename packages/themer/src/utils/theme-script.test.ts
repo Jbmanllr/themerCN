@@ -310,6 +310,16 @@ const FONT_ROWS: FontRow[] = [
     families: [],
   },
   {
+    name: "upper-case generic keywords",
+    fonts: {
+      "font-sans": "SYSTEM-UI, sans-serif",
+      "font-serif": "Serif",
+      "font-mono": "MONOSPACE",
+      "font-heading": "Sans-Serif",
+    },
+    families: [],
+  },
+  {
     name: "a var(...) stack",
     fonts: { "font-sans": "var(--font-dm-sans), sans-serif" },
     families: [],
@@ -374,6 +384,8 @@ describe("head script font links match the Theme fonts module", () => {
 
     // The Themer loads: the registry adopts every head-script link.
     setThemeFonts(document, themeFonts)
-    expect([...document.head.querySelectorAll("link")]).toEqual(links)
+    const adopted = [...document.head.querySelectorAll("link")]
+    expect(adopted).toHaveLength(links.length)
+    adopted.forEach((link, index) => expect(link).toBe(links[index]))
   })
 })

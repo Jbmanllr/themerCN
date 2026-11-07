@@ -638,7 +638,7 @@ const countFontFamilyDerivations = (): Counter =>
   )
 
 /** One edit, counted on the Host page and on the Live frame, each a unit,
- *  and the font family derivations of both together. */
+ *  and the font family derivations of both together (`shared`). */
 async function measureBoth(frameDoc: Document, edit: () => void) {
   let live: Counts = {}
   let host: Counts = {}
@@ -650,7 +650,7 @@ async function measureBoth(frameDoc: Document, edit: () => void) {
       )
     })
   })
-  return { host, live, derivations: shared[FONT_FAMILY_DERIVATIONS] }
+  return { host, live, shared, derivations: shared[FONT_FAMILY_DERIVATIONS] }
 }
 
 /** A light/dark toggle through the Themer's mode toggle, counted on the
@@ -826,12 +826,15 @@ describe("Theme apply failing seeds", () => {
 
   it("catches a second font family derivation of one Theme state", async () => {
     const frameDoc = await mountComposition(OWN_SHADOWS)
-    const { derivations } = await measureBoth(frameDoc, () => {
+    const plain = await measureBoth(frameDoc, () =>
+      editTheme({ ...OWN_SHADOWS, ...nextPrimary() })
+    )
+    const withSeed = await measureBoth(frameDoc, () => {
       editTheme({ ...OWN_SHADOWS, ...nextPrimary() })
       // A caller that rebuilds the styles derives the families again.
       getThemeFonts({ ...useEditorStore.getState().themeState.styles })
     })
-    expect(derivations).toBe(2)
+    expectCaught(FONT_FAMILY_DERIVATIONS, plain.shared, withSeed.shared)
   })
 
   /** A font edit the label shows, then the same with the seed (by default a

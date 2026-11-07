@@ -13,11 +13,17 @@
 //   head script restores the class before the first paint of a reload.
 // - Controlled: nothing is saved and a saved mode is removed, so the head
 //   script leaves the Host app's class alone.
+// - The key is written only when the mode differs from what is stored, and
+//   removed only when an entry exists. What is stored comes from the head
+//   script's record on `window[COLOR_MODE_RECORD]` (no storage read), kept
+//   current by each write here; with no record (no head script, or a
+//   namespace it never saw) the key is written or removed once.
 // - Outside a provider, useColorMode (hooks/use-color-mode.ts) behaves as
 //   uncontrolled.
 
 import * as React from "react"
 
+import { COLOR_MODE_RECORD } from "../config/constants"
 import {
   ColorModeContext,
   setRootClassMode,
@@ -26,6 +32,16 @@ import {
 import type { ThemerColorMode } from "../types"
 
 const noop = () => {}
+
+/** The stored colour mode per key, as the head script read it (null when
+ *  nothing is saved) and as this provider wrote it since. */
+function colourModeRecord(): Record<string, string | null> {
+  const host = window as unknown as Record<
+    string,
+    Record<string, string | null> | undefined
+  >
+  return (host[COLOR_MODE_RECORD] ??= {})
+}
 
 export function ColorModeProvider({
   children,
@@ -54,9 +70,13 @@ export function ColorModeProvider({
 
   React.useEffect(() => {
     if (!storageKey) return
+    const record = colourModeRecord()
+    const next = controlled ? null : rootClassMode
+    if (record[storageKey] === next) return
     try {
-      if (controlled) localStorage.removeItem(storageKey)
-      else localStorage.setItem(storageKey, rootClassMode)
+      if (next === null) localStorage.removeItem(storageKey)
+      else localStorage.setItem(storageKey, next)
+      record[storageKey] = next
     } catch {
       // Storage unavailable: the reload paints the Host's own mode.
     }

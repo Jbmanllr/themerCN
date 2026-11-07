@@ -82,6 +82,15 @@ export function getStorageKeys(namespace: string = DEFAULT_STORAGE_NAMESPACE) {
 }
 
 /**
+ * Name of the `window` property where the head script records the colour
+ * mode it read, per colour-mode storage key: the saved value, or null when
+ * nothing is saved. The colour-mode provider (components/color-mode.tsx)
+ * compares the mode with it, so a load writes the key only when it is stale
+ * and adds no storage read.
+ */
+export const COLOR_MODE_RECORD = "__themercnColorMode"
+
+/**
  * Versions of the persisted stores' entries (zustand persist `version`):
  * editor-store.ts and preferences-store.ts persist at them, and the
  * pre-hydration script (utils/theme-script.ts) ignores an entry saved at

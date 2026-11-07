@@ -9,7 +9,7 @@
 // utils/theme-script.test.ts.
 import { beforeEach, expect, it } from "vitest"
 
-import { EDITOR_STATE_VERSION } from "./config/constants"
+import { COLOR_MODE_RECORD, EDITOR_STATE_VERSION } from "./config/constants"
 import { getThemerHeadScript } from "./head-script"
 
 function save(namespace: string, primary: string) {
@@ -49,6 +49,28 @@ it("restores the default namespace's Theme when given none", () => {
   new Function(getThemerHeadScript())()
 
   expect(primary()).toBe("#111111")
+})
+
+const colourModeRecord = () =>
+  (window as unknown as Record<string, Record<string, string | null>>)[
+    COLOR_MODE_RECORD
+  ]
+
+it("records the saved colour mode it read, under its storage key", () => {
+  localStorage.setItem("shop:color-mode", "dark")
+
+  new Function(getThemerHeadScript({ storageNamespace: "shop" }))()
+
+  expect(colourModeRecord()?.["shop:color-mode"]).toBe("dark")
+})
+
+it("records nothing saved as null, with no write to <html>", () => {
+  const before = document.documentElement.outerHTML
+
+  new Function(getThemerHeadScript({ storageNamespace: "empty" }))()
+
+  expect(colourModeRecord()).toHaveProperty(["empty:color-mode"], null)
+  expect(document.documentElement.outerHTML).toBe(before)
 })
 
 it("does not carry the data-themer marker", () => {

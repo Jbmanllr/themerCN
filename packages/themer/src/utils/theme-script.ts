@@ -12,6 +12,7 @@
 
 import { THEME_FONT_KEYS } from "../types/theme"
 import {
+  COLOR_MODE_RECORD,
   EDITOR_STATE_VERSION,
   PREFERENCES_VERSION,
   RESTORE_STYLE_ID,
@@ -24,7 +25,9 @@ import { GENERIC_FONT_FAMILIES, LOCAL_FONT_FAMILY_NAMES } from "./font-names"
  * in the right mode.
  * - Mode: when an uncontrolled Themer saved its mode (`<ns>:color-mode`), it sets the `.dark`
  *   class on <html> to match. Otherwise the Host app owns the class (next-themes or its
- *   own script, which may run after this one) and the class is left alone.
+ *   own script, which may run after this one) and the class is left alone. Either way it
+ *   records the value it read (or null) on `window[COLOR_MODE_RECORD]` under that key, so
+ *   the colour-mode provider writes the key only when it is stale.
  * - Theme: with nothing saved (or the Theme override off) it writes nothing and the Host's
  *   CSS shows. A stored entry saved at another version counts as nothing saved, and
  *   stored preferences of another version leave the override on. Otherwise it writes both modes of the saved Theme into one
@@ -74,6 +77,7 @@ export function generateThemeScript({
       var storageKey = ${JSON.stringify(storageKeys.editor)};
       var preferencesStorageKey = ${JSON.stringify(storageKeys.preferences)};
       var colorModeStorageKey = ${JSON.stringify(storageKeys.colorMode)};
+      var colorModeRecord = ${JSON.stringify(COLOR_MODE_RECORD)};
       var editorVersion = ${JSON.stringify(EDITOR_STATE_VERSION)};
       var preferencesVersion = ${JSON.stringify(PREFERENCES_VERSION)};
       var styleId = ${JSON.stringify(RESTORE_STYLE_ID)};
@@ -95,6 +99,10 @@ export function generateThemeScript({
         }
 
         colorMode = localStorage.getItem(colorModeStorageKey);
+        // What was read, for the colour-mode provider to compare with
+        // instead of reading or rewriting the key: the value, or null.
+        var record = window[colorModeRecord] || (window[colorModeRecord] = {});
+        record[colorModeStorageKey] = colorMode;
       } catch (e) {
         console.warn("ThemeScript: Failed to read localStorage:", e);
       }

@@ -305,6 +305,13 @@ and below the Themer UI.
   made by anyone else. The mode is saved
   under `<ns>:color-mode` so the head script restores the class on reload.
 
+The key is written only when the mode differs from what is stored, and
+removed (controlled) only when an entry exists. The provider learns what is
+stored from the head script's record, `window[COLOR_MODE_RECORD]` keyed by
+storage key (the value read, or `null`), and updates it on each write, so a
+load adds no storage read; with no record (no head script, or a namespace it
+never saw) it writes or removes once.
+
 The mode controls (the toggle, its menu item, the contrast panel's starting
 mode) read `useColorMode()` directly, so a Host `.dark` flip updates them in
 the commit that themes the page. The store's `themeState.currentMode` (which
@@ -372,7 +379,8 @@ transition's synchronous commit, so the reveal shows the new mode's Theme.
 - [utils/theme-script.ts](src/utils/theme-script.ts) generates the head
   script string. It sets `.dark` from `<ns>:color-mode` when an uncontrolled
   Themer saved one (otherwise the Host owns the class, and its script may
-  run later). It writes both modes of the saved Theme into one
+  run later), and records the value it read on `window[COLOR_MODE_RECORD]`
+  for the colour-mode provider (no DOM write). It writes both modes of the saved Theme into one
   `<style id="themercn-restore">` (`RESTORE_STYLE_ID`) as
   `html:root:not(.dark)` and `html:root.dark` rules, which outrank the Host's
   `:root` and `.dark`, so the first paint has the right tokens whichever mode

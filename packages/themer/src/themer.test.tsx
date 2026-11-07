@@ -6,7 +6,11 @@ import { act, Profiler, StrictMode } from "react"
 import { createRoot, type Root } from "react-dom/client"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
-import { EDITOR_STATE_VERSION, PREFERENCES_VERSION } from "./config/constants"
+import {
+  COLOR_MODE_RECORD,
+  EDITOR_STATE_VERSION,
+  PREFERENCES_VERSION,
+} from "./config/constants"
 import { defaultThemeState } from "./config/defaults"
 import { resolvePresetStyles } from "./config/presets"
 import type { ThemeStyles } from "./types"
@@ -88,8 +92,34 @@ function stubLocalStorage(write: (key: string) => void = () => {}) {
   return writes
 }
 
+// Stands in for localStorage, recording each colour-mode write ("set
+// <mode>") and removal ("remove").
+function spyColourModeStorage() {
+  const real = localStorage
+  const changes: string[] = []
+  const isColourMode = (key: string) => key.endsWith(":color-mode")
+  vi.stubGlobal("localStorage", {
+    getItem: (key: string) => real.getItem(key),
+    setItem: (key: string, value: string) => {
+      if (isColourMode(key)) changes.push(`set ${value}`)
+      real.setItem(key, value)
+    },
+    removeItem: (key: string) => {
+      if (isColourMode(key)) changes.push("remove")
+      real.removeItem(key)
+    },
+  })
+  return changes
+}
+
+/** The pre-paint head script, as a Host page runs it before the mount. */
+function runHeadScript(storageNamespace: string) {
+  new Function(getThemerHeadScript({ storageNamespace }))()
+}
+
 // The stores are module singletons: start every test from a fresh Themer.
 beforeEach(() => {
+  delete (window as unknown as Record<string, unknown>)[COLOR_MODE_RECORD]
   useEditorStore.setState(useEditorStore.getInitialState(), true)
   usePreferencesStore.setState(usePreferencesStore.getInitialState(), true)
   useThemerUIStore.setState(useThemerUIStore.getInitialState(), true)
@@ -556,6 +586,45 @@ describe("Themer", () => {
       expect(localStorage.getItem("acme:color-mode")).toBe("light")
     })
 
+    it("writes no saved mode the page already shows, and each later switch", async () => {
+      localStorage.setItem("current:color-mode", "dark")
+      runHeadScript("current")
+      const changes = spyColourModeStorage()
+
+      await mount({ storageNamespace: "current" })
+      expect(changes).toEqual([])
+
+      await openThemer()
+      await clickModeToggle()
+      await clickModeToggle()
+      expect(changes).toEqual(["set light", "set dark"])
+    })
+
+    it("writes a stale or missing saved mode once", async () => {
+      localStorage.setItem("stale:color-mode", "light")
+      runHeadScript("stale")
+      runHeadScript("missing")
+      // The Host's own script sets the class after the head script.
+      document.documentElement.classList.add("dark")
+      const changes = spyColourModeStorage()
+
+      await mount({ storageNamespace: "stale" })
+      expect(changes).toEqual(["set dark"])
+
+      await act(async () => root?.render(<Themer storageNamespace="missing" />))
+      expect(changes).toEqual(["set dark", "set dark"])
+    })
+
+    it("writes once on a switch to a namespace the head script never saw", async () => {
+      runHeadScript("seen")
+      await mount({ storageNamespace: "seen" })
+      const changes = spyColourModeStorage()
+
+      await act(async () => root?.render(<Themer storageNamespace="unseen" />))
+
+      expect(changes).toEqual(["set light"])
+    })
+
     it("shows the new mode's Theme in the reveal", async () => {
       await mount()
       await openThemer()
@@ -682,6 +751,36 @@ describe("Themer", () => {
       await mount({ colorMode: "light", onColorModeChange: () => {} })
 
       expect(localStorage.getItem("themercn:color-mode")).toBeNull()
+    })
+
+    it("removes nothing when the head script found nothing saved", async () => {
+      runHeadScript("controlled-empty")
+      const changes = spyColourModeStorage()
+
+      await mount({
+        colorMode: "light",
+        onColorModeChange: () => {},
+        storageNamespace: "controlled-empty",
+      })
+
+      expect(changes).toEqual([])
+    })
+
+    it("removes a saved mode once", async () => {
+      localStorage.setItem("controlled-saved:color-mode", "dark")
+      runHeadScript("controlled-saved")
+      const changes = spyColourModeStorage()
+      const props = {
+        onColorModeChange: () => {},
+        storageNamespace: "controlled-saved",
+      }
+
+      await mount({ colorMode: "light", ...props })
+      await act(async () =>
+        root?.render(<Themer colorMode="dark" {...props} />)
+      )
+
+      expect(changes).toEqual(["remove"])
     })
 
     it("applies the mode the Host passes, whatever the class says", async () => {

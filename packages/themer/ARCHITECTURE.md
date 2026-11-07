@@ -301,9 +301,16 @@ and below the Themer UI.
   `colorMode`; the toggle calls `onColorModeChange`; the Host (for example
   `next-themes`) sets the class. No mode is saved (a saved one is removed).
 - **Uncontrolled**: the class is the mode. The toggle flips it and
-  re-renders the provider at once, and a `MutationObserver` follows changes
-  made by anyone else. The mode is saved
+  re-renders the provider at once, and the shared `<html>` observer follows
+  changes made by anyone else. The mode is saved
   under `<ns>:color-mode` so the head script restores the class on reload.
+
+The Themer's readers of `<html>` (the `.dark` class, the Host's `dir` for
+Host preview tabs, and the root font variables for font labels through
+`class` and `style`) share one `MutationObserver` per document
+([html-attribute-observer.ts](src/hooks/html-attribute-observer.ts)): built
+on the first subscriber, disconnected after the last, and a mutation wakes
+only the subscribers of the attribute that changed.
 
 The key is written only when the mode differs from what is stored, and
 removed (controlled) only when an entry exists. The provider learns what is

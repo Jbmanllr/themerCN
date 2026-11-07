@@ -142,7 +142,7 @@ The ratchet. Each count is per unit of its path, as the paths ADR defines the un
 | -------------------- | ------------------------------------------------------------------- | ------------- | -------------------------------------------------------------------------------- | ---------------- |
 | storage writes       | 0 nothing saved; 0 saved Theme; 2 other version; 1 namespace switch | must not grow | `pnpm --filter themercn exec vitest run src/components/page-load.count.test.tsx` | implementer done |
 | first applies        | 1                                                                   | must not grow | `pnpm --filter themercn exec vitest run src/components/page-load.count.test.tsx` | implementer done |
-| root-class observers | 2                                                                   | must not grow | `pnpm --filter themercn exec vitest run src/components/page-load.count.test.tsx` | implementer done |
+| root-class observers | 1                                                                   | must not grow | `pnpm --filter themercn exec vitest run src/components/page-load.count.test.tsx` | implementer done |
 
 **Font catalog request** (per request)
 

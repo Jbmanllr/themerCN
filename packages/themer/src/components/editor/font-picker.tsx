@@ -55,6 +55,7 @@ import { Separator } from "@workspace/ui/components/separator"
 import { Spinner } from "@workspace/ui/components/spinner"
 import { useCatalogLacksFamily } from "../../hooks/use-catalog-lacks-family"
 import { useFontSearch } from "../../hooks/use-font-search"
+import { subscribeToHtmlAttribute } from "../../hooks/html-attribute-observer"
 import { useEditorStore } from "../../stores/editor-store"
 import { useOptionalThemerContext } from "../../hooks/use-themer-context"
 import { useScrollBoundary } from "./scroll-boundary"
@@ -197,14 +198,15 @@ function readRootVariable(name: string): string {
 
 // The root font variables are the Host's (and the Themer's own CSS
 // variables): they change through <html>'s class (a Host theme or mode
-// class) and inline style, so the label follows them as an external store.
+// class) and inline style, so the label follows both through the shared
+// <html> observer, as an external store.
 function subscribeToRootStyle(onChange: () => void) {
-  const observer = new MutationObserver(onChange)
-  observer.observe(document.documentElement, {
-    attributes: true,
-    attributeFilter: ["class", "style"],
-  })
-  return () => observer.disconnect()
+  const unsubscribeClass = subscribeToHtmlAttribute("class", onChange)
+  const unsubscribeStyle = subscribeToHtmlAttribute("style", onChange)
+  return () => {
+    unsubscribeClass()
+    unsubscribeStyle()
+  }
 }
 
 /**

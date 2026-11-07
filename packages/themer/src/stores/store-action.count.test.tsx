@@ -35,13 +35,13 @@ import { CodePanelDialog } from "../components/actions/code-panel-dialog"
 import { ContrastChecker } from "../components/editor/contrast-checker"
 import { OtherPanel } from "../components/panels/other-panel"
 import { TypographyPanel } from "../components/panels/typography-panel"
-import { useIsOnPreset } from "../hooks/use-editor-selectors"
 import { Themer } from "../index"
 import {
   selectApplyThemePreset,
   selectCanRedo,
   selectCanUndo,
   selectCurrentMode,
+  isOnPreset,
   selectIsOnPreset,
   selectPreset,
 } from "../selectors"
@@ -329,8 +329,11 @@ describe("Store action composition", () => {
   })
 })
 
+// One more on-Preset caller that runs the rule itself instead of sharing the
+// published selector's answer. (One more useIsOnPreset caller shares it and
+// adds no compare: the composition already mounts three.)
 function ExtraOnPresetCaller() {
-  useIsOnPreset()
+  useEditorStore((state) => isOnPreset(state.themeState, false))
   return null
 }
 

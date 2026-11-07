@@ -8,14 +8,12 @@ import { defineConfig, loadEnv, type Plugin } from "vite"
 // index.html so a saved Theme is applied before first paint. Same condition
 // as the loader in src/main.tsx.
 function themerHeadScript(): Plugin {
+  // Built once, with the plugin, not on every request.
+  const script = getThemerHeadScript()
   return {
     name: "themer-head-script",
     transformIndexHtml: () => [
-      {
-        tag: "script",
-        children: getThemerHeadScript(),
-        injectTo: "head-prepend",
-      },
+      { tag: "script", children: script, injectTo: "head-prepend" },
     ],
   }
 }

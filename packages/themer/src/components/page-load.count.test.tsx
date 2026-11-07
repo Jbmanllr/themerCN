@@ -48,6 +48,7 @@ import {
   EDITOR_STATE_VERSION,
   PREFERENCES_VERSION,
   RESTORE_STYLE_ID,
+  THEMER_STYLE_ATTRIBUTE,
 } from "../config/constants"
 import { defaultThemeState } from "../config/defaults"
 import { configureExtraColors } from "../config/extra-colors"
@@ -60,7 +61,6 @@ import { usePreferencesStore } from "../stores/preferences-store"
 import { useThemerUIStore } from "../stores/themer-ui-store"
 import type { ThemePreset, ThemerProps } from "../types"
 import { applyThemeToElement } from "../utils/apply-theme"
-import { THEMER_STYLE_ATTRIBUTE } from "./themer-scope"
 
 // Work that crosses no platform boundary is counted on its module export.
 vi.mock("../head-script", async (importOriginal) => {

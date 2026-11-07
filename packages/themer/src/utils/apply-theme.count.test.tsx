@@ -107,10 +107,15 @@ const PATH = "Theme apply"
 const ONE_TOKEN = ["one-token edit"] as const
 const SHADOW_INPUT = ["shadow-input edit"] as const
 const SHEET_COUNT = ["stylesheet-count change"] as const
-// A mode toggle is an outcome of `property writes` alone; it changes no
-// shadow input and no stylesheet count, so the other split rows take its
-// one-token edit figures.
-const MODE_TOGGLE = { "property writes": "mode toggle" } as const
+// A mode toggle is an outcome of `property writes` and of `shadow colour
+// parses`: the diffed apply writes the tokens the two modes don't share, and
+// the property map, built once per Theme state and mode, parses the shadow
+// colour for the new mode. It changes no stylesheet count, so the other split
+// rows take its one-token edit figures.
+const MODE_TOGGLE = {
+  "property writes": "mode toggle",
+  "shadow colour parses": "mode toggle",
+} as const
 
 // Stacks that tell the work apart: the apply-theme module itself, each
 // document's caller in the composition, and a font label.
@@ -742,10 +747,16 @@ describe("Theme apply failing seeds", () => {
       after((doc) => doc.documentElement.style.setProperty("--seed", "1"))
     ))
 
+  // The shadow scale is memoised on its inputs, so the seed's second
+  // property step is for a shadow input the memo has not seen.
   it("catches a second property step that parses the shadow colour", () =>
     expectSeedCaught(
       "shadow colour parses",
-      after((_doc, theme) => computeThemeProperties(theme))
+      after(() =>
+        computeThemeProperties(
+          themeWith({ ...OWN_SHADOWS, "shadow-blur": `${++edits}px` })
+        )
+      )
     ))
 
   it("catches a CSSOM walk on an apply whose stylesheet count changed", () =>

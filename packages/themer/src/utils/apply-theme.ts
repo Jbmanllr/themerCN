@@ -17,22 +17,33 @@
 //   Its rules are `!important`, so the host's own variant shadow rules
 //   (`hover:shadow-md`, `data-active:shadow-sm`) are mirrored into it too, and
 //   the sheet is written again when the document's stylesheet count changes
-//   (a CSS chunk that loaded later).
+//   (a CSS chunk that loaded later). The walk skips the Themer's own sheets
+//   (the override sheet and `<style data-themer-style>`).
 //   Written only when the shadow inputs differ from the library defaults (a
 //   preset that declares shadows, or an edit): a preset without shadows, such
 //   as a host brand preset, keeps the host's own Tailwind shadow scale.
 // - Host extra colours (ThemerProps.extraColors) are ordinary style keys:
 //   written as `--key` when the theme sets them, absent (the host's CSS
 //   shows) when it does not.
-// - Every property written is recorded per element, so a re-apply drops keys
-//   the new theme no longer has and removal takes away exactly what was set.
+// - Diffed write: the value last written for each property is recorded per
+//   element, so an apply writes only the properties whose value changed,
+//   removes only the ones the new theme dropped, and removal takes away
+//   exactly what was set. An element without a record (a first apply, a new
+//   Live frame document, a record lost to a hot reload) gets the whole theme.
+//   Accepted trade-off: an outside write to a Theme property on <html>
+//   persists until that value changes, the Theme is removed, or the document
+//   is new, since an unchanged value is never written again.
+// - The property map is built once per mode's styles object and shared by
+//   the Host page and the Live frame (read-only). The shadow scale, the only
+//   step that parses a colour, is memoised per mode on its shadow inputs, so
+//   an edit that touches no shadow input parses nothing.
 //
 // Contract: pass `updateClass: false` wherever next-themes owns `.dark`. The
 // override sheet exists only while a `--shadow-*` variable is written, and
 // removing the theme removes the sheet with it.
 //
 // See: packages/themer/ARCHITECTURE.md ("Applying a theme").
-import { RESTORE_STYLE_ID } from "../config/constants"
+import { RESTORE_STYLE_ID, THEMER_STYLE_ATTRIBUTE } from "../config/constants"
 import { defaultLightStyles } from "../config/defaults"
 import { getExtraColorKeys } from "../config/extra-colors"
 import type { ThemeEditorState, ThemeMode } from "../types"
@@ -43,7 +54,7 @@ import {
 } from "../types/theme"
 import { clearThemeFonts, setThemeFonts } from "./font-links"
 import { getThemeFontFamilies } from "./font-names"
-import { SHADOW_SCALE_KEYS, getShadowVariables } from "./shadows"
+import { SHADOW_SCALE_KEYS, getShadowMap, type ShadowMap } from "./shadows"
 
 type ApplyThemeOptions = {
   /** Toggle the `dark` class on the element. Off where next-themes owns it. */
@@ -97,6 +108,22 @@ const SHADOW_STATE_VARIANTS = [
 ] as const
 
 /**
+ * Variant shadow rules of the Themer's own sheet that sit on an element with
+ * a base size, as `[selector, size]`. The CSSOM walk skips that sheet, so
+ * without these the base size's `!important` would win. The Dashboard
+ * preview's section cards: Card's `shadow-md` under the grid's
+ * `*:data-[slot=card]:shadow-xs`. The Themer's other variant shadows sit on
+ * elements without a base size, or are `shadow-none!`. The selector is
+ * Tailwind's compiled one; themer-css.test.ts checks it is in THEMER_CSS.
+ */
+export const THEMER_VARIANT_SHADOWS = [
+  [
+    String.raw`:is(.\*\:data-\[slot\=card\]\:shadow-xs > *)[data-slot=card]`,
+    "shadow-xs",
+  ],
+] as const
+
+/**
  * The override sheet's fixed part: it reads the `--shadow-*` variables set on
  * the root, so a shadow change only rewrites variables, never the sheet.
  * `!important` beats the utility's own `--tw-shadow` regardless of layer.
@@ -111,10 +138,30 @@ export const SHADOW_OVERRIDE_CSS = [
         `.${variant}\\:${name}${pseudo} { --tw-shadow: var(--${name}) !important; }`
     )
   ),
+  ...THEMER_VARIANT_SHADOWS.map(
+    ([selector, name]) =>
+      `${selector} { --tw-shadow: var(--${name}) !important; }`
+  ),
 ].join("\n")
 
-/** Properties last written per element (custom properties keep `--`). */
-const appliedProperties = new WeakMap<HTMLElement, Set<string>>()
+/** The value last written per property, per element (custom properties
+ *  keep `--`). An element without a record gets the whole Theme. */
+const appliedProperties = new WeakMap<HTMLElement, Map<string, string>>()
+/**
+ * The property map per mode's styles object, so one Theme state's map is
+ * built once and shared by every themed document (and by a caller's copy of
+ * the state with another `currentMode`). Keyed by mode as well: the shadow
+ * fallbacks are the mode's defaults.
+ */
+const propertyMaps = new WeakMap<
+  object,
+  Partial<Record<ThemeMode, Readonly<Record<string, string>>>>
+>()
+/** The last shadow scale per mode, with the shadow inputs it was built from:
+ *  an apply whose shadow inputs did not change parses no colour. */
+const shadowScales: Partial<
+  Record<ThemeMode, { inputs: string; scale: ShadowMap }>
+> = {}
 /** The override `<style>` per document. */
 const overrideStyles = new WeakMap<Document, HTMLStyleElement>()
 /** How many stylesheets the document had when its override was written. */
@@ -127,14 +174,24 @@ function trackingBase(letterSpacing: string): string {
   return letterSpacing === "normal" ? "0em" : "var(--letter-spacing)"
 }
 
-/**
- * Every property the theme writes for one mode, as `property → value`.
- * Pure: the same input gives the same map, so callers and tests can inspect
- * what will be applied without a DOM.
- */
-export function computeThemeProperties(
+/** The per-size shadow scale for one mode, built again only when that
+ *  mode's shadow inputs changed (the only step that parses a colour). */
+function shadowScaleFor(
   themeState: ThemeEditorState,
-  mode: ThemeMode = themeState.currentMode
+  mode: ThemeMode
+): ShadowMap {
+  const styles = themeState.styles[mode]
+  const inputs = JSON.stringify(SHADOW_INPUT_KEYS.map((key) => styles[key]))
+  const last = shadowScales[mode]
+  if (last?.inputs === inputs) return last.scale
+  const scale = getShadowMap(themeState, mode)
+  shadowScales[mode] = { inputs, scale }
+  return scale
+}
+
+function buildThemeProperties(
+  themeState: ThemeEditorState,
+  mode: ThemeMode
 ): Record<string, string> {
   const styles = themeState.styles[mode]
   const properties: Record<string, string> = {}
@@ -160,14 +217,30 @@ export function computeThemeProperties(
   const hasOwnShadows = SHADOW_INPUT_KEYS.some(
     (key) => (styles[key]?.trim() ?? "") !== defaultLightStyles[key]
   )
-  const shadows = hasOwnShadows
-    ? getShadowVariables({ ...themeState, currentMode: mode })
-    : {}
-  for (const [key, value] of Object.entries(shadows)) {
+  if (hasOwnShadows) {
     // Only the per-size results have a reader; the raw inputs do not.
-    if (SHADOW_VARIABLE_SET.has(key) && value) properties[`--${key}`] = value
+    for (const [key, value] of Object.entries(shadowScaleFor(themeState, mode)))
+      if (value) properties[`--${key}`] = value
   }
 
+  return properties
+}
+
+/**
+ * Every property the theme writes for one mode, as `property → value`.
+ * Pure: the same input gives the same map, so callers and tests can inspect
+ * what will be applied without a DOM. The map is built once per mode's
+ * styles object and shared by every themed document, so it is read-only.
+ */
+export function computeThemeProperties(
+  themeState: ThemeEditorState,
+  mode: ThemeMode = themeState.currentMode
+): Readonly<Record<string, string>> {
+  const styles = themeState.styles[mode]
+  const cached = propertyMaps.get(styles)?.[mode]
+  if (cached) return cached
+  const properties = Object.freeze(buildThemeProperties(themeState, mode))
+  propertyMaps.set(styles, { ...propertyMaps.get(styles), [mode]: properties })
   return properties
 }
 
@@ -241,23 +314,31 @@ function mirrorShadowRules(rules: ArrayLike<CssRuleLike>, out: string[]) {
 }
 
 /**
+ * A sheet the Themer wrote: the override sheet itself, or the Themer's own
+ * CSS (about 250 kB, whose variant shadow rules are its UI's, not the Host's).
+ */
+function isThemerSheet(owner: CSSStyleSheet["ownerNode"]): boolean {
+  return (
+    !!owner &&
+    "hasAttribute" in owner &&
+    (owner.hasAttribute(THEMER_OVERRIDES_ATTRIBUTE) ||
+      owner.hasAttribute(THEMER_STYLE_ATTRIBUTE))
+  )
+}
+
+/**
  * The host's variant shadow rules (`hover:shadow-md` inside its @media,
  * `data-active:shadow-sm`), pointed at the theme's variables like the fixed
  * part. Tailwind inlines shadow values, so without these a compound or
  * variant-only class would show the stock shadow, or lose to the base
  * size's `!important`. Base classes, `shadow-none`, arbitrary values and
- * opacity modifiers are left alone; a cross-origin sheet cannot be read.
+ * opacity modifiers are left alone; a cross-origin sheet cannot be read,
+ * and the Themer's own sheets are skipped.
  */
 function collectVariantShadowRules(doc: Document): string {
   const out: string[] = []
   for (const sheet of Array.from(doc.styleSheets)) {
-    const owner = sheet.ownerNode
-    if (
-      owner &&
-      "hasAttribute" in owner &&
-      owner.hasAttribute(THEMER_OVERRIDES_ATTRIBUTE)
-    )
-      continue
+    if (isThemerSheet(sheet.ownerNode)) continue
     let rules: ArrayLike<CssRuleLike>
     try {
       rules = sheet.cssRules
@@ -306,9 +387,10 @@ function removeOverrideStyle(doc: Document | null | undefined): void {
 
 /**
  * Apply one mode of the theme to an element (normally a document's <html>).
- * Returns the property names written; a property set by the previous call
- * and absent now is removed, so switching to a sparser theme leaves nothing
- * behind.
+ * Writes only the properties whose value changed since the last apply to
+ * this element (every property when it has no record) and removes the ones
+ * the theme dropped, so switching to a sparser theme leaves nothing behind.
+ * Returns every property name the theme writes.
  */
 export function applyThemeToElement(
   themeState: ThemeEditorState,
@@ -318,15 +400,20 @@ export function applyThemeToElement(
   const { updateClass = true, mode = themeState.currentMode } = options
   const properties = computeThemeProperties(themeState, mode)
   const keys = Object.keys(properties)
-  const next = new Set(keys)
+  const previous = appliedProperties.get(element)
 
-  for (const previous of appliedProperties.get(element) ?? []) {
-    if (!next.has(previous)) element.style.removeProperty(previous)
+  // Only what changed since the last apply to this element; all of it when
+  // there is no record (a first apply, a new document, a lost record).
+  if (previous) {
+    for (const key of previous.keys()) {
+      if (!(key in properties)) element.style.removeProperty(key)
+    }
   }
   for (const key of keys) {
-    element.style.setProperty(key, properties[key]!)
+    const value = properties[key]!
+    if (previous?.get(key) !== value) element.style.setProperty(key, value)
   }
-  appliedProperties.set(element, next)
+  appliedProperties.set(element, new Map(Object.entries(properties)))
 
   if (updateClass) updateThemeClass(element, mode)
 
@@ -372,7 +459,8 @@ export function removeThemeFromElement(
   if (!element?.style) return
 
   const recorded = appliedProperties.get(element)
-  const targets = keys ?? (recorded ? [...recorded] : knownThemeProperties())
+  const targets =
+    keys ?? (recorded ? [...recorded.keys()] : knownThemeProperties())
   for (const key of targets) element.style.removeProperty(key)
   appliedProperties.delete(element)
   removeOverrideStyle(element.ownerDocument)

@@ -9,11 +9,16 @@
 // (EDITOR_STATE_VERSION, PREFERENCES_VERSION), as the stores drop it.
 // Its imports are constants only, so the head-script entry stays small and
 // reaches no Themer code (scripts/check-entries.mjs).
+// Built once per run (the paths ADR's Page load contract): its font-name
+// lists and declaration patterns sit at the top of the run, not per family or
+// declaration. The string is the same for one namespace, so callers build it
+// once and reuse it (head-script.ts).
 
 import { THEME_FONT_KEYS } from "../types/theme"
 import {
   COLOR_MODE_RECORD,
   EDITOR_STATE_VERSION,
+  HEAD_FONT_LINK_ATTRIBUTE,
   PREFERENCES_VERSION,
   RESTORE_STYLE_ID,
   getStorageKeys,
@@ -37,38 +42,53 @@ import { GENERIC_FONT_FAMILIES, LOCAL_FONT_FAMILY_NAMES } from "./font-names"
  *   Theme. A saved value that could end its declaration is dropped.
  * It writes every saved variable but not the shadow override sheet or the tracking
  * variables, and preloads Google fonts for the sans, serif and mono slots only
- * (DynamicFontLoader loads the heading font after hydration).
+ * (DynamicFontLoader loads the heading font after hydration). Its font links use the
+ * font link registry's URLs and once-only default-weight retry, so the registry adopts
+ * them: one link per family.
  */
 export function generateThemeScript({
   storageNamespace,
 }: { storageNamespace?: string } = {}) {
   const storageKeys = getStorageKeys(storageNamespace)
   return `
+    // ----- CONSTANTS, built once per run -----
+    // The generic and local font-name lists, and the patterns a declaration's
+    // key must match and its value must not.
+    var genericFontNames = ${JSON.stringify([...GENERIC_FONT_FAMILIES])};
+    var localFontNames = ${JSON.stringify(LOCAL_FONT_FAMILY_NAMES)};
+    var safeKeyPattern = /^[a-zA-Z0-9-]+$/;
+    var unsafeValuePattern = /[{};<>\\\\\\r\\n\\f]|\\/\\*|\\*\\//;
+
     // ----- FONT LOADING UTILITIES -----
     // The Google family a font value starts with; null for a host font
     // (var(--font-x), already loaded by the host), a generic family, or a
     // family the OS ships (Google would answer 400). Mirrors font-names'
     // extractFontFamily and isLocalFontFamily, with the same generic and
-    // local lists embedded below.
+    // local lists embedded above.
     function extractFontFamily(fontFamilyValue) {
       if (!fontFamilyValue) return null;
       var firstFont = fontFamilyValue.split(",")[0].trim();
       if (firstFont.indexOf("var(") === 0) return null;
       var cleanFont = firstFont.replace(/['"]/g, "");
-      var systemFonts = ${JSON.stringify([...GENERIC_FONT_FAMILIES])};
-      var localFonts = ${JSON.stringify(LOCAL_FONT_FAMILY_NAMES)};
-      if (systemFonts.indexOf(cleanFont.toLowerCase()) !== -1) return null;
-      if (localFonts.indexOf(cleanFont.toLowerCase()) !== -1) return null;
+      if (genericFontNames.indexOf(cleanFont.toLowerCase()) !== -1) return null;
+      if (localFontNames.indexOf(cleanFont.toLowerCase()) !== -1) return null;
       return cleanFont;
     }
 
+    // font-links' URLs and once-only retry, marked: the registry adopts it.
     function loadGoogleFont(family, weights) {
       weights = weights || ["400","500","600","700"];
-      var href = "https://fonts.googleapis.com/css2?family=" + encodeURIComponent(family) + ":wght@" + weights.join(";") + "&display=swap";
+      var familyParam = "https://fonts.googleapis.com/css2?family=" + encodeURIComponent(family);
+      var href = familyParam + ":wght@" + weights.join(";") + "&display=swap";
+      var fallbackHref = familyParam + "&display=swap";
       if (document.querySelector('link[href="' + href + '"]')) return;
       var link = document.createElement("link");
-      link.rel = "stylesheet";
-      link.href = href;
+      link.setAttribute("rel", "stylesheet");
+      link.setAttribute("href", href);
+      link.setAttribute(${JSON.stringify(HEAD_FONT_LINK_ATTRIBUTE)}, family);
+      link.addEventListener("error", function() {
+        link.setAttribute("href", fallbackHref);
+      }, { once: true });
       document.head.appendChild(link);
     }
 
@@ -133,8 +153,8 @@ export function generateThemeScript({
           var value = values[key];
           if (value === undefined || value === null) continue;
           value = String(value);
-          if (!/^[a-zA-Z0-9-]+$/.test(key)) continue;
-          if (/[{};<>\\\\\\r\\n\\f]|\\/\\*|\\*\\//.test(value)) continue;
+          if (!safeKeyPattern.test(key)) continue;
+          if (unsafeValuePattern.test(value)) continue;
           css += "  --" + key + ": " + value + ";\\n";
         }
         return css;

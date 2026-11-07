@@ -13,6 +13,10 @@
 //   off, the script changes nothing.
 // - The string never contains `data-themer` (the marker the Vite smoke app
 //   greps for in a build with the Themer off).
+// - Uncached: each call builds the string again. It depends only on
+//   `storageNamespace`, so a caller builds it once per namespace and reuses
+//   it (the Next Adapter keeps one per namespace; the Vite recipe builds it
+//   with the plugin). The page-load count test counts builds on this export.
 //
 // See: utils/theme-script.ts for what the script does.
 
@@ -30,11 +34,15 @@ export interface ThemerHeadScriptOptions {
  * `storageNamespace` while the HTML is parsed; with nothing saved, or the
  * Theme override switched off, it changes nothing.
  *
+ * Each call builds the string again, and it depends only on
+ * `storageNamespace`: build it once and reuse it, not on every request.
+ *
  * @example
  * ```ts
- * // A Vite plugin in vite.config.ts
+ * // A Vite plugin in vite.config.ts: built once, with the plugin
+ * const script = getThemerHeadScript()
  * transformIndexHtml: () => [
- *   { tag: "script", children: getThemerHeadScript(), injectTo: "head-prepend" },
+ *   { tag: "script", children: script, injectTo: "head-prepend" },
  * ]
  * ```
  */

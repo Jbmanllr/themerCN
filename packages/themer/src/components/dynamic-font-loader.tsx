@@ -8,7 +8,7 @@ import { useEffect } from "react"
 import { useEditorStore } from "../stores/editor-store"
 import { usePreferencesStore } from "../stores/preferences-store"
 import { clearThemeFonts, setThemeFonts } from "../utils/font-links"
-import { getThemeFontFamilies } from "../utils/font-names"
+import { getThemeFonts } from "../utils/font-names"
 
 /**
  * Loads the active theme's Google fonts into the Host app's document after
@@ -22,12 +22,10 @@ import { getThemeFontFamilies } from "../utils/font-names"
  */
 export function DynamicFontLoader() {
   // Both modes, joined into one stable string: a font change in either mode
-  // re-runs the effect, an unrelated colour change does not.
+  // re-runs the effect, an unrelated colour change does not. The families
+  // are derived once per Theme state, shared with the Live frame apply.
   const familiesKey = useEditorStore((state) =>
-    getThemeFontFamilies(
-      state.themeState.styles.light,
-      state.themeState.styles.dark
-    ).join("\n")
+    getThemeFonts(state.themeState.styles).families.join("\n")
   )
   const themeOverrideEnabled = usePreferencesStore(
     (state) => state.themeOverrideEnabled

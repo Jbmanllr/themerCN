@@ -53,7 +53,7 @@ import {
   THEME_SPACING_KEYS,
 } from "../types/theme"
 import { clearThemeFonts, setThemeFonts } from "./font-links"
-import { getThemeFontFamilies } from "./font-names"
+import { getThemeFonts } from "./font-names"
 import { SHADOW_SCALE_KEYS, getShadowMap, type ShadowMap } from "./shadows"
 
 type ApplyThemeOptions = {
@@ -488,10 +488,7 @@ export function applyThemeToDocument(
   doc.getElementById(RESTORE_STYLE_ID)?.remove()
 
   if (loadFonts) {
-    setThemeFonts(
-      doc,
-      getThemeFontFamilies(themeState.styles.light, themeState.styles.dark)
-    )
+    setThemeFonts(doc, getThemeFonts(themeState.styles).families)
     documentsWithThemeFonts.add(doc)
   }
 

@@ -1,7 +1,10 @@
-// Font family names for the theme editor: categories and their fallbacks,
-// quoting, the family a font-family value names, and the families a theme's
-// font keys name. Pure (no DOM, no fetch, no catalogue), so the head script
-// (utils/theme-script.ts) imports from it without carrying the rest.
+// The Theme fonts module: font categories and their fallbacks, quoting, the
+// family a font-family value names, the Google families a Theme needs per
+// mode and slot (derived once per Theme state), and their link URLs' inputs
+// (the CSS API and the default weights), which the link registry
+// (font-links.ts) builds from. Pure (no DOM, no fetch, no catalogue), so the
+// head script (utils/theme-script.ts) imports from it without carrying the
+// rest.
 //
 // Contract: never treat as a Google family a value that starts with
 // `var(...)` (a host font the host already loads), a generic keyword or an OS
@@ -206,21 +209,77 @@ export function describeFontValue(
   return { kind: "system", generic: first.replace(/['"]/g, "") }
 }
 
+/** The Google Fonts CSS API every Theme font link asks. */
+export const GOOGLE_FONTS_CSS_URL = "https://fonts.googleapis.com/css2"
+
 /**
- * The Google families named by the theme's font keys, across the given style
- * sets (e.g. light and dark), without duplicates. Host stacks (`var(...)`)
- * and system families are skipped.
+ * The weights a Theme font link requests, by the head script and the link
+ * registry alike; a family lacking one is retried at its default weight.
  */
-export function getThemeFontFamilies(
-  ...styleSets: ReadonlyArray<Partial<Record<ThemeFontKey, string>> | undefined>
-): string[] {
+export const DEFAULT_FONT_WEIGHTS = ["400", "500", "600", "700"] as const
+
+/**
+ * The Google family a font-family value names, or null for a host stack
+ * (`var(...)`), a generic keyword or a family every OS ships.
+ */
+export function getGoogleFontFamily(
+  fontFamilyValue: string | undefined | null
+): string | null {
+  const family = extractFontFamily(fontFamilyValue)
+  return family && !isLocalFontFamily(family) ? family : null
+}
+
+/** One mode's Google family per font slot, null where it names none. */
+export type ThemeFontSlots = Readonly<Record<ThemeFontKey, string | null>>
+
+/** The Google fonts a Theme needs. */
+export type ThemeFonts = {
+  readonly light: ThemeFontSlots
+  readonly dark: ThemeFontSlots
+  /** Both modes' families, light first, in slot order, without duplicates. */
+  readonly families: readonly string[]
+}
+
+type ThemeFontModeStyles = Partial<Record<ThemeFontKey, string>> | undefined
+
+/** A Theme's styles as far as its fonts go: the store's `themeState.styles`. */
+export type ThemeFontStyles = {
+  readonly light?: ThemeFontModeStyles
+  readonly dark?: ThemeFontModeStyles
+}
+
+function slotsOf(styles: ThemeFontModeStyles): ThemeFontSlots {
+  const slots: Partial<Record<ThemeFontKey, string | null>> = {}
+  for (const key of THEME_FONT_KEYS) {
+    slots[key] = getGoogleFontFamily(styles?.[key])
+  }
+  return slots as ThemeFontSlots
+}
+
+// Keyed by the Theme's styles object: the store replaces it on every Theme
+// change, so the Host page's font loader and the Live frame apply of one
+// Theme state share one derivation.
+const themeFontsByStyles = new WeakMap<ThemeFontStyles, ThemeFonts>()
+
+/**
+ * The Google families a Theme names, per mode and slot and all together.
+ * Derived once per styles object: pass the store's `themeState.styles`
+ * itself, since a rebuilt object derives them again.
+ */
+export function getThemeFonts(styles: ThemeFontStyles): ThemeFonts {
+  const cached = themeFontsByStyles.get(styles)
+  if (cached) return cached
+
+  const light = slotsOf(styles.light)
+  const dark = slotsOf(styles.dark)
   const families = new Set<string>()
-  for (const styles of styleSets) {
-    if (!styles) continue
+  for (const slots of [light, dark]) {
     for (const key of THEME_FONT_KEYS) {
-      const family = extractFontFamily(styles[key])
-      if (family && !isLocalFontFamily(family)) families.add(family)
+      const family = slots[key]
+      if (family) families.add(family)
     }
   }
-  return [...families]
+  const fonts: ThemeFonts = { light, dark, families: [...families] }
+  themeFontsByStyles.set(styles, fonts)
+  return fonts
 }

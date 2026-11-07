@@ -13,7 +13,8 @@
 //   its <html>, which the label observes.
 // - The composition run mounts <Themer> (Workspace) on the Live tab, with one
 //   font label, and counts one store edit on the Host page and on the Live
-//   frame, each its own unit. The feature-off runs turn the Theme override
+//   frame, each its own unit, and asserts one derivation of the Theme's font
+//   families for both together. The feature-off runs turn the Theme override
 //   off, leave the Live tab, and use a Theme without its own shadows.
 // - Each counter has a failing seed: one extra unit of its work, which the
 //   comparison against the unseeded figure must catch, naming the row.
@@ -40,6 +41,7 @@ import {
   countExport,
   madeBy,
   measure,
+  readingStack,
   type Counter,
   type Counts,
 } from "../../../../tests/counting"
@@ -62,6 +64,7 @@ import {
 } from "./apply-theme"
 import { FakeDocument, type FakeStyleSheet } from "./fake-document.test-helper"
 import { acquireGoogleFont, setThemeFonts } from "./font-links"
+import { getThemeFonts } from "./font-names"
 
 // Work that crosses no platform boundary is counted on its module export.
 // Each export of the colour helpers parses the colour text it is given.
@@ -126,6 +129,9 @@ const FONT_LABEL = /\/components\/editor\/font-picker\.tsx/
 // The colour mode's own switch of the `.dark` class (setRootClassMode).
 const COLOUR_MODE_SWITCH = /\/hooks\/use-color-mode\.ts/
 const DOM_TOKEN_LIST = /\/happy-dom\/lib\/dom\/DOMTokenList\.js/
+// The Theme fonts module: it keeps each Theme state's font families, so each
+// derivation is one store into its memo.
+const THEME_FONTS = /\/utils\/font-names\.ts/
 
 /** One document's unit: the document applied to, the caller whose stack
  *  marks its apply (none when the test calls the interface itself), a
@@ -618,16 +624,33 @@ async function mountComposition(shadows: Styles): Promise<Document> {
   return frameDoc
 }
 
-/** One edit, counted on the Host page and on the Live frame, each a unit. */
+/** A derivation of a Theme state's font families: the Theme fonts module
+ *  stores each one it derives, so the Host page and the Live frame share it.
+ *  Counted across both documents, as the paths ADR builds it once per Theme
+ *  state; an assertion of this test, not a register row. */
+const FONT_FAMILY_DERIVATIONS = "font family derivations"
+const countFontFamilyDerivations = (): Counter =>
+  countCalls(
+    FONT_FAMILY_DERIVATIONS,
+    WeakMap.prototype,
+    "set",
+    () => !readingStack() && madeBy(THEME_FONTS)
+  )
+
+/** One edit, counted on the Host page and on the Live frame, each a unit,
+ *  and the font family derivations of both together. */
 async function measureBoth(frameDoc: Document, edit: () => void) {
   let live: Counts = {}
-  const host = await measure(counters(HOST_PAGE()), async () => {
-    live = await measure(
-      counters({ doc: frameDoc, caller: LIVE_CALLER, labels: false }),
-      () => settle(edit)
-    )
+  let host: Counts = {}
+  const shared = await measure([countFontFamilyDerivations()], async () => {
+    host = await measure(counters(HOST_PAGE()), async () => {
+      live = await measure(
+        counters({ doc: frameDoc, caller: LIVE_CALLER, labels: false }),
+        () => settle(edit)
+      )
+    })
   })
-  return { host, live }
+  return { host, live, derivations: shared[FONT_FAMILY_DERIVATIONS] }
 }
 
 /** A light/dark toggle through the Themer's mode toggle, counted on the
@@ -694,12 +717,15 @@ describe("Theme apply composition", () => {
       await act(() => vi.dynamicImportSettled())
       await settle(() => editTheme({ ...shadows, ...nextPrimary() }))
 
-      const { host, live } = await measureBoth(frameDoc, () =>
+      const { host, live, derivations } = await measureBoth(frameDoc, () =>
         editTheme({ ...shadows, ...nextPrimary() })
       )
 
       report(`composition: ${name}, Host page`, host)
       report(`composition: ${name}, Live frame`, live)
+      // A colour edit is a new Theme state: its families are derived once,
+      // for the Host page and the Live frame together.
+      expect(derivations).toBe(1)
       checkCounts({ path: PATH, outcomes: ONE_TOKEN, counts: host })
       checkCounts({ path: PATH, outcomes: ONE_TOKEN, counts: live })
       if (overrideOff || liveOff) {
@@ -797,6 +823,16 @@ describe("Theme apply failing seeds", () => {
       "font link appends",
       after((doc) => acquireGoogleFont("Seed Sans", { doc: doc.asDocument }))
     ))
+
+  it("catches a second font family derivation of one Theme state", async () => {
+    const frameDoc = await mountComposition(OWN_SHADOWS)
+    const { derivations } = await measureBoth(frameDoc, () => {
+      editTheme({ ...OWN_SHADOWS, ...nextPrimary() })
+      // A caller that rebuilds the styles derives the families again.
+      getThemeFonts({ ...useEditorStore.getState().themeState.styles })
+    })
+    expect(derivations).toBe(2)
+  })
 
   /** A font edit the label shows, then the same with the seed (by default a
    *  second label) in place. `seed` returns the function that removes it. */

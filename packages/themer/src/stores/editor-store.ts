@@ -19,9 +19,12 @@
 //   of the preference) aligns the Theme when it turns it on.
 // - Only themeState, themeCheckpoint and presetBaseline persist; history and
 //   future do not. The checkpoint and baseline are stored only when they
-//   differ from themeState (PersistedEditorState). Writes go through
-//   guardedLocalStorage (stores/persist-options.ts): a storage error never
-//   reaches an action, and an unchanged slice is not written.
+//   are not the Theme's own objects (PersistedEditorState): persistence
+//   decides by identity, never by a deep compare. A set whose updater
+//   returns the stored Theme keeps that object, so it writes nothing.
+//   Writes go through guardedLocalStorage (stores/persist-options.ts): a
+//   storage error never reaches an action, and an unchanged slice is not
+//   written.
 //   The persisted shape is versioned by EDITOR_STATE_VERSION
 //   (config/constants.ts) with no migrations (pre-release): a stored state of
 //   another version is dropped without an error and the key rewritten
@@ -79,13 +82,21 @@ import { dropOtherVersion, guardedLocalStorage } from "./persist-options"
 
 /**
  * The stored editor entry. The checkpoint and the baseline are left out
- * while they equal the Theme (the usual case: on a Preset, before any HSL
- * adjustment), so the entry holds one copy of the styles instead of three;
- * left out means "the Theme", while `null` means none.
+ * while they are the Theme's own objects (the usual case: on a Preset,
+ * before any HSL adjustment), so the entry holds one copy of the styles
+ * instead of three; left out means "the Theme", while `null` means none.
  */
 type PersistedEditorState = Pick<EditorStoreState, "themeState"> &
   Partial<Pick<EditorStoreState, "themeCheckpoint" | "presetBaseline">>
 
+/**
+ * Whether `baseline` is the Theme's own: its Preset, on the Theme's styles
+ * object. Decided by identity, never by a deep compare: every action that
+ * puts a Preset on the Theme builds the baseline on the new Theme's styles
+ * (baselineOf), and styles are never mutated in place. A baseline equal to
+ * the Theme but a separate object is stored; restoring it gives the same
+ * state.
+ */
 function isBaselineOf(
   baseline: PresetBaseline | null,
   themeState: ThemeEditorState
@@ -93,7 +104,7 @@ function isBaselineOf(
   return (
     baseline !== null &&
     baseline.preset === themeState.preset &&
-    isDeepEqual(baseline.styles, themeState.styles)
+    baseline.styles === themeState.styles
   )
 }
 
@@ -103,7 +114,8 @@ function toPersisted({
   presetBaseline,
 }: EditorStoreState): PersistedEditorState {
   const persisted: PersistedEditorState = { themeState }
-  if (!isDeepEqual(themeCheckpoint, themeState)) {
+  // By identity too: the checkpoint is left out when it is the Theme itself.
+  if (themeCheckpoint !== themeState) {
     persisted.themeCheckpoint = themeCheckpoint
   }
   if (!isBaselineOf(presetBaseline, themeState)) {
@@ -181,9 +193,16 @@ function presetThemeState(
   })
 }
 
-/** The baseline for a theme just put on `presetId`. */
-function baselineOf(presetId: string, styles: ThemeStyles): PresetBaseline {
-  return { preset: presetId, styles: copyStyles(styles) }
+/**
+ * The baseline for a Theme just put on `presetId`: built on that Theme
+ * state's own styles object, not a copy, so the stored entry leaves it out
+ * (isBaselineOf).
+ */
+function baselineOf(
+  presetId: string,
+  themeState: ThemeEditorState
+): PresetBaseline {
+  return { preset: presetId, styles: themeState.styles }
 }
 
 /**
@@ -209,10 +228,16 @@ export const useEditorStore = create<EditorStore>()(
           typeof stateOrUpdater === "function"
             ? stateOrUpdater(oldThemeState)
             : stateOrUpdater
-        const newState = withSidebarSync({
-          ...updatedState,
-          styles: copyStyles(updatedState.styles),
-        })
+        // The stored Theme returned unchanged is kept as it is (it is already
+        // in sync, with copied styles), so the persisted slice is left as it
+        // was. The set still records its undo entry and clears redo.
+        const newState =
+          updatedState === oldThemeState
+            ? oldThemeState
+            : withSidebarSync({
+                ...updatedState,
+                styles: copyStyles(updatedState.styles),
+              })
         let currentHistory = get().history
 
         // A change of light/dark mode only is not an edit: no undo entry and
@@ -224,6 +249,7 @@ export const useEditorStore = create<EditorStore>()(
         const newStateWithoutMode = { ...newState, currentMode: undefined }
 
         if (
+          newState !== oldThemeState &&
           isDeepEqual(oldStateWithoutMode, newStateWithoutMode) &&
           oldThemeState.currentMode !== newState.currentMode
         ) {
@@ -273,7 +299,7 @@ export const useEditorStore = create<EditorStore>()(
         set({
           themeState: newThemeState,
           themeCheckpoint: newThemeState,
-          presetBaseline: baselineOf(preset, newThemeState.styles),
+          presetBaseline: baselineOf(preset, newThemeState),
           history: pushHistory(get().history, currentThemeState),
           future: [],
         })
@@ -297,7 +323,7 @@ export const useEditorStore = create<EditorStore>()(
         set({
           themeState: newThemeState,
           themeCheckpoint: newThemeState,
-          presetBaseline: baselineOf(presetId, newThemeState.styles),
+          presetBaseline: baselineOf(presetId, newThemeState),
           history: [],
           future: [],
         })
@@ -365,7 +391,7 @@ export const useEditorStore = create<EditorStore>()(
         set({
           themeState: newThemeState,
           themeCheckpoint: newThemeState,
-          presetBaseline: baselineOf(presetId, newThemeState.styles),
+          presetBaseline: baselineOf(presetId, newThemeState),
         })
       },
 
@@ -384,7 +410,7 @@ export const useEditorStore = create<EditorStore>()(
         // edited): it can only be trusted when it already is its preset.
         if (!presetBaseline) {
           if (isDeepEqual(themeState.styles, newThemeState.styles)) {
-            set({ presetBaseline: baselineOf(presetId, newThemeState.styles) })
+            set({ presetBaseline: baselineOf(presetId, themeState) })
           }
           return
         }
@@ -396,7 +422,7 @@ export const useEditorStore = create<EditorStore>()(
         set({
           themeState: newThemeState,
           themeCheckpoint: newThemeState,
-          presetBaseline: baselineOf(presetId, newThemeState.styles),
+          presetBaseline: baselineOf(presetId, newThemeState),
         })
       },
 

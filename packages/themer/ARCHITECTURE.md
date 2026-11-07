@@ -391,9 +391,14 @@ Zustand stores. Two persist; two are transient.
 `<ns>:editor`, `version: EDITOR_STATE_VERSION` (0). Only `themeState`,
 `themeCheckpoint` and `presetBaseline` persist; `history`, `future` and
 `restoredFromStorage` do not. `themeCheckpoint` and `presetBaseline` are
-stored only when they differ from `themeState` (an absent key reads back as
-the Theme, `null` as none), so an entry on its Preset holds one copy of the
-styles, not three. The head script reads `themeState` only. The package is
+stored only when they are not the Theme's own objects (an absent key reads
+back as the Theme, `null` as none), so an entry on its Preset holds one copy
+of the styles, not three. Persistence decides by identity, never by a deep
+compare: the checkpoint is omitted when it is `themeState` itself, the
+baseline when it names the Theme's Preset on the Theme's own styles object,
+which every Preset action builds it on. A `setThemeState` whose updater
+returns the stored Theme keeps that object, so it records its undo entry and
+writes nothing. The head script reads `themeState` only. The package is
 pre-release: there are no
 migrations, and a stored state of another version is dropped (the store
 starts fresh, see Persistence and the head script).

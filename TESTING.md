@@ -87,7 +87,7 @@ First measured on 2026-11-06 (spec #119) on one machine: an Apple M3 Max under m
 | restore-sheet writes      | 0 nothing saved; 1 saved Theme | must not grow | `pnpm --filter themercn exec vitest run src/components/page-load.count.test.tsx` | implementer done |
 | restore-sheet removals    | 1                              | must not grow | `pnpm --filter themercn exec vitest run src/components/page-load.count.test.tsx` | implementer done |
 | stylesheet inserts        | 1                              | must not grow | `pnpm --filter themercn exec vitest run src/components/page-load.count.test.tsx` | implementer done |
-| store sets                | 2                              | must not grow | `pnpm --filter themercn exec vitest run src/components/page-load.count.test.tsx` | implementer done |
+| store sets                | 1                              | must not grow | `pnpm --filter themercn exec vitest run src/components/page-load.count.test.tsx` | implementer done |
 
 **Inspector pointer move** (per `mousemove`, and per measure where named)
 
@@ -138,10 +138,10 @@ The ratchet. Each count is per unit of its path, as the paths ADR defines the un
 | Metric               | Today                                                               | Direction     | Checked by                                                                                | Runs at          |
 | -------------------- | ------------------------------------------------------------------- | ------------- | ----------------------------------------------------------------------------------------- | ---------------- |
 | head-script builds   | 3                                                                   | must not grow | `pnpm --filter themercn exec vitest run src/components/page-load.count.test.tsx`          | implementer done |
-| storage writes       | 1 nothing saved; 1 saved Theme; 3 other version; 2 namespace switch | must not grow | `pnpm --filter themercn exec vitest run src/components/page-load.count.test.tsx`          | implementer done |
+| storage writes       | 0 nothing saved; 0 saved Theme; 2 other version; 1 namespace switch | must not grow | `pnpm --filter themercn exec vitest run src/components/page-load.count.test.tsx`          | implementer done |
 | font links           | 7                                                                   | must not grow | `pnpm --filter themercn exec vitest run src/components/page-load.count.test.tsx`          | implementer done |
 | Preset deep compares | 4                                                                   | must not grow | `pnpm --filter themercn exec vitest run src/components/page-load.count.test.tsx`          | implementer done |
-| first applies        | 3                                                                   | must not grow | `pnpm --filter themercn exec vitest run src/components/page-load.count.test.tsx`          | implementer done |
+| first applies        | 1                                                                   | must not grow | `pnpm --filter themercn exec vitest run src/components/page-load.count.test.tsx`          | implementer done |
 | frame chunk imports  | 1                                                                   | must not grow | `pnpm --filter web exec playwright test --project=chromium e2e/frame-chunk.count.spec.ts` | merge gate       |
 | root-class observers | 2                                                                   | must not grow | `pnpm --filter themercn exec vitest run src/components/page-load.count.test.tsx`          | implementer done |
 

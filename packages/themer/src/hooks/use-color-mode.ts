@@ -26,7 +26,8 @@ function subscribeToRootClass(onChange: () => void) {
   return () => observer.disconnect()
 }
 
-function getRootClassMode(): ThemeMode {
+/** The mode the `.dark` class on <html> says now. */
+export function getRootClassMode(): ThemeMode {
   return document.documentElement.classList.contains("dark") ? "dark" : "light"
 }
 

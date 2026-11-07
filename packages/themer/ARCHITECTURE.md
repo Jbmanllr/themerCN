@@ -90,7 +90,7 @@ Host tree                         <ThemerLoader {...props} />   (themercn/loader
                                   <Themer>                       components/themer.tsx
                                      │ null on the server, during hydration, in an iframe
                                      ▼
-                                  ThemerApp: hydrateThemerStores(ns) in a layout effect, useThemerStyle()
+                                  ThemerApp: hydrateThemerStores(ns, mode) in a layout effect, useThemerStyle()
                                   QueryClientProvider (its own client)
                                   └─ ColorModeProvider (colorMode / onColorModeChange), keyed by ns
                                      └─ ThemerProvider (config: presets, shortcut, …)
@@ -307,18 +307,23 @@ and below the Themer UI.
 The mode controls (the toggle, its menu item, the contrast panel's starting
 mode) read `useColorMode()` directly, so a Host `.dark` flip updates them in
 the commit that themes the page. The store's `themeState.currentMode` (which
-the style controls read) is written by the toggle's handler and by
-`ThemerProvider`'s Theme-apply effect, which also puts it back on the colour
-mode whenever the two differ (a controlling Host may decline the toggle's
-switch), and applies the Theme from a store subscription (an edit never re-renders the provider) and writes variables,
-never the class (`applyThemeToElement(..., { updateClass: false })`).
+the style controls read) mirrors the colour mode: hydration puts the colour
+mode the mount renders with on the hydrated Theme, the toggle's handler
+writes it with its switch, and `ThemerProvider`'s mode sync (a layout effect
+after the Preset adopt and refresh) puts it back on the colour mode whenever
+the two differ (a controlling Host may decline the toggle's switch). The
+mode sync never applies: `ThemerProvider`'s Theme-apply layout effect,
+keyed on the Theme override only, applies the Theme in the store's mode once,
+then from a store subscription on each Theme state change, a mode change
+included (an edit never re-renders the provider). It writes variables, never
+the class (`applyThemeToElement(..., { updateClass: false })`).
 `useToggleMode` ([hooks/use-themer.ts](src/hooks/use-themer.ts)) runs
 the switch inside a View Transition
 ([theme-transition.ts](src/utils/theme-transition.ts)) with a circular reveal where supported.
 
 ## Persistence and the head script
 
-- Stores use `skipHydration: true`; `hydrateThemerStores(ns)`
+- Stores use `skipHydration: true`; `hydrateThemerStores(ns, mode)`
   ([stores/hydrate.ts](src/stores/hydrate.ts)) points them at
   `getStorageKeys(ns)` (`<ns>:editor`, `<ns>:preferences`, plus
   `<ns>:color-mode` written by an uncontrolled `ColorModeProvider`;
@@ -336,7 +341,9 @@ the switch inside a View Transition
   `setState` persists at once (zustand 5), overwriting the new namespace's
   entry or wiping the old one. The tree from `ColorModeProvider` down is
   keyed by namespace, so ThemerProvider's mount-time default-Preset adoption
-  runs again and the colour mode is read from the new key.
+  runs again and the colour mode is read from the new key. The outgoing
+  tree's apply subscription ends in the commit that unmounts it, before the
+  stores rehydrate, so the switch's only first apply is the incoming tree's.
 - The `<ns>:color-mode` key amends Jbmanllr/themerCN#15 and
   Jbmanllr/themerCN#18, which named only `<ns>:editor` and
   `<ns>:preferences`: an uncontrolled Themer must restore `.dark` before
@@ -420,7 +427,9 @@ starts fresh, see Persistence and the head script).
   checkpoint; resetting to the Preset clears history.
 - `updateCommonStyle` writes mode-shared keys (fonts, radius, spacing, letter
   spacing, shadow parameters) to both modes.
-- `adoptDefaultPreset` moves a fresh store to `defaultPreset` without
+- A fresh store (nothing saved, or an entry at another version) starts with
+  its default Theme's own Preset baseline, so the refresh sets nothing.
+  `adoptDefaultPreset` moves a fresh store to `defaultPreset` without
   history. `refreshUntouchedPreset` (run by `ThemerProvider` after Host
   Presets are registered) makes a restored Theme that still equals its
   `presetBaseline` follow the Preset's current source, so a Host token change

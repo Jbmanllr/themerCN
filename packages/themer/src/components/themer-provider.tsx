@@ -10,8 +10,10 @@
 //   `extraColors` as module-level constants.
 // - The light/dark mode comes from useColorMode (hooks/use-color-mode.ts,
 //   provided by components/color-mode.tsx: the Host's controlled
-//   `colorMode`, or the `.dark` class on <html>). This provider writes it
-//   to the editor store where it applies the Theme, and writes CSS variables (and the shadow override sheet), never the class.
+//   `colorMode`, or the `.dark` class on <html>). The store's mode mirrors
+//   it (hydration, then this provider's mode sync), and the Theme is applied
+//   in the store's mode. It writes CSS variables (and the shadow override
+//   sheet), never the class.
 // - The CSS variables, the shadow override sheet and the theme's font links
 //   are removed when the theme override preference goes off or the provider
 //   unmounts.
@@ -147,22 +149,30 @@ export function ThemerProvider({
     (state) => state.themeOverrideEnabled
   )
 
-  // The store's mode, read only so the effect below can put it back when it
-  // leaves the colour mode: the toggle writes it with its switch, and a
-  // controlling Host may decline that switch. Changes only with the mode.
+  // The mode sync: the store's mode mirrors the colour mode. Hydration put
+  // the colour mode on the Theme, so at mount it has nothing to set. A layout
+  // effect after the Preset adopt and refresh, so a later mode change lands
+  // in the same commit as the controls that read the colour mode. It also
+  // puts the store's mode back when it leaves the colour mode (the toggle
+  // writes it with its switch, and a controlling Host may decline that
+  // switch). It never applies: the subscription below does.
   const storeMode = useEditorStore(selectCurrentMode)
+  React.useLayoutEffect(() => {
+    if (storeMode !== mode) useEditorStore.getState().setCurrentMode(mode)
+  }, [mode, storeMode])
 
-  // The Theme-apply path: the store's mode follows the colour mode here (the
-  // controls read the colour mode itself), then the Theme is applied now and
-  // on every later change through a store subscription, so an edit never
+  // The Theme-apply path: the Theme, in the store's mode, is applied once
+  // after the layout effects above, then on every later Theme state change
+  // (a mode change included) through a store subscription, so an edit never
   // re-renders this provider. Re-applying on every change is enough to drop
   // properties the new theme no longer sets (applyThemeToElement diffs
   // against its previous call), so the page never flashes between edits.
+  // A layout effect, so its subscription ends in the commit that unmounts
+  // this tree, before <Themer> rehydrates the stores for another
+  // `storageNamespace`: the outgoing tree never applies the incoming state.
   // Everything it wrote, the shadow override sheet included, is removed only
   // when the override goes off or the editor unmounts.
-  React.useEffect(() => {
-    const { setCurrentMode } = useEditorStore.getState()
-    if (storeMode !== mode) setCurrentMode(mode)
+  React.useLayoutEffect(() => {
     const restoreSheet = document.getElementById(RESTORE_STYLE_ID)
     if (!themeOverrideEnabled) {
       restoreSheet?.remove()
@@ -170,17 +180,15 @@ export function ThemerProvider({
     }
 
     const apply = (state: ThemeEditorState) =>
-      applyThemeToElement(
-        { ...state, currentMode: mode },
-        document.documentElement,
-        { updateClass: false }
-      )
+      applyThemeToElement(state, document.documentElement, {
+        updateClass: false,
+      })
     apply(useEditorStore.getState().themeState)
     restoreSheet?.remove()
     return useEditorStore.subscribe((next, previous) => {
       if (next.themeState !== previous.themeState) apply(next.themeState)
     })
-  }, [mode, storeMode, themeOverrideEnabled])
+  }, [themeOverrideEnabled])
 
   React.useEffect(() => {
     if (!themeOverrideEnabled) return undefined

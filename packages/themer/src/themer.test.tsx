@@ -187,6 +187,24 @@ describe("Themer", () => {
       expect(rootVar("--primary")).toBe("")
     })
 
+    it("writes no editor entry on a load with nothing to save", async () => {
+      await mount()
+
+      expect(localStorage.getItem("themercn:editor")).toBeNull()
+    })
+
+    it("restores a saved Theme in the page's mode and leaves its entry as stored", async () => {
+      seedEditor("page-mode:editor", "rgb(4, 4, 4)")
+      const stored = localStorage.getItem("page-mode:editor")
+      document.documentElement.classList.add("dark")
+
+      await mount({ storageNamespace: "page-mode" })
+
+      expect(useEditorStore.getState().themeState.currentMode).toBe("dark")
+      expect(rootVar("--primary")).toBe(DARK_PRIMARY)
+      expect(localStorage.getItem("page-mode:editor")).toBe(stored)
+    })
+
     function addHeadScriptRestore() {
       const style = document.createElement("style")
       style.id = "themercn-restore"

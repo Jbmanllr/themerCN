@@ -392,6 +392,30 @@ describe("adoptDefaultPreset", () => {
   })
 })
 
+describe("a fresh store", () => {
+  beforeEach(() => {
+    store.setState(store.getInitialState(), true)
+  })
+
+  it("starts on its default Theme's own Preset baseline", () => {
+    const { themeState, presetBaseline } = store.getState()
+    expect(presetBaseline).toEqual({
+      preset: themeState.preset,
+      styles: themeState.styles,
+    })
+    expect(hasUnsavedChanges(store.getState())).toBe(false)
+  })
+
+  it("has nothing for the refresh of its untouched Preset to set", () => {
+    const sets = vi.fn()
+    const unsubscribe = store.subscribe(sets)
+    store.getState().refreshUntouchedPreset()
+    unsubscribe()
+
+    expect(sets).not.toHaveBeenCalled()
+  })
+})
+
 describe("host extra colours in the theme", () => {
   const brand = {
     id: "brand",
@@ -517,6 +541,24 @@ describe("refreshUntouchedPreset", () => {
     configurePresets({ presets: [v2] })
     store.getState().refreshUntouchedPreset()
     expect(store.getState().themeState.styles.light.destructive).toBe("#B23A2A")
+  })
+
+  it("gives no baseline to a stored edited theme that has none", () => {
+    configurePresets({ presets: [v1] })
+    const preset = structuredClone(resolvePresetStyles("brand"))
+    store.setState({
+      themeState: {
+        ...defaultThemeState,
+        preset: "brand",
+        styles: { ...preset, light: { ...preset.light, primary: "#000000" } },
+      },
+      presetBaseline: null,
+      restoredFromStorage: true,
+    })
+    store.getState().refreshUntouchedPreset()
+
+    expect(store.getState().presetBaseline).toBeNull()
+    expect(store.getState().themeState.styles.light.primary).toBe("#000000")
   })
 
   it("keeps an imported theme", () => {

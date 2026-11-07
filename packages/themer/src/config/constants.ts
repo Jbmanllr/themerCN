@@ -99,13 +99,10 @@ export const PREFERENCES_VERSION = 1
  */
 export const RESTORE_STYLE_ID = "themercn-restore"
 
-/**
- * Attribute the pre-hydration script sets, to the family, on each Google
- * Fonts link it adds. The font link registry (utils/font-links.ts) adopts
- * only links carrying it, so a Host's own link with the same URL stays the
- * Host's. Not a `data-themer` name: the head-script string never contains
- * that marker (head-script.ts).
- */
+// Marks the font links the pre-hydration script adds: the font link registry
+// (utils/font-links.ts) adopts only marked links, never a Host's own. Not a
+// `data-themer` name, which the head-script string never contains. A line
+// comment, not TSDoc, so the size-budgeted `next` entry doesn't carry it.
 export const HEAD_FONT_LINK_ATTRIBUTE = "data-tcn-head-font"
 
 /**

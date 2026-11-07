@@ -72,10 +72,7 @@ export function generateThemeScript({
       return cleanFont;
     }
 
-    // The same URLs as font-links' buildFontCssUrl and its default-weight
-    // fallback, and a marker attribute, so the font link registry adopts
-    // this link rather than adding a second one (and never a Host's own
-    // link, which lacks the marker); and the same once-only retry on error.
+    // font-links' URLs and once-only retry, marked: the registry adopts it.
     function loadGoogleFont(family, weights) {
       weights = weights || ["400","500","600","700"];
       var familyParam = "https://fonts.googleapis.com/css2?family=" + encodeURIComponent(family);

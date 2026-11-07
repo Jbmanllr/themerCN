@@ -2,24 +2,27 @@
 # Claude Code Stop and SubagentStop hook (wired in .claude/settings.json): T1
 # of TESTING.md "Verification tiers". It keeps the turn (or the subagent) from
 # ending while the changed files' formatting (Prettier, which CI checks
-# first) or the affected lint, typecheck, test (the root's repo-wide checks
-# included), build and package checks fail. The Turbo tasks run in the
-# clone's heavy slot (scripts/heavy-slot.sh). It never runs e2e or the
-# visual baselines.
+# first), the affected lint, typecheck, test (the root's repo-wide checks
+# included), build and package checks, the floor guard or the register check
+# fail. The Turbo tasks run in the clone's heavy slot (scripts/heavy-slot.sh);
+# the floor guard and the register check run after them, uncached, as CI runs
+# them. It never runs e2e or the visual baselines.
 #
 # Reads the hook input on stdin and works in its `cwd`, the session's (or the
 # subagent's) worktree. The base is $TURBO_SCM_BASE, else `main`, else
 # `origin/main` (never the branch's upstream: once pushed, that is the
 # branch itself); changes are committed, staged, unstaged and untracked
 # files against the merge base with it. A tree that passed T1 against that
-# merge base is not checked again.
+# merge base is not checked again. After a block, a new commit counts as a
+# change even when the tree is the same: a `Quality-change:` trailer is how
+# a floor-guard finding is fixed.
 #
 #   exit 0  stop: nothing changed, T1 passed (now or before, on this tree and
 #           base), no base ref exists, or nothing changed since the last block (blocking again could never
 #           resolve). That last case is no pass: a `systemMessage` on stdout
 #           tells the user T1 is still red.
 #   exit 2  block: T1 failed, or the base shares no history with HEAD; the
-#           reason (T1 output's tail) is on stderr
+#           reason (each failing check's own output, its tail) is on stderr
 set -uo pipefail
 
 hooks=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
@@ -80,9 +83,10 @@ if git diff --quiet "$base" -- &&
 fi
 
 # The working tree as a tree object (untracked files included), to tell
-# whether anything changed since the run that last blocked.
+# whether anything changed since the run that last blocked (with HEAD, whose
+# trailers the floor guard reads) or passed.
 index=$(mktemp)
-trap 'rm -f "$index" "$index.out" "$index.fmt"' EXIT
+trap 'rm -f "$index" "$index.out" "$index.fmt" "$index.floor" "$index.register"' EXIT
 cp -p "$(git rev-parse --git-path index)" "$index" 2>/dev/null || rm -f "$index"
 GIT_INDEX_FILE=$index git add --all &&
   tree=$(GIT_INDEX_FILE=$index git write-tree) || tree=unknown
@@ -93,7 +97,8 @@ if [ "$tree" != unknown ] && [ "$base $tree" = "$(cat "$passed" 2>/dev/null)" ];
   exit 0
 fi
 
-if [ "$continuing" = true ] && [ "$tree" = "$(cat "$blocked" 2>/dev/null)" ]; then
+state="$(git rev-parse --verify --quiet HEAD) $tree"
+if [ "$continuing" = true ] && [ "$state" = "$(cat "$blocked" 2>/dev/null)" ]; then
   give_up "T1 still fails, with nothing changed since the last block. The work is not done: don't report it done until T1 passes."
 fi
 
@@ -118,17 +123,27 @@ NO_COLOR=1 TURBO_SCM_BASE=$base "$hooks/../../scripts/heavy-slot.sh" \
   pnpm turbo run lint lint:repo typecheck test test:repo build check:package \
   --affected --output-logs=errors-only >"$index.out" 2>&1 || turbo=$?
 
-if [ "$format" -eq 0 ] && [ "$turbo" -eq 0 ]; then
+floor=0
+NO_COLOR=1 pnpm -s floor-guard --base "$base" >"$index.floor" 2>&1 || floor=$?
+
+register=0
+NO_COLOR=1 pnpm exec vitest run tests/register-check.test.ts \
+  >"$index.register" 2>&1 || register=$?
+
+if [ "$format" -eq 0 ] && [ "$turbo" -eq 0 ] && [ "$floor" -eq 0 ] &&
+  [ "$register" -eq 0 ]; then
   rm -f "$blocked"
   [ "$tree" != unknown ] && echo "$base $tree" >"$passed"
   exit 0
 fi
 
-echo "$tree" >"$blocked"
+echo "$state" >"$blocked"
 {
   echo "T1 fails (prettier --check on the changed files, then" \
     "TURBO_SCM_BASE=$base pnpm turbo run lint lint:repo typecheck test" \
-    "test:repo build check:package --affected). Fix it before you stop;" \
+    "test:repo build check:package --affected, then pnpm -s floor-guard" \
+    "--base $base, then pnpm exec vitest run tests/register-check.test.ts)." \
+    "Fix it before you stop;" \
     "don't edit, skip or delete a test to get green unless the user asked" \
     "for the behavior it encodes to change, and don't report the work done" \
     "while T1 is red."
@@ -139,6 +154,15 @@ echo "$tree" >"$blocked"
   if [ "$turbo" -ne 0 ]; then
     echo "Turbo, last lines:"
     tail -n 60 "$index.out"
+  fi
+  if [ "$floor" -ne 0 ]; then
+    echo "Floor guard (a finding the rules allow needs a Quality-change" \
+      "trailer, TESTING.md Floor):"
+    tail -n 40 "$index.floor"
+  fi
+  if [ "$register" -ne 0 ]; then
+    echo "Register check, last lines:"
+    tail -n 40 "$index.register"
   fi
 } >&2
 exit 2

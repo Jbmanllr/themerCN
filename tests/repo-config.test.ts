@@ -1209,7 +1209,8 @@ describe("CI task selection", () => {
 // stand-in `pnpm` first on PATH.
 // The stand-in appends the command it was given, prefixed with
 // `TURBO_SCM_BASE=<base>` when that is set, to a log; prints `stdout`; and
-// exits with `exit`.
+// exits with `exit`. A command containing `fails.on` instead prints
+// `fails.stdout` and exits 1.
 const scriptSandbox = (name: string) => {
   let scratch = ""
   beforeAll(() => {
@@ -1220,6 +1221,8 @@ const scriptSandbox = (name: string) => {
       [
         "#!/bin/sh",
         'echo "${TURBO_SCM_BASE:+TURBO_SCM_BASE=$TURBO_SCM_BASE }$*" >> "$PNPM_ARGS"',
+        'if [ -n "$PNPM_FAIL_ON" ]; then case "$*" in *"$PNPM_FAIL_ON"*)',
+        '  printf "%s\\n" "$PNPM_FAIL_STDOUT"; exit 1;; esac; fi',
         'printf "%s\\n" "$PNPM_STDOUT"',
         'exit "$PNPM_EXIT"',
         "",
@@ -1263,7 +1266,11 @@ const scriptSandbox = (name: string) => {
       cwd?: string
       input?: string
       env?: Record<string, string>
-      pnpm?: { exit?: number; stdout?: string }
+      pnpm?: {
+        exit?: number
+        stdout?: string
+        fails?: { on: string; stdout: string }
+      }
     } = {}
   ) => {
     const log = join(scratch, `pnpm-args-${Math.random()}`)
@@ -1280,6 +1287,8 @@ const scriptSandbox = (name: string) => {
         PNPM_ARGS: log,
         PNPM_EXIT: String(pnpm.exit ?? 0),
         PNPM_STDOUT: pnpm.stdout ?? "",
+        PNPM_FAIL_ON: pnpm.fails?.on ?? "",
+        PNPM_FAIL_STDOUT: pnpm.fails?.stdout ?? "",
         ...env,
       },
     })
@@ -1623,8 +1632,9 @@ describe("Playwright tiers", () => {
 })
 
 // TESTING.md "Verification tiers": a Stop hook keeps an agent's turn from
-// ending while T1 (the changed files' formatting, and the affected lint,
-// typecheck, test, build and package checks) fails. Each case runs the real hook in a scratch repository, with
+// ending while T1 (the changed files' formatting, the affected lint,
+// typecheck, test, build and package checks, the floor guard and the
+// register check) fails. Each case runs the real hook in a scratch repository, with
 // a stand-in `pnpm` that records what it ran and exits as given.
 describe("the T1 Stop hook", () => {
   const HOOK = join(ROOT, ".claude/hooks/stop-t1.sh")
@@ -1633,6 +1643,9 @@ describe("the T1 Stop hook", () => {
   // Prettier on the changed files, which CI checks first.
   const format = (...files: string[]) =>
     `exec prettier --check --ignore-unknown -- ${files.join(" ")}`
+  // The Floor and the register, uncached, after Turbo.
+  const floorGuard = (base: string) => `-s floor-guard --base ${base}`
+  const REGISTER_CHECK = "exec vitest run tests/register-check.test.ts"
   const sandbox = scriptSandbox("stop-hook")
 
   // A repository whose `main` holds one commit, checked out on a branch
@@ -1654,10 +1667,12 @@ describe("the T1 Stop hook", () => {
       t1Exit = 0,
       input = {},
       env = {},
+      fails,
     }: {
       t1Exit?: number
       input?: Record<string, unknown>
       env?: Record<string, string>
+      fails?: { on: string; stdout: string }
     } = {}
   ) =>
     sandbox.run(HOOK, {
@@ -1669,7 +1684,7 @@ describe("the T1 Stop hook", () => {
         ...input,
       }),
       env,
-      pnpm: { exit: t1Exit, stdout: "T1 output: lint failed" },
+      pnpm: { exit: t1Exit, stdout: "T1 output: lint failed", fails },
     })
 
   it("allows stopping at once, without running T1, when nothing changed", () => {
@@ -1681,17 +1696,60 @@ describe("the T1 Stop hook", () => {
     const { dir, git } = repo()
     writeFileSync(join(dir, "a.ts"), "export const a = 2\n")
     const { status, ran } = stop(dir)
+    const base = git("rev-parse", "main")
     expect(status).toBe(0)
     expect(ran).toEqual([
       format("a.ts"),
-      `TURBO_SCM_BASE=${git("rev-parse", "main")} ${T1} --output-logs=errors-only`,
+      `TURBO_SCM_BASE=${base} ${T1} --output-logs=errors-only`,
+      floorGuard(base),
+      REGISTER_CHECK,
     ])
+  })
+
+  // Neither reads Turbo's cache: an assertion deleted without a trailer, or
+  // an exception past its expiry, blocks the turn before handoff.
+  it.each([
+    ["floor guard", "floor-guard", "assertion-removed: a.test.ts"],
+    ["register check", "register-check", "exception E1 expired"],
+  ])(
+    "blocks stopping while the %s fails, with its own message",
+    (_, on, message) => {
+      const { dir } = repo()
+      writeFileSync(join(dir, "a.ts"), "export const a = 2\n")
+      const { status, stderr } = stop(dir, { fails: { on, stdout: message } })
+      expect(status).toBe(2)
+      expect(stderr).toContain(message)
+    }
+  )
+
+  // A floor-guard block is fixed by a `Quality-change:` trailer, which
+  // changes the commits but not the tree.
+  it("checks again after a block when only the commits changed", () => {
+    const { dir, git } = repo()
+    writeFileSync(join(dir, "a.ts"), "export const a = 2\n")
+    git("commit", "--quiet", "--all", "--message=ticket")
+    const fails = { on: "floor-guard", stdout: "assertion-removed: a.ts" }
+    expect(stop(dir, { fails }).status).toBe(2)
+    git(
+      "commit",
+      "--quiet",
+      "--amend",
+      "--message=ticket\n\nQuality-change: a.ts: replaced"
+    )
+    const { status, ran, stdout } = stop(dir, {
+      input: { stop_hook_active: true },
+    })
+    expect({ status, stdout }).toEqual({ status: 0, stdout: "" })
+    expect(ran).toContain(floorGuard(git("rev-parse", "main")))
   })
 
   it("counts untracked changes against the base", () => {
     const { dir } = repo()
     writeFileSync(join(dir, "b.ts"), "export const b = 1\n")
-    expect(stop(dir).ran).toEqual([format("b.ts"), expect.stringContaining(T1)])
+    expect(stop(dir).ran.slice(0, 2)).toEqual([
+      format("b.ts"),
+      expect.stringContaining(T1),
+    ])
   })
 
   it("counts committed changes against the base, and leaves out deleted files", () => {
@@ -1700,7 +1758,10 @@ describe("the T1 Stop hook", () => {
     git("add", ".")
     git("rm", "--quiet", "a.ts")
     git("commit", "--quiet", "--message=ticket")
-    expect(stop(dir).ran).toEqual([format("b.ts"), expect.stringContaining(T1)])
+    expect(stop(dir).ran.slice(0, 2)).toEqual([
+      format("b.ts"),
+      expect.stringContaining(T1),
+    ])
   })
 
   // A tree that passed against this base is not gated again, whoever's
@@ -1708,21 +1769,21 @@ describe("the T1 Stop hook", () => {
   it("does not run T1 again on a tree that passed against the same base", () => {
     const { dir } = repo()
     writeFileSync(join(dir, "a.ts"), "export const a = 2\n")
-    expect(stop(dir).ran).toHaveLength(2)
+    expect(stop(dir).ran).toHaveLength(4)
     expect(stop(dir)).toMatchObject({ status: 0, ran: [] })
     writeFileSync(join(dir, "a.ts"), "export const a = 3\n")
-    expect(stop(dir).ran).toHaveLength(2)
+    expect(stop(dir).ran).toHaveLength(4)
   })
 
   it("runs T1 again on a passed tree when the base moved", () => {
     const { dir, git } = repo()
     writeFileSync(join(dir, "a.ts"), "export const a = 2\n")
-    expect(stop(dir).ran).toHaveLength(2)
+    expect(stop(dir).ran).toHaveLength(4)
     git("switch", "--quiet", "main")
     git("commit", "--quiet", "--allow-empty", "--message=main moved")
     git("switch", "--quiet", "ticket")
     git("merge", "--quiet", "--no-edit", "main")
-    expect(stop(dir).ran).toHaveLength(2)
+    expect(stop(dir).ran).toHaveLength(4)
   })
 
   it("does not count a failing tree as passed", () => {
@@ -1743,7 +1804,14 @@ describe("the T1 Stop hook", () => {
     const { status, ran, stderr } = stop(dir, {
       env: { HEAVY_SLOT_WAIT: "1" },
     })
-    expect({ status, ran }).toEqual({ status: 2, ran: [format("a.ts")] })
+    expect({ status, ran }).toEqual({
+      status: 2,
+      ran: [
+        format("a.ts"),
+        floorGuard(git("rev-parse", "main")),
+        REGISTER_CHECK,
+      ],
+    })
     expect(stderr).toMatch(/heavy slot busy/)
   })
 
@@ -1768,7 +1836,7 @@ describe("the T1 Stop hook", () => {
     writeFileSync(join(dir, "a.ts"), "export const a = 2\n")
     git("commit", "--quiet", "--all", "--message=ticket")
     git("push", "--quiet", "--set-upstream", "origin", "ticket")
-    expect(stop(dir).ran).toEqual([
+    expect(stop(dir).ran.slice(0, 2)).toEqual([
       format("a.ts"),
       `TURBO_SCM_BASE=${git("rev-parse", "main")} ${T1} --output-logs=errors-only`,
     ])
@@ -1783,7 +1851,7 @@ describe("the T1 Stop hook", () => {
     git("fetch", "--quiet", "origin")
     git("branch", "--quiet", "-D", "main")
     writeFileSync(join(dir, "a.ts"), "export const a = 2\n")
-    expect(stop(dir).ran).toEqual([
+    expect(stop(dir).ran.slice(0, 2)).toEqual([
       format("a.ts"),
       `TURBO_SCM_BASE=${git("rev-parse", "origin/main")} ${T1} --output-logs=errors-only`,
     ])
@@ -1840,7 +1908,7 @@ describe("the T1 Stop hook", () => {
     const { dir } = repo()
     writeFileSync(join(dir, "a.ts"), "export const a = 2\n")
     const { ran } = stop(dir, { t1Exit: 1 })
-    expect(ran).toHaveLength(2)
+    expect(ran).toHaveLength(4)
     for (const command of ran) {
       // Past the base SHA, whose hex digits can spell "e2e".
       expect(command.replace(/^TURBO_SCM_BASE=\S+ /, "")).not.toMatch(
@@ -1884,7 +1952,12 @@ describe("the T1 Stop hook", () => {
       stop(dir, { t1Exit: 1, input: { stop_hook_active: true } })
     ).toMatchObject({
       status: 2,
-      ran: [format("a.ts"), expect.stringContaining(T1)],
+      ran: [
+        format("a.ts"),
+        expect.stringContaining(T1),
+        expect.stringContaining("floor-guard"),
+        REGISTER_CHECK,
+      ],
     })
   })
 
@@ -1904,6 +1977,8 @@ describe("the T1 Stop hook", () => {
         .sort()
     expect(command?.[1]).toBeDefined()
     expect(tasks(command![1]!)).toEqual(tasks(T1))
+    expect(line).toContain("`pnpm -s floor-guard --base <base>`")
+    expect(line).toContain(`\`pnpm ${REGISTER_CHECK}\``)
   })
 
   // Subagents too: agents in parallel worktrees are gated like the session.

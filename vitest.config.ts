@@ -6,5 +6,9 @@ export default defineConfig({
   test: {
     environment: "node",
     include: ["tests/**/*.test.ts"],
+    // The clone's test slots (tests/test-slot.ts, TESTING.md): two runs at
+    // a time, each on half the cores.
+    globalSetup: ["tests/test-slot.ts"],
+    maxWorkers: "50%",
   },
 })

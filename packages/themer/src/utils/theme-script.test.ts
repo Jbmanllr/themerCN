@@ -24,6 +24,7 @@ import {
 } from "../config/constants"
 
 const STORAGE_KEYS = getStorageKeys()
+import { acquireGoogleFont, buildFontCssUrl } from "./font-links"
 import { generateThemeScript } from "./theme-script"
 
 function saveEditor(themeState: unknown) {
@@ -222,6 +223,39 @@ describe("generateThemeScript", () => {
     })
     runScript()
     expect(fontLinks()).toEqual([])
+  })
+
+  it("links the URL the font link registry builds, so the registry adopts it", () => {
+    saveEditor({ currentMode: "light", styles })
+    runScript()
+    const [link] = document.head.querySelectorAll("link")
+    expect(link?.getAttribute("href")).toBe(buildFontCssUrl("Inter"))
+
+    const release = acquireGoogleFont("Inter", { doc: document })
+    expect(document.head.querySelectorAll("link")).toHaveLength(1)
+    release()
+  })
+
+  it("switches a font link to the family's default weight once, on error", () => {
+    saveEditor({ currentMode: "light", styles })
+    runScript()
+    const [link] = document.head.querySelectorAll("link")
+    link?.dispatchEvent(new Event("error"))
+    expect(link?.getAttribute("href")).toBe(
+      "https://fonts.googleapis.com/css2?family=Inter&display=swap"
+    )
+    link?.setAttribute("href", "kept")
+    link?.dispatchEvent(new Event("error"))
+    expect(link?.getAttribute("href")).toBe("kept")
+    link?.setAttribute(
+      "href",
+      "https://fonts.googleapis.com/css2?family=Inter&display=swap"
+    )
+
+    // The registry recognises the fallback href too.
+    const release = acquireGoogleFont("Inter", { doc: document })
+    expect(document.head.querySelectorAll("link")).toHaveLength(1)
+    release()
   })
 
   it("drops a saved value that would break out of its declaration", () => {

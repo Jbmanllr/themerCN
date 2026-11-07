@@ -38,7 +38,9 @@ import { GENERIC_FONT_FAMILIES, LOCAL_FONT_FAMILY_NAMES } from "./font-names"
  *   Theme. A saved value that could end its declaration is dropped.
  * It writes every saved variable but not the shadow override sheet or the tracking
  * variables, and preloads Google fonts for the sans, serif and mono slots only
- * (DynamicFontLoader loads the heading font after hydration).
+ * (DynamicFontLoader loads the heading font after hydration). Its font links use the
+ * font link registry's URLs and once-only default-weight retry, so the registry adopts
+ * them: one link per family.
  */
 export function generateThemeScript({
   storageNamespace,
@@ -69,13 +71,21 @@ export function generateThemeScript({
       return cleanFont;
     }
 
+    // The same URLs as font-links' buildFontCssUrl and its default-weight
+    // fallback, so the font link registry adopts this link rather than
+    // adding a second one; and the same once-only retry on error.
     function loadGoogleFont(family, weights) {
       weights = weights || ["400","500","600","700"];
-      var href = "https://fonts.googleapis.com/css2?family=" + encodeURIComponent(family) + ":wght@" + weights.join(";") + "&display=swap";
+      var familyParam = "https://fonts.googleapis.com/css2?family=" + encodeURIComponent(family);
+      var href = familyParam + ":wght@" + weights.join(";") + "&display=swap";
+      var fallbackHref = familyParam + "&display=swap";
       if (document.querySelector('link[href="' + href + '"]')) return;
       var link = document.createElement("link");
-      link.rel = "stylesheet";
-      link.href = href;
+      link.setAttribute("rel", "stylesheet");
+      link.setAttribute("href", href);
+      link.addEventListener("error", function() {
+        link.setAttribute("href", fallbackHref);
+      }, { once: true });
       document.head.appendChild(link);
     }
 

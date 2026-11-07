@@ -6,9 +6,12 @@
 // previews, an iframe) ask for the same families. One reference-counted link
 // per family avoids duplicates and lets a link go when nothing uses it.
 //
-// Contract: never request from Google a value that starts with `var(...)`, a
-// generic keyword or an OS family (font-names.ts decides which names those
-// are). Shipped fonts load through next/font; this module is a development
+// Contract: at most 1 link per Google family per document (the paths ADR's
+// Page load contract). The head script (theme-script.ts) links families
+// before first paint with the URLs built here; a family's first acquire
+// adopts that link rather than adding a second. Never request from Google a
+// value that starts with `var(...)`, a generic keyword or an OS family
+// (font-names.ts decides which names those are). Shipped fonts load through next/font; this module is a development
 // preview mechanism.
 //
 // See: packages/themer/ARCHITECTURE.md ("Font link registry").
@@ -128,12 +131,98 @@ function registryFor(doc: Document): Map<string, FontLinkEntry> {
   return registry
 }
 
+/**
+ * Settles once `link`'s stylesheet loaded, or failed with no retry to come:
+ * `retrying` says whether its first error is followed by a retry (an href
+ * switch to the default weight).
+ */
+function linkReady(link: HTMLLinkElement, retrying: boolean): Promise<void> {
+  return new Promise<void>((resolve) => {
+    link.addEventListener("load", () => resolve(), { once: true })
+    link.addEventListener(
+      "error",
+      () => {
+        if (retrying) {
+          // The retry's own load, or its error, settles it.
+          link.addEventListener("error", () => resolve(), { once: true })
+        } else {
+          resolve()
+        }
+      },
+      { once: true }
+    )
+  })
+}
+
+/**
+ * The stylesheet link the head script added for a family, matched by its
+ * full or its default-weight href, adopted as the family's entry. The head
+ * script gives its links the same once-only retry the registry does, so the
+ * registry adds no retry of its own.
+ */
+function adoptHeadScriptLink(
+  doc: Document,
+  family: string,
+  href: string,
+  fallbackHref: string
+): FontLinkEntry | undefined {
+  const link = Array.from(doc.head.children).find(
+    (child): child is HTMLLinkElement =>
+      child.tagName.toLowerCase() === "link" &&
+      child.getAttribute("rel") === "stylesheet" &&
+      (child.getAttribute("href") === href ||
+        child.getAttribute("href") === fallbackHref)
+  )
+  if (!link) return undefined
+
+  link.setAttribute(FONT_LINK_ATTRIBUTE, family)
+  // Already loaded: settled. Otherwise its next load or error settles it,
+  // after the retry while it still asks for the full href. A link that
+  // already failed both URLs fires nothing more, so a wait on it ends at the
+  // wait's own timeout.
+  const ready = link.sheet
+    ? Promise.resolve()
+    : linkReady(
+        link,
+        fallbackHref !== href && link.getAttribute("href") === href
+      )
+  return { link, refs: 0, ready }
+}
+
+function addFontLink(
+  doc: Document,
+  family: string,
+  href: string,
+  fallbackHref?: string
+): FontLinkEntry {
+  const link = doc.createElement("link")
+  link.setAttribute("rel", "stylesheet")
+  link.setAttribute("href", href)
+  link.setAttribute(FONT_LINK_ATTRIBUTE, family)
+  const retryHref = fallbackHref && fallbackHref !== href ? fallbackHref : null
+  if (retryHref) {
+    // Google answers 400 when a static family lacks a requested weight;
+    // retry once with the family's default weight.
+    link.addEventListener("error", () => link.setAttribute("href", retryHref), {
+      once: true,
+    })
+  }
+  const ready = linkReady(link, retryHref !== null)
+  doc.head.appendChild(link)
+  return { link, refs: 0, ready }
+}
+
+/**
+ * Holds `key`'s entry, adding its link on the first hold. With `adopt`, the
+ * first hold looks for the head script's link for the family first.
+ */
 function acquireFontLink(
   doc: Document,
   key: string,
   family: string,
   href: string,
-  fallbackHref?: string
+  fallbackHref?: string,
+  adopt = false
 ): FontRelease {
   const registry = registryFor(doc)
   let entry = registry.get(key)
@@ -144,38 +233,10 @@ function acquireFontLink(
   }
 
   if (!entry) {
-    const link = doc.createElement("link")
-    link.setAttribute("rel", "stylesheet")
-    link.setAttribute("href", href)
-    link.setAttribute(FONT_LINK_ATTRIBUTE, family)
-    const retryHref =
-      fallbackHref && fallbackHref !== href ? fallbackHref : null
-    if (retryHref) {
-      // Google answers 400 when a static family lacks a requested weight;
-      // retry once with the family's default weight.
-      link.addEventListener(
-        "error",
-        () => link.setAttribute("href", retryHref),
-        { once: true }
-      )
-    }
-    const ready = new Promise<void>((resolve) => {
-      link.addEventListener("load", () => resolve(), { once: true })
-      link.addEventListener(
-        "error",
-        () => {
-          if (retryHref) {
-            // The retry's own load, or its error, settles it.
-            link.addEventListener("error", () => resolve(), { once: true })
-          } else {
-            resolve()
-          }
-        },
-        { once: true }
-      )
-    })
-    doc.head.appendChild(link)
-    entry = { link, refs: 0, ready }
+    entry =
+      (adopt && fallbackHref
+        ? adoptHeadScriptLink(doc, family, href, fallbackHref)
+        : undefined) ?? addFontLink(doc, family, href, fallbackHref)
     registry.set(key, entry)
   }
 
@@ -194,7 +255,9 @@ function acquireFontLink(
 
 /**
  * Hold a Google family in a document. The first holder decides the weights;
- * later holders share that link.
+ * later holders share that link. A link the head script already added for
+ * the family (its full or default-weight href) is adopted rather than
+ * doubled.
  */
 export function acquireGoogleFont(
   family: string,
@@ -209,7 +272,8 @@ export function acquireGoogleFont(
     `family:${name}`,
     name,
     buildFontCssUrl(name, options.weights),
-    buildPlainFontCssUrl(name)
+    buildPlainFontCssUrl(name),
+    true
   )
 }
 

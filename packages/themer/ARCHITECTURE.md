@@ -552,6 +552,16 @@ diffs against what the Theme holds; `clearThemeFonts` releases all. A failed
 link retries once with the default weight. A stack starting with a system
 family or `var(...)` names no Google family.
 
+The head script links the saved sans, serif and mono families before first
+paint, with the same URLs and the same once-only retry. A family's first
+acquire in a document adopts that link (matched by its full or its
+default-weight href) instead of adding a second one: the link gets
+`data-themer-font`, is held and released like the registry's own, and goes
+with the last release or when the Theme override goes off. Its readiness
+settles at once when its stylesheet already loaded, else at its next load or
+error; a link that already failed both URLs leaves `waitForFont` to its own
+timeout. So each Google family has one `<link>` per document.
+
 #### Font Picker Positioning and Scroll Ownership
 
 The picker is `Popover + Command` with a Base UI `Select` for the category;

@@ -66,7 +66,7 @@ afterEach(() => {
 function hydrateEmpty() {
   const { themeState } = store.getState()
   localStorage.clear()
-  hydrateThemerStores("themercn")
+  hydrateThemerStores("themercn", themeState.currentMode)
   store.setState({ themeState })
 }
 
@@ -793,7 +793,7 @@ describe("the stored entry", () => {
 
     // A load, then a storageNamespace switch.
     for (const namespace of ["first", "second"]) {
-      hydrateThemerStores(namespace)
+      hydrateThemerStores(namespace, themeState.currentMode)
       const restored = store.getState()
       expect(restored.themeCheckpoint).toBe(restored.themeState)
       expect(restored.presetBaseline?.styles).toBe(restored.themeState.styles)

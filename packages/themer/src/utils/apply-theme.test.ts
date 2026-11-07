@@ -114,16 +114,17 @@ describe("applyThemeToElement / removeThemeFromElement", () => {
     const html = root(doc)
     html.style.setProperty("--host-owned", "1")
 
-    const keys = applyThemeToElement(defaultThemeState, html)
+    applyThemeToElement(defaultThemeState, html)
+    const keys = Object.keys(computeThemeProperties(defaultThemeState))
     const style = doc.documentElement.style
     expect(keys.length).toBeGreaterThan(0)
     for (const key of keys) expect(style.getPropertyValue(key)).not.toBe("")
 
-    removeThemeFromElement(html, keys)
+    removeThemeFromElement(html)
     expect([...style.values.keys()]).toEqual(["--host-owned"])
   })
 
-  it("removes what was last applied when no key list is given", () => {
+  it("removes what was last applied, override sheet included", () => {
     const doc = new FakeDocument()
     const html = root(doc)
 
@@ -170,12 +171,8 @@ describe("applyThemeToElement / removeThemeFromElement", () => {
       const style = doc.documentElement.style
       const set = vi.spyOn(style, "setProperty")
       const remove = vi.spyOn(style, "removeProperty")
-      if (doc === host) {
-        // The returned list is still every property the Theme writes.
-        expect(applyThemeToElement(after, root(doc))).toEqual(
-          Object.keys(computeThemeProperties(after))
-        )
-      } else store.setState({ themeState: after })
+      if (doc === host) applyThemeToElement(after, root(doc))
+      else store.setState({ themeState: after })
 
       expect(set.mock.calls).toEqual([["--primary", "oklch(0.5 0.1 42)"]])
       expect(remove).not.toHaveBeenCalled()
@@ -210,22 +207,12 @@ describe("applyThemeToElement / removeThemeFromElement", () => {
     applyThemeToElement(theme, html)
     removeThemeFromElement(html)
 
-    const keys = applyThemeToElement(theme, html)
+    applyThemeToElement(theme, html)
 
+    const keys = Object.keys(computeThemeProperties(theme))
     expect([...doc.documentElement.style.values.keys()].sort()).toEqual(
       [...keys].sort()
     )
-  })
-
-  it("toggles the dark class unless the host owns it", () => {
-    const doc = new FakeDocument()
-    const html = root(doc)
-
-    applyThemeToElement(themeWith({}, "dark"), html)
-    expect(doc.documentElement.classList.contains("dark")).toBe(true)
-
-    applyThemeToElement(themeWith({}, "light"), html, { updateClass: false })
-    expect(doc.documentElement.classList.contains("dark")).toBe(true)
   })
 
   it("injects one shadow override sheet per document and removes it", () => {
@@ -457,6 +444,40 @@ describe("startThemedDocument", () => {
     expect(doc.documentElement.style.length).toBe(0)
     expect(doc.head.children).toEqual([])
   })
+
+  it("skips a document that is gone, and still cleans it on stop", () => {
+    const doc = new FakeDocument()
+    const store = createStore(() => ({
+      themeState: themeWith({ "font-sans": "Inter, sans-serif" }),
+    }))
+    const stop = startThemedDocument(doc.asDocument, store)
+    const written = root(doc).style.getPropertyValue("--primary")
+
+    // The frame navigated away: the next edit must not reach the old page.
+    doc.gone = true
+    store.setState({ themeState: themeWith({ primary: "#abcdef" }) })
+    expect(root(doc).style.getPropertyValue("--primary")).toBe(written)
+
+    stop()
+    expect(doc.documentElement.style.length).toBe(0)
+    expect(doc.head.children).toEqual([])
+  })
+
+  it("lets a fault in an apply to a shown document reach the caller", () => {
+    const doc = new FakeDocument()
+    const store = createStore(() => ({ themeState: themeWith({}) }))
+    const stop = startThemedDocument(doc.asDocument, store)
+    vi.spyOn(doc.documentElement.style, "setProperty").mockImplementation(
+      () => {
+        throw new Error("style write failed")
+      }
+    )
+
+    expect(() =>
+      store.setState({ themeState: themeWith({ primary: "#abcdef" }) })
+    ).toThrow("style write failed")
+    stop()
+  })
 })
 
 describe("host extra colours", () => {
@@ -467,12 +488,14 @@ describe("host extra colours", () => {
     const html = root(doc)
     const theme = themeWith({ signal: "#3457FF", "success-foreground": "" })
 
-    const keys = applyThemeToElement(theme, html)
+    applyThemeToElement(theme, html)
     expect(doc.documentElement.style.getPropertyValue("--signal")).toBe(
       "#3457FF"
     )
     // An unset (blank) extra is not written: the host's CSS value shows.
-    expect(keys).not.toContain("--success-foreground")
+    expect(
+      doc.documentElement.style.getPropertyValue("--success-foreground")
+    ).toBe("")
 
     applyThemeToElement(themeWith({}), html)
     expect(doc.documentElement.style.getPropertyValue("--signal")).toBe("")

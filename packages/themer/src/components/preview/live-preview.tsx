@@ -125,11 +125,7 @@ function useThemeInjectedIframe(
     const stopThemed = () => {
       const current = themed
       themed = null
-      try {
-        current?.stop()
-      } catch {
-        // Detached document: nothing left to clean.
-      }
+      current?.stop()
     }
 
     const themeFrameDocument = () => {
@@ -139,12 +135,10 @@ function useThemeInjectedIframe(
       // The frame navigated: the old document is gone, drop its records.
       stopThemed()
       if (!doc) return
-      try {
-        const root = doc.documentElement
-        themed = { doc, root, stop: startThemedDocument(doc, useEditorStore) }
-      } catch {
-        // The document went away mid-navigation; the next load starts again.
-      }
+      // A document gone mid-navigation is skipped by startThemedDocument;
+      // the next load starts again.
+      const root = doc.documentElement
+      themed = { doc, root, stop: startThemedDocument(doc, useEditorStore) }
     }
 
     themeFrameDocument()

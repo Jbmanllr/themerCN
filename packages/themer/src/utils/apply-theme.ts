@@ -38,9 +38,9 @@
 //   step that parses a colour, is memoised per mode on its shadow inputs, so
 //   an edit that touches no shadow input parses nothing.
 //
-// Contract: pass `updateClass: false` wherever next-themes owns `.dark`. The
-// override sheet exists only while a `--shadow-*` variable is written, and
-// removing the theme removes the sheet with it.
+// Contract: next-themes owns `.dark` in every themed document, so this module
+// never toggles it. The override sheet exists only while a `--shadow-*`
+// variable is written, and removing the theme removes the sheet with it.
 //
 // See: packages/themer/ARCHITECTURE.md ("Applying a theme").
 import type { StoreApi } from "zustand"
@@ -56,13 +56,6 @@ import {
 import { clearThemeFonts, setThemeFonts } from "./font-links"
 import { getThemeFonts } from "./font-names"
 import { SHADOW_SCALE_KEYS, getShadowMap, type ShadowMap } from "./shadows"
-
-type ApplyThemeOptions = {
-  /** Toggle the `dark` class on the element. Off where next-themes owns it. */
-  updateClass?: boolean
-  /** Mode to apply; defaults to `themeState.currentMode`. */
-  mode?: ThemeMode
-}
 
 /**
  * The non-colour keys a theme writes as `--key` (fonts, radius, spacing,
@@ -234,10 +227,6 @@ export function computeThemeProperties(
   return properties
 }
 
-function updateThemeClass(element: HTMLElement, mode: ThemeMode): void {
-  element.classList.toggle("dark", mode === "dark")
-}
-
 /** What collectVariantShadowRules reads of a CSSOM rule. */
 type CssRuleLike = {
   cssText: string
@@ -376,19 +365,16 @@ function removeOverrideStyle(doc: Document | null | undefined): void {
 }
 
 /**
- * Apply one mode of the theme to an element (normally a document's <html>).
+ * Apply the theme's current mode to an element (a document's <html>).
  * Writes only the properties whose value changed since the last apply to
  * this element (every property when it has no record) and removes the ones
  * the theme dropped, so switching to a sparser theme leaves nothing behind.
- * Returns every property name the theme writes.
  */
 export function applyThemeToElement(
   themeState: ThemeEditorState,
-  element: HTMLElement = document.documentElement,
-  options: ApplyThemeOptions = {}
-): string[] {
-  const { updateClass = true, mode = themeState.currentMode } = options
-  const properties = computeThemeProperties(themeState, mode)
+  element: HTMLElement
+): void {
+  const properties = computeThemeProperties(themeState)
   const keys = Object.keys(properties)
   const previous = appliedProperties.get(element)
 
@@ -405,16 +391,12 @@ export function applyThemeToElement(
   }
   appliedProperties.set(element, new Map(Object.entries(properties)))
 
-  if (updateClass) updateThemeClass(element, mode)
-
   const doc = element.ownerDocument
   if (keys.some((key) => SHADOW_VARIABLE_SET.has(key.slice(2)))) {
     ensureOverrideStyle(doc)
   } else {
     removeOverrideStyle(doc)
   }
-
-  return keys
 }
 
 /**
@@ -438,19 +420,13 @@ function knownThemeProperties(): string[] {
 }
 
 /**
- * Remove the theme from an element: `keys` when given (the list
- * applyThemeToElement returned), otherwise what was last applied to it. Also
- * removes its document's shadow override sheet.
+ * Remove the theme from an element: what was last applied to it, or every
+ * property a theme can write when it has no record. Also removes its
+ * document's shadow override sheet.
  */
-export function removeThemeFromElement(
-  element: HTMLElement = document.documentElement,
-  keys?: readonly string[]
-): void {
-  if (!element?.style) return
-
+export function removeThemeFromElement(element: HTMLElement): void {
   const recorded = appliedProperties.get(element)
-  const targets =
-    keys ?? (recorded ? [...recorded.keys()] : knownThemeProperties())
+  const targets = recorded ? [...recorded.keys()] : knownThemeProperties()
   for (const key of targets) element.style.removeProperty(key)
   appliedProperties.delete(element)
   removeOverrideStyle(element.ownerDocument)
@@ -464,7 +440,7 @@ export function removeThemeFromElement(
  * replaces it. next-themes owns the `dark` class, so it is never toggled.
  */
 function applyThemeToDocument(doc: Document, themeState: ThemeEditorState) {
-  applyThemeToElement(themeState, doc.documentElement, { updateClass: false })
+  applyThemeToElement(themeState, doc.documentElement)
   doc.getElementById(RESTORE_STYLE_ID)?.remove()
   setThemeFonts(doc, getThemeFonts(themeState.styles).families)
 }
@@ -473,6 +449,14 @@ function applyThemeToDocument(doc: Document, themeState: ThemeEditorState) {
 function removeThemeFromDocument(doc: Document): void {
   removeThemeFromElement(doc.documentElement)
   clearThemeFonts(doc)
+}
+
+/**
+ * Whether a document is no longer shown: browsers drop its window once its
+ * frame navigated away or was removed; happy-dom also disconnects its <html>.
+ */
+function isGone(doc: Document): boolean {
+  return doc.defaultView === null || !doc.documentElement.isConnected
 }
 
 /** The part of the editor store a themed document reads. */
@@ -492,25 +476,23 @@ type ThemeStateSource = Pick<
  * next-themes owns the `dark` class in every themed document, so it is never
  * toggled here.
  *
- * A document that goes away mid-navigation throws on its next apply: that
- * apply is skipped, and the caller starts a new instance on the new document.
+ * A document that is gone (its frame navigated away or was removed) is not
+ * themed: an apply to it is skipped, and the caller starts a new instance on
+ * the new document. Stopping still removes what was written to it. Any error
+ * from an apply to a live document is the caller's.
  */
 export function startThemedDocument(
   doc: Document,
   store: ThemeStateSource
 ): () => void {
-  const apply = (themeState: ThemeEditorState) =>
+  const apply = (themeState: ThemeEditorState) => {
+    if (isGone(doc)) return
     applyThemeToDocument(doc, themeState)
+  }
 
   apply(store.getState().themeState)
   const unsubscribe = store.subscribe((next, previous) => {
-    if (next.themeState === previous.themeState) return
-    try {
-      apply(next.themeState)
-    } catch {
-      // The document went away mid-navigation: the caller restarts on the
-      // new one.
-    }
+    if (next.themeState !== previous.themeState) apply(next.themeState)
   })
   return () => {
     unsubscribe()

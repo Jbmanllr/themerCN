@@ -334,6 +334,18 @@ describe("LivePreview Theme", () => {
     expect(fontLinksOf(doc)).toBe(0)
   })
 
+  it("removes everything it wrote when the Live tab is left", async () => {
+    await setFonts()
+    const doc = await themedFrameDocument()
+    expect(fontLinksOf(doc)).toBe(1)
+
+    await act(async () => root?.unmount())
+    root = null
+
+    expect(doc.documentElement.style.length).toBe(0)
+    expect(fontLinksOf(doc)).toBe(0)
+  })
+
   // An edit restyles the framed page through a store subscription: the
   // preview (address bar, size buttons, panels) does not re-render for it.
   it("restyles the framed page on an edit without re-rendering the preview", async () => {

@@ -103,6 +103,8 @@ First measured on 2026-11-06 (spec #119) on one machine: an Apple M3 Max under m
 | store sets               | 0                                           | must not grow | `pnpm --filter themercn exec vitest run src/components/preview/inspector/use-inspector.count.test.tsx` | implementer done |
 | ancestor walks           | 1                                           | must not grow | `pnpm --filter themercn exec vitest run src/components/preview/inspector/use-inspector.count.test.tsx` | implementer done |
 | class tests per class    | 1                                           | must not grow | `pnpm --filter themercn exec vitest run src/components/preview/inspector/use-inspector.count.test.tsx` | implementer done |
+| `closest(ignore)` calls  | 1                                           | must not grow | `pnpm --filter themercn exec vitest run src/components/preview/inspector/use-inspector.count.test.tsx` | implementer done |
+| other DOM queries        | 0 same element; 0 new element; 1 card shown | must not grow | `pnpm --filter themercn exec vitest run src/components/preview/inspector/use-inspector.count.test.tsx` | implementer done |
 | measures                 | 0 same element; 1 new element; 0 card shown | must not grow | `pnpm --filter themercn exec vitest run src/components/preview/inspector/use-inspector.count.test.tsx` | implementer done |
 | layout reads per measure | 5                                           | must not grow | `pnpm --filter themercn exec vitest run src/components/preview/inspector/use-inspector.count.test.tsx` | implementer done |
 | overlay renders          | 0 same element; 1 new element; 0 card shown | must not grow | `pnpm --filter themercn exec vitest run src/components/preview/inspector/use-inspector.count.test.tsx` | implementer done |
@@ -139,13 +141,6 @@ The ratchet. Each count is per unit of its path, as the paths ADR defines the un
 | first applies        | 3                                                                   | must not grow | `pnpm --filter themercn exec vitest run src/components/page-load.count.test.tsx`          | implementer done |
 | frame chunk imports  | 1                                                                   | must not grow | `pnpm --filter web exec playwright test --project=chromium e2e/frame-chunk.count.spec.ts` | merge gate       |
 | root-class observers | 2                                                                   | must not grow | `pnpm --filter themercn exec vitest run src/components/page-load.count.test.tsx`          | implementer done |
-
-**Inspector pointer move** (per `mousemove`, and per measure where named)
-
-| Metric                  | Today                                       | Direction     | Checked by                                                                                             | Runs at          |
-| ----------------------- | ------------------------------------------- | ------------- | ------------------------------------------------------------------------------------------------------ | ---------------- |
-| `closest(ignore)` calls | 2                                           | must not grow | `pnpm --filter themercn exec vitest run src/components/preview/inspector/use-inspector.count.test.tsx` | implementer done |
-| other DOM queries       | 1 same element; 1 new element; 2 card shown | must not grow | `pnpm --filter themercn exec vitest run src/components/preview/inspector/use-inspector.count.test.tsx` | implementer done |
 
 **Font catalog request** (per request)
 

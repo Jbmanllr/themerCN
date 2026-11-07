@@ -71,6 +71,10 @@ const CACHED = "cached"
 const UNCACHED = "uncached"
 const BACK_OFF = "back-off"
 const CONCURRENT = "concurrent"
+// How the endpoint answered a client request (client round trips, badge
+// requests): a page or a 4xx, final; or a network error or 5xx, retried once.
+const SUCCESS_OR_4XX = "success or 4xx"
+const RETRIED_FAILURE = "retried failure"
 
 // ---- Google, stubbed --------------------------------------------------------
 
@@ -288,16 +292,21 @@ const counters = (): Counter[] => [
 // ---- Checking and reporting -------------------------------------------------
 
 /**
- * Checks one run. `outcome` is the run's outcome for every split row;
- * `perRow` names another for a row that has no figure for it (a concurrent
- * request downloads once, so its parse is the uncached one).
+ * Checks one run. `outcome` is the run's catalog outcome for every row split
+ * by it, and `answer` how the endpoint answered, for the client rows split by
+ * that; `perRow` names another outcome for a row that has no figure for the
+ * run's (a concurrent request downloads once, so its parse is the uncached
+ * one).
  */
 function check(
   outcome: string,
   counts: Counts,
-  perRow: Record<string, string> = {}
+  {
+    answer = SUCCESS_OR_4XX,
+    perRow = {},
+  }: { answer?: string; perRow?: Record<string, string> } = {}
 ) {
-  checkCounts({ path: PATH, outcomes: [outcome], perRow, counts })
+  checkCounts({ path: PATH, outcomes: [outcome, answer], perRow, counts })
 }
 
 // Not a register row: every browser fetch, which no endpoint must remove.
@@ -501,7 +510,7 @@ describe("Font catalog request rows, on the route", () => {
       await Promise.all([first, second])
     })
     report(`route: ${CONCURRENT} (catalog parses: ${UNCACHED})`, counts)
-    check(CONCURRENT, counts, { "catalog parses": UNCACHED })
+    check(CONCURRENT, counts, { perRow: { "catalog parses": UNCACHED } })
   })
 })
 
@@ -577,7 +586,8 @@ describe("Font catalog request composition", () => {
     expect(picker["badge requests"]).toBe(1)
   })
 
-  // A failure that a second try can fix is retried once, then given up.
+  // A failure that a second try can fix is retried once, then given up: the
+  // retried-failure outcome of the client rows.
   it.each(["5xx", "network error"] as const)(
     "reports every row when the endpoint fails with a %s",
     async (failure) => {
@@ -585,8 +595,11 @@ describe("Font catalog request composition", () => {
       const counts = await measure(counters(), () =>
         mountPicker("Inter, sans-serif", ENDPOINT)
       )
-      report(`endpoint ${failure}: picker badge lookup, ${CACHED}`, counts)
-      check(CACHED, counts)
+      report(
+        `endpoint ${failure}: picker badge lookup, ${CACHED}, ${RETRIED_FAILURE}`,
+        counts
+      )
+      check(CACHED, counts, { answer: RETRIED_FAILURE })
       expect(counts["badge requests"]).toBe(2)
     }
   )

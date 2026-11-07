@@ -105,10 +105,12 @@ First measured on 2026-11-06 (spec #119) on one machine: an Apple M3 Max under m
 
 | Metric               | Rule                                           | Direction     | Checked by                                                                   | Runs at          |
 | -------------------- | ---------------------------------------------- | ------------- | ---------------------------------------------------------------------------- | ---------------- |
+| client round trips   | 1 success or 4xx; 2 retried failure            | must not grow | `pnpm --filter themercn exec vitest run src/api/font-catalog.count.test.tsx` | implementer done |
 | Google downloads     | 0 cached; 1 uncached; 0 back-off; 1 concurrent | must not grow | `pnpm --filter themercn exec vitest run src/api/font-catalog.count.test.tsx` | implementer done |
 | catalog parses       | 0 cached; 1 uncached; 0 back-off               | must not grow | `pnpm --filter themercn exec vitest run src/api/font-catalog.count.test.tsx` | implementer done |
 | catalog code loads   | 1                                              | must not grow | `pnpm --filter themercn exec vitest run src/api/font-catalog.count.test.tsx` | implementer done |
 | whole-catalog passes | 1                                              | must not grow | `pnpm --filter themercn exec vitest run src/api/font-catalog.count.test.tsx` | implementer done |
+| badge requests       | 1 success or 4xx; 2 retried failure            | must not grow | `pnpm --filter themercn exec vitest run src/api/font-catalog.count.test.tsx` | implementer done |
 
 ### Measured, not yet enforced
 
@@ -156,10 +158,8 @@ The ratchet. Each count is per unit of its path, as the paths ADR defines the un
 
 | Metric               | Today | Direction     | Checked by                                                                   | Runs at          |
 | -------------------- | ----- | ------------- | ---------------------------------------------------------------------------- | ---------------- |
-| client round trips   | 2     | must not grow | `pnpm --filter themercn exec vitest run src/api/font-catalog.count.test.tsx` | implementer done |
 | family lower-cases   | 0     | must not grow | `pnpm --filter themercn exec vitest run src/api/font-catalog.count.test.tsx` | implementer done |
 | response stringifies | 1     | must not grow | `pnpm --filter themercn exec vitest run src/api/font-catalog.count.test.tsx` | implementer done |
-| badge requests       | 2     | must not grow | `pnpm --filter themercn exec vitest run src/api/font-catalog.count.test.tsx` | implementer done |
 | badge lower-cases    | 0     | must not grow | `pnpm --filter themercn exec vitest run src/api/font-catalog.count.test.tsx` | implementer done |
 
 ### Exceptions
@@ -184,8 +184,6 @@ The ratchet. Each count is per unit of its path, as the paths ADR defines the un
 | E16 | root-class observers    | Page load              | Debt: "Every `useColorMode` caller and every font label adds its own `<html>` observer"; remediation map #111                                                           | Jbmanllr (project owner) | 2027-02-04 |
 | E17 | `closest(ignore)` calls | Inspector pointer move | Debt: "every move runs `closest(ignore)` twice, once on the surface and once in the outside-move check"; remediation map #111                                           | Jbmanllr (project owner) | 2027-02-04 |
 | E18 | other DOM queries       | Inspector pointer move | No debt line. Measured cause: the outside-move check's `contains` runs on every move while a card is current; remediation map #111                                      | Jbmanllr (project owner) | 2027-02-04 |
-| E19 | client round trips      | Font catalog request   | No debt line. Measured cause: with the route disabled, the 404 plus the Themer's `retry: 1` asks twice; remediation map #111                                            | Jbmanllr (project owner) | 2027-02-04 |
-| E22 | badge requests          | Font catalog request   | No debt line. Measured cause: the same retry as E19; remediation map #111                                                                                               | Jbmanllr (project owner) | 2027-02-04 |
 
 ### Rules
 

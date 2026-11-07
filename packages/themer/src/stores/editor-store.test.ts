@@ -610,11 +610,14 @@ describe("refreshUntouchedPreset", () => {
     configurePresets({ presets: [v2] })
     store.getState().refreshUntouchedPreset()
 
-    const { themeState, themeCheckpoint, history } = store.getState()
+    const { themeState, themeCheckpoint, presetBaseline, history } =
+      store.getState()
     expect(themeState.styles.light.destructive).toBe("#B23A2A")
     expect(themeState.styles.light.signal).toBe("#3457FF")
     expect(themeState.currentMode).toBe("dark")
     expect(themeCheckpoint).toBe(themeState)
+    expect(presetBaseline?.preset).toBe("brand")
+    expect(presetBaseline?.styles).toEqual(themeState.styles)
     expect(history).toEqual([])
   })
 

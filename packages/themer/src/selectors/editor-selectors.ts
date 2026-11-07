@@ -8,6 +8,10 @@
 // each call changes identity on every store update and re-renders its
 // component each time; wrap such a selector in useShallow or derive the value
 // in the component.
+//
+// The module also holds the pure Preset rules (isOnPreset, isUntouchedPreset,
+// shouldAdoptPreset) that the store's actions and selectors call; they take
+// plain values and are not selectors themselves.
 
 import type {
   EditorStore,
@@ -117,7 +121,8 @@ export function isUntouchedPreset(
  * `presetId` unless it is already that Preset. Only a Theme on the built-in
  * default Preset id adopts; on the same id it adopts only when `presetStyles`,
  * the resolved Preset, differ from its styles (a Host Preset replacing
- * "default"). Freshness (no restore, no history) is the caller's check.
+ * "default"). Freshness (no restore, no history) and the Preset registry
+ * lookup (`hasPreset`) are the caller's checks.
  */
 export function shouldAdoptPreset(
   themeState: ThemeEditorState,

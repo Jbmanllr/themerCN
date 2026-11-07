@@ -3,8 +3,10 @@
 // stacks never reach Google, previews are text subsets, a rejected weight
 // retries once at the default weight, theme fonts follow the theme, and
 // waitForFont waits for the stylesheet (and its retry) before the face, and
-// a link the head script already added for a family is adopted, not doubled.
+// a link the head script already added for a family is adopted, not doubled,
+// while a Host's own link with the same URL is left to the Host.
 import { afterEach, describe, expect, it, vi } from "vitest"
+import { HEAD_FONT_LINK_ATTRIBUTE } from "../config/constants"
 import { FakeDocument } from "./fake-document.test-helper"
 import {
   FONT_LINK_ATTRIBUTE,
@@ -98,12 +100,19 @@ const INTER_FULL =
 const INTER_FALLBACK =
   "https://fonts.googleapis.com/css2?family=Inter&display=swap"
 
-/** A link as the head script adds it: no registry attribute. */
-function headScriptLink(doc: FakeDocument, href: string) {
+/** A Host's own stylesheet link: neither marker. */
+function hostLink(doc: FakeDocument, href: string) {
   const link = doc.createElement("link")
   link.setAttribute("rel", "stylesheet")
   link.setAttribute("href", href)
   doc.head.appendChild(link)
+  return link
+}
+
+/** A link as the head script adds it: its marker, no registry attribute. */
+function headScriptLink(doc: FakeDocument, href: string) {
+  const link = hostLink(doc, href)
+  link.setAttribute(HEAD_FONT_LINK_ATTRIBUTE, "Inter")
   return link
 }
 
@@ -151,6 +160,20 @@ describe("head-script links", () => {
     const [fresh] = links(doc)
     expect(fresh).not.toBe(adopted)
     expect(fresh?.getAttribute("href")).toBe(INTER_FULL)
+  })
+
+  it("leaves a Host's own link with the same URL to the Host", () => {
+    const doc = new FakeDocument()
+    const own = hostLink(doc, INTER_FULL)
+    setThemeFonts(doc.asDocument, ["Inter"])
+
+    const added = links(doc).filter((link) => link !== own)
+    expect(added).toHaveLength(1)
+    expect(added[0]?.getAttribute(FONT_LINK_ATTRIBUTE)).toBe("Inter")
+    expect(own.getAttribute(FONT_LINK_ATTRIBUTE)).toBeNull()
+
+    clearThemeFonts(doc.asDocument)
+    expect(links(doc)).toEqual([own])
   })
 
   it("shares an adopted family link with a preview", () => {

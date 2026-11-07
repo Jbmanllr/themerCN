@@ -111,6 +111,21 @@ it("builds the string once for every render of one namespace", async () => {
   )
 })
 
+it("builds the default namespace's string once, named or not", async () => {
+  // A fresh module, so no earlier test's string is cached.
+  vi.resetModules()
+  const fresh = await import("./index")
+  const { getThemerHeadScript: build } = await import("../head-script")
+
+  const unnamed = renderToString(<fresh.ThemerHeadScript />)
+  const named = renderToString(
+    <fresh.ThemerHeadScript storageNamespace="themercn" />
+  )
+
+  expect(vi.mocked(build)).toHaveBeenCalledTimes(1)
+  expect(named).toBe(unnamed)
+})
+
 it("gives each namespace its own string", () => {
   const first = renderToString(<ThemerHeadScript storageNamespace="first" />)
   const second = renderToString(<ThemerHeadScript storageNamespace="second" />)

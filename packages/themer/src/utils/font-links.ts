@@ -8,13 +8,15 @@
 //
 // Contract: at most 1 link per Google family per document (the paths ADR's
 // Page load contract). The head script (theme-script.ts) links families
-// before first paint with the URLs built here; a family's first acquire
-// adopts that link rather than adding a second. Never request from Google a
+// before first paint with the URLs built here and marks them
+// (HEAD_FONT_LINK_ATTRIBUTE); a family's first acquire adopts a marked link
+// rather than adding a second, and never a Host's own unmarked link. Never request from Google a
 // value that starts with `var(...)`, a generic keyword or an OS family
 // (font-names.ts decides which names those are). Shipped fonts load through next/font; this module is a development
 // preview mechanism.
 //
 // See: packages/themer/ARCHITECTURE.md ("Font link registry").
+import { HEAD_FONT_LINK_ATTRIBUTE } from "../config/constants"
 import { extractFontFamily, quoteFontFamily } from "./font-names"
 
 type FontWeight = number | string
@@ -155,20 +157,28 @@ function linkReady(link: HTMLLinkElement, retrying: boolean): Promise<void> {
 }
 
 /**
- * The stylesheet link the head script added for a family, matched by its
- * full or its default-weight href, adopted as the family's entry. The head
- * script gives its links the same once-only retry the registry does, so the
- * registry adds no retry of its own.
+ * A Google family's stylesheet URLs: the requested weights, and the default
+ * weight a rejected request retries with. The head script links the same.
+ */
+type FamilyUrls = { href: string; fallbackHref: string }
+
+/**
+ * The stylesheet link the head script added for a family (it carries
+ * HEAD_FONT_LINK_ATTRIBUTE), matched by its full or its default-weight href,
+ * adopted as the family's entry. A Host's own link with the same href lacks
+ * the marker and stays the Host's. The head script gives its links the same
+ * once-only retry the registry does, so the registry adds no retry of its
+ * own.
  */
 function adoptHeadScriptLink(
   doc: Document,
   family: string,
-  href: string,
-  fallbackHref: string
+  { href, fallbackHref }: FamilyUrls
 ): FontLinkEntry | undefined {
   const link = Array.from(doc.head.children).find(
     (child): child is HTMLLinkElement =>
       child.tagName.toLowerCase() === "link" &&
+      child.getAttribute(HEAD_FONT_LINK_ATTRIBUTE) !== null &&
       child.getAttribute("rel") === "stylesheet" &&
       (child.getAttribute("href") === href ||
         child.getAttribute("href") === fallbackHref)
@@ -213,16 +223,16 @@ function addFontLink(
 }
 
 /**
- * Holds `key`'s entry, adding its link on the first hold. With `adopt`, the
- * first hold looks for the head script's link for the family first.
+ * Holds `key`'s entry, adding its link on the first hold: a plain `href`, or
+ * a Google family's `FamilyUrls`, whose first hold adopts the head script's
+ * link for the family when there is one, and whose own link retries once
+ * with the fallback.
  */
 function acquireFontLink(
   doc: Document,
   key: string,
   family: string,
-  href: string,
-  fallbackHref?: string,
-  adopt = false
+  source: string | FamilyUrls
 ): FontRelease {
   const registry = registryFor(doc)
   let entry = registry.get(key)
@@ -234,9 +244,10 @@ function acquireFontLink(
 
   if (!entry) {
     entry =
-      (adopt && fallbackHref
-        ? adoptHeadScriptLink(doc, family, href, fallbackHref)
-        : undefined) ?? addFontLink(doc, family, href, fallbackHref)
+      typeof source === "string"
+        ? addFontLink(doc, family, source)
+        : (adoptHeadScriptLink(doc, family, source) ??
+          addFontLink(doc, family, source.href, source.fallbackHref))
     registry.set(key, entry)
   }
 
@@ -267,14 +278,10 @@ export function acquireGoogleFont(
   const name = family.trim()
   if (!doc || !name || extractFontFamily(name) === null) return noopRelease
 
-  return acquireFontLink(
-    doc,
-    `family:${name}`,
-    name,
-    buildFontCssUrl(name, options.weights),
-    buildPlainFontCssUrl(name),
-    true
-  )
+  return acquireFontLink(doc, `family:${name}`, name, {
+    href: buildFontCssUrl(name, options.weights),
+    fallbackHref: buildPlainFontCssUrl(name),
+  })
 }
 
 /**

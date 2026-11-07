@@ -100,6 +100,15 @@ export const PREFERENCES_VERSION = 1
 export const RESTORE_STYLE_ID = "themercn-restore"
 
 /**
+ * Attribute the pre-hydration script sets, to the family, on each Google
+ * Fonts link it adds. The font link registry (utils/font-links.ts) adopts
+ * only links carrying it, so a Host's own link with the same URL stays the
+ * Host's. Not a `data-themer` name: the head-script string never contains
+ * that marker (head-script.ts).
+ */
+export const HEAD_FONT_LINK_ATTRIBUTE = "data-tcn-head-font"
+
+/**
  * WCAG contrast ratio thresholds that utils/contrast-checker.ts grades a
  * foreground and background pair against.
  */

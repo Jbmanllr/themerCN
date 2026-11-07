@@ -17,6 +17,7 @@
 import { THEME_FONT_KEYS } from "../types/theme"
 import {
   EDITOR_STATE_VERSION,
+  HEAD_FONT_LINK_ATTRIBUTE,
   PREFERENCES_VERSION,
   RESTORE_STYLE_ID,
   getStorageKeys,
@@ -72,8 +73,9 @@ export function generateThemeScript({
     }
 
     // The same URLs as font-links' buildFontCssUrl and its default-weight
-    // fallback, so the font link registry adopts this link rather than
-    // adding a second one; and the same once-only retry on error.
+    // fallback, and a marker attribute, so the font link registry adopts
+    // this link rather than adding a second one (and never a Host's own
+    // link, which lacks the marker); and the same once-only retry on error.
     function loadGoogleFont(family, weights) {
       weights = weights || ["400","500","600","700"];
       var familyParam = "https://fonts.googleapis.com/css2?family=" + encodeURIComponent(family);
@@ -83,6 +85,7 @@ export function generateThemeScript({
       var link = document.createElement("link");
       link.setAttribute("rel", "stylesheet");
       link.setAttribute("href", href);
+      link.setAttribute(${JSON.stringify(HEAD_FONT_LINK_ATTRIBUTE)}, family);
       link.addEventListener("error", function() {
         link.setAttribute("href", fallbackHref);
       }, { once: true });

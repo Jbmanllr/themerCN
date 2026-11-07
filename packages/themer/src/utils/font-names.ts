@@ -58,14 +58,6 @@ export const SYSTEM_FONTS = [
   "fantasy",
 ]
 
-export const SYSTEM_FONTS_FALLBACKS: Record<FontCategory, string> = {
-  "sans-serif": FONT_CATEGORIES["sans-serif"].fallback,
-  serif: FONT_CATEGORIES.serif.fallback,
-  monospace: FONT_CATEGORIES.monospace.fallback,
-  display: FONT_CATEGORIES.display.fallback,
-  handwriting: FONT_CATEGORIES.handwriting.fallback,
-}
-
 const roleToCategory: Record<ThemeFontRole, FontCategory> = {
   sans: "sans-serif",
   heading: "serif",
@@ -115,7 +107,7 @@ export function buildFontFamily(
   fontFamily: string,
   category: FontCategory
 ): string {
-  return `${quoteFontFamily(fontFamily)}, ${SYSTEM_FONTS_FALLBACKS[category]}`
+  return `${quoteFontFamily(fontFamily)}, ${FONT_CATEGORIES[category].fallback}`
 }
 
 /**

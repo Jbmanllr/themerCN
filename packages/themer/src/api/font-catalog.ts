@@ -10,9 +10,11 @@
 // - The route always answers. A Google request that takes over 5 seconds is
 //   aborted. If Google fails either way, the bundled FALLBACK_FONTS answer,
 //   so the picker works offline.
-// - The transformed catalog is held in this module's memory for a day, per
-//   key, so a keystroke neither downloads nor parses it again. After a
-//   failure the bundled list answers for 60 seconds without calling Google.
+// - The transformed catalog, prepared with its lower-cased family names, is
+//   held in this module's memory for a day, per key, so a keystroke neither
+//   downloads, parses nor lower-cases it again. After a failure the bundled
+//   list (prepared once per module load) answers for 60 seconds without
+//   calling Google.
 // - The picker also asks this catalog whether a theme's family is a Google
 //   font (its "Custom font" badge), so the full list matters, not only the
 //   first page.
@@ -24,10 +26,10 @@
 //
 // See: packages/themer/README.md ("Font catalog").
 
-import type { FontInfo } from "../types/fonts"
 import {
-  FALLBACK_FONTS,
+  FALLBACK_CATALOG,
   filterAndPaginateFonts,
+  type PreparedFontCatalog,
 } from "../utils/font-catalog-data"
 import {
   fetchGoogleFontsCatalog,
@@ -43,12 +45,17 @@ const FAILURE_BACKOFF_MS = 60_000
 
 // What answers per source (the key, or "" for the keyless catalog), and until
 // when: Google's catalog for a day, or the bundled list during a back-off.
-const catalogs = new Map<string, { fonts: FontInfo[]; expires: number }>()
+const catalogs = new Map<
+  string,
+  { catalog: PreparedFontCatalog; expires: number }
+>()
 // The download in flight per source: requests that arrive meanwhile (the
 // picker asks about several families at once) share it.
-const requests = new Map<string, Promise<FontInfo[]>>()
+const requests = new Map<string, Promise<PreparedFontCatalog>>()
 
-async function fetchCatalog(googleFontsApiKey: string): Promise<FontInfo[]> {
+async function fetchCatalog(
+  googleFontsApiKey: string
+): Promise<PreparedFontCatalog> {
   // A timer rather than AbortSignal.timeout, so it can be cleared once the
   // body is read.
   const controller = new AbortController()
@@ -76,29 +83,29 @@ async function fetchCatalog(googleFontsApiKey: string): Promise<FontInfo[]> {
   }
 }
 
-function remember(source: string, fonts: FontInfo[], ttlMs: number) {
-  catalogs.set(source, { fonts, expires: Date.now() + ttlMs })
-  return fonts
+function remember(source: string, catalog: PreparedFontCatalog, ttlMs: number) {
+  catalogs.set(source, { catalog, expires: Date.now() + ttlMs })
+  return catalog
 }
 
-function catalog(googleFontsApiKey: string): Promise<FontInfo[]> {
+function catalog(googleFontsApiKey: string): Promise<PreparedFontCatalog> {
   const cached = catalogs.get(googleFontsApiKey)
   if (cached && cached.expires > Date.now()) {
-    return Promise.resolve(cached.fonts)
+    return Promise.resolve(cached.catalog)
   }
 
   let request = requests.get(googleFontsApiKey)
   if (!request) {
     request = fetchCatalog(googleFontsApiKey)
-      .then((fonts) =>
-        remember(googleFontsApiKey, fonts, CATALOG_TTL_SECONDS * 1000)
+      .then((fetched) =>
+        remember(googleFontsApiKey, fetched, CATALOG_TTL_SECONDS * 1000)
       )
       .catch((error: unknown) => {
         console.warn(
           "Themer: Google Fonts catalog unavailable, using the bundled list.",
           error
         )
-        return remember(googleFontsApiKey, FALLBACK_FONTS, FAILURE_BACKOFF_MS)
+        return remember(googleFontsApiKey, FALLBACK_CATALOG, FAILURE_BACKOFF_MS)
       })
       .finally(() => {
         requests.delete(googleFontsApiKey)
@@ -125,11 +132,11 @@ export async function fontCatalogResponse(
   url: URL,
   googleFontsApiKey: string | undefined
 ): Promise<Response> {
-  const fonts = await catalog(googleFontsApiKey ?? "")
+  const served = await catalog(googleFontsApiKey ?? "")
 
   const params = url.searchParams
   return Response.json(
-    filterAndPaginateFonts(fonts, {
+    filterAndPaginateFonts(served, {
       category: params.get("category") ?? "all",
       limit: Number(params.get("limit") ?? 50),
       offset: Number(params.get("offset") ?? 0),

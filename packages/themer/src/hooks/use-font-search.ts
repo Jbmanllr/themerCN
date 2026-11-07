@@ -1,7 +1,7 @@
 import { useInfiniteQuery } from "@tanstack/react-query"
 import type { FilterFontCategory, PaginatedFontsResponse } from "../types/fonts"
 import {
-  FALLBACK_FONTS,
+  FALLBACK_CATALOG,
   filterAndPaginateFonts,
 } from "../utils/font-catalog-data"
 
@@ -45,7 +45,8 @@ function retryCatalogFailure(failureCount: number, error: unknown) {
  * Host's `fontCatalogEndpoint`) it pages through
  * `GET ?q=&category=&limit=&offset=` → `{ fonts, total, offset, limit, hasMore }`;
  * the Host's route owns API keys and gating. Without one it searches the
- * bundled list (FALLBACK_FONTS) in the browser, with the same paging.
+ * bundled list (FALLBACK_CATALOG, prepared once per module load) in the
+ * browser, with the same paging.
  * A failed request is retried once for a network error or a 5xx answer, never
  * for a 4xx.
  */
@@ -60,7 +61,7 @@ export function useFontSearch({
     queryKey: ["themer-fonts", endpoint, query, category, limit],
     queryFn: async ({ pageParam }) => {
       if (!endpoint) {
-        return filterAndPaginateFonts(FALLBACK_FONTS, {
+        return filterAndPaginateFonts(FALLBACK_CATALOG, {
           query,
           category,
           limit,

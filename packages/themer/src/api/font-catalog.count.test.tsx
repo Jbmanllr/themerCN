@@ -212,11 +212,14 @@ const badgeLowerCase = (self: unknown) =>
   !madeBy(/utils\/font-names/)
 // A family lower-cased by a request: the route, or useFontSearch's query
 // over the bundled list in the browser (the picker's rows and its label are
-// not requests).
+// not requests). Per request only: a catalog's names, built once per load
+// (prepareFontCatalog), and the request's own query (normalizeFontQuery,
+// which a family-named query such as the badge's passes) are not counted.
 const familyLowerCase = (self: unknown) =>
   isFamily(self) &&
   notAlongside() &&
-  (onServer() || calledFrom(/hooks\/use-font-search/))
+  (onServer() || calledFrom(/hooks\/use-font-search/)) &&
+  !madeBy(/\b(?:prepareFontCatalog|normalizeFontQuery)\b/)
 // A pass over the whole served catalog (FontInfo entries, as many as the
 // catalog has); a page of it is not one.
 const isWholeCatalog = (self: unknown) => {

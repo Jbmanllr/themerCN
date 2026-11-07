@@ -527,13 +527,16 @@ FontPicker opens ─► useFontSearch (TanStack infinite query, own QueryClient)
    │          └─ fontCatalogResponse (src/api/font-catalog.ts)
    │               ├─ googleFontsApiKey: Fonts Developer API (memory, 1 day)
    │               ├─ no key: fonts.google.com/metadata/fonts (memory, 1 day)
-   │               └─ Google fails or takes > 5 s: FALLBACK_FONTS (60 s back-off)
-   └─ no endpoint: filterAndPaginateFonts(FALLBACK_FONTS) in the browser
+   │               └─ Google fails or takes > 5 s: FALLBACK_CATALOG (60 s back-off)
+   └─ no endpoint: filterAndPaginateFonts(FALLBACK_CATALOG) in the browser
 User picks a family ─► acquireGoogleFont + waitForFont ─► font-* written as a full stack
 ```
 
 The response is `{ fonts, total, offset, limit, hasMore }`; paging is clamped
-by `filterAndPaginateFonts` (limit 1–100, default 50). The package reads no
+by `filterAndPaginateFonts` (limit 1–100, default 50). It searches a prepared
+catalog: the fonts and their lower-cased family names, built once per catalog
+load (in Google's transform, and at module load for the bundled
+`FALLBACK_CATALOG`), so a search lower-cases only its query. The package reads no
 environment. The picker also asks the catalog whether a Theme's family is a
 Google font (its "Custom font" badge).
 

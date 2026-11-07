@@ -4,13 +4,15 @@
 // the actions menu), with the circular reveal. Internal.
 //
 // Light/dark: useColorMode (hooks/use-color-mode.ts) owns the mode. The
-// toggle writes themeState.currentMode with the change, and ThemerProvider
-// writes it where it applies the Theme (for a change made by the Host, or
-// to undo the toggle's write when a controlling Host declines the switch).
+// toggle only switches the colour mode; ThemerProvider's mode sync is the
+// one writer of themeState.currentMode, and its subscription applies the
+// Theme once. An uncontrolled switch re-renders the colour-mode provider at
+// once, so that apply lands inside the transition and the reveal shows the
+// new Theme. A controlled switch reaches the store when the Host commits
+// its new mode; a declined one changes nothing.
 
 import { useCallback } from "react"
 import { useColorMode } from "./use-color-mode"
-import { useEditorStore } from "../stores/editor-store"
 import {
   runThemeTransition,
   type TransitionOrigin,
@@ -43,16 +45,12 @@ function toOrigin(
  */
 export function useToggleMode(): (origin?: ToggleModeOrigin) => void {
   const { mode, setMode } = useColorMode()
-  const setCurrentMode = useEditorStore((state) => state.setCurrentMode)
 
   return useCallback(
     (origin?: ToggleModeOrigin) => {
       const newMode: ThemeMode = mode === "light" ? "dark" : "light"
-      runThemeTransition(() => {
-        setMode(newMode)
-        setCurrentMode(newMode)
-      }, toOrigin(origin))
+      runThemeTransition(() => setMode(newMode), toOrigin(origin))
     },
-    [mode, setMode, setCurrentMode]
+    [mode, setMode]
   )
 }

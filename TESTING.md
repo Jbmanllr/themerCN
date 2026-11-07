@@ -126,12 +126,12 @@ The ratchet. Each count is per unit of its path, as the paths ADR defines the un
 
 **Theme apply** (per apply and document)
 
-| Metric                  | Today                                                               | Direction     | Checked by                                                                    | Runs at          |
-| ----------------------- | ------------------------------------------------------------------- | ------------- | ----------------------------------------------------------------------------- | ---------------- |
-| property writes         | 54 one-token edit; 54 shadow-input edit; 54 stylesheet-count change | must not grow | `pnpm --filter themercn exec vitest run src/utils/apply-theme.count.test.tsx` | implementer done |
-| shadow colour parses    | 1 one-token edit; 1 shadow-input edit; 1 stylesheet-count change    | must not grow | `pnpm --filter themercn exec vitest run src/utils/apply-theme.count.test.tsx` | implementer done |
-| font label layout reads | 4                                                                   | must not grow | `pnpm --filter themercn exec vitest run src/utils/apply-theme.count.test.tsx` | implementer done |
-| font label stringifies  | 5                                                                   | must not grow | `pnpm --filter themercn exec vitest run src/utils/apply-theme.count.test.tsx` | implementer done |
+| Metric                  | Today                                                                               | Direction     | Checked by                                                                    | Runs at          |
+| ----------------------- | ----------------------------------------------------------------------------------- | ------------- | ----------------------------------------------------------------------------- | ---------------- |
+| property writes         | 54 one-token edit; 54 shadow-input edit; 54 stylesheet-count change; 54 mode toggle | must not grow | `pnpm --filter themercn exec vitest run src/utils/apply-theme.count.test.tsx` | implementer done |
+| shadow colour parses    | 1 one-token edit; 1 shadow-input edit; 1 stylesheet-count change                    | must not grow | `pnpm --filter themercn exec vitest run src/utils/apply-theme.count.test.tsx` | implementer done |
+| font label layout reads | 4                                                                                   | must not grow | `pnpm --filter themercn exec vitest run src/utils/apply-theme.count.test.tsx` | implementer done |
+| font label stringifies  | 5                                                                                   | must not grow | `pnpm --filter themercn exec vitest run src/utils/apply-theme.count.test.tsx` | implementer done |
 
 **Page load** (per load; hydration rows also per `storageNamespace` switch)
 

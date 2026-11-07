@@ -300,18 +300,20 @@ and below the Themer UI.
 - **Controlled** (`colorMode` or `onColorModeChange` set): the mode is
   `colorMode`; the toggle calls `onColorModeChange`; the Host (for example
   `next-themes`) sets the class. No mode is saved (a saved one is removed).
-- **Uncontrolled**: the class is the mode. The toggle flips it, and a
-  `MutationObserver` follows changes made by anyone else. The mode is saved
+- **Uncontrolled**: the class is the mode. The toggle flips it and
+  re-renders the provider at once, and a `MutationObserver` follows changes
+  made by anyone else. The mode is saved
   under `<ns>:color-mode` so the head script restores the class on reload.
 
 The mode controls (the toggle, its menu item, the contrast panel's starting
 mode) read `useColorMode()` directly, so a Host `.dark` flip updates them in
 the commit that themes the page. The store's `themeState.currentMode` (which
 the style controls read) mirrors the colour mode: hydration puts the colour
-mode the mount renders with on the hydrated Theme, the toggle's handler
-writes it with its switch, and `ThemerProvider`'s mode sync (a layout effect
-after the Preset adopt and refresh) puts it back on the colour mode whenever
-the two differ (a controlling Host may decline the toggle's switch). The
+mode the mount renders with on the hydrated Theme, and after that only
+`ThemerProvider`'s mode sync (a layout effect after the Preset adopt and
+refresh) writes it, when the colour mode differs from it. The toggle only
+switches the colour mode, so a switch a controlling Host declines changes
+nothing, and one it commits later themes the page when it commits. The
 mode sync never applies: `ThemerProvider`'s Theme-apply layout effect,
 keyed on the Theme override only, applies the Theme in the store's mode once,
 then from a store subscription on each Theme state change, a mode change
@@ -319,7 +321,9 @@ included (an edit never re-renders the provider). It writes variables, never
 the class (`applyThemeToElement(..., { updateClass: false })`).
 `useToggleMode` ([hooks/use-themer.ts](src/hooks/use-themer.ts)) runs
 the switch inside a View Transition
-([theme-transition.ts](src/utils/theme-transition.ts)) with a circular reveal where supported.
+([theme-transition.ts](src/utils/theme-transition.ts)) with a circular reveal where supported;
+an uncontrolled switch, the mode sync and the one apply land in the
+transition's synchronous commit, so the reveal shows the new mode's Theme.
 
 ## Persistence and the head script
 

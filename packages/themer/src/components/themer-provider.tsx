@@ -49,7 +49,6 @@ import { RESTORE_STYLE_ID, SHORTCUTS } from "../config/constants"
 import { configurePresets, getDefaultPresetId } from "../config/presets"
 import { configureExtraColors } from "../config/extra-colors"
 import { isProduction } from "../utils/is-production"
-import { selectCurrentMode } from "../selectors"
 
 interface ThemerProviderProps {
   children: React.ReactNode
@@ -149,17 +148,18 @@ export function ThemerProvider({
     (state) => state.themeOverrideEnabled
   )
 
-  // The mode sync: the store's mode mirrors the colour mode. Hydration put
-  // the colour mode on the Theme, so at mount it has nothing to set. A layout
-  // effect after the Preset adopt and refresh, so a later mode change lands
-  // in the same commit as the controls that read the colour mode. It also
-  // puts the store's mode back when it leaves the colour mode (the toggle
-  // writes it with its switch, and a controlling Host may decline that
-  // switch). It never applies: the subscription below does.
-  const storeMode = useEditorStore(selectCurrentMode)
+  // The mode sync, the one writer of the store's mode after hydration: the
+  // store's mode mirrors the colour mode. Hydration put the colour mode on
+  // the Theme, so at mount it has nothing to set. A layout effect after the
+  // Preset adopt and refresh, so a mode change lands in the same commit as
+  // the controls that read the colour mode (inside the toggle's reveal, for
+  // an uncontrolled switch). A switch a controlling Host declines never
+  // changes the colour mode, so nothing is set. It never applies: the
+  // subscription below does, once.
   React.useLayoutEffect(() => {
-    if (storeMode !== mode) useEditorStore.getState().setCurrentMode(mode)
-  }, [mode, storeMode])
+    const { themeState, setCurrentMode } = useEditorStore.getState()
+    if (themeState.currentMode !== mode) setCurrentMode(mode)
+  }, [mode])
 
   // The Theme-apply path: the Theme, in the store's mode, is applied once
   // after the layout effects above, then on every later Theme state change

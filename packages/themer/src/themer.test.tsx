@@ -556,6 +556,33 @@ describe("Themer", () => {
       expect(localStorage.getItem("acme:color-mode")).toBe("light")
     })
 
+    it("shows the new mode's Theme in the reveal", async () => {
+      await mount()
+      await openThemer()
+      // The browser takes the reveal's "new" snapshot when the transition's
+      // update returns: the page must be themed for the new mode by then.
+      let revealed: string | undefined
+      const startViewTransition = (update: () => void) => {
+        update()
+        revealed = rootVar("--primary")
+        return { finished: Promise.resolve() }
+      }
+      Object.defineProperty(document, "startViewTransition", {
+        configurable: true,
+        value: startViewTransition,
+      })
+      vi.stubGlobal("matchMedia", () => ({ matches: false }))
+
+      try {
+        await clickModeToggle()
+      } finally {
+        delete (document as { startViewTransition?: unknown })
+          .startViewTransition
+      }
+
+      expect(revealed).toBe(DARK_PRIMARY)
+    })
+
     it("follows a .dark toggle made outside the Themer", async () => {
       await mount()
       expect(rootVar("--primary")).toBe(LIGHT_PRIMARY)
@@ -678,8 +705,18 @@ describe("Themer", () => {
     it("keeps editing the shown mode when the Host declines a switch", async () => {
       await mount({ colorMode: "light", onColorModeChange: () => {} })
       await openThemer()
+      const writes: MutationRecord[] = []
+      const observer = new MutationObserver((batch) => writes.push(...batch))
+      observer.observe(document.documentElement, {
+        attributes: true,
+        attributeFilter: ["style"],
+      })
 
       await clickModeToggle()
+
+      writes.push(...observer.takeRecords())
+      observer.disconnect()
+      expect(writes).toHaveLength(0)
       // An edit as the Colors panel makes it: to the store's current mode.
       await act(async () =>
         useEditorStore.getState().setThemeState((prev) => ({

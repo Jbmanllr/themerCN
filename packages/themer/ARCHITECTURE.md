@@ -497,9 +497,16 @@ document (the Host's `<html>` and the Live frame's, through the same code).
   `--tw-shadow` at its variable (`!important`, with the Host's state variants
   mirrored; the walk skips the Themer's own sheets). Written only when the shadow inputs differ from the defaults,
   so a Preset without shadows keeps the Host's scale.
-- **Tracking of written properties.** A `WeakMap` per element records what
-  was set, so a re-apply drops keys the new Theme lost and removal takes away
-  exactly those.
+- **Diffed write.** A `WeakMap` per element records the value last written
+  for each property, so an apply calls `setProperty` only for a value that
+  changed and `removeProperty` only for a key the new Theme dropped, and
+  removal takes away exactly what was set. An element without a record (a
+  first apply, a new Live frame document after navigation, a record lost to
+  a hot reload) gets the whole Theme.
+- **Shared map and shadow memo.** The property map is built once per mode's
+  styles object and shared, read-only, by the Host page and the Live frame.
+  The shadow scale, the only step that parses a colour, is memoised per mode
+  on its shadow inputs, so an edit that touches no shadow input parses none.
 - **Fonts.** `setThemeFonts` loads the Theme's Google families (see
   [Font link registry](#font-link-registry-utilsfont-linksts));
   `DynamicFontLoader` does it for the Host page.

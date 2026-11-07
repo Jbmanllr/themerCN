@@ -67,6 +67,8 @@ First measured on 2026-11-06 (spec #119) on one machine: an Apple M3 Max under m
 
 | Metric                  | Rule                                                             | Direction     | Checked by                                                                    | Runs at          |
 | ----------------------- | ---------------------------------------------------------------- | ------------- | ----------------------------------------------------------------------------- | ---------------- |
+| property writes         | 1 one-token edit; 8 shadow-input edit; 1 stylesheet-count change | must not grow | `pnpm --filter themercn exec vitest run src/utils/apply-theme.count.test.tsx` | implementer done |
+| shadow colour parses    | 0 one-token edit; 1 shadow-input edit; 0 stylesheet-count change | must not grow | `pnpm --filter themercn exec vitest run src/utils/apply-theme.count.test.tsx` | implementer done |
 | CSSOM walks             | 0 one-token edit; 0 shadow-input edit; 1 stylesheet-count change | must not grow | `pnpm --filter themercn exec vitest run src/utils/apply-theme.count.test.tsx` | implementer done |
 | override sheet writes   | 0 one-token edit; 0 shadow-input edit; 1 stylesheet-count change | must not grow | `pnpm --filter themercn exec vitest run src/utils/apply-theme.count.test.tsx` | implementer done |
 | restore-sheet lookups   | 1                                                                | must not grow | `pnpm --filter themercn exec vitest run src/utils/apply-theme.count.test.tsx` | implementer done |
@@ -126,12 +128,10 @@ The ratchet. Each count is per unit of its path, as the paths ADR defines the un
 
 **Theme apply** (per apply and document)
 
-| Metric                  | Today                                                               | Direction     | Checked by                                                                    | Runs at          |
-| ----------------------- | ------------------------------------------------------------------- | ------------- | ----------------------------------------------------------------------------- | ---------------- |
-| property writes         | 54 one-token edit; 54 shadow-input edit; 54 stylesheet-count change | must not grow | `pnpm --filter themercn exec vitest run src/utils/apply-theme.count.test.tsx` | implementer done |
-| shadow colour parses    | 1 one-token edit; 1 shadow-input edit; 1 stylesheet-count change    | must not grow | `pnpm --filter themercn exec vitest run src/utils/apply-theme.count.test.tsx` | implementer done |
-| font label layout reads | 4                                                                   | must not grow | `pnpm --filter themercn exec vitest run src/utils/apply-theme.count.test.tsx` | implementer done |
-| font label stringifies  | 5                                                                   | must not grow | `pnpm --filter themercn exec vitest run src/utils/apply-theme.count.test.tsx` | implementer done |
+| Metric                  | Today | Direction     | Checked by                                                                    | Runs at          |
+| ----------------------- | ----- | ------------- | ----------------------------------------------------------------------------- | ---------------- |
+| font label layout reads | 4     | must not grow | `pnpm --filter themercn exec vitest run src/utils/apply-theme.count.test.tsx` | implementer done |
+| font label stringifies  | 5     | must not grow | `pnpm --filter themercn exec vitest run src/utils/apply-theme.count.test.tsx` | implementer done |
 
 **Page load** (per load; hydration rows also per `storageNamespace` switch)
 
@@ -171,8 +171,6 @@ The ratchet. Each count is per unit of its path, as the paths ADR defines the un
 | E3  | store deep compares     | Store action           | Debt: "history-only sets run 2 store deep compares" (3 measured in the composition: the preset baseline adds `isBaselineOf`); remediation map #111                      | Jbmanllr (project owner) | 2027-02-04 |
 | E4  | selector deep compares  | Store action           | Debt: "every `useIsOnPreset` caller runs its own"; remediation map #111                                                                                                 | Jbmanllr (project owner) | 2027-02-04 |
 | E5  | selector colour parses  | Store action           | Debt: "the Shadow control's selector parses the shadow colour on every set"; remediation map #111                                                                       | Jbmanllr (project owner) | 2027-02-04 |
-| E6  | property writes         | Theme apply            | Debt: "every apply writes all 46 properties, 54 with own shadows, even for a one-token edit"; remediation map #111                                                      | Jbmanllr (project owner) | 2027-02-04 |
-| E7  | shadow colour parses    | Theme apply            | Debt: "The property map and the shadow colour parse run once per document and apply … even when the shadow inputs didn't change"; remediation map #111                  | Jbmanllr (project owner) | 2027-02-04 |
 | E8  | font label layout reads | Theme apply            | Debt: "A font label reads `getComputedStyle` once per `var()` hop, up to 4"; remediation map #111                                                                       | Jbmanllr (project owner) | 2027-02-04 |
 | E9  | font label stringifies  | Theme apply            | No debt line. Measured cause: 4 `getSnapshot` runs under React's development build, plus react-query's key hash; remediation map #111                                   | Jbmanllr (project owner) | 2027-02-04 |
 | E10 | head-script builds      | Page load              | Debt: "Next builds the head-script string 3 times per load (server render, hydration render, post-hydration render)"; remediation map #111                              | Jbmanllr (project owner) | 2027-02-04 |

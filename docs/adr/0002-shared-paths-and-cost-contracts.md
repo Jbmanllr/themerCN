@@ -84,3 +84,5 @@ These candidates are not shared paths:
 Keeping the pre-paint head script as its own path was rejected: it shares its unit and its saved-Theme reads with the Themer's mount and hydration, so it is one stage of the page load.
 
 Handing the head script's parsed entries to the stores, through a global, was rejected: it would break the head-script entry's isolation from Themer code to save two parses per load.
+
+Moving the mount sequence's stage order out of React effects into a plain sequence module was rejected: the effects' commit order already is the stage order, and a second definition of it would put the `storageNamespace` switch at risk to make the stages testable without React.

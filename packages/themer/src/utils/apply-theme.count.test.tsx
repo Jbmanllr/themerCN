@@ -38,6 +38,7 @@ import {
   checkSeedCaught,
   countCalls,
   countExport,
+  madeBy,
   measure,
   type Counter,
   type Counts,
@@ -117,15 +118,21 @@ const APPLY_THEME = /\/utils\/apply-theme\.ts/
 const HOST_CALLER = /\/components\/themer-provider\.tsx/
 const LIVE_CALLER = /\/preview\/live-preview\.tsx/
 const FONT_LABEL = /\/components\/editor\/font-picker\.tsx/
+// The colour mode's own switch of the `.dark` class (setRootClassMode).
+const COLOUR_MODE_SWITCH = /\/hooks\/use-color-mode\.ts/
+const DOM_TOKEN_LIST = /\/happy-dom\/lib\/dom\/DOMTokenList\.js/
 
 /** One document's unit: the document applied to, the caller whose stack
  *  marks its apply (none when the test calls the interface itself), a
  *  caller whose stack marks another unit's apply even under this caller,
- *  and whether this document's font labels count. */
+ *  the code whose own class toggle is the outcome itself rather than its
+ *  work (a mode toggle's switch of the `.dark` class), and whether this
+ *  document's font labels count. */
 type Unit = {
   doc: Document
   caller: RegExp | null
   excludes?: RegExp
+  outcomeToggle?: RegExp
   labels: boolean
 }
 
@@ -238,8 +245,20 @@ const countOverrideSheetWrites = (doc: Document): Counter => ({
   },
 })
 
+/** Whether `pattern`'s code made the current class toggle: directly, or
+ *  through the DOM's own token list (happy-dom's toggle calls its add or
+ *  remove), so the one switch is left out whole. */
+const switchedBy = (pattern: RegExp) =>
+  madeBy(pattern) || (madeBy(DOM_TOKEN_LIST) && calledFrom(pattern))
+
 /** The register's Theme apply counters for one document's unit. */
-function counters({ doc, caller, excludes, labels }: Unit): Counter[] {
+function counters({
+  doc,
+  caller,
+  excludes,
+  outcomeToggle,
+  labels,
+}: Unit): Counter[] {
   const inUnit = () =>
     !caller ||
     (calledFrom(caller) && !(excludes !== undefined && calledFrom(excludes)))
@@ -265,10 +284,11 @@ function counters({ doc, caller, excludes, labels }: Unit): Counter[] {
     ...(["toggle", "add", "remove"] as const)
       .filter((key) => typeof classList[key] === "function")
       .map((key) =>
-        // The apply's own: a mode toggle's switch of the `.dark` class is
-        // the colour mode's, not the apply's.
-        countCalls("class toggles", classList, key, () =>
-          calledFrom(APPLY_THEME)
+        countCalls(
+          "class toggles",
+          classList,
+          key,
+          () => outcomeToggle === undefined || !switchedBy(outcomeToggle)
         )
       ),
     countExport(
@@ -615,7 +635,10 @@ async function expectOneApplyPerModeToggle(name: string) {
   )
   if (!toggle) throw new Error("the mode toggle did not render")
   let applies: Counts = {}
-  const host = await measure(counters(HOST_PAGE()), async () => {
+  // The toggle's one switch of the `.dark` class is the outcome, not its
+  // work; any other class toggle on the toggle's path still counts.
+  const unit = { ...HOST_PAGE(), outcomeToggle: COLOUR_MODE_SWITCH }
+  const host = await measure(counters(unit), async () => {
     applies = await measure(
       [
         countExport(

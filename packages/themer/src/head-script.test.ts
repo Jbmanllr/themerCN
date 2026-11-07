@@ -9,7 +9,11 @@
 // utils/theme-script.test.ts.
 import { beforeEach, expect, it } from "vitest"
 
-import { COLOR_MODE_RECORD, EDITOR_STATE_VERSION } from "./config/constants"
+import {
+  COLOR_MODE_RECORD,
+  colorModeRecordHost,
+  EDITOR_STATE_VERSION,
+} from "./config/constants"
 import { getThemerHeadScript } from "./head-script"
 
 function save(namespace: string, primary: string) {
@@ -51,10 +55,7 @@ it("restores the default namespace's Theme when given none", () => {
   expect(primary()).toBe("#111111")
 })
 
-const colourModeRecord = () =>
-  (window as unknown as Record<string, Record<string, string | null>>)[
-    COLOR_MODE_RECORD
-  ]
+const colourModeRecord = () => colorModeRecordHost()[COLOR_MODE_RECORD]
 
 it("records the saved colour mode it read, under its storage key", () => {
   localStorage.setItem("shop:color-mode", "dark")

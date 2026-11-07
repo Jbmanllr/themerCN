@@ -90,6 +90,15 @@ export function getStorageKeys(namespace: string = DEFAULT_STORAGE_NAMESPACE) {
  */
 export const COLOR_MODE_RECORD = "__themercnColorMode"
 
+/** `window` as the holder of the colour-mode record, typed. */
+export type ColorModeRecordHost = {
+  [COLOR_MODE_RECORD]?: Record<string, string | null>
+}
+
+/** The page's `window`, typed as the colour-mode record's holder. */
+export const colorModeRecordHost = (): ColorModeRecordHost =>
+  window as ColorModeRecordHost
+
 /**
  * Versions of the persisted stores' entries (zustand persist `version`):
  * editor-store.ts and preferences-store.ts persist at them, and the

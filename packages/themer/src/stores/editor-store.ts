@@ -476,18 +476,9 @@ export const useEditorStore = create<EditorStore>()(
       skipHydration: true,
       version: EDITOR_STATE_VERSION,
       migrate: dropOtherVersion,
-      // Called with `undefined` when nothing (or a state of another version)
-      // is stored; the flag lets adoptDefaultPreset tell a fresh store from a
-      // restored one. Built on the initial state, never the current one, so
-      // a namespace switch (stores/hydrate.ts) carries no Theme or undo
-      // history over from the previous namespace.
-      // The Theme it restores (or starts from) is put in sync with the
-      // preference, already restored (stores/hydrate.ts), so a Theme saved
-      // with Sync off (another tab) holds the rule too. Hydration replaces
-      // this merge with mergeEditorState for the page's colour mode.
-      // Nothing is written until the next action.
-      merge: (persistedState): EditorStore =>
-        mergeEditorState(persistedState, defaultThemeState.currentMode),
+      // No merge here: hydration is the only rehydrate, and it sets the
+      // merge (mergeEditorState) for the page's colour mode
+      // (stores/hydrate.ts).
       // history and future stay out of localStorage (quota): undo and redo
       // start empty after a reload. A change to them alone writes nothing
       // (guardedLocalStorage skips a slice equal to the last write).
@@ -504,6 +495,12 @@ export const useEditorStore = create<EditorStore>()(
  * mode sync has nothing to set. A fresh store keeps its default Theme's
  * baseline (in sync, as the Theme), so the refresh sets nothing. Writes
  * nothing.
+ *
+ * Built on the initial state, never the current one, so a namespace switch
+ * carries no Theme or undo history over; `restoredFromStorage` lets
+ * adoptDefaultPreset tell a fresh store from a restored one. The Theme is
+ * put in sync with the preference, already restored (stores/hydrate.ts), so
+ * a Theme saved with Sync off (another tab) holds the rule too.
  */
 export function mergeEditorState(
   persistedState: unknown,

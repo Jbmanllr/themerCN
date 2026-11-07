@@ -8,6 +8,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import {
   COLOR_MODE_RECORD,
+  colorModeRecordHost,
   EDITOR_STATE_VERSION,
   PREFERENCES_VERSION,
 } from "./config/constants"
@@ -119,7 +120,7 @@ function runHeadScript(storageNamespace: string) {
 
 // The stores are module singletons: start every test from a fresh Themer.
 beforeEach(() => {
-  delete (window as unknown as Record<string, unknown>)[COLOR_MODE_RECORD]
+  delete colorModeRecordHost()[COLOR_MODE_RECORD]
   useEditorStore.setState(useEditorStore.getInitialState(), true)
   usePreferencesStore.setState(usePreferencesStore.getInitialState(), true)
   useThemerUIStore.setState(useThemerUIStore.getInitialState(), true)

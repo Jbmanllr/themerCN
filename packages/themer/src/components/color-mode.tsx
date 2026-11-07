@@ -23,7 +23,7 @@
 
 import * as React from "react"
 
-import { COLOR_MODE_RECORD } from "../config/constants"
+import { COLOR_MODE_RECORD, colorModeRecordHost } from "../config/constants"
 import {
   ColorModeContext,
   setRootClassMode,
@@ -36,11 +36,7 @@ const noop = () => {}
 /** The stored colour mode per key, as the head script read it (null when
  *  nothing is saved) and as this provider wrote it since. */
 function colourModeRecord(): Record<string, string | null> {
-  const host = window as unknown as Record<
-    string,
-    Record<string, string | null> | undefined
-  >
-  return (host[COLOR_MODE_RECORD] ??= {})
+  return (colorModeRecordHost()[COLOR_MODE_RECORD] ??= {})
 }
 
 export function ColorModeProvider({

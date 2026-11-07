@@ -12,9 +12,9 @@
 //   stays open meanwhile. Only the latest pick may commit (`selectionRef`): a
 //   superseded load gives its stylesheet hold back and leaves the state to the
 //   newer pick.
-// - After a commit the picker keeps its stylesheet hold for FONT_HANDOFF_MS so
-//   the theme's own font slot (DynamicFontLoader) takes its reference before
-//   ours drops; releasing first would remove and refetch the link.
+// - After a commit the picker releases its stylesheet hold at once: the
+//   Theme's font slot (the Host page's Theme apply) takes its reference in
+//   the same store commit, so the link stays continuously.
 //
 // See: packages/themer/ARCHITECTURE.md (Font Catalog Flow, Font Picker
 // Positioning and Scroll Ownership).
@@ -93,13 +93,6 @@ type FontItemProps = {
   onSelect: (font: FontInfo) => void
   selectedRef: React.Ref<HTMLDivElement> | null
 }
-
-/**
- * How long the picker keeps its own hold on a chosen family after onChange:
- * the theme's font slot (DynamicFontLoader) takes its reference once the
- * change renders, and releasing ours first would drop and refetch the link.
- */
-const FONT_HANDOFF_MS = 2000
 
 /**
  * Load a row's preview (a `&text=` subset with the glyphs of its name) once
@@ -581,7 +574,8 @@ export function FontPicker({
       setLoadingFont(null)
       onChange(buildFontFamily(font.family, font.category))
       setOpen(false)
-      setTimeout(release, FONT_HANDOFF_MS)
+      // The Theme's font slot took its reference in onChange's store commit.
+      release()
     },
     [onChange]
   )

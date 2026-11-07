@@ -330,10 +330,10 @@ refresh) writes it, when the colour mode differs from it. The toggle only
 switches the colour mode, so a switch a controlling Host declines changes
 nothing, and one it commits later themes the page when it commits. The
 mode sync never applies: `ThemerProvider`'s Theme-apply layout effect,
-keyed on the Theme override only, applies the Theme in the store's mode once,
-then from a store subscription on each Theme state change, a mode change
-included (an edit never re-renders the provider). It writes variables, never
-the class (`applyThemeToElement(..., { updateClass: false })`).
+keyed on the Theme override only, runs `startThemedDocument` on the Host
+page, which applies the Theme in the store's mode once, then from a store
+subscription on each Theme state change, a mode change included (an edit
+never re-renders the provider). It writes variables, never the class.
 `useToggleMode` ([hooks/use-themer.ts](src/hooks/use-themer.ts)) runs
 the switch inside a View Transition
 ([theme-transition.ts](src/utils/theme-transition.ts)) with a circular reveal where supported;
@@ -399,9 +399,9 @@ label reads `<html>` once per toggle.
   the page ends up in; it also adds the font links. It writes nothing when
   nothing is saved or `themeOverrideEnabled` is false, ignores an entry
   saved at another version (as the store drops it), and drops a saved
-  value that could end its declaration. `ThemerProvider` (and
-  `applyThemeToDocument`, for the Live frame) removes the sheet once it
-  applies the Theme itself. It embeds what it needs with `JSON.stringify` and
+  value that could end its declaration. `startThemedDocument` (on the Host
+  page and in the Live frame) removes the sheet once it applies the Theme
+  itself; with the Theme override off, `ThemerProvider` removes it at once. It embeds what it needs with `JSON.stringify` and
   imports constants only. A change to the persisted shape is a change to this
   script.
 - `getThemerHeadScript` (`themercn/head-script`) returns that string,
@@ -525,7 +525,12 @@ registering one picker per token re-renders nobody.
 
 [utils/apply-theme.ts](src/utils/apply-theme.ts) writes the Theme on a
 document (the Host's `<html>` and the Live frame's, through the same code).
-`ThemerProvider` re-applies on every change.
+`startThemedDocument(doc, store)` themes one whole document for as long as it
+runs: it applies the store's Theme with its fonts, removes the restore sheet,
+follows every Theme state change, and its stop removes everything it wrote.
+`ThemerProvider` runs one on the Host page while the Theme override is on;
+the Live view runs one per Live frame document and restarts it when the
+frame loads a new document.
 
 - **Verbatim values.** Colours and common keys are written as stored; Hosts
   map `--color-x: var(--x)` in `@theme inline`, so any CSS colour works.
@@ -551,9 +556,10 @@ document (the Host's `<html>` and the Live frame's, through the same code).
   styles object and shared, read-only, by the Host page and the Live frame.
   The shadow scale, the only step that parses a colour, is memoised per mode
   on its shadow inputs, so an edit that touches no shadow input parses none.
-- **Fonts.** `setThemeFonts` loads the Theme's Google families (see
-  [Font link registry](#font-link-registry-utilsfont-linksts));
-  `DynamicFontLoader` does it for the Host page.
+- **Fonts.** Each apply of a themed document loads the Theme's Google
+  families with `setThemeFonts` (see
+  [Font link registry](#font-link-registry-utilsfont-linksts)), in the same
+  step on the Host page and in the Live frame.
 
 ### Export and import
 

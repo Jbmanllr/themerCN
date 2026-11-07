@@ -40,6 +40,10 @@ _Avoid_: chrome, editor UI, panel
 Any surface that exists to display the Theme: a built-in preview page or the Live view of the Host app's page.
 _Avoid_: demo, sample page
 
+**Themed document**:
+A page the Themer writes the Theme onto while the Theme override is on: the Host app's page, or the page loaded in the Live view's frame. It gets the Theme's variables, shadow overrides and fonts, follows every edit, and loses all of them when theming stops; a frame page left behind by navigation is no longer themed.
+_Avoid_: injected iframe, target element
+
 **Themer layout**:
 How the Themer UI is arranged on screen while it is open: Workspace, Overlay, Push or Toolbar. The Host app sets the default; the user can switch, and the choice is remembered. Small screens always get the same bottom drawer, whatever the Themer layout.
 _Avoid_: layout (alone; a Host app has its own layouts), mode (that is light/dark), view

@@ -142,7 +142,7 @@ The ratchet. Each count is per unit of its path, as the paths ADR defines the un
 | font links           | 7                                                                   | must not grow | `pnpm --filter themercn exec vitest run src/components/page-load.count.test.tsx`          | implementer done |
 | Preset deep compares | 4                                                                   | must not grow | `pnpm --filter themercn exec vitest run src/components/page-load.count.test.tsx`          | implementer done |
 | first applies        | 3                                                                   | must not grow | `pnpm --filter themercn exec vitest run src/components/page-load.count.test.tsx`          | implementer done |
-| frame chunk imports  | 1                                                                   | must not grow | `pnpm --filter web exec playwright test --project=chromium e2e/frame-chunk.count.spec.ts` | merge gate       |
+| frame chunk imports  | 0                                                                   | must not grow | `pnpm --filter web exec playwright test --project=chromium e2e/frame-chunk.count.spec.ts` | merge gate       |
 | root-class observers | 2                                                                   | must not grow | `pnpm --filter themercn exec vitest run src/components/page-load.count.test.tsx`          | implementer done |
 
 **Inspector pointer move** (per `mousemove`, and per measure where named)

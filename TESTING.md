@@ -118,9 +118,9 @@ The ratchet. Each count is per unit of its path, as the paths ADR defines the un
 
 | Metric                 | Today                                 | Direction     | Checked by                                                                      | Runs at          |
 | ---------------------- | ------------------------------------- | ------------- | ------------------------------------------------------------------------------- | ---------------- |
-| stringifies            | 1 persisted change; 1 no change       | must not grow | `pnpm --filter themercn exec vitest run src/stores/store-action.count.test.tsx` | implementer done |
-| storage writes         | 1 persisted change; 1 no change       | must not grow | `pnpm --filter themercn exec vitest run src/stores/store-action.count.test.tsx` | implementer done |
-| store deep compares    | 3 Theme change; 3 history-only change | must not grow | `pnpm --filter themercn exec vitest run src/stores/store-action.count.test.tsx` | implementer done |
+| stringifies            | 1 persisted change; 0 no change       | must not grow | `pnpm --filter themercn exec vitest run src/stores/store-action.count.test.tsx` | implementer done |
+| storage writes         | 1 persisted change; 0 no change       | must not grow | `pnpm --filter themercn exec vitest run src/stores/store-action.count.test.tsx` | implementer done |
+| store deep compares    | 1 Theme change; 0 history-only change | must not grow | `pnpm --filter themercn exec vitest run src/stores/store-action.count.test.tsx` | implementer done |
 | selector deep compares | 9                                     | must not grow | `pnpm --filter themercn exec vitest run src/stores/store-action.count.test.tsx` | implementer done |
 | selector colour parses | 1                                     | must not grow | `pnpm --filter themercn exec vitest run src/stores/store-action.count.test.tsx` | implementer done |
 
@@ -140,7 +140,7 @@ The ratchet. Each count is per unit of its path, as the paths ADR defines the un
 | head-script builds   | 3                                                                   | must not grow | `pnpm --filter themercn exec vitest run src/components/page-load.count.test.tsx`          | implementer done |
 | storage writes       | 1 nothing saved; 1 saved Theme; 3 other version; 2 namespace switch | must not grow | `pnpm --filter themercn exec vitest run src/components/page-load.count.test.tsx`          | implementer done |
 | font links           | 7                                                                   | must not grow | `pnpm --filter themercn exec vitest run src/components/page-load.count.test.tsx`          | implementer done |
-| Preset deep compares | 4                                                                   | must not grow | `pnpm --filter themercn exec vitest run src/components/page-load.count.test.tsx`          | implementer done |
+| Preset deep compares | 2                                                                   | must not grow | `pnpm --filter themercn exec vitest run src/components/page-load.count.test.tsx`          | implementer done |
 | first applies        | 3                                                                   | must not grow | `pnpm --filter themercn exec vitest run src/components/page-load.count.test.tsx`          | implementer done |
 | frame chunk imports  | 1                                                                   | must not grow | `pnpm --filter web exec playwright test --project=chromium e2e/frame-chunk.count.spec.ts` | merge gate       |
 | root-class observers | 2                                                                   | must not grow | `pnpm --filter themercn exec vitest run src/components/page-load.count.test.tsx`          | implementer done |

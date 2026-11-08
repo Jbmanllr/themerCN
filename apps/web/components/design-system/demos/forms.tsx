@@ -5,6 +5,7 @@ import { useId, useState } from "react"
 
 import { State } from "@/components/design-system/specimen"
 import { Calendar } from "@workspace/ui/components/calendar"
+import { calendarLabels } from "@workspace/ui/lib/calendar-labels"
 import { Checkbox } from "@workspace/ui/components/checkbox"
 import {
   Combobox,
@@ -474,6 +475,7 @@ export function CalendarDemo() {
     <>
       <State label="One day">
         <Calendar
+          labels={calendarLabels}
           mode="single"
           defaultMonth={MONTH}
           selected={day}
@@ -483,6 +485,7 @@ export function CalendarDemo() {
       </State>
       <State label="A range">
         <Calendar
+          labels={calendarLabels}
           mode="range"
           defaultMonth={MONTH}
           selected={range}

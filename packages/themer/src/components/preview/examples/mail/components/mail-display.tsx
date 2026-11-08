@@ -24,6 +24,7 @@ import {
 } from "@workspace/ui/components/avatar"
 import { Button } from "@workspace/ui/components/button"
 import { Calendar } from "@workspace/ui/components/calendar"
+import { calendarLabels } from "@workspace/ui/lib/calendar-labels"
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -121,6 +122,7 @@ export function MailDisplay({ mail }: MailDisplayProps) {
               </div>
               <div className="p-2">
                 <Calendar
+                  labels={calendarLabels}
                   mode="single"
                   selected={selectedDate}
                   onSelect={setSelectedDate}

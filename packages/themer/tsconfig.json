@@ -8,7 +8,8 @@
     "moduleResolution": "Bundler",
     "noEmit": true,
     "declarationMap": false,
-    "allowJs": true
+    "allowJs": true,
+    "types": ["node"]
   },
   "include": ["src/**/*.ts", "src/**/*.tsx", "scripts/**/*.test.ts"]
 }

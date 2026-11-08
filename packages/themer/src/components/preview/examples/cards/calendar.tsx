@@ -3,6 +3,7 @@
 import { addDays } from "date-fns"
 
 import { Calendar } from "@workspace/ui/components/calendar"
+import { calendarLabels } from "@workspace/ui/lib/calendar-labels"
 import { Card, CardContent } from "@workspace/ui/components/card"
 
 const start = new Date(2025, 5, 5)
@@ -12,6 +13,7 @@ export function CardsCalendar() {
     <Card className="hidden p-0 @2xl:flex">
       <CardContent className="p-0">
         <Calendar
+          labels={calendarLabels}
           numberOfMonths={1}
           mode="range"
           defaultMonth={start}

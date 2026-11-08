@@ -7,6 +7,7 @@ import { DateRange } from "react-day-picker"
 
 import { Button } from "@workspace/ui/components/button"
 import { Calendar } from "@workspace/ui/components/calendar"
+import { calendarLabels } from "@workspace/ui/lib/calendar-labels"
 import {
   Card,
   CardContent,
@@ -66,6 +67,7 @@ export function DatePickerWithRange({
           />
           <PopoverContent className="w-auto p-0" align="start">
             <Calendar
+              labels={calendarLabels}
               mode="range"
               defaultMonth={date?.from}
               selected={date}

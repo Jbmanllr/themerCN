@@ -22,6 +22,8 @@ root="$(cd "$(dirname "$0")/.." && pwd)"
 # (and so the baselines) would differ from CI's.
 version="$(node -p 'require(process.argv[1]).devDependencies["@playwright/test"]' "$root/apps/web/package.json")"
 image="mcr.microsoft.com/playwright:v${version}-noble"
+# The image has no corepack: it installs the pnpm this repository pins.
+package_manager="$(node -p 'require(process.argv[1]).packageManager' "$root/package.json")"
 
 update=false
 for arg in "$@"; do
@@ -36,6 +38,7 @@ docker run --rm --ipc=host --init \
   -e PLAYGROUND_E2E="${PLAYGROUND_E2E:-}" \
   -e npm_config_store_dir=/pnpm-store \
   -e UPDATE="$update" \
+  -e PACKAGE_MANAGER="$package_manager" \
   -e HOST_UID="$(id -u)" -e HOST_GID="$(id -g)" \
   -w /work \
   "$image" \
@@ -44,7 +47,7 @@ docker run --rm --ipc=host --init \
       --exclude=./.git --exclude=node_modules --exclude=.next --exclude=dist \
       --exclude=dist-e2e --exclude=.turbo --exclude=playwright-report \
       --exclude=test-results -cf - . | tar -xf -
-    corepack enable
+    npm install --global --silent "$PACKAGE_MANAGER"
     CI=true pnpm install --frozen-lockfile
     pnpm turbo build --filter=web --output-logs=errors-only
     cd apps/web

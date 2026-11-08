@@ -5,6 +5,7 @@
 // removal touches exactly what was written, and Host extra colours are
 // ordinary keys.
 import { afterEach, describe, expect, it, vi } from "vitest"
+import { createStore } from "zustand/vanilla"
 import { defaultThemeState } from "../config/defaults"
 import { THEMER_STYLE_ATTRIBUTE } from "../config/constants"
 import { configureExtraColors } from "../config/extra-colors"
@@ -12,11 +13,10 @@ import type { ThemeEditorState } from "../types"
 import {
   SHADOW_OVERRIDE_CSS,
   THEMER_OVERRIDES_ATTRIBUTE,
-  applyThemeToDocument,
   applyThemeToElement,
   computeThemeProperties,
-  removeThemeFromDocument,
   removeThemeFromElement,
+  startThemedDocument,
 } from "./apply-theme"
 import { FakeDocument } from "./fake-document.test-helper"
 
@@ -114,16 +114,17 @@ describe("applyThemeToElement / removeThemeFromElement", () => {
     const html = root(doc)
     html.style.setProperty("--host-owned", "1")
 
-    const keys = applyThemeToElement(defaultThemeState, html)
+    applyThemeToElement(defaultThemeState, html)
+    const keys = Object.keys(computeThemeProperties(defaultThemeState))
     const style = doc.documentElement.style
     expect(keys.length).toBeGreaterThan(0)
     for (const key of keys) expect(style.getPropertyValue(key)).not.toBe("")
 
-    removeThemeFromElement(html, keys)
+    removeThemeFromElement(html)
     expect([...style.values.keys()]).toEqual(["--host-owned"])
   })
 
-  it("removes what was last applied when no key list is given", () => {
+  it("removes what was last applied, override sheet included", () => {
     const doc = new FakeDocument()
     const html = root(doc)
 
@@ -159,7 +160,8 @@ describe("applyThemeToElement / removeThemeFromElement", () => {
     const frame = new FakeDocument()
     const before = themeWith({ "shadow-offset-x": "2px" })
     applyThemeToElement(before, root(host))
-    applyThemeToDocument(frame.asDocument, before)
+    const store = createStore(() => ({ themeState: before }))
+    const stop = startThemedDocument(frame.asDocument, store)
     const after = themeWith({
       "shadow-offset-x": "2px",
       primary: "oklch(0.5 0.1 42)",
@@ -169,32 +171,33 @@ describe("applyThemeToElement / removeThemeFromElement", () => {
       const style = doc.documentElement.style
       const set = vi.spyOn(style, "setProperty")
       const remove = vi.spyOn(style, "removeProperty")
-      const keys =
-        doc === host
-          ? applyThemeToElement(after, root(doc))
-          : applyThemeToDocument(doc.asDocument, after)
+      if (doc === host) applyThemeToElement(after, root(doc))
+      else store.setState({ themeState: after })
 
       expect(set.mock.calls).toEqual([["--primary", "oklch(0.5 0.1 42)"]])
       expect(remove).not.toHaveBeenCalled()
-      // The returned list is still every property the Theme writes.
-      expect(keys).toEqual(Object.keys(computeThemeProperties(after)))
       for (const [key, value] of Object.entries(computeThemeProperties(after)))
         expect(style.getPropertyValue(key)).toBe(value)
     }
+    stop()
   })
 
   it("writes the whole Theme onto a document it has no record of", () => {
     const old = new FakeDocument()
     const theme = themeWith({ primary: "#123456" })
-    applyThemeToDocument(old.asDocument, theme)
+    const store = createStore(() => ({ themeState: theme }))
+    const stopOld = startThemedDocument(old.asDocument, store)
 
     // The Live frame navigated: a new document, same Theme state.
     const navigated = new FakeDocument()
-    const keys = applyThemeToDocument(navigated.asDocument, theme)
+    const stop = startThemedDocument(navigated.asDocument, store)
 
+    const keys = Object.keys(computeThemeProperties(theme))
     const style = navigated.documentElement.style
     expect(keys.length).toBeGreaterThan(0)
     expect([...style.values.keys()].sort()).toEqual([...keys].sort())
+    stop()
+    stopOld()
   })
 
   it("writes the whole Theme again after it was removed from the element", () => {
@@ -204,22 +207,12 @@ describe("applyThemeToElement / removeThemeFromElement", () => {
     applyThemeToElement(theme, html)
     removeThemeFromElement(html)
 
-    const keys = applyThemeToElement(theme, html)
+    applyThemeToElement(theme, html)
 
+    const keys = Object.keys(computeThemeProperties(theme))
     expect([...doc.documentElement.style.values.keys()].sort()).toEqual(
       [...keys].sort()
     )
-  })
-
-  it("toggles the dark class unless the host owns it", () => {
-    const doc = new FakeDocument()
-    const html = root(doc)
-
-    applyThemeToElement(themeWith({}, "dark"), html)
-    expect(doc.documentElement.classList.contains("dark")).toBe(true)
-
-    applyThemeToElement(themeWith({}, "light"), html, { updateClass: false })
-    expect(doc.documentElement.classList.contains("dark")).toBe(true)
   })
 
   it("injects one shadow override sheet per document and removes it", () => {
@@ -359,40 +352,131 @@ function shadowRule(selectorText: string) {
   }
 }
 
-describe("applyThemeToDocument", () => {
-  it("loads the theme's Google fonts into that document and releases them", () => {
-    const doc = new FakeDocument()
-    const theme = themeWith({
-      "font-sans": "Inter, ui-sans-serif, sans-serif",
-      "font-heading": '"Source Serif 4", ui-serif, serif',
-      "font-serif": "var(--font-fraunces), ui-serif, Georgia, serif",
-      "font-mono": "ui-monospace, monospace",
-    })
+describe("startThemedDocument", () => {
+  const OWN_SHADOWS = { "shadow-offset-x": "4px" }
 
-    applyThemeToDocument(doc.asDocument, theme, { loadFonts: true })
-    applyThemeToDocument(doc.asDocument, theme, { loadFonts: true })
-    const families = doc
-      .headChildren("link")
-      .map((link) => link.getAttribute("data-themer-font"))
-    expect(families.sort()).toEqual(["Inter", "Source Serif 4"])
-
-    removeThemeFromDocument(doc.asDocument)
-    expect(doc.head.children).toEqual([])
-    expect(doc.documentElement.style.length).toBe(0)
-  })
-})
-
-describe("applyThemeToDocument over the head script", () => {
-  it("replaces the head script's restore sheet in that document", () => {
+  /** A document holding the head script's restore sheet. */
+  function documentWithRestoreSheet() {
     const doc = new FakeDocument()
     const restore = doc.createElement("style")
     restore.setAttribute("id", "themercn-restore")
     doc.head.appendChild(restore)
+    return doc
+  }
 
-    applyThemeToDocument(doc.asDocument, themeWith({ primary: "#123456" }))
+  const fontLinks = (doc: FakeDocument) =>
+    doc
+      .headChildren("link")
+      .map((link) => link.getAttribute("data-themer-font"))
 
-    expect(doc.getElementById("themercn-restore")).toBeNull()
+  it("themes the document with the store's Theme and its fonts, in place of the restore sheet", () => {
+    const doc = documentWithRestoreSheet()
+    const store = createStore(() => ({
+      themeState: themeWith({
+        ...OWN_SHADOWS,
+        primary: "#123456",
+        "font-sans": "Inter, sans-serif",
+      }),
+    }))
+
+    const stop = startThemedDocument(doc.asDocument, store)
+
     expect(root(doc).style.getPropertyValue("--primary")).toBe("#123456")
+    expect(doc.getElementById("themercn-restore")).toBeNull()
+    expect(fontLinks(doc)).toEqual(["Inter"])
+    expect(
+      doc.head.children.filter(
+        (child) => child.getAttribute(THEMER_OVERRIDES_ATTRIBUTE) != null
+      )
+    ).toHaveLength(1)
+    stop()
+  })
+
+  it("follows every Theme state change without toggling the dark class", () => {
+    const doc = new FakeDocument()
+    const store = createStore(() => ({ themeState: themeWith({}) }))
+    const stop = startThemedDocument(doc.asDocument, store)
+
+    store.setState({
+      themeState: themeWith(
+        { primary: "#abcdef", "font-sans": "Lora, serif" },
+        "dark"
+      ),
+    })
+
+    expect(root(doc).style.getPropertyValue("--primary")).toBe("#abcdef")
+    expect(fontLinks(doc)).toEqual(["Lora"])
+    expect(doc.documentElement.classList.contains("dark")).toBe(false)
+    stop()
+  })
+
+  it("keeps one link per Google family through re-applies, skipping host and system fonts", () => {
+    const doc = new FakeDocument()
+    const fonts = {
+      "font-sans": "Inter, ui-sans-serif, sans-serif",
+      "font-heading": '"Source Serif 4", ui-serif, serif',
+      "font-serif": "var(--font-fraunces), ui-serif, Georgia, serif",
+      "font-mono": "ui-monospace, monospace",
+    }
+    const store = createStore(() => ({ themeState: themeWith(fonts) }))
+    const stop = startThemedDocument(doc.asDocument, store)
+
+    store.setState({ themeState: themeWith({ ...fonts, primary: "#abcdef" }) })
+
+    expect(fontLinks(doc).sort()).toEqual(["Inter", "Source Serif 4"])
+    stop()
+    expect(doc.head.children).toEqual([])
+  })
+
+  it("on stop, removes everything it wrote and no longer follows the store", () => {
+    const doc = new FakeDocument()
+    const store = createStore(() => ({
+      themeState: themeWith({
+        ...OWN_SHADOWS,
+        "font-sans": "Inter, sans-serif",
+      }),
+    }))
+    const stop = startThemedDocument(doc.asDocument, store)
+
+    stop()
+    store.setState({ themeState: themeWith({ primary: "#abcdef" }) })
+
+    expect(doc.documentElement.style.length).toBe(0)
+    expect(doc.head.children).toEqual([])
+  })
+
+  it("skips a document that is gone, and still cleans it on stop", () => {
+    const doc = new FakeDocument()
+    const store = createStore(() => ({
+      themeState: themeWith({ "font-sans": "Inter, sans-serif" }),
+    }))
+    const stop = startThemedDocument(doc.asDocument, store)
+    const written = root(doc).style.getPropertyValue("--primary")
+
+    // The frame navigated away: the next edit must not reach the old page.
+    doc.gone = true
+    store.setState({ themeState: themeWith({ primary: "#abcdef" }) })
+    expect(root(doc).style.getPropertyValue("--primary")).toBe(written)
+
+    stop()
+    expect(doc.documentElement.style.length).toBe(0)
+    expect(doc.head.children).toEqual([])
+  })
+
+  it("lets a fault in an apply to a shown document reach the caller", () => {
+    const doc = new FakeDocument()
+    const store = createStore(() => ({ themeState: themeWith({}) }))
+    const stop = startThemedDocument(doc.asDocument, store)
+    vi.spyOn(doc.documentElement.style, "setProperty").mockImplementation(
+      () => {
+        throw new Error("style write failed")
+      }
+    )
+
+    expect(() =>
+      store.setState({ themeState: themeWith({ primary: "#abcdef" }) })
+    ).toThrow("style write failed")
+    stop()
   })
 })
 
@@ -404,12 +488,14 @@ describe("host extra colours", () => {
     const html = root(doc)
     const theme = themeWith({ signal: "#3457FF", "success-foreground": "" })
 
-    const keys = applyThemeToElement(theme, html)
+    applyThemeToElement(theme, html)
     expect(doc.documentElement.style.getPropertyValue("--signal")).toBe(
       "#3457FF"
     )
     // An unset (blank) extra is not written: the host's CSS value shows.
-    expect(keys).not.toContain("--success-foreground")
+    expect(
+      doc.documentElement.style.getPropertyValue("--success-foreground")
+    ).toBe("")
 
     applyThemeToElement(themeWith({}), html)
     expect(doc.documentElement.style.getPropertyValue("--signal")).toBe("")

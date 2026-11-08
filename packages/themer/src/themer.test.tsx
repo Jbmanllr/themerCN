@@ -266,6 +266,187 @@ describe("Themer", () => {
       expect(document.getElementById("themercn-restore")).toBeNull()
     })
 
+    describe("the Host page's Theme fonts", () => {
+      /** The <head> links loading `family`, the head script's included. */
+      const fontLinks = (family: string) =>
+        [...document.head.querySelectorAll("link")].filter((link) =>
+          link.href.includes(`family=${encodeURIComponent(family)}`)
+        )
+
+      function editStyles(styles: Partial<ThemeStyles["light"]>) {
+        useEditorStore.getState().setThemeState((prev) => ({
+          ...prev,
+          styles: {
+            light: { ...prev.styles.light, ...styles },
+            dark: { ...prev.styles.dark, ...styles },
+          },
+        }))
+      }
+
+      /** Everything the Themer writes on the Host page is gone. */
+      function expectHostPageClear() {
+        expect(document.documentElement.style.length).toBe(0)
+        expect(document.head.querySelectorAll("link")).toHaveLength(0)
+        expect(document.querySelector("[data-themer-overrides]")).toBeNull()
+      }
+
+      afterEach(() => {
+        document.head.querySelectorAll("link").forEach((link) => link.remove())
+      })
+
+      it("loads with the Theme and are removed with it when the override goes off", async () => {
+        await mount()
+        await act(async () =>
+          editStyles({
+            "font-sans": "Inter, sans-serif",
+            "shadow-offset-x": "3px",
+          })
+        )
+        expect(rootVar("--font-sans")).toBe("Inter, sans-serif")
+        expect(fontLinks("Inter")).toHaveLength(1)
+
+        await act(async () =>
+          usePreferencesStore.getState().setThemeOverrideEnabled(false)
+        )
+
+        expectHostPageClear()
+      })
+
+      it("are removed with the Theme when the Themer unmounts", async () => {
+        await mount()
+        await act(async () => editStyles({ "font-sans": "Inter, sans-serif" }))
+
+        await act(async () => root?.unmount())
+        root = null
+
+        expectHostPageClear()
+      })
+
+      it("keep one link per family through edits, the head script's included", async () => {
+        const namespace = "host-fonts"
+        const themeState = {
+          ...defaultThemeState,
+          styles: {
+            light: {
+              ...defaultThemeState.styles.light,
+              "font-sans": "Inter, sans-serif",
+            },
+            dark: {
+              ...defaultThemeState.styles.dark,
+              "font-sans": "Inter, sans-serif",
+            },
+          },
+        }
+        localStorage.setItem(
+          `${namespace}:editor`,
+          JSON.stringify({
+            state: {
+              themeState,
+              themeCheckpoint: themeState,
+              presetBaseline: null,
+            },
+            version: EDITOR_STATE_VERSION,
+          })
+        )
+        runHeadScript(namespace)
+        expect(fontLinks("Inter")).toHaveLength(1)
+
+        await mount({ storageNamespace: namespace })
+        await act(async () => editStyles({ primary: "#123456" }))
+        await act(async () => editStyles({ "font-heading": "Lora, serif" }))
+
+        expect(fontLinks("Inter")).toHaveLength(1)
+        expect(fontLinks("Lora")).toHaveLength(1)
+      })
+
+      describe("on a pick through the font picker", () => {
+        const family = "Inter"
+        /** The family's stylesheet link, not a picker row's `&text=` preview. */
+        const isStylesheet = (node: Node) =>
+          node instanceof HTMLLinkElement &&
+          node.href.includes(`family=${encodeURIComponent(family)}`) &&
+          !node.href.includes("text=")
+
+        /** Records each append and removal of the family's stylesheet link. */
+        function watchStylesheet() {
+          const changes: string[] = []
+          const record = (records: MutationRecord[]) => {
+            for (const { addedNodes, removedNodes } of records) {
+              addedNodes.forEach((node) => {
+                if (isStylesheet(node)) changes.push("append")
+              })
+              removedNodes.forEach((node) => {
+                if (isStylesheet(node)) changes.push("remove")
+              })
+            }
+          }
+          const observer = new MutationObserver(record)
+          observer.observe(document.head, { childList: true })
+          return () => {
+            record(observer.takeRecords())
+            observer.disconnect()
+            return changes
+          }
+        }
+
+        /** Picks `family` in the Sans-serif slot and waits for the commit. */
+        async function pickSans() {
+          await openThemer()
+          const typography = document.querySelector<HTMLElement>(
+            '[role="tab"][aria-label="Typography"]'
+          )
+          await act(async () => typography?.click())
+          const sansTrigger = [
+            ...document.querySelectorAll<HTMLElement>('[role="combobox"]'),
+          ].find(
+            (trigger) =>
+              document.getElementById(
+                trigger.getAttribute("aria-labelledby") ?? ""
+              )?.textContent === "Sans-serif"
+          )
+          if (!sansTrigger) throw new Error("no Sans-serif picker")
+          await act(async () => sansTrigger.click())
+          const row = await vi.waitFor(() => {
+            const item = document.querySelector<HTMLElement>(
+              `[cmdk-item][data-value="${family}"]`
+            )
+            if (!item) throw new Error(`no row for ${family}`)
+            return item
+          })
+          await act(async () => row.click())
+          await vi.waitFor(() =>
+            expect(
+              useEditorStore.getState().themeState.styles.light["font-sans"]
+            ).toContain(family)
+          )
+        }
+
+        it("keeps the family's link continuously, with no timer", async () => {
+          await mount()
+          const stop = watchStylesheet()
+
+          await pickSans()
+
+          expect(rootVar("--font-sans")).toContain(family)
+          expect(stop()).toEqual(["append"])
+          expect(fontLinks(family).filter(isStylesheet)).toHaveLength(1)
+        })
+
+        it("drops the family's link right after the pick while the Theme override is off", async () => {
+          await mount()
+          await act(async () =>
+            usePreferencesStore.getState().setThemeOverrideEnabled(false)
+          )
+          const stop = watchStylesheet()
+
+          await pickSans()
+
+          expect(stop()).toEqual(["append", "remove"])
+          expect(fontLinks(family).filter(isStylesheet)).toHaveLength(0)
+        })
+      })
+    })
+
     describe("switching storageNamespace", () => {
       // Their own namespaces: <Themer> hydrates once per namespace.
       async function rerender(props: ThemerProps) {

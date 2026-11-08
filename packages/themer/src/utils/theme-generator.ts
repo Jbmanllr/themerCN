@@ -31,8 +31,8 @@ import type {
 import { colorFormatter } from "./color-converter"
 import { SHADOW_SCALE_KEYS, getShadowMap } from "./shadows"
 import { defaultThemeState } from "../config/defaults"
-import { THEME_COLOR_KEYS } from "../types/theme"
-import { extractFontFamily, isLocalFontFamily } from "./font-names"
+import { THEME_COLOR_KEYS, THEME_FONT_KEYS } from "../types/theme"
+import { getThemeFonts } from "./font-names"
 
 /** The theme colours a mode block and `@theme inline` export, in order. */
 const EXPORT_COLOR_KEYS = THEME_COLOR_KEYS
@@ -444,17 +444,6 @@ export function generateTailwindConfigCode(
   )
 }
 
-const FONT_SLOTS = [
-  { key: "font-sans" as const, varName: "fontSans", cssVar: "--font-sans" },
-  {
-    key: "font-heading" as const,
-    varName: "fontHeading",
-    cssVar: "--font-heading",
-  },
-  { key: "font-serif" as const, varName: "fontSerif", cssVar: "--font-serif" },
-  { key: "font-mono" as const, varName: "fontMono", cssVar: "--font-mono" },
-]
-
 /**
  * A Next.js root `layout.tsx` that imports each Google family the light mode's
  * font slots name through `next/font/google` and binds it to the slot's CSS
@@ -469,15 +458,18 @@ export function generateLayoutCode(themeState: ThemeEditorState): string {
   const googleFonts: { importName: string; varName: string; cssVar: string }[] =
     []
 
-  for (const slot of FONT_SLOTS) {
-    const fontFamily = extractFontFamily(themeState.styles.light[slot.key])
-    // An OS family (Georgia, Menlo) is not on Google: its CSS stack stands.
-    if (!fontFamily || isLocalFontFamily(fontFamily)) continue
+  // The Theme fonts module owns the slots and which families Google serves
+  // (not an OS family such as Georgia, nor a `var(...)` host font).
+  const lightFonts = getThemeFonts(themeState.styles).light
+  for (const key of THEME_FONT_KEYS) {
+    const fontFamily = lightFonts[key]
+    if (!fontFamily) continue
 
     googleFonts.push({
       importName: fontFamily.replace(/ /g, "_"),
-      varName: slot.varName,
-      cssVar: slot.cssVar,
+      // `font-heading` -> `fontHeading`, bound to `--font-heading`.
+      varName: key.replace(/-(\w)/g, (_, char: string) => char.toUpperCase()),
+      cssVar: `--${key}`,
     })
   }
 

@@ -39,6 +39,7 @@ vi.mock("../../hooks/use-themer-context", () => ({
 }))
 
 import { usePreferencesStore } from "../../stores/preferences-store"
+import { useThemerUIStore } from "../../stores/themer-ui-store"
 import { PreviewTabs } from "./preview-tabs"
 
 ;(
@@ -123,5 +124,29 @@ describe("PreviewTabs", () => {
     )
     await act(async () => item?.click())
     expect(usePreferencesStore.getState().previewTab).toBe("mail")
+  })
+
+  it("leaves Ctrl+I alone where the inspector cannot run", async () => {
+    const desktopMatchMedia = window.matchMedia
+    window.matchMedia = (() => ({
+      matches: true,
+      addEventListener: () => {},
+      removeEventListener: () => {},
+    })) as unknown as typeof window.matchMedia
+    try {
+      await mount()
+      const event = new KeyboardEvent("keydown", {
+        key: "i",
+        ctrlKey: true,
+        bubbles: true,
+        cancelable: true,
+      })
+      await act(async () => window.dispatchEvent(event))
+
+      expect(useThemerUIStore.getState().inspectorLayout).toBeNull()
+      expect(event.defaultPrevented).toBe(false)
+    } finally {
+      window.matchMedia = desktopMatchMedia
+    }
   })
 })

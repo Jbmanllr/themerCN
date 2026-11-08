@@ -17,11 +17,14 @@
 //
 // See: packages/themer/ARCHITECTURE.md ("Font link registry").
 import { HEAD_FONT_LINK_ATTRIBUTE } from "../config/constants"
-import { extractFontFamily, quoteFontFamily } from "./font-names"
+import {
+  DEFAULT_FONT_WEIGHTS,
+  GOOGLE_FONTS_CSS_URL,
+  extractFontFamily,
+  quoteFontFamily,
+} from "./font-names"
 
 type FontWeight = number | string
-
-export const GOOGLE_FONTS_CSS_URL = "https://fonts.googleapis.com/css2"
 
 function normalizeWeights(weights: readonly FontWeight[]): string[] {
   return weights.map((weight) => String(weight))
@@ -71,11 +74,9 @@ export function getDefaultWeights(variants: string[]): string[] {
     .sort((a, b) => Number(a) - Number(b))
 }
 
-const DEFAULT_THEME_WEIGHTS = ["400", "500", "600", "700"] as const
-
 export function buildFontCssUrl(
   family: string,
-  weights: readonly FontWeight[] = DEFAULT_THEME_WEIGHTS
+  weights: readonly FontWeight[] = DEFAULT_FONT_WEIGHTS
 ): string {
   const weightsParam = normalizeWeights(weights).join(";")
   return `${GOOGLE_FONTS_CSS_URL}?family=${encodeURIComponent(

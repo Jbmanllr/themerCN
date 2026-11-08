@@ -14,22 +14,19 @@
 //   it (hydration, then this provider's mode sync), and the Theme is applied
 //   in the store's mode. It writes CSS variables (and the shadow override
 //   sheet), never the class.
-// - The CSS variables, the shadow override sheet and the theme's font links
-//   are removed when the theme override preference goes off or the provider
-//   unmounts.
-// - The head script's restore sheet (RESTORE_STYLE_ID) is removed in the same
-//   effect that first applies the Theme, or at once when the override is off,
-//   so the page never shows a stale copy of the Theme.
+// - The Host page is themed by startThemedDocument (utils/apply-theme.ts)
+//   while the Theme override is on: CSS variables, the shadow override sheet
+//   and the Theme's font links, all removed when the override goes off or the
+//   provider unmounts.
+// - The head script's restore sheet (RESTORE_STYLE_ID) is removed by the
+//   first apply, or at once when the override is off, so the page never
+//   shows a stale copy of the Theme.
 //
 // See: packages/themer/ARCHITECTURE.md ("Core Entry Points").
 
 import * as React from "react"
 import { useShallow } from "zustand/react/shallow"
-import type {
-  ThemeEditorState,
-  ThemerConfig,
-  ThemerContextValue,
-} from "../types"
+import type { ThemerConfig, ThemerContextValue } from "../types"
 import {
   useKeyboardShortcut,
   parseShortcut,
@@ -38,13 +35,9 @@ import {
 import { useThemerUIStore } from "../stores/themer-ui-store"
 import { useEditorStore } from "../stores/editor-store"
 import { usePreferencesStore } from "../stores/preferences-store"
-import {
-  applyThemeToElement,
-  removeThemeFromElement,
-} from "../utils/apply-theme"
+import { startThemedDocument } from "../utils/apply-theme"
 import { useColorMode } from "../hooks/use-color-mode"
 import { ThemerContext } from "../hooks/use-themer-context"
-import { DynamicFontLoader } from "./dynamic-font-loader"
 import { RESTORE_STYLE_ID, SHORTCUTS } from "../config/constants"
 import { configurePresets, getDefaultPresetId } from "../config/presets"
 import { configureExtraColors } from "../config/extra-colors"
@@ -161,38 +154,22 @@ export function ThemerProvider({
     if (themeState.currentMode !== mode) setCurrentMode(mode)
   }, [mode])
 
-  // The Theme-apply path: the Theme, in the store's mode, is applied once
-  // after the layout effects above, then on every later Theme state change
-  // (a mode change included) through a store subscription, so an edit never
-  // re-renders this provider. Re-applying on every change is enough to drop
-  // properties the new theme no longer sets (applyThemeToElement diffs
-  // against its previous call), so the page never flashes between edits.
-  // A layout effect, so its subscription ends in the commit that unmounts
+  // The Theme-apply path: while the override is on, the Host page is a
+  // themed document. startThemedDocument applies the Theme, in the store's
+  // mode, with its fonts once after the layout effects above, then on every
+  // later Theme state change (a mode change included) through a store
+  // subscription, so an edit never re-renders this provider. Its stop, when
+  // the override goes off or the editor unmounts, removes everything it
+  // wrote, the shadow override sheet and the font links included.
+  // A layout effect, so the subscription ends in the commit that unmounts
   // this tree, before <Themer> rehydrates the stores for another
   // `storageNamespace`: the outgoing tree never applies the incoming state.
-  // Everything it wrote, the shadow override sheet included, is removed only
-  // when the override goes off or the editor unmounts.
   React.useLayoutEffect(() => {
-    const restoreSheet = document.getElementById(RESTORE_STYLE_ID)
     if (!themeOverrideEnabled) {
-      restoreSheet?.remove()
+      document.getElementById(RESTORE_STYLE_ID)?.remove()
       return undefined
     }
-
-    const apply = (state: ThemeEditorState) =>
-      applyThemeToElement(state, document.documentElement, {
-        updateClass: false,
-      })
-    apply(useEditorStore.getState().themeState)
-    restoreSheet?.remove()
-    return useEditorStore.subscribe((next, previous) => {
-      if (next.themeState !== previous.themeState) apply(next.themeState)
-    })
-  }, [themeOverrideEnabled])
-
-  React.useEffect(() => {
-    if (!themeOverrideEnabled) return undefined
-    return () => removeThemeFromElement(document.documentElement)
+    return startThemedDocument(document, useEditorStore)
   }, [themeOverrideEnabled])
 
   // Keyboard shortcuts. useKeyboardShortcut keys its listener on the
@@ -237,10 +214,5 @@ export function ThemerProvider({
     [config]
   )
 
-  return (
-    <ThemerContext value={contextValue}>
-      <DynamicFontLoader />
-      {children}
-    </ThemerContext>
-  )
+  return <ThemerContext value={contextValue}>{children}</ThemerContext>
 }

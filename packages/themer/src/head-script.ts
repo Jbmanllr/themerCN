@@ -31,8 +31,9 @@ export interface ThemerHeadScriptOptions {
 /**
  * The body of the pre-paint restore script (no `<script>` tag), for an
  * inline `<script>` at the top of `<head>`. It applies the Theme saved under
- * `storageNamespace` while the HTML is parsed; with nothing saved, or the
- * Theme override switched off, it changes nothing.
+ * `storageNamespace` while the HTML is parsed, and links the Google family of
+ * each of its font slots (sans, heading, serif, mono); with nothing saved, or
+ * the Theme override switched off, it changes nothing.
  *
  * Each call builds the string again, and it depends only on
  * `storageNamespace`: build it once and reuse it, not on every request.

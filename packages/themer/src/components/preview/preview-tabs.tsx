@@ -11,8 +11,10 @@
 //   whole theme it injects), so an edit does not re-render the demos.
 // - Host tabs render inside `previewWrapper` so they get the host's providers
 //   (the editor is portaled outside the host tree).
-// - Inspector: toggle and Ctrl+I here; disabled on mobile and for a
-//   cross-origin Live frame. Clicking a class focuses its colour control.
+// - Inspector: its session rules (mode, pick, Ctrl+I) live in
+//   useInspectorSession (./inspector/use-inspector-session.ts); this entry
+//   point passes the active tab as its surface, unavailable on mobile, and
+//   renders the toggle and overlay. A cross-origin Live frame also makes it unavailable.
 // - Fullscreen: this area goes `fixed` over the editor; ThemerUI unmounts
 //   the sidebar and header. The light/dark toggle (ModeToggle) shows here
 //   meanwhile, since the action bar is covered.
@@ -31,13 +33,7 @@ import {
 import { ScrollArea, ScrollBar } from "@workspace/ui/components/scroll-area"
 import { Tabs, TabsContent, TabsList } from "@workspace/ui/components/tabs"
 import { cn } from "@workspace/ui/lib/utils"
-import { useColorFocusTrigger } from "../../hooks/use-color-focus"
 import { useIsMobile } from "../../hooks/use-is-mobile"
-import { useInspectorMode } from "../../hooks/use-themer-layout"
-import {
-  themerShortcuts,
-  useKeyboardShortcut,
-} from "../../hooks/use-keyboard-shortcut"
 import { useThemerUIStore } from "../../stores/themer-ui-store"
 import { usePreferencesStore } from "../../stores/preferences-store"
 import type { ThemerConfig } from "../../types"
@@ -48,8 +44,7 @@ import { BUILTIN_TABS } from "./builtin-tabs"
 import {
   InspectorOverlay,
   InspectorToggle,
-  segmentClassName,
-  useInspector,
+  useInspectorSession,
 } from "./inspector"
 import {
   mergePreviewTabs,
@@ -65,11 +60,9 @@ export function PreviewTabs() {
   const { previewTabs, previewWrapper } = config
   const previewTab = usePreferencesStore((state) => state.previewTab)
   const setPreviewTab = usePreferencesStore((state) => state.setPreviewTab)
-  const { active: inspectorMode, toggle: toggleInspector } = useInspectorMode()
   const isFullscreen = useThemerUIStore((state) => state.fullscreenPreview)
   const toggleFullscreen = useThemerUIStore((state) => state.toggleFullscreen)
   const isMobile = useIsMobile()
-  const { focusColor } = useColorFocusTrigger()
 
   const tabs = React.useMemo(
     () => mergePreviewTabs(BUILTIN_TABS, previewTabs),
@@ -81,30 +74,18 @@ export function PreviewTabs() {
   const hostRef = React.useRef<HTMLDivElement>(null)
   const containerRef = React.useRef<HTMLElement>(null)
 
-  const handlePick = React.useCallback(
-    (className: string) => {
-      const { value } = segmentClassName(className)
-      if (value) focusColor(value)
-    },
-    [focusColor]
-  )
-
-  const isFrameTab = activeTab?.frame === true
-  const { state: inspector, frameBlocked } = useInspector({
-    enabled: inspectorMode && !isMobile,
-    frame: isFrameTab,
+  const {
+    state: inspector,
+    active: inspectorMode,
+    toggle: toggleInspector,
+    available: inspectorAvailable,
+    focusColor,
+  } = useInspectorSession({
+    surfaceAvailable: !isMobile,
+    frame: activeTab?.frame === true,
     bindingKey: activeTabId,
     hostRef,
     containerRef,
-    onPick: handlePick,
-  })
-  const inspectorAvailable = !isMobile && !(isFrameTab && frameBlocked)
-
-  useKeyboardShortcut({
-    key: themerShortcuts.inspector.key,
-    modifiers: themerShortcuts.inspector.modifiers,
-    callback: toggleInspector,
-    enabled: inspectorAvailable,
   })
 
   const handleTabChange = React.useCallback(

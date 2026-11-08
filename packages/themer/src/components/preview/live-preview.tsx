@@ -9,11 +9,12 @@
 //
 // - Starts on the page the editor was opened from: that is the page being
 //   themed, and a CMS root can be an unpublished 404.
-// - The theme is written into the frame's document with applyThemeToDocument
-//   (variables, shadow overrides, Google font links: fonts are per document)
-//   on every load and every change, and removed again when the override
-//   switch goes off or the tab unmounts. The document last themed is kept, so
-//   cleanup reaches it even after the frame navigated or was detached.
+// - The theme is written into the frame's document by startThemedDocument
+//   (variables, shadow overrides, Google font links: fonts are per document),
+//   one instance per frame document: a load with a new document stops the
+//   old instance and starts one on the new document. Stopping it, when the
+//   override switch goes off or the tab unmounts, removes everything it
+//   wrote, even after the frame navigated or was detached.
 // - next-themes inside the frame owns its light/dark class, as on the page.
 // - A cross-origin URL cannot be themed (or inspected); reading it throws or
 //   yields null, which is ignored.
@@ -44,10 +45,7 @@ import {
 } from "@workspace/ui/components/toggle-group"
 import { useEditorStore } from "../../stores/editor-store"
 import { usePreferencesStore } from "../../stores/preferences-store"
-import {
-  applyThemeToDocument,
-  removeThemeFromDocument,
-} from "../../utils/apply-theme"
+import { startThemedDocument } from "../../utils/apply-theme"
 import { ActionButton } from "../ui/action-button"
 import { readFrameDocument } from "./inspector"
 
@@ -104,8 +102,10 @@ function readNavigation(
 }
 
 /**
- * Theme the frame's document on load and on every theme change. The Theme is
- * read from a store subscription, so an edit never re-renders the preview.
+ * Theme the frame's document while the Theme override is on: one
+ * themed-document instance per frame document, restarted when the frame
+ * loads a new one. Edits reach the frame through that instance's store
+ * subscription, so an edit never re-renders the preview.
  */
 function useThemeInjectedIframe(
   iframeRef: React.RefObject<HTMLIFrameElement | null>
@@ -113,57 +113,42 @@ function useThemeInjectedIframe(
   const themeOverrideEnabled = usePreferencesStore(
     (state) => state.themeOverrideEnabled
   )
-  const themedDocRef = React.useRef<Document | null>(null)
 
   React.useEffect(() => {
     const iframe = iframeRef.current
     if (!iframe || !themeOverrideEnabled) return undefined
 
-    const inject = () => {
-      const doc = readFrameDocument(iframe)
-      const previous = themedDocRef.current
-      if (previous && previous !== doc) {
-        // The frame navigated: the old document is gone, drop its records.
-        removeThemeFromDocument(previous)
-        themedDocRef.current = null
-      }
-      if (!doc) return
-      try {
-        applyThemeToDocument(doc, useEditorStore.getState().themeState, {
-          loadFonts: true,
-          updateClass: false,
-        })
-        themedDocRef.current = doc
-      } catch {
-        // The document went away mid-navigation; the next load re-applies.
-      }
+    // The document themed, and its <html> when started: a load that replaced
+    // either is a new document to theme.
+    let themed: { doc: Document; root: Element; stop: () => void } | null = null
+
+    const stopThemed = () => {
+      const current = themed
+      themed = null
+      current?.stop()
     }
 
-    inject()
-    iframe.addEventListener("load", inject)
-    const unsubscribe = useEditorStore.subscribe((next, previous) => {
-      if (next.themeState !== previous.themeState) inject()
-    })
+    const themeFrameDocument = () => {
+      const doc = readFrameDocument(iframe)
+      if (doc && doc === themed?.doc && doc.documentElement === themed.root)
+        return
+      // The frame navigated: the old document is gone, drop its records.
+      stopThemed()
+      if (!doc) return
+      // A document gone mid-navigation is skipped by startThemedDocument;
+      // the next load starts again.
+      const root = doc.documentElement
+      themed = { doc, root, stop: startThemedDocument(doc, useEditorStore) }
+    }
+
+    themeFrameDocument()
+    iframe.addEventListener("load", themeFrameDocument)
+    // Override off or tab unmounted: remove everything from the themed doc.
     return () => {
-      iframe.removeEventListener("load", inject)
-      unsubscribe()
+      iframe.removeEventListener("load", themeFrameDocument)
+      stopThemed()
     }
   }, [iframeRef, themeOverrideEnabled])
-
-  // Override off or tab unmounted: remove everything from the themed doc.
-  React.useEffect(() => {
-    if (!themeOverrideEnabled) return undefined
-    return () => {
-      const doc = themedDocRef.current
-      themedDocRef.current = null
-      if (!doc) return
-      try {
-        removeThemeFromDocument(doc)
-      } catch {
-        // Detached document: nothing left to clean.
-      }
-    }
-  }, [themeOverrideEnabled])
 }
 
 export function LivePreview() {

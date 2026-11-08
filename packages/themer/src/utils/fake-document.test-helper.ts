@@ -1,6 +1,7 @@
 // A minimal DOM for the apply-theme and font-links tests. Component and hook
 // tests opt into happy-dom per file; these two modules only touch inline
-// style, classList, attributes, <head> children, link "load" and "error"
+// style, classList, attributes, <head> children, whether the document is
+// still shown (defaultView, <html> isConnected), link "load" and "error"
 // events, a link's loaded `sheet`, document.fonts and the rules of
 // document.styleSheets, so this fake covers exactly that surface and lets
 // their tests control every rule and event. A module under test that reaches for anything else needs this fake
@@ -70,6 +71,9 @@ export class FakeElement {
   ) {}
 
   get isConnected() {
+    // The <html> is connected while its document is shown (FakeDocument.gone).
+    if (this === this.ownerDocument.documentElement)
+      return !this.ownerDocument.gone
     return this.parent !== null
   }
 
@@ -112,6 +116,12 @@ export class FakeDocument {
   readonly head = new FakeHead()
   readonly documentElement = new FakeElement("html", this)
   styleSheets: FakeStyleSheet[] = []
+  /** Set by a test: the frame navigated away or was removed. */
+  gone = false
+  /** A browser drops a document's window once it is gone. */
+  get defaultView(): object | null {
+    return this.gone ? null : {}
+  }
   fonts?: {
     check: (font: string) => boolean
     load: (font: string) => Promise<unknown>

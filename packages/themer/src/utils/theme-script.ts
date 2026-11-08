@@ -23,7 +23,12 @@ import {
   RESTORE_STYLE_ID,
   getStorageKeys,
 } from "../config/constants"
-import { GENERIC_FONT_FAMILIES, LOCAL_FONT_FAMILY_NAMES } from "./font-names"
+import {
+  DEFAULT_FONT_WEIGHTS,
+  GENERIC_FONT_FAMILIES,
+  GOOGLE_FONTS_CSS_URL,
+  LOCAL_FONT_FAMILY_NAMES,
+} from "./font-names"
 
 /**
  * The script that runs before hydration so the first paint already shows the saved Theme
@@ -40,10 +45,10 @@ import { GENERIC_FONT_FAMILIES, LOCAL_FONT_FAMILY_NAMES } from "./font-names"
  *   Host's `:root` and `.dark` rules; ThemerProvider removes the sheet once it applies the
  *   Theme. A saved value that could end its declaration is dropped.
  * It writes every saved variable but not the shadow override sheet or the tracking
- * variables, and preloads Google fonts for the sans, serif and mono slots only
- * (DynamicFontLoader loads the heading font after hydration). Its font links use the
- * font link registry's URLs and once-only default-weight retry, so the registry adopts
- * them: one link per family.
+ * variables, and links the Google family of each font slot (sans, heading, serif,
+ * mono), as the Theme fonts module (font-names.ts) names them. Its font links use the
+ * font link registry's URLs (weights and CSS API embedded from the Theme fonts module)
+ * and once-only default-weight retry, so the registry adopts them: one link per family.
  */
 export function generateThemeScript({
   storageNamespace,
@@ -58,22 +63,22 @@ export function generateThemeScript({
 
     // ----- FONT LOADING UTILITIES -----
     // The Google family a value starts with, or null (host var, generic or
-    // OS font). Mirrors font-names' extractFontFamily and isLocalFontFamily.
+    // OS font). Mirrors font-names' getGoogleFontFamily.
     function extractFontFamily(fontFamilyValue) {
       if (!fontFamilyValue) return null;
       var firstFont = fontFamilyValue.split(",")[0].trim();
       if (firstFont.indexOf("var(") === 0) return null;
-      var cleanFont = firstFont.replace(/['"]/g, "");
+      var cleanFont = firstFont.replace(/['"]/g, "").trim();
+      if (!cleanFont) return null;
       if (genericFontNames.indexOf(cleanFont.toLowerCase()) !== -1) return null;
       if (localFontNames.indexOf(cleanFont.toLowerCase()) !== -1) return null;
       return cleanFont;
     }
 
     // font-links' URLs and once-only retry, marked: the registry adopts it.
-    function loadGoogleFont(family, weights) {
-      weights = weights || ["400","500","600","700"];
-      var familyParam = "https://fonts.googleapis.com/css2?family=" + encodeURIComponent(family);
-      var href = familyParam + ":wght@" + weights.join(";") + "&display=swap";
+    function loadGoogleFont(family) {
+      var familyParam = ${JSON.stringify(`${GOOGLE_FONTS_CSS_URL}?family=`)} + encodeURIComponent(family);
+      var href = familyParam + ":wght@" + ${JSON.stringify(DEFAULT_FONT_WEIGHTS.join(";"))} + "&display=swap";
       var fallbackHref = familyParam + "&display=swap";
       if (document.querySelector('link[href="' + href + '"]')) return;
       var link = document.createElement("link");
@@ -161,14 +166,12 @@ export function generateThemeScript({
         "html:root:not(.dark) {\\n" + declarations(light) + "}\\n" +
         "html:root.dark {\\n" + declarations(dark) + "}\\n";
 
-      // Load Google Fonts immediately
+      // Every font slot's Google family, before first paint.
       try {
-        var fontSans = extractFontFamily(light["font-sans"]);
-        var fontSerif = extractFontFamily(light["font-serif"]);
-        var fontMono = extractFontFamily(light["font-mono"]);
-        if (fontSans) loadGoogleFont(fontSans);
-        if (fontSerif) loadGoogleFont(fontSerif);
-        if (fontMono) loadGoogleFont(fontMono);
+        fontKeys.forEach(function(key) {
+          var family = extractFontFamily(light[key]);
+          if (family) loadGoogleFont(family);
+        });
       } catch (e) {
         console.warn("ThemeScript: Failed to load fonts:", e);
       }

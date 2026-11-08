@@ -8,10 +8,19 @@
 // each call changes identity on every store update and re-renders its
 // component each time; wrap such a selector in useShallow or derive the value
 // in the component.
+//
+// The module also holds the pure Preset rules (isOnPreset, isUntouchedPreset,
+// shouldAdoptPreset) that the store's actions and selectors call; they take
+// plain values and are not selectors themselves.
 
-import type { EditorStore, ThemeEditorState, ThemeStyles } from "../types"
+import type {
+  EditorStore,
+  PresetBaseline,
+  ThemeEditorState,
+  ThemeStyles,
+} from "../types"
 import { resolvePresetStyles } from "../config/presets"
-import { defaultHSLAdjustments } from "../config/defaults"
+import { defaultHSLAdjustments, defaultThemeState } from "../config/defaults"
 import { isDeepEqual } from "../utils/deep-equal"
 import { applySidebarSync } from "../utils/sidebar-sync"
 import { isIdentityHslAdjustment } from "../utils/hsl-adjust"
@@ -63,6 +72,14 @@ export function isOnPreset(
   )
 }
 
+// The neutral-HSL check both Preset rules share: a missing adjustment counts
+// as the identity.
+function hasNeutralHsl(themeState: ThemeEditorState): boolean {
+  return isIdentityHslAdjustment(
+    themeState.hslAdjustments ?? defaultHSLAdjustments
+  )
+}
+
 function onPreset(
   themeState: ThemeEditorState,
   sidebarSync: boolean,
@@ -72,8 +89,50 @@ function onPreset(
     isDeepEqual(
       themeState.styles,
       sidebarSync ? sidebarSyncedPresetStyles(presetStyles) : presetStyles
-    ) &&
-    isIdentityHslAdjustment(themeState.hslAdjustments ?? defaultHSLAdjustments)
+    ) && hasNeutralHsl(themeState)
+  )
+}
+
+/**
+ * The "untouched" rule: no edit, import, AI change or undo has moved the
+ * Theme off the Preset last put on it, so a Host Preset change may refresh
+ * it. Its HSL adjustment is neutral, and its styles equal its Preset
+ * baseline at its own Preset; with no baseline (the fresh default, then
+ * edited), they must equal `presetStyles`, the resolved Preset as it would
+ * be put on (Sidebar-synced while Sync is on). A baseline built on the
+ * Theme's own styles object is untouched without a compare.
+ */
+export function isUntouchedPreset(
+  themeState: ThemeEditorState,
+  baseline: PresetBaseline | null,
+  presetStyles: ThemeStyles
+): boolean {
+  if (!hasNeutralHsl(themeState)) return false
+  if (!baseline) return isDeepEqual(themeState.styles, presetStyles)
+  if (baseline.preset !== themeState.preset) return false
+  return (
+    themeState.styles === baseline.styles ||
+    isDeepEqual(themeState.styles, baseline.styles)
+  )
+}
+
+/**
+ * The "should adopt" rule: a fresh Theme takes the Host's default Preset
+ * `presetId` unless it is already that Preset. Only a Theme on the built-in
+ * default Preset id adopts; on the same id it adopts only when `presetStyles`,
+ * the resolved Preset, differ from its styles (a Host Preset replacing
+ * "default"). Freshness (no restore, no history) and the Preset registry
+ * lookup (`hasPreset`) are the caller's checks.
+ */
+export function shouldAdoptPreset(
+  themeState: ThemeEditorState,
+  presetId: string,
+  presetStyles: ThemeStyles
+): boolean {
+  if (themeState.preset !== defaultThemeState.preset) return false
+  return (
+    presetId !== themeState.preset ||
+    !isDeepEqual(themeState.styles, presetStyles)
   )
 }
 

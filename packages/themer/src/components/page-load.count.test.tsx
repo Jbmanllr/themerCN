@@ -60,7 +60,7 @@ import { useEditorStore } from "../stores/editor-store"
 import { usePreferencesStore } from "../stores/preferences-store"
 import { useThemerUIStore } from "../stores/themer-ui-store"
 import type { ThemePreset, ThemerProps } from "../types"
-import { applyThemeToElement } from "../utils/apply-theme"
+import { startThemedDocument } from "../utils/apply-theme"
 
 // Work that crosses no platform boundary is counted on its module export.
 vi.mock("../head-script", async (importOriginal) => {
@@ -84,7 +84,10 @@ vi.mock("../utils/apply-theme", async (importOriginal) => {
   const real = await importOriginal<typeof import("../utils/apply-theme")>()
   return {
     ...real,
-    applyThemeToElement: passThrough("theme apply", real.applyThemeToElement),
+    startThemedDocument: passThrough(
+      "themed document start",
+      real.startThemedDocument
+    ),
   }
 })
 // happy-dom overflows on the real sheet's custom properties (themer.test.tsx).
@@ -211,10 +214,11 @@ const counters = (): Counter[] => [
     calledFrom(/\badoptDefaultPreset\b|\brefreshUntouchedPreset\b/)
   ),
   countStoreSets("store sets"),
+  // A themed document's start is its first apply.
   countExport(
     "first applies",
-    "theme apply",
-    (_state: unknown, element: unknown) => element === document.documentElement
+    "themed document start",
+    (doc: unknown) => doc === document
   ),
   countMethod(
     "`<html>` observers",
@@ -423,7 +427,11 @@ beforeEach(() => {
   document.documentElement.removeAttribute("style")
 })
 
+/** Themed documents a seed started, stopped after the test. */
+const seededStops: (() => void)[] = []
+
 afterEach(async () => {
+  for (const stop of seededStops.splice(0)) stop()
   for (const root of roots.splice(0)) await act(async () => root.unmount())
   themerRoot = null
   stage = "idle"
@@ -645,11 +653,9 @@ describe("Page load failing seeds", () => {
 
   it("catches a second first apply", () =>
     expectSeedCaught("first applies", () => ({
-      mount: () =>
-        applyThemeToElement(
-          useEditorStore.getState().themeState,
-          document.documentElement
-        ),
+      mount: () => {
+        seededStops.push(startThemedDocument(document, useEditorStore))
+      },
     })))
 
   it("catches a second <html> observer of another attribute", () =>

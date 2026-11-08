@@ -476,7 +476,18 @@ describe("adoptDefaultPreset", () => {
     const state = store.getState()
     expect(state.themeState.preset).toBe("neo-brutalism")
     expect(state.history).toHaveLength(0)
+    expect(state.themeCheckpoint).toBe(state.themeState)
+    expect(state.presetBaseline).toEqual({
+      preset: "neo-brutalism",
+      styles: state.themeState.styles,
+    })
     expect(hasUnsavedChanges(state)).toBe(false)
+  })
+
+  it("leaves a fresh store alone for an unknown Preset id", () => {
+    const before = store.getState()
+    store.getState().adoptDefaultPreset("no-such-preset")
+    expect(store.getState()).toBe(before)
   })
 
   it("leaves a restored or edited store alone", () => {
@@ -599,11 +610,14 @@ describe("refreshUntouchedPreset", () => {
     configurePresets({ presets: [v2] })
     store.getState().refreshUntouchedPreset()
 
-    const { themeState, themeCheckpoint, history } = store.getState()
+    const { themeState, themeCheckpoint, presetBaseline, history } =
+      store.getState()
     expect(themeState.styles.light.destructive).toBe("#B23A2A")
     expect(themeState.styles.light.signal).toBe("#3457FF")
     expect(themeState.currentMode).toBe("dark")
     expect(themeCheckpoint).toBe(themeState)
+    expect(presetBaseline?.preset).toBe("brand")
+    expect(presetBaseline?.styles).toEqual(themeState.styles)
     expect(history).toEqual([])
   })
 
@@ -640,24 +654,6 @@ describe("refreshUntouchedPreset", () => {
     configurePresets({ presets: [v2] })
     store.getState().refreshUntouchedPreset()
     expect(store.getState().themeState.styles.light.destructive).toBe("#B23A2A")
-  })
-
-  it("gives no baseline to a stored edited theme that has none", () => {
-    configurePresets({ presets: [v1] })
-    const preset = structuredClone(resolvePresetStyles("brand"))
-    store.setState({
-      themeState: {
-        ...defaultThemeState,
-        preset: "brand",
-        styles: { ...preset, light: { ...preset.light, primary: "#000000" } },
-      },
-      presetBaseline: null,
-      restoredFromStorage: true,
-    })
-    store.getState().refreshUntouchedPreset()
-
-    expect(store.getState().presetBaseline).toBeNull()
-    expect(store.getState().themeState.styles.light.primary).toBe("#000000")
   })
 
   it("keeps an imported theme", () => {

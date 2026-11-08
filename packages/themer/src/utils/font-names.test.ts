@@ -5,7 +5,7 @@ import {
   buildFontFamily,
   describeFontValue,
   extractFontFamily,
-  getThemeFontFamilies,
+  getThemeFonts,
   quoteFontFamily,
 } from "./font-names"
 
@@ -30,13 +30,13 @@ describe("family names", () => {
       "Source Serif 4"
     )
     expect(
-      getThemeFontFamilies(
-        {
+      getThemeFonts({
+        light: {
           "font-sans": "Inter, sans-serif",
           "font-heading": "var(--font-fraunces), serif",
         },
-        { "font-sans": "Inter, sans-serif", "font-mono": "Fira Code" }
-      )
+        dark: { "font-sans": "Inter, sans-serif", "font-mono": "Fira Code" },
+      }).families
     ).toEqual(["Inter", "Fira Code"])
   })
 })
@@ -73,14 +73,34 @@ describe("describeFontValue", () => {
   })
 })
 
-describe("getThemeFontFamilies", () => {
+describe("getThemeFonts", () => {
   it("does not request fonts every OS ships from Google", () => {
     expect(
-      getThemeFontFamilies({
-        "font-sans": "Montserrat, sans-serif",
-        "font-serif": "Georgia, serif",
-        "font-mono": "Menlo, monospace",
-      })
+      getThemeFonts({
+        light: {
+          "font-sans": "Montserrat, sans-serif",
+          "font-serif": "Georgia, serif",
+          "font-mono": "Menlo, monospace",
+        },
+      }).families
     ).toEqual(["Montserrat"])
+  })
+
+  it("names each mode's Google family per slot, heading included", () => {
+    expect(
+      getThemeFonts({
+        light: {
+          "font-sans": "Inter, sans-serif",
+          "font-heading": '"Playfair Display", serif',
+          "font-serif": "Georgia, serif",
+          "font-mono": "var(--font-mono)",
+        },
+      }).light
+    ).toEqual({
+      "font-sans": "Inter",
+      "font-heading": "Playfair Display",
+      "font-serif": null,
+      "font-mono": null,
+    })
   })
 })

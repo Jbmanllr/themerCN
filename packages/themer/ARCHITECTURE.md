@@ -177,8 +177,9 @@ the Themer's portal beside the Host tree and never wrap it.
   `<PageInspector />` in its root (beside the Toolbar's bar) and `<PageInspectorToggle />` in its
   sidebar header (Overlay, Push) or its bar (Toolbar, `size="default"` to
   match the `ButtonGroup`).
-  `useInspector` binds to the Host document with `ignore: "[data-themer]"`,
-  so the Themer's own tree is never inspected and its clicks still act; the
+  It passes the Host document to `useInspectorSession`
+  (components/preview/inspector/use-inspector-session.ts) with
+  `ignore: "[data-themer]"`, so the Themer's own tree is never inspected and its clicks still act; the
   card renders in a fixed, pointer-transparent layer. The ThemerUIStore
   keeps `inspectorLayout`, the layout the inspector was turned on in;
   `useInspectorMode` (hooks/use-themer-layout.ts) derives "active" from it
@@ -329,10 +330,10 @@ refresh) writes it, when the colour mode differs from it. The toggle only
 switches the colour mode, so a switch a controlling Host declines changes
 nothing, and one it commits later themes the page when it commits. The
 mode sync never applies: `ThemerProvider`'s Theme-apply layout effect,
-keyed on the Theme override only, applies the Theme in the store's mode once,
-then from a store subscription on each Theme state change, a mode change
-included (an edit never re-renders the provider). It writes variables, never
-the class (`applyThemeToElement(..., { updateClass: false })`).
+keyed on the Theme override only, runs `startThemedDocument` on the Host
+page, which applies the Theme in the store's mode once, then from a store
+subscription on each Theme state change, a mode change included (an edit
+never re-renders the provider). It writes variables, never the class.
 `useToggleMode` ([hooks/use-themer.ts](src/hooks/use-themer.ts)) runs
 the switch inside a View Transition
 ([theme-transition.ts](src/utils/theme-transition.ts)) with a circular reveal where supported;
@@ -398,9 +399,9 @@ label reads `<html>` once per toggle.
   the page ends up in; it also adds the font links. It writes nothing when
   nothing is saved or `themeOverrideEnabled` is false, ignores an entry
   saved at another version (as the store drops it), and drops a saved
-  value that could end its declaration. `ThemerProvider` (and
-  `applyThemeToDocument`, for the Live frame) removes the sheet once it
-  applies the Theme itself. It embeds what it needs with `JSON.stringify` and
+  value that could end its declaration. `startThemedDocument` (on the Host
+  page and in the Live frame) removes the sheet once it applies the Theme
+  itself; with the Theme override off, `ThemerProvider` removes it at once. It embeds what it needs with `JSON.stringify` and
   imports constants only. A change to the persisted shape is a change to this
   script.
 - `getThemerHeadScript` (`themercn/head-script`) returns that string,
@@ -524,7 +525,12 @@ registering one picker per token re-renders nobody.
 
 [utils/apply-theme.ts](src/utils/apply-theme.ts) writes the Theme on a
 document (the Host's `<html>` and the Live frame's, through the same code).
-`ThemerProvider` re-applies on every change.
+`startThemedDocument(doc, store)` themes one whole document for as long as it
+runs: it applies the store's Theme with its fonts, removes the restore sheet,
+follows every Theme state change, and its stop removes everything it wrote.
+`ThemerProvider` runs one on the Host page while the Theme override is on;
+the Live view runs one per Live frame document and restarts it when the
+frame loads a new document.
 
 - **Verbatim values.** Colours and common keys are written as stored; Hosts
   map `--color-x: var(--x)` in `@theme inline`, so any CSS colour works.
@@ -550,9 +556,10 @@ document (the Host's `<html>` and the Live frame's, through the same code).
   styles object and shared, read-only, by the Host page and the Live frame.
   The shadow scale, the only step that parses a colour, is memoised per mode
   on its shadow inputs, so an edit that touches no shadow input parses none.
-- **Fonts.** `setThemeFonts` loads the Theme's Google families (see
-  [Font link registry](#font-link-registry-utilsfont-linksts));
-  `DynamicFontLoader` does it for the Host page.
+- **Fonts.** Each apply of a themed document loads the Theme's Google
+  families with `setThemeFonts` (see
+  [Font link registry](#font-link-registry-utilsfont-linksts)), in the same
+  step on the Host page and in the Live frame.
 
 ### Export and import
 
@@ -604,8 +611,11 @@ diffs against what the Theme holds; `clearThemeFonts` releases all. A failed
 link retries once with the default weight. A stack starting with a system
 family or `var(...)` names no Google family.
 
-The head script links the saved sans, serif and mono families before first
-paint, with the same URLs and the same once-only retry, and marks each with
+The head script links the saved Theme's families for all four font slots
+(sans, heading, serif, mono) before first paint, with the same URLs (the
+weights and CSS API embedded from the Theme fonts module,
+`utils/font-names.ts`; its ES5 extractor is checked against the module by
+one table-driven parity test) and the same once-only retry, and marks each with
 `data-tcn-head-font`. A family's first acquire in a document adopts a marked
 link (matched by its full or its default-weight href) instead of adding a
 second one; a Host's own link with the same href is unmarked and stays the
@@ -641,6 +651,7 @@ go last). Only the active tab mounts; Host tabs render inside
 | `LivePreview`                       | Same-origin iframe of the Host page; the Theme is applied to its document after each load. The Host must allow same-origin framing.                                                                       |
 | `InspectorOverlay` + `useInspector` | Hover shows an element's token classes; click pins it and focuses the colour control. Off on mobile and for a cross-origin frame. `ignore` leaves a subtree alone (the page inspector's `[data-themer]`). |
 | `InspectorToggle`                   | The toggle, shared by `PreviewTabs` and `PageInspectorToggle`.                                                                                                                                            |
+| `useInspectorSession`               | Session rules for both entry points (`PreviewTabs`, `PageInspector`), in `inspector/`: mode for the layout in force, toggle, the pick that focuses the token's colour control, `Ctrl+I` while available.  |
 | `useFullscreenSync`                 | Keeps `fullscreenPreview` in step with the Fullscreen API; CSS fallback; `Esc` exits.                                                                                                                     |
 
 ## Color System
@@ -691,8 +702,9 @@ ignored. Every shortcut is defined once in `SHORTCUTS`; bindings read it
 parsed (`themerShortcuts`) and tooltips format it. Toggle (`shortcut`,
 default `SHORTCUTS.toggle` = `ctrl+shift+e`), undo and redo in
 `ThemerProvider` (undo and redo only while the Themer UI is open); `Ctrl+I`
-(`inspector`) in `PreviewTabs` (Workspace) and `PageInspector` (in-place
-layouts). Outside `SHORTCUTS`, `Esc` exits the fallback fullscreen preview
+(`inspector`) in `useInspectorSession`, for `PreviewTabs` (Workspace: not on
+mobile or a cross-origin Live frame) and `PageInspector` (in-place layouts:
+every device). Outside `SHORTCUTS`, `Esc` exits the fallback fullscreen preview
 (`subscribeFullscreen`) and hides the inspector card (`useInspector`; a
 pinned card takes the key first). The Themer binds no sidebar shortcut: the
 stock Ctrl/Cmd+B is off in `ThemerSidebarProvider`. A shortcut string

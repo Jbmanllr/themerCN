@@ -10,7 +10,7 @@ import {
   selectApplyThemePreset,
   selectIsOnPreset,
   selectPreset,
-} from "../selectors"
+} from "../selectors/editor-selectors"
 
 /**
  * Whether the Theme is on its Preset (selectors' isOnPreset), under the

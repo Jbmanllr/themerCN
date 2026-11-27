@@ -44,7 +44,7 @@ import {
   isOnPreset,
   selectIsOnPreset,
   selectPreset,
-} from "../selectors"
+} from "../selectors/editor-selectors"
 import type { ThemerExtraColorGroup } from "../types"
 import { getShadowMap } from "../utils/shadows"
 import { isDeepEqual } from "../utils/deep-equal"

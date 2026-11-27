@@ -13,6 +13,7 @@
 // See: packages/themer/ARCHITECTURE.md ("Color System")
 import * as culori from "culori"
 import type { ColorFormat, TailwindVersion } from "../types"
+import { isProduction } from "./is-production"
 
 /** Integers as they are; others to 4 decimals with trailing zeros dropped. */
 function formatNumber(value: number, decimals = 4): string {
@@ -74,7 +75,9 @@ export function colorFormatter(
   try {
     const parsed = culori.parse(color)
     if (!parsed) {
-      console.warn(`[themercn] Invalid color: ${color}`)
+      // A Theme may hold any CSS colour (`var(--brand)`, `color-mix(…)`), so
+      // this is no error: it tells the developer the value is kept as written.
+      if (!isProduction()) console.warn(`[themercn] Invalid color: ${color}`)
       return color
     }
 

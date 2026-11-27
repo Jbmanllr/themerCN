@@ -727,6 +727,9 @@ Host developer can filter the console on one word. A warning about how the
 Host uses the Themer (a second `<Themer>`, an invalid `shortcut`, storage
 that cannot be written) is development-only, behind `isProduction()`
 ([utils/is-production.ts](src/utils/is-production.ts)), and logged once.
+So is the warning for a colour `culori` cannot parse (`var(--brand)`,
+`color-mix(…)`): any CSS colour is a valid token value, kept as written on
+export and rated as black by the contrast checker.
 
 ## Testing
 

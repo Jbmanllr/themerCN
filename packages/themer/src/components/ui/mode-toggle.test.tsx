@@ -8,7 +8,7 @@ import { createRoot, type Root } from "react-dom/client"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 const toggleMode = vi.hoisted(() => vi.fn())
-vi.mock("../../hooks/use-themer", () => ({
+vi.mock("../../hooks/use-toggle-mode", () => ({
   useToggleMode: () => toggleMode,
 }))
 

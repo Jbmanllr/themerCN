@@ -45,7 +45,7 @@ import {
   DropdownMenuTrigger,
 } from "@workspace/ui/components/dropdown-menu"
 import { SHORTCUTS } from "../../config/constants"
-import { useToggleMode } from "../../hooks/use-themer"
+import { useToggleMode } from "../../hooks/use-toggle-mode"
 import { useIsOnPreset } from "../../hooks/use-editor-selectors"
 import { selectCanRedo, selectCanUndo } from "../../selectors"
 import { useEditorStore } from "../../stores/editor-store"

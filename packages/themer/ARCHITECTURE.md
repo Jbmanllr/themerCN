@@ -334,7 +334,7 @@ keyed on the Theme override only, runs `startThemedDocument` on the Host
 page, which applies the Theme in the store's mode once, then from a store
 subscription on each Theme state change, a mode change included (an edit
 never re-renders the provider). It writes variables, never the class.
-`useToggleMode` ([hooks/use-themer.ts](src/hooks/use-themer.ts)) runs
+`useToggleMode` ([hooks/use-toggle-mode.ts](src/hooks/use-toggle-mode.ts)) runs
 the switch inside a View Transition
 ([theme-transition.ts](src/utils/theme-transition.ts)) with a circular reveal where supported;
 an uncontrolled switch, the mode sync and the one apply land in the

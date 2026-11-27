@@ -1,5 +1,7 @@
 // State and action shapes of the editor, preferences, colour focus and
-// Themer UI stores in src/stores/.
+// Themer UI stores in src/stores/, and ThemerLayout, the Themer layout the
+// preferences and the Themer UI state hold (public: it is also the value of
+// `ThemerProps.layout`). Imports only ./theme; ./index re-exports this file.
 // Behaviour rules (undo batching, persistence versions, what resets on close)
 // are written in the store files.
 
@@ -11,7 +13,18 @@ import type {
   ThemeStyles,
 } from "./theme"
 
-import type { ThemerLayout } from "./index"
+/**
+ * How the Themer UI is arranged on screen while it is open: the value of
+ * `ThemerProps.layout`.
+ * - `"workspace"`: covers the whole page, the sidebar beside the Preview.
+ * - `"overlay"`: the sidebar floats over the Host app's real page, which
+ *   stays usable beside it.
+ * - `"push"`: the sidebar sits beside the Host app's real page and shifts it
+ *   aside (`margin-left` on `<html>`, `--themer-inset-left`).
+ * - `"toolbar"`: no sidebar; every control sits in a bar at the top of the
+ *   Host app's real page, each group of controls in its own popup.
+ */
+export type ThemerLayout = "workspace" | "overlay" | "push" | "toolbar"
 
 export type PackageManager = "pnpm" | "npm" | "yarn" | "bun"
 

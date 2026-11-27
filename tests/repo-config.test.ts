@@ -168,6 +168,57 @@ describe("linting", () => {
     )
   }, 60_000)
 
+  // The import layers (docs/adr/0003-import-layers.md): each workspace's
+  // ESLint config forbids the imports that point up, so the rule must fire
+  // on one, and stay quiet on an import that points down and in a test.
+  const restricted = async (workspace: string, file: string, from: string) => {
+    const cwd = fileURLToPath(new URL(`../${workspace}/`, import.meta.url))
+    const [result] = await new ESLint({ cwd }).lintText(`import "${from}"\n`, {
+      filePath: join(cwd, file),
+    })
+    return (result?.messages ?? []).some(
+      (message) => message.ruleId === "no-restricted-imports"
+    )
+  }
+
+  it.each([
+    ["packages/themer", "src/types/probe.ts", "../config/constants"],
+    ["packages/themer", "src/config/probe.ts", "../utils/length"],
+    ["packages/themer", "src/utils/probe.ts", "../stores/editor-store"],
+    ["packages/themer", "src/selectors/probe.ts", "../stores/editor-store"],
+    ["packages/themer", "src/stores/probe.ts", "../hooks/use-color-mode"],
+    ["packages/themer", "src/hooks/probe.ts", "../components/themer"],
+    ["packages/themer", "src/api/probe.ts", "../stores/editor-store"],
+    ["packages/themer", "src/components/editor/probe.tsx", "../../api/x"],
+    ["packages/themer", "src/components/probe.tsx", "../index"],
+    ["packages/themer", "src/next/probe.ts", "../components/themer"],
+    ["apps/web", "lib/probe.ts", "@/components/site/site-header"],
+    ["apps/web", "lib/mock/probe.ts", "../../components/site/site-header"],
+    ["apps/web", "components/site/probe.tsx", "@/app/layout"],
+  ])(
+    "%s: %s may not import %s",
+    async (workspace, file, from) => {
+      expect(await restricted(workspace, file, from)).toBe(true)
+    },
+    30_000
+  )
+
+  it.each([
+    ["packages/themer", "src/utils/probe.ts", "../config/constants"],
+    ["packages/themer", "src/components/editor/probe.tsx", "../../stores/x"],
+    ["packages/themer", "src/next/probe.ts", "../head-script"],
+    ["packages/themer", "src/utils/probe.test.ts", "../components/themer"],
+    ["apps/web", "components/site/probe.tsx", "@/lib/site"],
+    ["apps/web", "app/probe.tsx", "@/components/site/site-header"],
+    ["apps/web", "lib/probe.test.ts", "@/components/site/site-header"],
+  ])(
+    "%s: %s may import %s",
+    async (workspace, file, from) => {
+      expect(await restricted(workspace, file, from)).toBe(false)
+    },
+    30_000
+  )
+
   it("no shared ESLint config downgrades errors to warnings", async () => {
     const configs = await Promise.all([
       import("../packages/eslint-config/base.js").then((m) => m.config),

@@ -746,7 +746,7 @@ packages/themer/
 │   │   │   └── layouts/           # one component per Themer layout
 │   │   └── preview/               # tabs, registry, Live, inspector, example pages
 │   ├── stores/                    # editor, preferences, themer-ui, color-focus; hydrate.ts
-│   ├── selectors/ hooks/ utils/ config/ types/   # imports point down: config, utils ← stores ← hooks ← components
+│   ├── selectors/ hooks/ utils/ config/ types/   # imports point down: types ← config ← utils ← selectors ← stores ← hooks ← components
 │   ├── api/font-catalog.ts        # catalog response (no gating)
 │   ├── api/google-fonts.ts        # Google catalog fetch and transform (server)
 │   ├── styles/                    # themer.css, view-transition.css (CSS build input)
@@ -756,3 +756,8 @@ packages/themer/
 ├── README.md                      # npm-facing docs
 └── ARCHITECTURE.md                # this file (not published)
 ```
+
+The layers are a lint rule: [eslint.config.js](eslint.config.js) lists what
+each directory of `src/` may import, and an import that points up fails
+`lint` ([ADR 0003](../../docs/adr/0003-import-layers.md)). Test files are
+exempt.

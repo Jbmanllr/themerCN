@@ -16,7 +16,7 @@ import {
 export const GOOGLE_FONTS_API_URL =
   "https://www.googleapis.com/webfonts/v1/webfonts"
 
-export function transformGoogleFontsResponse(
+function transformGoogleFontsResponse(
   response: GoogleFontsAPIResponse
 ): PreparedFontCatalog {
   return prepareFontCatalog(response.items, (font: GoogleFont) => ({

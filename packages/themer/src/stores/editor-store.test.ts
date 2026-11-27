@@ -20,7 +20,7 @@ import {
   selectCanRedo,
   selectIsOnPreset,
 } from "../selectors/editor-selectors"
-import { isSidebarSynced } from "../utils/sidebar-sync"
+import { applySidebarSync } from "../utils/sidebar-sync"
 import type { EditorStore, ThemeEditorState } from "../types"
 import { useEditorStore } from "./editor-store"
 import { hydrateThemerStores } from "./hydrate"
@@ -249,7 +249,8 @@ describe("Sidebar Sync", () => {
   const PRESET = "neo-brutalism"
 
   function synced(state: ThemeEditorState | null) {
-    return state !== null && isSidebarSynced(state.styles)
+    // applySidebarSync returns the same object only when nothing is to sync.
+    return state !== null && applySidebarSync(state.styles) === state.styles
   }
 
   beforeEach(() => {
@@ -261,7 +262,8 @@ describe("Sidebar Sync", () => {
   })
 
   it("puts a preset on in sync, on its preset, in one commit", () => {
-    expect(isSidebarSynced(resolvePresetStyles(PRESET))).toBe(false)
+    const presetStyles = resolvePresetStyles(PRESET)
+    expect(applySidebarSync(presetStyles)).not.toBe(presetStyles)
     let commits = 0
     const unsubscribe = store.subscribe(() => commits++)
     store.getState().applyThemePreset(PRESET)

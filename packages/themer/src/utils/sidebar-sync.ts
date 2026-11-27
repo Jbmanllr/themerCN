@@ -56,8 +56,3 @@ export function applySidebarSync(styles: ThemeStyles): ThemeStyles {
     ? styles
     : { light, dark }
 }
-
-/** Whether every sidebar colour already equals its base twin. */
-export function isSidebarSynced(styles: ThemeStyles): boolean {
-  return applySidebarSync(styles) === styles
-}

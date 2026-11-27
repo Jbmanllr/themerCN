@@ -1,6 +1,6 @@
 # Architecture governance: progress and task pool
 
-A running record of the work that reduces architectural entropy in this repository: what was surveyed, what changed, what is left, and what waits on the owner. Started 2026-11-27 on the branch `worktree-architecture-entropy-reduction`. Add to it when a round finishes; delete it once the pool is empty.
+A running record of the work that reduces architectural entropy in this repository: what was surveyed, what changed, what is left, and what waits on the owner. Started 2026-11-27 on the branch `worktree-architecture-entropy-reduction`. Add to it when a round finishes; delete it once the owner has decided the items that wait on them.
 
 How the Themer works inside is [`packages/themer/ARCHITECTURE.md`](../packages/themer/ARCHITECTURE.md); decisions are in [`docs/adr/`](adr/). This file repeats neither.
 
@@ -30,7 +30,7 @@ The repository has no authentication, permissions, database or retry layer beyon
 
 ## Done
 
-Each batch is one commit: baseline, change, callers migrated, old path deleted, checks run.
+Each batch is one commit: baseline, change, callers migrated, old path deleted, checks run. Batches 1 to 5 merged in pull request 178.
 
 | Batch | Change                                                                                                                                                                                                     | Guard against its return                                                   |
 | ----- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
@@ -39,14 +39,12 @@ Each batch is one commit: baseline, change, callers migrated, old path deleted, 
 | 3     | `isSidebarSynced` had no production caller and is removed; `transformGoogleFontsResponse` is no longer exported.                                                                                           | None (see the pool: unused exports).                                       |
 | 4     | The import layers of the Themer and the Playground are a lint rule ([ADR 0003](adr/0003-import-layers.md)). No code moved.                                                                                 | `lint`, plus a repo test that the rule fires on one probe per layer.       |
 | 5     | Every console message starts with `[themercn]`; there were five spellings.                                                                                                                                 | The convention is in `ARCHITECTURE.md`; only the loader's is tested.       |
+| 6     | `getColorElement` and `resetFontCatalogCache` existed for tests and are removed. The registry test goes through `focusColor`; the catalog test loads the module anew for each test.                        | None (see the owner's items: unused exports).                              |
+| 7     | The `selectors/index.ts` barrel is gone; its importers name `selectors/editor-selectors`. The edit to the store-action count test, a gate file, carries a `Quality-change` trailer.                        | None.                                                                      |
 
 ## Task pool
 
-Safe to do without a decision, in rough order of value.
-
-1. **`getColorElement` and `resetFontCatalogCache` exist for tests.** Rewrite the two tests through the modules' interfaces (`focusColor` finding a registered picker; a fresh module per test), then delete the exports.
-2. **The `selectors/index.ts` barrel.** It re-exports one module, and the store imports that module directly. Removing it means editing an import in `store-action.count.test.tsx`, a gate file, so the commit needs a `Quality-change` trailer.
-3. **The Playground's dashboard formats numbers on its own.** `components/app/dashboard.tsx` builds a percent and a week formatter and a dollar string beside `lib/format.ts`. Move them there if a second caller appears; today they have one.
+Empty. A new finding that is safe to act on without a decision goes here.
 
 ## Waiting on the owner
 
@@ -68,3 +66,4 @@ Each of these changes a contract, adds a dependency, or moves many files.
 - **Four Vitest configs repeat the test-slot setup.** Each workspace runs alone, and a repo test checks the wiring.
 - **The inspector barrel.** It is the inspector module's interface, named in ADR 0002, with three readers.
 - **`apps/web/hooks/` holds only a `.gitkeep`.** It is the target of the `hooks` alias in `components.json`, where the shadcn CLI writes a hook.
+- **The Playground's dashboard formats numbers on its own.** `components/app/dashboard.tsx` builds a percent and a week formatter and a dollar string beside `lib/format.ts`. Each has one caller; they move to `lib/format.ts` when a second one appears.

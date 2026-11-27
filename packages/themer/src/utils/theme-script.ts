@@ -120,7 +120,7 @@ export function generateThemeScript({
         colorMode = localStorage.getItem(colorModeStorageKey);
         (window[colorModeRecord] = window[colorModeRecord] || {})[colorModeStorageKey] = colorMode;
       } catch (e) {
-        console.warn("ThemeScript: Failed to read localStorage:", e);
+        console.warn("[themercn] Failed to read localStorage:", e);
       }
 
       // Only an uncontrolled Themer saves its mode.
@@ -173,7 +173,7 @@ export function generateThemeScript({
           if (family) loadGoogleFont(family);
         });
       } catch (e) {
-        console.warn("ThemeScript: Failed to load fonts:", e);
+        console.warn("[themercn] Failed to load fonts:", e);
       }
     })();
   `

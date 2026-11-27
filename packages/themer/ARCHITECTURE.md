@@ -712,6 +712,15 @@ accepts `cmd`/`command` (meta), `control` (ctrl) and `option` (alt); any
 other unknown part makes it invalid, and an invalid `shortcut` warns in
 development and falls back to the default toggle.
 
+## Console messages
+
+Every message the package logs starts with `[themercn] `, in every entry (the
+Themer, the loader, the head script, the font catalog on the server), so a
+Host developer can filter the console on one word. A warning about how the
+Host uses the Themer (a second `<Themer>`, an invalid `shortcut`, storage
+that cannot be written) is development-only, behind `isProduction()`
+([utils/is-production.ts](src/utils/is-production.ts)), and logged once.
+
 ## Testing
 
 - Vitest, Node by default; DOM files opt in with

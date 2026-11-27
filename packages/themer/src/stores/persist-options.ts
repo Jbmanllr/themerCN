@@ -28,7 +28,7 @@ function warnOnce(error: unknown): void {
   if (warned || isProduction()) return
   warned = true
   console.warn(
-    "themercn: localStorage is unavailable, so Themer changes are not saved.",
+    "[themercn] localStorage is unavailable, so Themer changes are not saved.",
     error
   )
 }

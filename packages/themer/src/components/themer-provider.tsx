@@ -90,7 +90,7 @@ export function ThemerProvider({
     if (warnedShortcuts.has(requestedShortcut)) return
     warnedShortcuts.add(requestedShortcut)
     console.warn(
-      `themercn: shortcut "${requestedShortcut}" is not a valid shortcut ` +
+      `[themercn] shortcut "${requestedShortcut}" is not a valid shortcut ` +
         `(modifiers: ctrl/control, alt/option, shift, meta/cmd/command). ` +
         `Using the default "${SHORTCUTS.toggle}".`
     )

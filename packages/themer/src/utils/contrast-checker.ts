@@ -17,13 +17,13 @@ function getLuminance(color: string): number {
   try {
     const parsed = culori.parse(color)
     if (!parsed) {
-      console.warn(`Invalid color: ${color}`)
+      console.warn(`[themercn] Invalid color: ${color}`)
       return 0
     }
 
     return culori.wcagLuminance(parsed)
   } catch (error) {
-    console.error(`Error calculating luminance: ${color}`, error)
+    console.error(`[themercn] Error calculating luminance: ${color}`, error)
     return 0
   }
 }
@@ -44,7 +44,7 @@ export function getContrastRatio(color1: string, color2: string): number {
     return (lighter + 0.05) / (darker + 0.05)
   } catch (error) {
     console.error(
-      `Error calculating contrast between ${color1} and ${color2}:`,
+      `[themercn] Error calculating contrast between ${color1} and ${color2}:`,
       error
     )
     return 1

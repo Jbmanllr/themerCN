@@ -334,7 +334,7 @@ keyed on the Theme override only, runs `startThemedDocument` on the Host
 page, which applies the Theme in the store's mode once, then from a store
 subscription on each Theme state change, a mode change included (an edit
 never re-renders the provider). It writes variables, never the class.
-`useToggleMode` ([hooks/use-themer.ts](src/hooks/use-themer.ts)) runs
+`useToggleMode` ([hooks/use-toggle-mode.ts](src/hooks/use-toggle-mode.ts)) runs
 the switch inside a View Transition
 ([theme-transition.ts](src/utils/theme-transition.ts)) with a circular reveal where supported;
 an uncontrolled switch, the mode sync and the one apply land in the
@@ -712,6 +712,15 @@ accepts `cmd`/`command` (meta), `control` (ctrl) and `option` (alt); any
 other unknown part makes it invalid, and an invalid `shortcut` warns in
 development and falls back to the default toggle.
 
+## Console messages
+
+Every message the package logs starts with `[themercn] `, in every entry (the
+Themer, the loader, the head script, the font catalog on the server), so a
+Host developer can filter the console on one word. A warning about how the
+Host uses the Themer (a second `<Themer>`, an invalid `shortcut`, storage
+that cannot be written) is development-only, behind `isProduction()`
+([utils/is-production.ts](src/utils/is-production.ts)), and logged once.
+
 ## Testing
 
 - Vitest, Node by default; DOM files opt in with
@@ -746,7 +755,7 @@ packages/themer/
 │   │   │   └── layouts/           # one component per Themer layout
 │   │   └── preview/               # tabs, registry, Live, inspector, example pages
 │   ├── stores/                    # editor, preferences, themer-ui, color-focus; hydrate.ts
-│   ├── selectors/ hooks/ utils/ config/ types/   # imports point down: config, utils ← stores ← hooks ← components
+│   ├── selectors/ hooks/ utils/ config/ types/   # imports point down: types ← config ← utils ← selectors ← stores ← hooks ← components
 │   ├── api/font-catalog.ts        # catalog response (no gating)
 │   ├── api/google-fonts.ts        # Google catalog fetch and transform (server)
 │   ├── styles/                    # themer.css, view-transition.css (CSS build input)
@@ -756,3 +765,8 @@ packages/themer/
 ├── README.md                      # npm-facing docs
 └── ARCHITECTURE.md                # this file (not published)
 ```
+
+The layers are a lint rule: [eslint.config.js](eslint.config.js) lists what
+each directory of `src/` may import, and an import that points up fails
+`lint` ([ADR 0003](../../docs/adr/0003-import-layers.md)). Test files are
+exempt.

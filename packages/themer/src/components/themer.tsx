@@ -106,7 +106,7 @@ function ThemerApp({
     if (current === null || current === storageNamespace) return
     if (isProduction()) return
     console.warn(
-      `themercn: another <Themer> (storageNamespace "${current}") holds the ` +
+      `[themercn] another <Themer> (storageNamespace "${current}") holds the ` +
         `Themer's stores, so the one on "${storageNamespace}" renders ` +
         `nothing. Mount one <Themer> per page.`
     )

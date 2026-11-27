@@ -5,11 +5,7 @@ import { describe, expect, it } from "vitest"
 
 import { defaultThemeStyles } from "../config/defaults"
 import type { ThemeStyles } from "../types"
-import {
-  SIDEBAR_SYNC_MAP,
-  applySidebarSync,
-  isSidebarSynced,
-} from "./sidebar-sync"
+import { SIDEBAR_SYNC_MAP, applySidebarSync } from "./sidebar-sync"
 
 function unsynced(): ThemeStyles {
   return {
@@ -52,8 +48,9 @@ describe("applySidebarSync", () => {
 
   it("returns the same object when already synced", () => {
     const synced = applySidebarSync(unsynced())
+    const input = unsynced()
     expect(applySidebarSync(synced)).toBe(synced)
-    expect(isSidebarSynced(synced)).toBe(true)
-    expect(isSidebarSynced(unsynced())).toBe(false)
+    expect(applySidebarSync(input)).not.toBe(input)
+    expect(applySidebarSync(input)).not.toEqual(input)
   })
 })

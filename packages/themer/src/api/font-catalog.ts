@@ -102,7 +102,7 @@ function catalog(googleFontsApiKey: string): Promise<PreparedFontCatalog> {
       )
       .catch((error: unknown) => {
         console.warn(
-          "Themer: Google Fonts catalog unavailable, using the bundled list.",
+          "[themercn] Google Fonts catalog unavailable, using the bundled list.",
           error
         )
         return remember(googleFontsApiKey, FALLBACK_CATALOG, FAILURE_BACKOFF_MS)

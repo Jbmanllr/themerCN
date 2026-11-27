@@ -16,7 +16,8 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@workspace/ui/components/tooltip"
-import { CollapsedNavigation, ExpandedContent } from "./sidebar"
+import { CollapsedNavigation } from "./sidebar/collapsed-navigation"
+import { ExpandedContent } from "./sidebar/expanded-content"
 
 interface ThemerSidebarProps {
   onClose: () => void

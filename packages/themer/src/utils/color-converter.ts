@@ -74,7 +74,7 @@ export function colorFormatter(
   try {
     const parsed = culori.parse(color)
     if (!parsed) {
-      console.warn(`Invalid color: ${color}`)
+      console.warn(`[themercn] Invalid color: ${color}`)
       return color
     }
 
@@ -112,7 +112,7 @@ export function colorFormatter(
         return color
     }
   } catch (error) {
-    console.error(`Error converting color: ${color}`, error)
+    console.error(`[themercn] Error converting color: ${color}`, error)
     return color
   }
 }

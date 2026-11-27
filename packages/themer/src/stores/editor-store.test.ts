@@ -15,8 +15,12 @@ import {
   getStorageKeys,
 } from "../config/constants"
 import { configurePresets, resolvePresetStyles } from "../config/presets"
-import { isOnPreset, selectIsOnPreset } from "../selectors/editor-selectors"
-import { isSidebarSynced } from "../utils/sidebar-sync"
+import {
+  isOnPreset,
+  selectCanRedo,
+  selectIsOnPreset,
+} from "../selectors/editor-selectors"
+import { applySidebarSync } from "../utils/sidebar-sync"
 import type { EditorStore, ThemeEditorState } from "../types"
 import { useEditorStore } from "./editor-store"
 import { hydrateThemerStores } from "./hydrate"
@@ -130,7 +134,7 @@ describe("undo history", () => {
     setRadius("4rem")
     expect(store.getState().history).toHaveLength(1)
     expect(store.getState().future).toEqual([])
-    expect(store.getState().canRedo()).toBe(false)
+    expect(selectCanRedo(store.getState())).toBe(false)
   })
 
   it(`keeps at most ${MAX_HISTORY_COUNT} entries`, () => {
@@ -176,6 +180,15 @@ describe("undo history", () => {
     store.getState().setThemeState((prev) => ({ ...prev }))
 
     expect(writes()).toBe(1)
+  })
+
+  it("changes nothing on an undo or a redo with nothing to restore", () => {
+    const before = store.getState()
+
+    store.getState().undo()
+    store.getState().redo()
+
+    expect(store.getState()).toBe(before)
   })
 
   it("keeps the current mode when undoing", () => {
@@ -236,7 +249,8 @@ describe("Sidebar Sync", () => {
   const PRESET = "neo-brutalism"
 
   function synced(state: ThemeEditorState | null) {
-    return state !== null && isSidebarSynced(state.styles)
+    // applySidebarSync returns the same object only when nothing is to sync.
+    return state !== null && applySidebarSync(state.styles) === state.styles
   }
 
   beforeEach(() => {
@@ -248,7 +262,8 @@ describe("Sidebar Sync", () => {
   })
 
   it("puts a preset on in sync, on its preset, in one commit", () => {
-    expect(isSidebarSynced(resolvePresetStyles(PRESET))).toBe(false)
+    const presetStyles = resolvePresetStyles(PRESET)
+    expect(applySidebarSync(presetStyles)).not.toBe(presetStyles)
     let commits = 0
     const unsubscribe = store.subscribe(() => commits++)
     store.getState().applyThemePreset(PRESET)

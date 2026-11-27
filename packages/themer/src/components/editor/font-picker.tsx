@@ -561,7 +561,7 @@ export function FontPicker({
       try {
         await waitForFont(font.family, weights[0])
       } catch (error) {
-        console.warn(`Failed to load font ${font.family}:`, error)
+        console.warn(`[themercn] Failed to load font ${font.family}:`, error)
       }
 
       // A later pick superseded this one: drop our hold and leave the state

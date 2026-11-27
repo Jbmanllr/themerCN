@@ -14,6 +14,7 @@ import {
 } from "./config/constants"
 import { defaultThemeState } from "./config/defaults"
 import { resolvePresetStyles } from "./config/presets"
+import { selectCanUndo } from "./selectors/editor-selectors"
 import type { ThemeStyles } from "./types"
 import { useEditorStore } from "./stores/editor-store"
 import { useThemerUIStore } from "./stores/themer-ui-store"
@@ -461,7 +462,7 @@ describe("Themer", () => {
         await act(async () =>
           useEditorStore.getState().applyThemePreset("default")
         )
-        expect(useEditorStore.getState().canUndo()).toBe(true)
+        expect(selectCanUndo(useEditorStore.getState())).toBe(true)
         return violetPrimary
       }
 
@@ -504,7 +505,7 @@ describe("Themer", () => {
 
         expect(rootVar("--primary")).toBe("rgb(6, 6, 6)")
         expect(localStorage.getItem("switch-populated-b:editor")).toBe(stored)
-        expect(useEditorStore.getState().canUndo()).toBe(false)
+        expect(selectCanUndo(useEditorStore.getState())).toBe(false)
       })
 
       it("starts an empty namespace on the Host's default Preset with no history, and leaves the previous key alone", async () => {
@@ -518,7 +519,7 @@ describe("Themer", () => {
 
         expect(rootVar("--primary")).toBe(violetPrimary)
         expect(persistedPreset("switch-empty-b:editor")).toBe("violet-bloom")
-        expect(useEditorStore.getState().canUndo()).toBe(false)
+        expect(selectCanUndo(useEditorStore.getState())).toBe(false)
         expect(localStorage.getItem("switch-empty-a:editor")).toBe(previous)
       })
     })
@@ -621,7 +622,7 @@ describe("Themer", () => {
         // baseline are untouched.
         await act(async () => useEditorStore.setState({ history: [] }))
 
-        expect(useEditorStore.getState().canUndo()).toBe(false)
+        expect(selectCanUndo(useEditorStore.getState())).toBe(false)
         expect(writes).toEqual([])
 
         // A Theme change still writes.

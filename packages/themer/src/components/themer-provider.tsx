@@ -25,7 +25,6 @@
 // See: packages/themer/ARCHITECTURE.md ("Core Entry Points").
 
 import * as React from "react"
-import { useShallow } from "zustand/react/shallow"
 import type { ThemerConfig, ThemerContextValue } from "../types"
 import {
   useKeyboardShortcut,
@@ -91,7 +90,7 @@ export function ThemerProvider({
     if (warnedShortcuts.has(requestedShortcut)) return
     warnedShortcuts.add(requestedShortcut)
     console.warn(
-      `themercn: shortcut "${requestedShortcut}" is not a valid shortcut ` +
+      `[themercn] shortcut "${requestedShortcut}" is not a valid shortcut ` +
         `(modifiers: ctrl/control, alt/option, shift, meta/cmd/command). ` +
         `Using the default "${SHORTCUTS.toggle}".`
     )
@@ -129,14 +128,10 @@ export function ThemerProvider({
 
   const { mode } = useColorMode()
 
-  const { undo, redo, canUndo, canRedo } = useEditorStore(
-    useShallow((state) => ({
-      undo: state.undo,
-      redo: state.redo,
-      canUndo: state.canUndo,
-      canRedo: state.canRedo,
-    }))
-  )
+  // Store actions: stable references, and each is a no-op with nothing to
+  // restore, so the shortcuts below need no availability check.
+  const undo = useEditorStore((state) => state.undo)
+  const redo = useEditorStore((state) => state.redo)
   const themeOverrideEnabled = usePreferencesStore(
     (state) => state.themeOverrideEnabled
   )
@@ -189,11 +184,7 @@ export function ThemerProvider({
   useKeyboardShortcut({
     key: themerShortcuts.undo.key,
     modifiers: themerShortcuts.undo.modifiers,
-    callback: () => {
-      if (canUndo()) {
-        undo()
-      }
-    },
+    callback: undo,
     enabled: isOpen,
   })
 
@@ -201,11 +192,7 @@ export function ThemerProvider({
   useKeyboardShortcut({
     key: themerShortcuts.redo.key,
     modifiers: themerShortcuts.redo.modifiers,
-    callback: () => {
-      if (canRedo()) {
-        redo()
-      }
-    },
+    callback: redo,
     enabled: isOpen,
   })
 

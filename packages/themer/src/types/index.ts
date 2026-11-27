@@ -59,10 +59,12 @@ export type {
   ThemerUIState,
   ThemerUIActions,
   ThemerUIStore,
+  ThemerLayout,
 } from "./editor"
 
 // Import for use in interfaces below
 import type { ComponentType, ReactNode } from "react"
+import type { ThemerLayout } from "./editor"
 import type { ThemePreset } from "./theme"
 
 /**
@@ -120,19 +122,6 @@ export interface ThemerExtraColorGroup {
   /** The tokens of the group, in display order. */
   colors: readonly ThemerExtraColor[]
 }
-
-/**
- * How the Themer UI is arranged on screen while it is open: the value of
- * `ThemerProps.layout`.
- * - `"workspace"`: covers the whole page, the sidebar beside the Preview.
- * - `"overlay"`: the sidebar floats over the Host app's real page, which
- *   stays usable beside it.
- * - `"push"`: the sidebar sits beside the Host app's real page and shifts it
- *   aside (`margin-left` on `<html>`, `--themer-inset-left`).
- * - `"toolbar"`: no sidebar; every control sits in a bar at the top of the
- *   Host app's real page, each group of controls in its own popup.
- */
-export type ThemerLayout = "workspace" | "overlay" | "push" | "toolbar"
 
 /** Light or dark: the value of `ThemerProps.colorMode`. */
 export type ThemerColorMode = "light" | "dark"

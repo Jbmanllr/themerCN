@@ -5,7 +5,7 @@
 // starts from the click point (useToggleMode).
 
 import { Moon, Sun } from "lucide-react"
-import { useToggleMode } from "../../hooks/use-themer"
+import { useToggleMode } from "../../hooks/use-toggle-mode"
 import { useColorMode } from "../../hooks/use-color-mode"
 import { ActionButton, type ActionButtonProps } from "./action-button"
 

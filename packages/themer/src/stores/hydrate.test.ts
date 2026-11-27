@@ -3,7 +3,7 @@
 // version whose shape is wrong (hand-edited, or written by a bug) never
 // reaches the stores. The editor starts fresh, as with nothing stored; the
 // preferences keep their valid fields and take the defaults for the rest.
-import { afterEach, describe, expect, it } from "vitest"
+import { afterEach, describe, expect, it, vi } from "vitest"
 
 import {
   EDITOR_STATE_VERSION,
@@ -53,6 +53,8 @@ function savedTheme(): ThemeEditorState {
 
 afterEach(() => {
   localStorage.clear()
+  vi.unstubAllEnvs()
+  vi.restoreAllMocks()
 })
 
 describe("a stored editor entry", () => {
@@ -65,9 +67,44 @@ describe("a stored editor entry", () => {
   })
 
   const theme = savedTheme()
-  const withoutBackground = Object.fromEntries(
-    Object.entries(theme.styles.light).filter(([key]) => key !== "background")
-  )
+
+  // A Preset may set a built-in style to undefined (PartialThemeStyleProps),
+  // which JSON then leaves out: the Theme a correct build saved.
+  it("is restored when a built-in style is unset", () => {
+    const withoutBackground = Object.fromEntries(
+      Object.entries(theme.styles.light).filter(([key]) => key !== "background")
+    )
+    hydrate({
+      editor: {
+        themeState: {
+          ...theme,
+          styles: { ...theme.styles, light: withoutBackground },
+        },
+      },
+    })
+
+    const state = useEditorStore.getState()
+    expect(state.themeState.styles.light.primary).toBe("#123456")
+    expect(state.themeState.styles.light.background).toBeUndefined()
+    expect(state.restoredFromStorage).toBe(true)
+  })
+
+  it("is ignored with one development warning, and none in production", () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {})
+
+    hydrate({ editor: { themeState: { currentMode: "light" } } })
+    expect(warn).toHaveBeenCalledTimes(1)
+    expect(warn).toHaveBeenCalledWith(expect.stringMatching(/^\[themercn\]/))
+
+    vi.stubEnv("NODE_ENV", "production")
+    hydrate({ editor: { themeState: { currentMode: "light" } } })
+    expect(warn).toHaveBeenCalledTimes(1)
+
+    // Nothing stored is no warning either.
+    vi.unstubAllEnvs()
+    hydrate({})
+    expect(warn).toHaveBeenCalledTimes(1)
+  })
 
   it.each<[string, unknown]>([
     ["is not an object", "themeState"],
@@ -83,15 +120,6 @@ describe("a stored editor entry", () => {
         themeState: {
           ...theme,
           styles: { ...theme.styles, dark: { ...theme.styles.dark, ring: 4 } },
-        },
-      },
-    ],
-    [
-      "lacks a built-in style",
-      {
-        themeState: {
-          ...theme,
-          styles: { ...theme.styles, light: withoutBackground },
         },
       },
     ],
@@ -112,6 +140,7 @@ describe("a stored editor entry", () => {
       { themeState: theme, presetBaseline: { preset: "default" } },
     ],
   ])("is ignored when it %s", (_case, stored) => {
+    vi.spyOn(console, "warn").mockImplementation(() => {})
     hydrate({ editor: stored })
 
     const state = useEditorStore.getState()
@@ -152,6 +181,20 @@ describe("stored preferences", () => {
     expect(state.colorSelectorTab).toBe(defaults.colorSelectorTab)
     expect(Object.keys(state)).toEqual(Object.keys(defaults))
   })
+
+  // Tailwind 3 has no oklch: the store's rule holds for a restored pair too,
+  // whether the stored format was oklch or fell back to the oklch default.
+  it.each(["oklch", "cmyk"])(
+    "never restore Tailwind 3 with oklch (stored format %s)",
+    (colorFormat) => {
+      hydrate({ preferences: { tailwindVersion: "3", colorFormat } })
+
+      const state = usePreferencesStore.getState()
+      expect(state.tailwindVersion).toBe("3")
+      expect(state.colorFormat).toBe("hsl")
+      expect(state.getAvailableColorFormats()).toContain(state.colorFormat)
+    }
+  )
 
   it("take the default open states when one of them is not a boolean", () => {
     hydrate({ preferences: { sectionStates: { colors: "open" } } })

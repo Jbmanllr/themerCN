@@ -45,6 +45,7 @@ import {
 import { getExtraColorKeys } from "../../config/extra-colors"
 import { useCopyFeedback } from "../../hooks/use-copy-feedback"
 import type { ColorFormat, PackageManager, TailwindVersion } from "../../types"
+import { PACKAGE_MANAGERS } from "../../types/editor"
 
 interface CodePanelDialogProps {
   open: boolean
@@ -53,7 +54,6 @@ interface CodePanelDialogProps {
 
 type CodeTab = "index.css" | "tailwind.config.ts" | "layout.tsx"
 
-const PACKAGE_MANAGERS = ["pnpm", "npm", "yarn", "bun"] as const
 const CODE_TOKEN_REGEX =
   /(\/\/[^\n]*|\/\*[\s\S]*?\*\/|"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|`(?:\\.|[^`\\])*`|--[A-Za-z0-9-]+|@[A-Za-z-]+|\b(?:children|className|colors|const|darkMode|default|description|export|extend|from|function|import|interface|module|return|subsets|theme|title|type|variable)\b|\b\d+(?:\.\d+)?(?:%|px|rem|em)?\b)/g
 

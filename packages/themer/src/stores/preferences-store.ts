@@ -23,15 +23,25 @@
 
 import { create } from "zustand"
 import { persist } from "zustand/middleware"
-import type { PreferencesStore } from "../types"
+import type { ColorFormat, PreferencesStore, TailwindVersion } from "../types"
+import { COLOR_FORMATS } from "../types/theme"
 import { PREFERENCES_VERSION, getStorageKeys } from "../config/constants"
 import { dropOtherVersion, guardedLocalStorage } from "./persist-options"
 import { restorePreferences } from "./persisted-state"
 
-const colorFormatsByVersion = {
+const colorFormatsByVersion: Record<TailwindVersion, readonly ColorFormat[]> = {
   "3": ["hex", "rgb", "hsl"],
-  "4": ["hex", "rgb", "hsl", "oklch"],
-} as const
+  "4": COLOR_FORMATS,
+}
+
+/**
+ * `format` when Tailwind `version` has it, else hsl (Tailwind 3 has no
+ * oklch): the one rule that ties the two preferences, applied when the
+ * version is set and when a stored pair is restored.
+ */
+function formatFor(version: TailwindVersion, format: ColorFormat): ColorFormat {
+  return colorFormatsByVersion[version].includes(format) ? format : "hsl"
+}
 
 /**
  * User preferences store. `sectionStates` holds each ControlSection's open
@@ -60,13 +70,11 @@ export const usePreferencesStore = create<PreferencesStore>()(
           set({ colorFormat: format })
         }
       },
-      setTailwindVersion: (version) => {
-        const next: Partial<PreferencesStore> = { tailwindVersion: version }
-        if (version === "3" && get().colorFormat === "oklch") {
-          next.colorFormat = "hsl"
-        }
-        set(next)
-      },
+      setTailwindVersion: (version) =>
+        set({
+          tailwindVersion: version,
+          colorFormat: formatFor(version, get().colorFormat),
+        }),
       setPackageManager: (packageManager) => set({ packageManager }),
       setShowContrastWarnings: (show) => set({ showContrastWarnings: show }),
       setPreviewTab: (tab) => set({ previewTab: tab }),
@@ -92,10 +100,19 @@ export const usePreferencesStore = create<PreferencesStore>()(
       migrate: dropOtherVersion,
       // On the initial state, never the current one, so a namespace switch
       // (stores/hydrate.ts) keeps no preference of the previous namespace.
-      // Only the stored fields that pass their check are laid over it.
+      // Only the stored fields that pass their check are laid over it, and
+      // the restored pair of version and format holds the store's rule.
       merge: (persistedState): PreferencesStore => {
         const initial = usePreferencesStore.getInitialState()
-        return { ...initial, ...restorePreferences(persistedState, initial) }
+        const restored = restorePreferences(persistedState, initial)
+        return {
+          ...initial,
+          ...restored,
+          colorFormat: formatFor(
+            restored.tailwindVersion,
+            restored.colorFormat
+          ),
+        }
       },
       // Guarded writes, skipped when nothing changed (setSectionOpen with
       // the value already set).

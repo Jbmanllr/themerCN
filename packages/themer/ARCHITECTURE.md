@@ -382,11 +382,18 @@ label reads `<html>` once per toggle.
   the key at the current version.
 - A stored entry is outside data, so its shape is checked too
   ([stores/persisted-state.ts](src/stores/persisted-state.ts)), after the
-  version. An editor entry whose Theme, checkpoint or baseline is not what
-  the types say (a missing built-in style, a value that is not a string) is
-  ignored whole: the store starts fresh, as with nothing stored.
+  version. An editor entry whose Theme, checkpoint or baseline has a shape
+  the code cannot read (styles that are not objects, a style that is not a
+  string, HSL adjustments that are not numbers) is ignored whole: the store
+  starts fresh, as with nothing stored, and says so once in development. A
+  built-in style left out is not a wrong shape: a Preset may unset one.
+  Nothing is written, so the entry stays until the next store set replaces
+  it; the head script reads storage on its own and may still paint such an
+  entry for that load, before the first apply puts the fresh Theme on.
   Preferences are checked field by field: a valid one is restored, any
-  other takes its default, and a key that is no preference is left out.
+  other takes its default, and a key that is no preference is left out; the
+  store then holds its own rule on the restored pair (Tailwind 3 has no
+  oklch).
 - Both stores read and write through `guardedLocalStorage` (same module).
   Every localStorage access is wrapped in try/catch, so a full or blocked
   storage never throws from a store action: the edit applies but isn't
@@ -466,7 +473,8 @@ starts fresh, see Persistence and the head script).
   checkpoint; resetting to the Preset clears history.
 - `updateCommonStyle` writes mode-shared keys (fonts, radius, spacing, letter
   spacing, shadow parameters) to both modes.
-- A fresh store (nothing saved, or an entry at another version) starts with
+- A fresh store (nothing saved, or an entry at another version or of the
+  wrong shape) starts with
   its default Theme's own Preset baseline, so the refresh sets nothing.
   `adoptDefaultPreset` moves a fresh store to `defaultPreset` without
   history. `refreshUntouchedPreset` (run by `ThemerProvider` after Host
@@ -727,9 +735,10 @@ Host developer can filter the console on one word. A warning about how the
 Host uses the Themer (a second `<Themer>`, an invalid `shortcut`, storage
 that cannot be written) is development-only, behind `isProduction()`
 ([utils/is-production.ts](src/utils/is-production.ts)), and logged once.
-So is the warning for a colour `culori` cannot parse (`var(--brand)`,
-`color-mix(…)`): any CSS colour is a valid token value, kept as written on
-export and rated as black by the contrast checker.
+The warning for a colour `culori` cannot parse (`var(--brand)`,
+`color-mix(…)`) is development-only too, but logged each time the colour is
+formatted or rated: any CSS colour is a valid token value, kept as written
+on export and rated as black by the contrast checker.
 
 ## Testing
 

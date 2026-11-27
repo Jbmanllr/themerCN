@@ -47,6 +47,7 @@ import {
   type TailwindPaletteEntry,
 } from "../../config/tailwind-palette"
 import { usePreferencesStore } from "../../stores/preferences-store"
+import { COLOR_SELECTOR_TABS, type ColorSelectorTab } from "../../types/editor"
 import { normalizeColorForCompare } from "../../utils/color-converter"
 import { useScrollBoundary } from "./scroll-boundary"
 
@@ -56,10 +57,10 @@ interface ColorSelectorPopoverProps {
   disabled?: boolean
 }
 
-type ViewMode = "list" | "palette"
+type ViewMode = ColorSelectorTab
 
 function isViewMode(value: unknown): value is ViewMode {
-  return value === "list" || value === "palette"
+  return COLOR_SELECTOR_TABS.some((tab) => tab === value)
 }
 
 type PaletteGroup = {

@@ -79,6 +79,7 @@ import {
   getStorageKeys,
 } from "../config/constants"
 import { isDeepEqual } from "../utils/deep-equal"
+import { isProduction } from "../utils/is-production"
 import { applySidebarSync } from "../utils/sidebar-sync"
 import {
   isUntouchedPreset,
@@ -530,6 +531,14 @@ export function mergeEditorState(
     ? persistedState
     : undefined
   if (!persisted) {
+    // Something is stored and is not an entry: the Theme the user saved is
+    // not coming back, which the developer should not have to guess.
+    if (persistedState !== undefined && !isProduction()) {
+      console.warn(
+        "[themercn] The saved Theme is not a valid entry and was ignored: " +
+          "the Themer starts on its default Preset."
+      )
+    }
     const themeState = withSidebarSync({
       ...initialState.themeState,
       currentMode: mode,

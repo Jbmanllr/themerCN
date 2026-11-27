@@ -64,8 +64,9 @@ function formatHexWithAlpha(color: culori.Color): string | undefined {
 
 /**
  * Format a colour as hsl, rgb, hex or oklch. An unparseable colour is returned
- * unchanged (with a console warning). With `tailwindVersion` "3", hsl is the
- * bare channel triple `H S% L%` that Tailwind 3 wraps in `hsl(...)`.
+ * unchanged (with a console warning in development). With `tailwindVersion`
+ * "3", hsl is the bare channel triple `H S% L%` that Tailwind 3 wraps in
+ * `hsl(...)`.
  */
 export function colorFormatter(
   color: string,

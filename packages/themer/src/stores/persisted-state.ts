@@ -2,17 +2,23 @@
 // data: localStorage is shared with the Host app, survives every build of the
 // Themer, and can be edited by hand. The version check (dropOtherVersion)
 // rejects an entry of another version; these checks reject an entry of the
-// current version whose shape is wrong, so the stores only ever hold what
-// their types say.
+// current version whose shape is wrong, so the stores never hold a shape
+// their code cannot read.
 //
 // Contract:
 // - The editor entry is all or nothing: a Theme with one bad style is not
-//   half-applied, the store starts fresh as with nothing stored.
-// - Preferences are independent of each other, so each field is checked on
-//   its own: a valid one is kept, any other takes its default, and a key that
-//   is not a preference is dropped.
-// - One pass over the entry per hydration, with no parse, compare or storage
-//   access: nothing the page-load cost contract counts (ADR 0002).
+//   half-applied, the store starts fresh as with nothing stored. Nothing is
+//   written, so the entry stays until the next store set replaces it, and
+//   the head script, which reads storage on its own, may still paint it for
+//   that load (utils/theme-script.ts).
+// - Each preference is checked on its own: a valid one is kept, any other
+//   takes its default, and a key that is not a preference is dropped. The
+//   one rule that ties two preferences (Tailwind 3 has no oklch) stays with
+//   the preferences store, which applies it to what this returns.
+// - A walk over the entry's values per hydration, with no parse, compare or
+//   storage access: nothing the page-load cost contract counts (ADR 0002).
+// - Hand-written checks, not a zod schema: zod loads today only with the
+//   lazy Dashboard example, and the stores load with the Themer chunk.
 
 import { isThemerLayout } from "../config/themer-layouts"
 import type {
@@ -25,7 +31,8 @@ import type {
   ThemeStyles,
   ThemerLayout,
 } from "../types"
-import { THEME_STYLE_KEYS } from "../types/theme"
+import { COLOR_SELECTOR_TABS, PACKAGE_MANAGERS } from "../types/editor"
+import { COLOR_FORMATS, TAILWIND_VERSIONS } from "../types/theme"
 
 /**
  * The stored editor entry. The checkpoint and the baseline are left out
@@ -45,19 +52,15 @@ const isBoolean = (value: unknown): value is boolean =>
 
 const isString = (value: unknown): value is string => typeof value === "string"
 
-/** `spacing` is the one built-in style a mode may leave out. */
-const REQUIRED_STYLE_KEYS = THEME_STYLE_KEYS.filter((key) => key !== "spacing")
-
 /**
- * Every built-in style present, and every value a string: JSON drops an
- * unset extra colour, so nothing stored is anything else.
+ * An object whose every value is a string: JSON drops an unset style, so
+ * nothing a build stored is anything else. Whether each built-in style is
+ * present is not checked: ThemeModeStyles promises them, but a Preset may
+ * set one to undefined (PartialThemeStyleProps), the Theme is then saved
+ * without it, and its readers treat a missing style as unset.
  */
 function isModeStyles(value: unknown): value is ThemeModeStyles {
-  if (!isRecord(value)) return false
-  for (const key of REQUIRED_STYLE_KEYS) {
-    if (!isString(value[key])) return false
-  }
-  return Object.values(value).every(isString)
+  return isRecord(value) && Object.values(value).every(isString)
 }
 
 function isThemeStyles(value: unknown): value is ThemeStyles {
@@ -144,17 +147,17 @@ export function restorePreferences(
   return {
     colorFormat: restored(
       entry.colorFormat,
-      oneOf("hex", "rgb", "hsl", "oklch"),
+      oneOf(...COLOR_FORMATS),
       defaults.colorFormat
     ),
     tailwindVersion: restored(
       entry.tailwindVersion,
-      oneOf("3", "4"),
+      oneOf(...TAILWIND_VERSIONS),
       defaults.tailwindVersion
     ),
     packageManager: restored(
       entry.packageManager,
-      oneOf("pnpm", "npm", "yarn", "bun"),
+      oneOf(...PACKAGE_MANAGERS),
       defaults.packageManager
     ),
     showContrastWarnings: restored(
@@ -182,7 +185,7 @@ export function restorePreferences(
     ),
     colorSelectorTab: restored(
       entry.colorSelectorTab,
-      oneOf("list", "palette"),
+      oneOf(...COLOR_SELECTOR_TABS),
       defaults.colorSelectorTab
     ),
     sectionStates: restored(

@@ -6,9 +6,11 @@
 // are written in the store files.
 
 import type {
+  ColorFormat,
   CommonStyleKey,
   HSLAdjustments,
   PartialThemeStyleProps,
+  TailwindVersion,
   ThemeMode,
   ThemeStyles,
 } from "./theme"
@@ -26,7 +28,18 @@ import type {
  */
 export type ThemerLayout = "workspace" | "overlay" | "push" | "toolbar"
 
-export type PackageManager = "pnpm" | "npm" | "yarn" | "bun"
+/**
+ * The package managers the Code dialog writes commands for, in menu order:
+ * the one list its union, the menu and the stored preference's check share.
+ */
+export const PACKAGE_MANAGERS = ["pnpm", "npm", "yarn", "bun"] as const
+
+export type PackageManager = (typeof PACKAGE_MANAGERS)[number]
+
+/** The views of the Tailwind colour selector popover: the one list. */
+export const COLOR_SELECTOR_TABS = ["list", "palette"] as const
+
+export type ColorSelectorTab = (typeof COLOR_SELECTOR_TABS)[number]
 
 /**
  * Complete theme editor state
@@ -190,9 +203,9 @@ export type EditorStore = EditorStoreState & EditorStoreActions
  */
 export interface PreferencesState {
   /** Preferred color format for display */
-  colorFormat: "hex" | "rgb" | "hsl" | "oklch"
+  colorFormat: ColorFormat
   /** Tailwind version for export */
-  tailwindVersion: "3" | "4"
+  tailwindVersion: TailwindVersion
   /** Package manager for registry commands */
   packageManager: PackageManager
   /** Show contrast warnings */
@@ -223,7 +236,7 @@ export interface PreferencesState {
    */
   sidebarColorSync: boolean
   /** Last view of the Tailwind colour selector popover. */
-  colorSelectorTab: "list" | "palette"
+  colorSelectorTab: ColorSelectorTab
   /** Open state of each editor ControlSection, by section id. */
   sectionStates: Record<string, boolean>
 }

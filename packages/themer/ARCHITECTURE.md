@@ -380,6 +380,13 @@ label reads `<html>` once per toggle.
   ([stores/persist-options.ts](src/stores/persist-options.ts)), so an entry
   of another version is not applied, nothing is logged, and zustand rewrites
   the key at the current version.
+- A stored entry is outside data, so its shape is checked too
+  ([stores/persisted-state.ts](src/stores/persisted-state.ts)), after the
+  version. An editor entry whose Theme, checkpoint or baseline is not what
+  the types say (a missing built-in style, a value that is not a string) is
+  ignored whole: the store starts fresh, as with nothing stored.
+  Preferences are checked field by field: a valid one is restored, any
+  other takes its default, and a key that is no preference is left out.
 - Both stores read and write through `guardedLocalStorage` (same module).
   Every localStorage access is wrapped in try/catch, so a full or blocked
   storage never throws from a store action: the edit applies but isn't

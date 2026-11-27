@@ -26,6 +26,7 @@ import { persist } from "zustand/middleware"
 import type { PreferencesStore } from "../types"
 import { PREFERENCES_VERSION, getStorageKeys } from "../config/constants"
 import { dropOtherVersion, guardedLocalStorage } from "./persist-options"
+import { restorePreferences } from "./persisted-state"
 
 const colorFormatsByVersion = {
   "3": ["hex", "rgb", "hsl"],
@@ -91,10 +92,11 @@ export const usePreferencesStore = create<PreferencesStore>()(
       migrate: dropOtherVersion,
       // On the initial state, never the current one, so a namespace switch
       // (stores/hydrate.ts) keeps no preference of the previous namespace.
-      merge: (persistedState): PreferencesStore => ({
-        ...usePreferencesStore.getInitialState(),
-        ...(persistedState as Partial<PreferencesStore> | undefined),
-      }),
+      // Only the stored fields that pass their check are laid over it.
+      merge: (persistedState): PreferencesStore => {
+        const initial = usePreferencesStore.getInitialState()
+        return { ...initial, ...restorePreferences(persistedState, initial) }
+      },
       // Guarded writes, skipped when nothing changed (setSectionOpen with
       // the value already set).
       storage: guardedLocalStorage(),

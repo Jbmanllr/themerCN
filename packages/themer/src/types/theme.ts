@@ -267,7 +267,7 @@ const COLOR_STYLE_KEY_SET: ReadonlySet<string> = /* @__PURE__ */ new Set(
 )
 
 /** Narrow a style key to one shared by both modes. */
-export function isCommonStyleKey(key: string): key is CommonStyleKey {
+function isCommonStyleKey(key: string): key is CommonStyleKey {
   return (
     !COLOR_STYLE_KEY_SET.has(key) &&
     (THEME_STYLE_KEYS as readonly string[]).includes(key)

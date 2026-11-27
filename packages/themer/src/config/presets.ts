@@ -57,7 +57,7 @@ const builtInThemePresets: Readonly<Record<string, ThemePreset>> = {
 }
 
 /** The preset every unknown id resolves to. */
-export const FALLBACK_PRESET_ID = "default"
+const FALLBACK_PRESET_ID = "default"
 
 /**
  * Live preset registry: built-ins plus registered Host Presets. The object

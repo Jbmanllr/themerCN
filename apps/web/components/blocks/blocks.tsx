@@ -46,7 +46,7 @@ function ProductBlock({ slug, size }: { slug: string; size: Size }) {
 }
 
 /** One block of content. */
-export function BlockView({
+function BlockView({
   block,
   size = "md",
 }: {

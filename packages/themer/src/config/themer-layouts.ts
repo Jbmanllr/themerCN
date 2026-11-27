@@ -41,7 +41,7 @@ export const THEMER_LAYOUTS: Record<ThemerLayout, ThemerLayoutDefinition> = {
   toolbar: { label: "Toolbar", icon: PanelTop, coversPage: false },
 }
 
-export const DEFAULT_THEMER_LAYOUT: ThemerLayout = "workspace"
+const DEFAULT_THEMER_LAYOUT: ThemerLayout = "workspace"
 
 export function isThemerLayout(value: unknown): value is ThemerLayout {
   return typeof value === "string" && Object.hasOwn(THEMER_LAYOUTS, value)

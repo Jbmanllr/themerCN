@@ -35,7 +35,7 @@ const percent = new Intl.NumberFormat("en-US", {
 })
 
 /** `0.081` → `+8.1%`, `-0.022` → `-2.2%`. */
-export function formatDelta(delta: number): string {
+function formatDelta(delta: number): string {
   return percent.format(delta)
 }
 

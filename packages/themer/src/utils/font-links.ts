@@ -95,7 +95,7 @@ function buildPlainFontCssUrl(family: string): string {
  * A preview stylesheet: only the glyphs of `text` (Google's `&text=`
  * subset), a few hundred bytes instead of the whole family.
  */
-export function buildFontPreviewUrl(family: string, text = family): string {
+function buildFontPreviewUrl(family: string, text = family): string {
   return `${buildPlainFontCssUrl(family)}&text=${encodeURIComponent(text)}`
 }
 

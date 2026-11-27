@@ -12,7 +12,7 @@ import type { Product } from "@/lib/mock/types"
  * and blurb, and stretched over the whole card; the illustration is decorative
  * here. The name alone keeps the link's accessible name equal to its text.
  */
-export function ProductCard({ product }: { product: Product }) {
+function ProductCard({ product }: { product: Product }) {
   const id = useId()
   return (
     <div className="group relative flex flex-col gap-3 rounded-3xl has-[a:focus-visible]:ring-3 has-[a:focus-visible]:ring-ring/50">

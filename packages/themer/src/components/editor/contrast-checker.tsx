@@ -253,7 +253,7 @@ const BADGES: Record<
 }
 
 /** One WCAG level as a badge; "AA Large" carries a warning icon, not a check. */
-export function ContrastBadge({ level, className }: ContrastBadgeProps) {
+function ContrastBadge({ level, className }: ContrastBadgeProps) {
   const { variant, Icon } = BADGES[level]
   return (
     <Badge variant={variant} className={className}>

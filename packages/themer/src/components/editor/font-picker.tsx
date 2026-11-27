@@ -713,7 +713,7 @@ const FONT_SLOTS = Object.keys(FONT_CONTROLS) as FontControlKey[]
  * Fonts are shared by both modes, so the change goes through
  * updateCommonStyle; the slot reads only its own value.
  */
-export function FontSlotPicker({ slot }: Readonly<{ slot: FontControlKey }>) {
+function FontSlotPicker({ slot }: Readonly<{ slot: FontControlKey }>) {
   const value = useEditorStore(
     (state) => state.themeState.styles[state.themeState.currentMode][slot]
   )

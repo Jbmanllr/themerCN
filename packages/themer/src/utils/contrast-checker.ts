@@ -35,7 +35,7 @@ function getLuminance(color: string): number {
  * The WCAG contrast ratio between two colours, from 1 (identical luminance)
  * to 21 (black on white). An unparseable colour counts as black.
  */
-export function getContrastRatio(color1: string, color2: string): number {
+function getContrastRatio(color1: string, color2: string): number {
   try {
     const lum1 = getLuminance(color1)
     const lum2 = getLuminance(color2)
@@ -122,7 +122,7 @@ export interface ContrastPair {
 }
 
 /** The token pairs the contrast dialog rates for each mode. */
-export const standardColorPairs: readonly ContrastPair[] = [
+const standardColorPairs: readonly ContrastPair[] = [
   { fg: "foreground", bg: "background", label: "Text on Background" },
   { fg: "primary-foreground", bg: "primary", label: "Primary Button Text" },
   {

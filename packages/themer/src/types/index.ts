@@ -1,4 +1,6 @@
-// The package's types: re-exports of the theme, font and editor types, plus
+// The package's types: re-exports of the theme and editor types that other
+// layers import through this file (the font types are imported from
+// ./fonts, and a type only its own file uses is not re-exported), plus
 // ThemerProps (the public `<Themer>` props) and the preview-tab and
 // extra-colour types it uses. ThemerProps and the types its props reference
 // (ThemePreset, PartialThemeStyles, ThemerExtraColorGroup, ThemerExtraColor,
@@ -8,14 +10,9 @@
 // Theme types
 export type {
   ThemeColorKey,
-  ThemeFontKey,
-  ThemeShadowKey,
-  ThemeSpacingKey,
-  ThemeStyleKey,
   CommonStyleKey,
   ThemeStyleProps,
   ThemeModeStyles,
-  ExtraColorValues,
   ThemeStyles,
   ThemeMode,
   HSLAdjustments,
@@ -26,38 +23,18 @@ export type {
   TailwindVersion,
 } from "./theme"
 
-export type {
-  FilterFontCategory,
-  FontCategory,
-  FontInfo,
-  GoogleFont,
-  GoogleFontAxis,
-  GoogleFontFiles,
-  GoogleFontsAPIResponse,
-  PaginatedFontsResponse,
-} from "./fonts"
-
 // Editor types
 export type {
   ThemeEditorState,
   HistoryEntry,
   PresetBaseline,
   SetThemeStateArg,
-  ImportedThemeStyles,
-  ImportThemeStylesOptions,
   EditorStoreState,
-  EditorStoreActions,
   EditorStore,
   PreferencesState,
-  PreferencesActions,
   PreferencesStore,
   PackageManager,
-  ColorFocusState,
-  ColorFocusActions,
   ColorFocusStore,
-  ThemerDialog,
-  ThemerUIState,
-  ThemerUIActions,
   ThemerUIStore,
   ThemerLayout,
 } from "./editor"

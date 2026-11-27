@@ -47,7 +47,6 @@ Safe to do without a decision, in rough order of value.
 1. **`getColorElement` and `resetFontCatalogCache` exist for tests.** Rewrite the two tests through the modules' interfaces (`focusColor` finding a registered picker; a fresh module per test), then delete the exports.
 2. **The `selectors/index.ts` barrel.** It re-exports one module, and the store imports that module directly. Removing it means editing an import in `store-action.count.test.tsx`, a gate file, so the commit needs a `Quality-change` trailer.
 3. **The Playground's dashboard formats numbers on its own.** `components/app/dashboard.tsx` builds a percent and a week formatter and a dollar string beside `lib/format.ts`. Move them there if a second caller appears; today they have one.
-4. **`apps/web/hooks/` holds only a `.gitkeep`.** Remove it unless `components.json` needs the alias target to exist.
 
 ## Waiting on the owner
 
@@ -68,3 +67,4 @@ Each of these changes a contract, adds a dependency, or moves many files.
 - **The head script's own font-name extractor.** It duplicates the Theme fonts module in ES5 because the script imports nothing; a parity test ties the two.
 - **Four Vitest configs repeat the test-slot setup.** Each workspace runs alone, and a repo test checks the wiring.
 - **The inspector barrel.** It is the inspector module's interface, named in ADR 0002, with three readers.
+- **`apps/web/hooks/` holds only a `.gitkeep`.** It is the target of the `hooks` alias in `components.json`, where the shadcn CLI writes a hook.

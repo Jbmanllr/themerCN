@@ -115,12 +115,6 @@ function catalog(googleFontsApiKey: string): Promise<PreparedFontCatalog> {
   return request
 }
 
-/** Test hook: forget every cached catalog, back-off and pending download. */
-export function resetFontCatalogCache(): void {
-  catalogs.clear()
-  requests.clear()
-}
-
 /**
  * Answers the picker's GET with a page of the font catalog as JSON. Always
  * resolves with a 200 JSON body: a Google failure or timeout is logged with

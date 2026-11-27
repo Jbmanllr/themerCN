@@ -12,7 +12,6 @@ import { useThemerUIStore } from "../stores/themer-ui-store"
 import { usePreferencesStore } from "../stores/preferences-store"
 import {
   focusColor,
-  getColorElement,
   registerColorElement,
   type FocusColorScheduler,
 } from "./use-color-focus"
@@ -132,14 +131,29 @@ describe("focusColor", () => {
 
 describe("color registry", () => {
   it("unregisters only the element it registered", () => {
-    const first = fakeElement().element
-    const second = fakeElement().element
-    const unregisterFirst = registerColorElement("accent", first)
-    const unregisterSecond = registerColorElement("accent", second)
+    const frames = new FrameQueue()
+    useColorFocusStore.setState({ highlightTarget: null })
+    const first = fakeElement()
+    const second = fakeElement()
+    const unregisterFirst = registerColorElement("accent", first.element)
+    const unregisterSecond = registerColorElement("accent", second.element)
+
+    // The first picker's unregister leaves the second one registered: a
+    // jump still finds it.
     unregisterFirst()
-    expect(getColorElement("accent")).toBe(second)
+    focusColor("accent", frames)
+    frames.flush()
+    frames.flush()
+    expect(first.calls).toHaveLength(0)
+    expect(second.calls).toHaveLength(1)
+
+    // Its own unregister removes it: the next jump finds no picker.
     unregisterSecond()
-    expect(getColorElement("accent")).toBeUndefined()
+    useColorFocusStore.setState({ highlightTarget: null })
+    focusColor("accent", frames)
+    for (let i = 0; i < 30; i += 1) frames.flush()
+    expect(second.calls).toHaveLength(1)
+    expect(useColorFocusStore.getState().highlightTarget).toBeNull()
   })
 })
 

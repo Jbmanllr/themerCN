@@ -45,11 +45,6 @@ export function registerColorElement(
   }
 }
 
-/** The registered element for a token, if its picker is mounted. */
-export function getColorElement(name: string): HTMLElement | undefined {
-  return colorRegistry.get(name)
-}
-
 export interface FocusColorScheduler {
   requestFrame: (callback: () => void) => number
   cancelFrame: (id: number) => void

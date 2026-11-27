@@ -19,7 +19,7 @@ export const BRAND = {
 export const README_URL =
   "https://github.com/Jbmanllr/themerCN/tree/main/packages/themer#readme"
 
-export const REPO_URL = "https://github.com/Jbmanllr/themerCN"
+const REPO_URL = "https://github.com/Jbmanllr/themerCN"
 
 export type NavLink = { href: string; label: string }
 

@@ -305,7 +305,7 @@ export const tailwindColors = {
   },
 } as const
 
-export const tailwindSpecialColors = {
+const tailwindSpecialColors = {
   white: {
     DEFAULT: "#ffffff",
   },

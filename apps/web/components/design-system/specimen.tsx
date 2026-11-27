@@ -19,7 +19,7 @@ const MODES = {
  * DropdownMenu, Tooltip, Dialog, Sheet, Drawer) mount inside it, so they take
  * the half's mode too.
  */
-export function ModePanel({
+function ModePanel({
   mode,
   className,
   children,

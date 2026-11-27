@@ -79,6 +79,7 @@ import {
   getStorageKeys,
 } from "../config/constants"
 import { isDeepEqual } from "../utils/deep-equal"
+import { isProduction } from "../utils/is-production"
 import { applySidebarSync } from "../utils/sidebar-sync"
 import {
   isUntouchedPreset,
@@ -86,15 +87,10 @@ import {
 } from "../selectors/editor-selectors"
 import { usePreferencesStore } from "./preferences-store"
 import { dropOtherVersion, guardedLocalStorage } from "./persist-options"
-
-/**
- * The stored editor entry. The checkpoint and the baseline are left out
- * while they are the Theme's own objects (the usual case: on a Preset,
- * before any HSL adjustment), so the entry holds one copy of the styles
- * instead of three; left out means "the Theme", while `null` means none.
- */
-type PersistedEditorState = Pick<EditorStoreState, "themeState"> &
-  Partial<Pick<EditorStoreState, "themeCheckpoint" | "presetBaseline">>
+import {
+  isPersistedEditorState,
+  type PersistedEditorState,
+} from "./persisted-state"
 
 /**
  * Whether `baseline` is the Theme's own: its Preset, on the Theme's styles
@@ -512,8 +508,9 @@ export const useEditorStore = create<EditorStore>()(
 )
 
 /**
- * The editor state hydrated from `persistedState` (undefined when nothing,
- * or an entry at another version, is stored), on the page's colour `mode`:
+ * The editor state hydrated from `persistedState`, on the page's colour
+ * `mode`. Nothing stored, an entry at another version (both undefined here)
+ * and an entry of the wrong shape (isPersistedEditorState) start fresh:
  * the hydrated Theme already holds the mode the mount renders with, so the
  * mode sync has nothing to set. A fresh store keeps its default Theme's
  * baseline (in sync, as the Theme), so the refresh sets nothing. Writes
@@ -530,8 +527,18 @@ export function mergeEditorState(
   mode: ThemeMode
 ): EditorStore {
   const initialState = useEditorStore.getInitialState()
-  const persisted = persistedState as PersistedEditorState | undefined
-  if (!persisted?.themeState) {
+  const persisted = isPersistedEditorState(persistedState)
+    ? persistedState
+    : undefined
+  if (!persisted) {
+    // Something is stored and is not an entry: the Theme the user saved is
+    // not coming back, which the developer should not have to guess.
+    if (persistedState !== undefined && !isProduction()) {
+      console.warn(
+        "[themercn] The saved Theme is not a valid entry and was ignored: " +
+          "the Themer starts on its default Preset."
+      )
+    }
     const themeState = withSidebarSync({
       ...initialState.themeState,
       currentMode: mode,

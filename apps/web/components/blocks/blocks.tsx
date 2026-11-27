@@ -46,13 +46,7 @@ function ProductBlock({ slug, size }: { slug: string; size: Size }) {
 }
 
 /** One block of content. */
-export function BlockView({
-  block,
-  size = "md",
-}: {
-  block: Block
-  size?: Size
-}) {
+function BlockView({ block, size = "md" }: { block: Block; size?: Size }) {
   switch (block.type) {
     case "p":
       return <p>{block.text}</p>

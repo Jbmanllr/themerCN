@@ -112,7 +112,7 @@ function detectMac(): boolean {
 }
 
 /** Whether the event comes from a field the user is typing in. */
-export function isEditableTarget(target: EventTarget | null): boolean {
+function isEditableTarget(target: EventTarget | null): boolean {
   if (!target || typeof target !== "object") return false
   const element = target as { tagName?: string; isContentEditable?: boolean }
   return (

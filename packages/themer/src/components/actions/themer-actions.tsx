@@ -218,7 +218,7 @@ export function ThemerMenuActions() {
 }
 
 /** An action as a menu item. */
-export function ThemerActionMenuItem({ action }: { action: ThemerAction }) {
+function ThemerActionMenuItem({ action }: { action: ThemerAction }) {
   return (
     <DropdownMenuItem
       data-testid={action.testId}
@@ -232,7 +232,7 @@ export function ThemerActionMenuItem({ action }: { action: ThemerAction }) {
 }
 
 /** ModeToggle's menu form, named by the mode it switches to. */
-export function ThemerModeMenuItem() {
+function ThemerModeMenuItem() {
   const isDark = useColorMode().mode === "dark"
   const toggleMode = useToggleMode()
   const Icon = isDark ? Sun : Moon

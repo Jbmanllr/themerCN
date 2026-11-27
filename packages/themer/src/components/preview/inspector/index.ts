@@ -1,9 +1,8 @@
-// Barrel of the inspector: the overlay card, its toggle, the hook that binds
-// it to the active tab or the Host page, the session hook its two entry
-// points (PreviewTabs, PageInspector) share, `readFrameDocument` (null for a
-// cross-origin frame) and `segmentClassName`.
+// Barrel of the inspector: the overlay card, its toggle, the session hook
+// its two entry points (PreviewTabs, PageInspector) share, and
+// `readFrameDocument` (null for a cross-origin frame). `useInspector` and
+// `segmentClassName` stay inside the module.
 export { InspectorOverlay } from "./inspector-overlay"
 export { InspectorToggle } from "./inspector-toggle"
-export { readFrameDocument, useInspector } from "./use-inspector"
+export { readFrameDocument } from "./use-inspector"
 export { useInspectorSession } from "./use-inspector-session"
-export { segmentClassName } from "./segment-classname"

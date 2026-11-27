@@ -11,13 +11,16 @@
 import * as culori from "culori"
 import { WCAG_CONTRAST } from "../config/constants"
 import type { ThemeStyleProps } from "../types"
+import { isProduction } from "./is-production"
 
 /** WCAG relative luminance (0 to 1); an unparseable colour counts as black. */
 function getLuminance(color: string): number {
   try {
     const parsed = culori.parse(color)
     if (!parsed) {
-      console.warn(`[themercn] Invalid color: ${color}`)
+      // Any CSS colour is a valid token value; one culori cannot read is
+      // rated as black, which the developer is told.
+      if (!isProduction()) console.warn(`[themercn] Invalid color: ${color}`)
       return 0
     }
 
@@ -32,7 +35,7 @@ function getLuminance(color: string): number {
  * The WCAG contrast ratio between two colours, from 1 (identical luminance)
  * to 21 (black on white). An unparseable colour counts as black.
  */
-export function getContrastRatio(color1: string, color2: string): number {
+function getContrastRatio(color1: string, color2: string): number {
   try {
     const lum1 = getLuminance(color1)
     const lum2 = getLuminance(color2)
@@ -119,7 +122,7 @@ export interface ContrastPair {
 }
 
 /** The token pairs the contrast dialog rates for each mode. */
-export const standardColorPairs: readonly ContrastPair[] = [
+const standardColorPairs: readonly ContrastPair[] = [
   { fg: "foreground", bg: "background", label: "Text on Background" },
   { fg: "primary-foreground", bg: "primary", label: "Primary Button Text" },
   {

@@ -84,7 +84,7 @@ const evalExpression = (source: string, context: Context): unknown => {
 }
 
 /** The value of a `${{ }}` template, or of a bare expression. */
-export function evaluate(template: string, context: Context): unknown {
+function evaluate(template: string, context: Context): unknown {
   const whole = template.match(/^\$\{\{(.*)\}\}$/s)
   if (whole) return evalExpression(whole[1]!, context)
   if (!template.includes("${{")) return evalExpression(template, context)

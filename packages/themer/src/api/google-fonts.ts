@@ -84,7 +84,7 @@ const METADATA_CATEGORIES: Record<string, FontCategory> = {
   handwriting: "handwriting",
 }
 
-export function transformGoogleFontsMetadata(
+function transformGoogleFontsMetadata(
   metadata: GoogleFontsMetadata
 ): PreparedFontCatalog {
   return prepareFontCatalog(metadata.familyMetadataList, (font) => ({

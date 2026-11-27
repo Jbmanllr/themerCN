@@ -238,14 +238,24 @@ export interface ThemePreset {
 }
 
 /**
+ * The export's colour formats: the one list. Its union, the format menu and
+ * the check of a stored preference (stores/persisted-state.ts) derive from
+ * it, so a new format is one edit.
+ */
+export const COLOR_FORMATS = ["hex", "rgb", "hsl", "oklch"] as const
+
+/**
  * Color format for export
  */
-export type ColorFormat = "hex" | "rgb" | "hsl" | "oklch"
+export type ColorFormat = (typeof COLOR_FORMATS)[number]
+
+/** The Tailwind versions the export targets: the one list, as above. */
+export const TAILWIND_VERSIONS = ["3", "4"] as const
 
 /**
  * Tailwind version for export
  */
-export type TailwindVersion = "3" | "4"
+export type TailwindVersion = (typeof TAILWIND_VERSIONS)[number]
 
 /**
  * Style keys each mode holds its own value for: the 32 colours plus
@@ -267,7 +277,7 @@ const COLOR_STYLE_KEY_SET: ReadonlySet<string> = /* @__PURE__ */ new Set(
 )
 
 /** Narrow a style key to one shared by both modes. */
-export function isCommonStyleKey(key: string): key is CommonStyleKey {
+function isCommonStyleKey(key: string): key is CommonStyleKey {
   return (
     !COLOR_STYLE_KEY_SET.has(key) &&
     (THEME_STYLE_KEYS as readonly string[]).includes(key)

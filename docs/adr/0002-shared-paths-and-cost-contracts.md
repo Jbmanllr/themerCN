@@ -85,3 +85,5 @@ Keeping the pre-paint head script as its own path was rejected: it shares its un
 Handing the head script's parsed entries to the stores, through a global, was rejected: it would break the head-script entry's isolation from Themer code to save two parses per load.
 
 Moving the mount sequence's stage order out of React effects into a plain sequence module was rejected: the effects' commit order already is the stage order, and a second definition of it would put the `storageNamespace` switch at risk to make the stages testable without React.
+
+Moving the Preset registry and the Host extra colours out of module state was rejected. `configurePresets` and `configureExtraColors` set them during the render of the Themer's provider, before any stage reads them. They follow the stores, which are module singletons: a page mounts one `<Themer>`. Holding them in a store would add a store set to every page load, where the contract allows two, and passing the Presets down would thread them through every caller of `resolvePresetStyles`: the store's actions, the selectors and the components.

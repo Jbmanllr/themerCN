@@ -55,7 +55,7 @@ class FakeClassList {
   }
 }
 
-export class FakeElement {
+class FakeElement {
   readonly style = new FakeStyle()
   readonly classList = new FakeClassList()
   readonly attributes = new Map<string, string>()

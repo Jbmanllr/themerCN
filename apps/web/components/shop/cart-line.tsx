@@ -8,7 +8,7 @@ import type { CartLine } from "@/lib/mock/types"
 import { unitPrice } from "@/lib/shop"
 
 /** "Filter, 1kg": the options chosen for a line. */
-export function optionLabel(line: CartLine): string {
+function optionLabel(line: CartLine): string {
   return Object.values(line.option).join(", ")
 }
 

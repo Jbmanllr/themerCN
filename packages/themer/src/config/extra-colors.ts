@@ -30,7 +30,7 @@ const BUILT_IN_STYLE_KEYS: ReadonlySet<string> = new Set<string>([
 ])
 
 /** Whether a key can be a Host extra colour (valid and not built in). */
-export function isValidExtraColorKey(key: string): boolean {
+function isValidExtraColorKey(key: string): boolean {
   return (
     EXTRA_KEY_PATTERN.test(key) &&
     !BUILT_IN_STYLE_KEYS.has(key) &&
@@ -39,7 +39,7 @@ export function isValidExtraColorKey(key: string): boolean {
 }
 
 /** Pure normalisation of a host's groups (see the header for the rules). */
-export function normalizeExtraColorGroups(
+function normalizeExtraColorGroups(
   groups: readonly ThemerExtraColorGroup[]
 ): readonly ThemerExtraColorGroup[] {
   const seen = new Set<string>()

@@ -20,7 +20,7 @@ import { THEME_FONT_KEYS, type ThemeFontKey } from "../types/theme"
 /** The editor's font slots; heading takes serif faces by default. */
 export type ThemeFontRole = "sans" | "heading" | "serif" | "mono"
 
-export const FONT_CATEGORIES: Record<
+const FONT_CATEGORIES: Record<
   FontCategory,
   { label: string; fallback: string }
 > = {
@@ -46,7 +46,7 @@ export const FONT_CATEGORIES: Record<
   },
 }
 
-export const SYSTEM_FONTS = [
+const SYSTEM_FONTS = [
   "ui-sans-serif",
   "ui-serif",
   "ui-monospace",
@@ -217,7 +217,7 @@ export const DEFAULT_FONT_WEIGHTS = ["400", "500", "600", "700"] as const
  * The Google family a font-family value names, or null for a host stack
  * (`var(...)`), a generic keyword or a family every OS ships.
  */
-export function getGoogleFontFamily(
+function getGoogleFontFamily(
   fontFamilyValue: string | undefined | null
 ): string | null {
   const family = extractFontFamily(fontFamilyValue)

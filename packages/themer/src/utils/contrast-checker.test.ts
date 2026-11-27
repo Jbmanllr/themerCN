@@ -2,7 +2,7 @@
 // Large 3 for normal text (AA Large fails there), large text rated on its own
 // 3 and 4.5 thresholds, no level the criteria do not define, the sidebar pairs
 // carrying their group, and a pair with a missing token skipped.
-import { describe, expect, it } from "vitest"
+import { afterEach, describe, expect, it, vi } from "vitest"
 
 import { checkThemeContrast, checkWCAGCompliance } from "./contrast-checker"
 
@@ -84,5 +84,23 @@ describe("checkWCAGCompliance levels", () => {
     }
     expect([...levels].sort()).toEqual(["AA", "AA Large", "AAA", "Fail"].sort())
     expect(levels.has("A")).toBe(false)
+  })
+})
+
+describe("a colour culori cannot parse", () => {
+  afterEach(() => {
+    vi.unstubAllEnvs()
+    vi.restoreAllMocks()
+  })
+
+  it("counts as black, with a warning in development only", () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {})
+
+    expect(checkWCAGCompliance("var(--brand)", "#fff").ratio).toBeCloseTo(21)
+    expect(warn).toHaveBeenCalledTimes(1)
+
+    vi.stubEnv("NODE_ENV", "production")
+    expect(checkWCAGCompliance("var(--brand)", "#fff").ratio).toBeCloseTo(21)
+    expect(warn).toHaveBeenCalledTimes(1)
   })
 })

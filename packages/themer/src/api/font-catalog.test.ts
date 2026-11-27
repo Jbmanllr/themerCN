@@ -1,7 +1,15 @@
-import { afterEach, describe, expect, it, vi } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import { FALLBACK_FONTS } from "../utils/font-catalog-data"
-import { fontCatalogResponse, resetFontCatalogCache } from "./font-catalog"
+
+// Each test loads the module anew, as a new server process would, so its
+// memory (cached catalogs, back-offs, downloads in flight) starts empty.
+let fontCatalogResponse: (typeof import("./font-catalog"))["fontCatalogResponse"]
+
+beforeEach(async () => {
+  vi.resetModules()
+  ;({ fontCatalogResponse } = await import("./font-catalog"))
+})
 
 // The font picker must stay usable offline and when Google misbehaves: the
 // key is optional local configuration, never a reason for the editor to break.
@@ -37,7 +45,6 @@ const googleMetadata = {
 }
 
 afterEach(() => {
-  resetFontCatalogCache()
   vi.useRealTimers()
   vi.unstubAllGlobals()
   vi.restoreAllMocks()

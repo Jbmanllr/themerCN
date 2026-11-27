@@ -14,7 +14,7 @@ import { ColorPicker } from "./color-picker"
 import { useEditorStore } from "../../stores/editor-store"
 import { CONTROL_RANGES } from "../../config/constants"
 import { defaultThemeState } from "../../config/defaults"
-import { selectCurrentMode } from "../../selectors"
+import { selectCurrentMode } from "../../selectors/editor-selectors"
 import type { CommonStyleKey } from "../../types"
 import { getShadowMap, getShadowParams } from "../../utils/shadows"
 

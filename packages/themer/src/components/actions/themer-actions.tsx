@@ -47,7 +47,7 @@ import {
 import { SHORTCUTS } from "../../config/constants"
 import { useToggleMode } from "../../hooks/use-toggle-mode"
 import { useIsOnPreset } from "../../hooks/use-editor-selectors"
-import { selectCanRedo, selectCanUndo } from "../../selectors"
+import { selectCanRedo, selectCanUndo } from "../../selectors/editor-selectors"
 import { useEditorStore } from "../../stores/editor-store"
 import { useColorMode } from "../../hooks/use-color-mode"
 import { usePreferencesStore } from "../../stores/preferences-store"

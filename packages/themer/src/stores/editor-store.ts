@@ -492,9 +492,6 @@ export const useEditorStore = create<EditorStore>()(
         const synced = withSidebarSync(themeState)
         if (synced !== themeState) setThemeState(synced)
       },
-
-      canUndo: () => get().history.length > 0,
-      canRedo: () => get().future.length > 0,
     }),
     {
       name: getStorageKeys().editor,

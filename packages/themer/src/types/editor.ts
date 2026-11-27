@@ -128,10 +128,6 @@ export interface EditorStoreActions {
   undo: () => void
   /** Redo last undone change; moves the checkpoint to the restored state. */
   redo: () => void
-  /** Check if undo is available */
-  canUndo: () => boolean
-  /** Check if redo is available */
-  canRedo: () => boolean
   /** Set current mode (light/dark) */
   setCurrentMode: (mode: ThemeMode) => void
   /**

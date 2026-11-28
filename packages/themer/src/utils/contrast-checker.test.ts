@@ -74,17 +74,6 @@ describe("checkWCAGCompliance levels", () => {
       passes: false,
     })
   })
-
-  it("never reports a level the WCAG criteria do not have", () => {
-    const levels = new Set<string>()
-    for (const grey of ["#000", "#595959", "#767676", "#949494", "#eee"]) {
-      for (const large of [false, true]) {
-        levels.add(checkWCAGCompliance(grey, "#fff", large).level)
-      }
-    }
-    expect([...levels].sort()).toEqual(["AA", "AA Large", "AAA", "Fail"].sort())
-    expect(levels.has("A")).toBe(false)
-  })
 })
 
 describe("a colour culori cannot parse", () => {

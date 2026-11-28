@@ -49,9 +49,6 @@
       ],
       "outputs": []
     },
-    "format": {
-      "cache": false
-    },
     "typecheck": {
       "dependsOn": ["^typecheck", "^build", "build:css"]
     },

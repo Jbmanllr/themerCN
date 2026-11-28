@@ -48,16 +48,18 @@ describe("adjustColor", () => {
 
 describe("adjustThemeStyles", () => {
   it("adjusts per-mode colours in both modes and leaves shared styles", () => {
-    const adjusted = adjustThemeStyles(defaultThemeStyles, {
-      ...identity,
-      hueShift: 90,
-    })
+    const red = {
+      light: { ...defaultThemeStyles.light, primary: "#ff0000" },
+      dark: { ...defaultThemeStyles.dark, primary: "#ff0000" },
+    }
+    const adjusted = adjustThemeStyles(red, { ...identity, hueShift: 120 })
+    // Red a third of the way round the hue circle is green, in both modes.
+    expect(adjusted.light.primary).toBe("#00ff00")
+    expect(adjusted.dark.primary).toBe("#00ff00")
     expect(adjusted.light["font-sans"]).toBe(
       defaultThemeStyles.light["font-sans"]
     )
     expect(adjusted.dark.radius).toBe(defaultThemeStyles.dark.radius)
-    expect(adjusted.light.primary).not.toBe(undefined)
-    expect(adjusted).not.toBe(defaultThemeStyles)
   })
 
   it("restores the base colours exactly at the neutral adjustment", () => {

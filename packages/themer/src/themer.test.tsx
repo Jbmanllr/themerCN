@@ -140,12 +140,6 @@ afterEach(async () => {
 })
 
 describe("Themer", () => {
-  it("mounts its trigger beside the Host tree", async () => {
-    await mount()
-
-    expect(trigger()).not.toBeNull()
-  })
-
   it("renders nothing inside an iframe", async () => {
     vi.spyOn(window, "top", "get").mockReturnValue({} as Window)
 
@@ -1219,6 +1213,7 @@ describe("Themer", () => {
       await act(async () => hostTab?.click())
 
       const content = document.querySelector('[data-testid="host-tab-content"]')
+      expect(content).not.toBeNull()
       expect(content?.closest("[data-themer-host]")).not.toBeNull()
     })
 

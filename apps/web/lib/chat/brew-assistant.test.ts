@@ -1,16 +1,14 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
+import { scriptedReplies } from "../mock"
 import type { ScriptedReply } from "../mock"
 
 import { answer, streamReply } from "./brew-assistant"
 
 describe("answer", () => {
   it("answers with the first scripted reply whose pattern matches", () => {
-    const reply = answer("Why is my espresso so sour?")
-    expect(reply.reply[0]).toEqual({
-      type: "p",
-      text: "Taste is the best gauge. Sour means grind finer; bitter means grind coarser.",
-    })
+    // Both the espresso and the filter patterns match: the first one wins.
+    expect(answer("espresso ratio for a V60")).toBe(scriptedReplies[0])
   })
 
   it("falls back when nothing matches", () => {

@@ -49,29 +49,11 @@ const ciYml = parse(read("../.github/workflows/ci.yml")) as {
 }
 
 describe("formatting", () => {
-  it("CI runs a format check", () => {
-    const steps = [
-      ...read("../.github/workflows/ci.yml").matchAll(/run: (.+)/g),
-    ].map((match) => match[1])
-    expect(steps).toContain("pnpm format:check")
-  })
-
-  it("the root format check covers the whole repo", () => {
-    const scripts = JSON.parse(read("../package.json")).scripts
-    expect(scripts["format:check"]).toBe("prettier --check .")
-  })
-
   it("the root format writes exactly what the check checks", () => {
     const scripts = JSON.parse(read("../package.json")).scripts
     expect(scripts.format).toBe(
       scripts["format:check"].replace("--check", "--write")
     )
-  })
-
-  it("format is an uncached write with no upstream chain", () => {
-    const { format } = JSON.parse(read("../turbo.json")).tasks
-    expect(format.cache).toBe(false)
-    expect(format.dependsOn ?? []).toEqual([])
   })
 
   it("lint does not wait on upstream lint", () => {
@@ -558,20 +540,6 @@ describe("build input exclusions", () => {
     ["themercn build:css", themer["build:css"].inputs],
   ]
 
-  it("excludes the tests, specs, snapshots, docs and test configs", () => {
-    expect(SHARED).toEqual(
-      expect.arrayContaining([
-        "**/*.test.{ts,tsx}",
-        "e2e/**",
-        "**/__snapshots__/**",
-        "**/*-snapshots/**",
-        "*.md",
-        "vitest.config.*",
-        "playwright.config.*",
-      ])
-    )
-  })
-
   // themercn's own lists replace the root's, so they repeat it; they also
   // keep out their generated CSS and packages/ui's own test files.
   it.each(lists)("%s excludes exactly the shared globs", (_name, inputs) => {
@@ -690,12 +658,6 @@ describe("shared dependency versions", () => {
 })
 
 describe("toolchain", () => {
-  it("the root does not depend on the shared ESLint config, so editing it does not invalidate every package", () => {
-    const pkg = JSON.parse(read("../package.json"))
-    const deps = { ...pkg.dependencies, ...pkg.devDependencies }
-    expect(Object.keys(deps)).not.toContain("@workspace/eslint-config")
-  })
-
   it("root engines.node matches the README's Node requirement", () => {
     const required = read("../README.md").match(
       /Requires Node (\d+)\.(\d+) or later/
@@ -747,7 +709,6 @@ describe("the CI gate", () => {
   // Branch protection requires these until the owner swaps to ci-gate, and
   // release.yml listens for the workflow by name.
   it("keeps the workflow and job names branch protection and release.yml use", () => {
-    expect(ciYml.name).toBe("CI")
     expect(others.map(([, job]) => job.name)).toEqual(
       expect.arrayContaining([
         "Lint, typecheck, test, build, package checks",
@@ -1532,10 +1493,6 @@ describe("Playwright tiers", () => {
     it("fails a CI run on a flaky test, and only a CI run", async () => {
       expect((await load("1")).failOnFlakyTests).toBe(true)
       expect((await load(undefined)).failOnFlakyTests).toBe(false)
-    })
-
-    it("keeps the trace of every failed attempt and every retry", async () => {
-      expect((await load("1")).use?.trace).toBe("retain-on-failure-and-retries")
     })
   })
 

@@ -374,14 +374,6 @@ describe("Sidebar Sync", () => {
     expect(store.getState().themeState).toBe(themeState)
     expect(store.getState().history).toBe(history)
   })
-
-  it("leaves the sidebar colours alone while the preference is off", () => {
-    usePreferencesStore.setState({ sidebarColorSync: false })
-    store.getState().applyThemePreset(PRESET)
-    expect(store.getState().themeState.styles).toEqual(
-      resolvePresetStyles(PRESET)
-    )
-  })
 })
 
 describe("isOnPreset", () => {

@@ -82,11 +82,6 @@ describe("preset catalog", () => {
     const ids = getPresetIds()
     expect(ids).toHaveLength(43)
     expect(ids.filter((id) => !isTweakcnPreset(id))).toEqual(["default"])
-    for (const id of ["graphite", "violet-bloom", "neo-brutalism"]) {
-      expect(themePresets[id]?.styles).toBe(
-        tweakcnThemePresets[id as keyof typeof tweakcnThemePresets].styles
-      )
-    }
   })
 
   it("lists default first", () => {

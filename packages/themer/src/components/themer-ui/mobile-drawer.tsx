@@ -41,7 +41,7 @@ export function MobileDrawer({ isOpen, onClose }: MobileDrawerProps) {
           <DrawerTitle>Themer</DrawerTitle>
         </DrawerHeader>
         <div className="border-b p-4">
-          <PresetSelect value={preset ?? "default"} onChange={applyPreset} />
+          <PresetSelect value={preset} onChange={applyPreset} />
         </div>
         <div className="overflow-y-auto p-4" data-lenis-prevent>
           <MobilePanelContent />

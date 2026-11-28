@@ -50,10 +50,12 @@ export interface ThemeEditorState {
   /** Currently active mode */
   currentMode: ThemeMode
   /**
-   * Id of the preset the theme started from. On reset, a stale id (a removed
-   * Host Preset) falls back to the Host app's default preset.
+   * Id of the preset the theme started from: every Theme has one, since a
+   * fresh store starts on the built-in default Preset and no action removes
+   * it. On reset, a stale id (a removed Host Preset) falls back to the Host
+   * app's default preset.
    */
-  preset?: string
+  preset: string
   /** HSL adjustment values; absent or neutral means no adjustment */
   hslAdjustments?: HSLAdjustments
 }

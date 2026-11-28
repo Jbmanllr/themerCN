@@ -149,7 +149,7 @@ export function CodePanelDialog({ open, onOpenChange }: CodePanelDialogProps) {
   // is the preset as shipped: an edited theme would install something else.
   const preset = themeState.preset
   const registryCommand =
-    preset && isTweakcnPreset(preset) && !hasUnsavedChanges
+    isTweakcnPreset(preset) && !hasUnsavedChanges
       ? getRegistryCommand(packageManager, preset)
       : null
   const visibleActiveTab =

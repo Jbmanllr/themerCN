@@ -22,7 +22,7 @@ export function ExpandedContent() {
           an h-12 header), so their bottom borders line up. */}
       <SidebarGroup className="h-12 shrink-0 border-b p-0">
         <div className="flex h-full items-center px-2">
-          <PresetSelect value={preset ?? "default"} onChange={applyPreset} />
+          <PresetSelect value={preset} onChange={applyPreset} />
         </div>
       </SidebarGroup>
 

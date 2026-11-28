@@ -15,6 +15,12 @@ import type {
 } from "../types"
 
 /**
+ * Id of the built-in default Preset (presets.ts registers it under this id):
+ * the Preset a fresh Theme is on, and the one an unknown id resolves to.
+ */
+export const BUILT_IN_DEFAULT_PRESET_ID = "default"
+
+/**
  * Default HSL adjustments (no changes)
  */
 export const defaultHSLAdjustments: HSLAdjustments = {
@@ -174,6 +180,6 @@ export const defaultThemeStyles: ThemeStyles = {
 export const defaultThemeState: ThemeEditorState = {
   styles: defaultThemeStyles,
   currentMode: "light",
-  preset: "default",
+  preset: BUILT_IN_DEFAULT_PRESET_ID,
   hslAdjustments: defaultHSLAdjustments,
 }

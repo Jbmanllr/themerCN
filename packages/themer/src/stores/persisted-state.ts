@@ -83,7 +83,7 @@ function isThemeEditorState(value: unknown): value is ThemeEditorState {
     isRecord(value) &&
     isThemeStyles(value.styles) &&
     (value.currentMode === "light" || value.currentMode === "dark") &&
-    (value.preset === undefined || isString(value.preset)) &&
+    isString(value.preset) &&
     (value.hslAdjustments === undefined ||
       isHslAdjustments(value.hslAdjustments))
   )

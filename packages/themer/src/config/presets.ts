@@ -19,12 +19,16 @@
 // See: packages/themer/ARCHITECTURE.md (EditorStore)
 
 import type { ThemePreset, ThemeStyleProps, ThemeStyles } from "../types"
-import { defaultLightStyles, defaultDarkStyles } from "./defaults"
+import {
+  BUILT_IN_DEFAULT_PRESET_ID,
+  defaultLightStyles,
+  defaultDarkStyles,
+} from "./defaults"
 import { tweakcnThemePresets } from "./tweakcn-presets"
 
 /** The registry's "default" preset: tweakcn's default theme (defaults.ts). */
 const tweakcnDefaultThemePreset: ThemePreset = {
-  id: "default",
+  id: BUILT_IN_DEFAULT_PRESET_ID,
   label: "Default",
   description: "The default tweakcn theme",
   source: "BUILT_IN",
@@ -52,12 +56,9 @@ const tweakcnThemePresetsWithIds = Object.fromEntries(
 ) as Record<string, ThemePreset>
 
 const builtInThemePresets: Readonly<Record<string, ThemePreset>> = {
-  default: tweakcnDefaultThemePreset,
+  [BUILT_IN_DEFAULT_PRESET_ID]: tweakcnDefaultThemePreset,
   ...tweakcnThemePresetsWithIds,
 }
-
-/** The preset every unknown id resolves to. */
-const FALLBACK_PRESET_ID = "default"
 
 /**
  * Live preset registry: built-ins plus registered Host Presets. The object
@@ -70,7 +71,7 @@ export const themePresets: Record<string, ThemePreset> = {
 
 const NO_HOST_PRESETS: readonly ThemePreset[] = []
 let registeredHostPresets: readonly ThemePreset[] = NO_HOST_PRESETS
-let configuredDefaultPresetId: string = FALLBACK_PRESET_ID
+let configuredDefaultPresetId: string = BUILT_IN_DEFAULT_PRESET_ID
 const resolvedStylesCache = new Map<string, ThemeStyles>()
 
 export interface PresetRegistryConfig {
@@ -109,7 +110,7 @@ export function configurePresets({
   configuredDefaultPresetId =
     defaultPreset && hasPreset(defaultPreset)
       ? defaultPreset
-      : FALLBACK_PRESET_ID
+      : BUILT_IN_DEFAULT_PRESET_ID
 }
 
 /** Whether a preset id is registered (built-in or host). */
@@ -124,7 +125,7 @@ export function hasPreset(presetId: string): boolean {
 export function getDefaultPresetId(): string {
   return hasPreset(configuredDefaultPresetId)
     ? configuredDefaultPresetId
-    : FALLBACK_PRESET_ID
+    : BUILT_IN_DEFAULT_PRESET_ID
 }
 
 /**
@@ -159,7 +160,7 @@ function resolveModeHeading(
  * cached per id and shared: treat it as read-only.
  */
 export function resolvePresetStyles(presetId: string): ThemeStyles {
-  const id = hasPreset(presetId) ? presetId : FALLBACK_PRESET_ID
+  const id = hasPreset(presetId) ? presetId : BUILT_IN_DEFAULT_PRESET_ID
   const cached = resolvedStylesCache.get(id)
   if (cached) return cached
 
@@ -233,10 +234,10 @@ export const hslPresets = [
 /** Every registered preset id: "default" first, then by label. */
 export function getPresetIds(): string[] {
   return Object.keys(themePresets).sort((a, b) => {
-    if (a === FALLBACK_PRESET_ID) {
+    if (a === BUILT_IN_DEFAULT_PRESET_ID) {
       return -1
     }
-    if (b === FALLBACK_PRESET_ID) {
+    if (b === BUILT_IN_DEFAULT_PRESET_ID) {
       return 1
     }
     return getPresetLabel(a).localeCompare(getPresetLabel(b))

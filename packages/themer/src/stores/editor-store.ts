@@ -96,7 +96,7 @@ import {
  * Whether `baseline` is the Theme's own: its Preset, on the Theme's styles
  * object. Decided by identity, never by a deep compare: every action that
  * puts a Preset on the Theme builds the baseline on the new Theme's styles
- * (baselineOf), and styles are never mutated in place. A baseline equal to
+ * (putOnPreset), and styles are never mutated in place. A baseline equal to
  * the Theme but a separate object is stored; restoring it gives the same
  * state.
  */
@@ -140,9 +140,7 @@ function fromPersisted({
     themeCheckpoint:
       themeCheckpoint === undefined ? themeState : themeCheckpoint,
     presetBaseline:
-      presetBaseline === undefined && themeState.preset
-        ? { preset: themeState.preset, styles: themeState.styles }
-        : (presetBaseline ?? null),
+      presetBaseline === undefined ? baselineOf(themeState) : presetBaseline,
   }
 }
 
@@ -197,15 +195,45 @@ function presetThemeState(
 }
 
 /**
- * The baseline for a Theme just put on `presetId`: built on that Theme
- * state's own styles object, not a copy, so the stored entry leaves it out
+ * The baseline of a Theme that is its Preset: built on that Theme state's
+ * own styles object, not a copy, so the stored entry leaves it out
  * (isBaselineOf).
  */
-function baselineOf(
-  presetId: string,
-  themeState: ThemeEditorState
-): PresetBaseline {
-  return { preset: presetId, styles: themeState.styles }
+function baselineOf(themeState: ThemeEditorState): PresetBaseline {
+  return { preset: themeState.preset, styles: themeState.styles }
+}
+
+/** The store fields every action that sets the Theme's Preset moves. */
+type PresetFields = Pick<
+  EditorStoreState,
+  "themeState" | "themeCheckpoint" | "presetBaseline"
+>
+
+/**
+ * `base` put on a Preset: the Theme (presetThemeState), the checkpoint on
+ * it and its baseline, the three fields that move together whenever a
+ * Preset is put on the Theme (apply, reset, adopt, refresh).
+ */
+function putOnPreset(base: ThemeEditorState, presetId: string): PresetFields {
+  const themeState = presetThemeState(base, presetId)
+  return {
+    themeState,
+    themeCheckpoint: themeState,
+    presetBaseline: baselineOf(themeState),
+  }
+}
+
+/**
+ * The store fields an undo or redo restores from `entry`: its Theme, in
+ * sync and in the mode the editor shows now, and the checkpoint on it, so
+ * the two stay aligned.
+ */
+function restored(
+  entry: HistoryEntry,
+  currentMode: ThemeMode
+): Pick<EditorStoreState, "themeState" | "themeCheckpoint"> {
+  const themeState = withSidebarSync({ ...entry.state, currentMode })
+  return { themeState, themeCheckpoint: themeState }
 }
 
 /**
@@ -220,10 +248,7 @@ export const useEditorStore = create<EditorStore>()(
       themeCheckpoint: null,
       // The default Theme is its own Preset, untouched: with its baseline,
       // the refresh of a fresh store has nothing to set.
-      presetBaseline: baselineOf(
-        defaultThemeState.preset ?? "default",
-        defaultThemeState
-      ),
+      presetBaseline: baselineOf(defaultThemeState),
       history: [],
       future: [],
       restoredFromStorage: false,
@@ -302,12 +327,8 @@ export const useEditorStore = create<EditorStore>()(
         if (!hasPreset(preset)) return
         const currentThemeState = get().themeState
 
-        const newThemeState = presetThemeState(currentThemeState, preset)
-
         set({
-          themeState: newThemeState,
-          themeCheckpoint: newThemeState,
-          presetBaseline: baselineOf(preset, newThemeState),
+          ...putOnPreset(currentThemeState, preset),
           history: pushHistory(get().history, currentThemeState),
           future: [],
         })
@@ -321,17 +342,12 @@ export const useEditorStore = create<EditorStore>()(
         const currentThemeState = get().themeState
         // A preset id that is no longer registered (a removed Host Preset)
         // resets to the Host app's default preset instead of shadcn defaults.
-        const presetId =
-          currentThemeState.preset && hasPreset(currentThemeState.preset)
-            ? currentThemeState.preset
-            : getDefaultPresetId()
-
-        const newThemeState = presetThemeState(currentThemeState, presetId)
+        const presetId = hasPreset(currentThemeState.preset)
+          ? currentThemeState.preset
+          : getDefaultPresetId()
 
         set({
-          themeState: newThemeState,
-          themeCheckpoint: newThemeState,
-          presetBaseline: baselineOf(presetId, newThemeState),
+          ...putOnPreset(currentThemeState, presetId),
           history: [],
           future: [],
         })
@@ -395,40 +411,27 @@ export const useEditorStore = create<EditorStore>()(
           return
         }
 
-        const newThemeState = presetThemeState(themeState, presetId)
-        set({
-          themeState: newThemeState,
-          themeCheckpoint: newThemeState,
-          presetBaseline: baselineOf(presetId, newThemeState),
-        })
+        set(putOnPreset(themeState, presetId))
       },
 
       refreshUntouchedPreset: () => {
         const { themeState, presetBaseline } = get()
-        const presetId = themeState.preset
-        if (!presetId || !hasPreset(presetId)) return
+        if (!hasPreset(themeState.preset)) return
         // The preset's current source, as applyThemePreset would put it on.
-        const newThemeState = presetThemeState(themeState, presetId)
-        if (
-          !isUntouchedPreset(themeState, presetBaseline, newThemeState.styles)
-        ) {
-          return
-        }
+        const fresh = putOnPreset(themeState, themeState.preset)
+        const freshStyles = fresh.themeState.styles
+        if (!isUntouchedPreset(themeState, presetBaseline, freshStyles)) return
 
         // No preset was ever put on this theme, but it already is its
         // preset: record the baseline only.
         if (!presetBaseline) {
-          set({ presetBaseline: baselineOf(presetId, themeState) })
+          set({ presetBaseline: baselineOf(themeState) })
           return
         }
         // The preset's source has not changed since the baseline.
-        if (isDeepEqual(newThemeState.styles, presetBaseline.styles)) return
+        if (isDeepEqual(freshStyles, presetBaseline.styles)) return
 
-        set({
-          themeState: newThemeState,
-          themeCheckpoint: newThemeState,
-          presetBaseline: baselineOf(presetId, newThemeState),
-        })
+        set(fresh)
       },
 
       undo: () => {
@@ -447,14 +450,8 @@ export const useEditorStore = create<EditorStore>()(
         }
         const newFuture = [newFutureEntry, ...future]
 
-        // The checkpoint is the restored Theme itself, so it stays aligned.
-        const restored = withSidebarSync({
-          ...lastHistoryEntry.state,
-          currentMode: currentThemeState.currentMode,
-        })
         set({
-          themeState: restored,
-          themeCheckpoint: restored,
+          ...restored(lastHistoryEntry, currentThemeState.currentMode),
           history: newHistory,
           future: newFuture,
         })
@@ -469,13 +466,8 @@ export const useEditorStore = create<EditorStore>()(
         const newFuture = future.slice(1)
         const currentThemeState = get().themeState
 
-        const restored = withSidebarSync({
-          ...firstFutureEntry.state,
-          currentMode: currentThemeState.currentMode,
-        })
         set({
-          themeState: restored,
-          themeCheckpoint: restored,
+          ...restored(firstFutureEntry, currentThemeState.currentMode),
           history: pushHistory(history, currentThemeState),
           future: newFuture,
         })
@@ -546,7 +538,7 @@ export function mergeEditorState(
     const presetBaseline =
       themeState.styles === initialState.themeState.styles
         ? initialState.presetBaseline
-        : baselineOf(themeState.preset ?? "default", themeState)
+        : baselineOf(themeState)
     return { ...initialState, themeState, presetBaseline }
   }
   return {

@@ -10,6 +10,11 @@ export function formatPrice(cents: Cents): string {
   return usd.format(cents / 100)
 }
 
+/** A plan's price as its card shows it: `1200` → `$12`, `1250` → `$12.50`. */
+export function formatPlanPrice(cents: Cents): string {
+  return formatPrice(cents).replace(/\.00$/, "")
+}
+
 const dateFormat = new Intl.DateTimeFormat("en-US", {
   dateStyle: "medium",
   timeZone: "UTC",

@@ -1,6 +1,15 @@
 import { describe, expect, it } from "vitest"
 
-import { cartSummary, lineKey, shippingLabel } from "./shop"
+import { cartSummary, lineKey, shippingLabel, shippingOptions } from "./shop"
+
+describe("shippingOptions", () => {
+  it("quotes the prices the cart charges", () => {
+    expect(shippingOptions.map((option) => option.description)).toEqual([
+      "3 to 5 days. Free from $40.00, otherwise $5.00.",
+      "Next day if you order before 2 pm. $12.00.",
+    ])
+  })
+})
 
 describe("cartSummary", () => {
   it("adds up lines and charges standard shipping below the free threshold", () => {

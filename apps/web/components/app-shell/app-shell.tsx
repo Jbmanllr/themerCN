@@ -3,7 +3,7 @@ import type { ReactNode } from "react"
 
 import { AppNavButton, AppPageTitle } from "@/components/app-shell/app-nav"
 import { LogoMark } from "@/components/brand/logo"
-import { chatThreads } from "@/lib/mock"
+import { account, chatThreads, getAccountPlan } from "@/lib/mock"
 import { BRAND, appNav } from "@/lib/site"
 import { Avatar, AvatarFallback } from "@workspace/ui/components/avatar"
 import { Separator } from "@workspace/ui/components/separator"
@@ -86,12 +86,17 @@ export function AppShell({ children }: { children: ReactNode }) {
                 render={<Link href="/app/settings" />}
               >
                 <Avatar className="size-8">
-                  <AvatarFallback>AB</AvatarFallback>
+                  <AvatarFallback>
+                    {account.name
+                      .split(" ")
+                      .map((part) => part[0])
+                      .join("")}
+                  </AvatarFallback>
                 </Avatar>
                 <span className="flex flex-col text-left leading-tight">
-                  <span className="text-sm font-medium">Ada Brennan</span>
+                  <span className="text-sm font-medium">{account.name}</span>
                   <span className="text-xs text-muted-foreground">
-                    Night Shift plan
+                    {getAccountPlan()?.name} plan
                   </span>
                 </span>
               </SidebarMenuButton>

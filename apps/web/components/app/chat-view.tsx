@@ -14,6 +14,7 @@ import { LogoMark } from "@/components/brand/logo"
 import { Illustration } from "@/components/illustrations/illustration"
 import { answer, streamReply } from "@/lib/chat/brew-assistant"
 import { formatDate } from "@/lib/format"
+import { chatSuggestions } from "@/lib/mock"
 import type { ChatMessage, ChatThread } from "@/lib/mock"
 import { Bubble, BubbleContent } from "@workspace/ui/components/bubble"
 import { Button } from "@workspace/ui/components/button"
@@ -28,13 +29,6 @@ import {
   MessageAvatar,
   MessageContent,
 } from "@workspace/ui/components/message"
-
-const SUGGESTIONS = [
-  "Why is my espresso sour?",
-  "What ratio for a V60?",
-  "Is decaf any good?",
-  "A gift for a coffee lover",
-]
 
 /**
  * The Brew Assistant: a saved thread (or a new chat) plus a composer. Sent
@@ -224,7 +218,7 @@ function NewChat({ onPick }: { onPick: (text: string) => void }) {
         </p>
       </div>
       <div className="flex max-w-lg flex-wrap justify-center gap-2">
-        {SUGGESTIONS.map((suggestion) => (
+        {chatSuggestions.map((suggestion) => (
           <Button
             key={suggestion}
             variant="outline"

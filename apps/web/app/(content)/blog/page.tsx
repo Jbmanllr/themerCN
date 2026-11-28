@@ -12,7 +12,6 @@ export default function JournalPage() {
       <PageIntro
         title="Journal"
         lede="Brew guides, trips to origin and gear we would buy again, written by the people who roast your coffee."
-        className="md:grid-cols-1"
       >
         <CategoryNav />
       </PageIntro>

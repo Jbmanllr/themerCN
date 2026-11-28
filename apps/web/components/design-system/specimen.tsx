@@ -54,15 +54,9 @@ function ModePanel({
  * one signature. The halves share one frame, split at a hairline, so the
  * comparison reads as a single object rather than two cards.
  */
-export function SpecimenSplit({
-  children,
-  className,
-}: {
-  children: ReactNode
-  className?: string
-}) {
+export function SpecimenSplit({ children }: { children: ReactNode }) {
   return (
-    <div className={cn("grid rounded-3xl border lg:grid-cols-2", className)}>
+    <div className="grid rounded-3xl border lg:grid-cols-2">
       <ModePanel
         mode="light"
         className="rounded-t-3xl lg:rounded-l-3xl lg:rounded-tr-none"

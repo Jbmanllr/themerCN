@@ -5,6 +5,7 @@ import { ModeNote, PageHeader } from "@/components/design-system/page-header"
 import type { Mode } from "@/components/design-system/specimen"
 import { TokenValue } from "@/components/design-system/token-value"
 import { nightjarPreset } from "@/lib/brand/nightjar"
+import { BRAND } from "@/lib/site"
 import { cn } from "@workspace/ui/lib/utils"
 
 export const metadata = { title: "Tokens" }
@@ -18,7 +19,7 @@ type Row = {
 }
 
 const MODES: Mode[] = ["light", "dark"]
-const SAMPLE = "Good coffee, slowly."
+const SAMPLE = BRAND.tagline
 
 function TokenTable({ title, rows }: { title: string; rows: Row[] }) {
   const id = `tokens-${title.toLowerCase()}`
@@ -96,26 +97,27 @@ const colourRows: Row[] = Object.keys(nightjarPreset.styles.light)
     ),
   }))
 
+// Each token is the utility class that draws its own row.
 const radiusScale = [
-  ["rounded-sm", "--radius × 0.6", "rounded-sm"],
-  ["rounded-md", "--radius × 0.8", "rounded-md"],
-  ["rounded-lg", "--radius", "rounded-lg"],
-  ["rounded-xl", "--radius × 1.4", "rounded-xl"],
-  ["rounded-2xl", "--radius × 1.8", "rounded-2xl"],
-  ["rounded-3xl", "--radius × 2.2", "rounded-3xl"],
-  ["rounded-4xl", "--radius × 2.6", "rounded-4xl"],
+  ["rounded-sm", "--radius × 0.6"],
+  ["rounded-md", "--radius × 0.8"],
+  ["rounded-lg", "--radius"],
+  ["rounded-xl", "--radius × 1.4"],
+  ["rounded-2xl", "--radius × 1.8"],
+  ["rounded-3xl", "--radius × 2.2"],
+  ["rounded-4xl", "--radius × 2.6"],
 ] as const
 
 const radiusRows: Row[] = [
   { token: "--radius", render: () => <TokenValue name="--radius" /> },
-  ...radiusScale.map(([token, note, className]) => ({
+  ...radiusScale.map(([token, note]) => ({
     token,
     note,
     render: () => (
       <div
         className={cn(
           "h-10 w-20 rounded-none border-2 border-primary bg-primary/10",
-          className
+          token
         )}
       />
     ),

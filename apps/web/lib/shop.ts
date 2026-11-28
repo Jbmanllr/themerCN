@@ -1,5 +1,6 @@
 // Shop pricing: what a cart costs, shared by /cart and /checkout. Fixed rules,
 // no backend. Prices come from the catalog (lib/mock/catalog.ts).
+import { formatPrice } from "./format"
 import { getProduct } from "./mock"
 import type { CartLine, Cents } from "./mock/types"
 
@@ -26,12 +27,12 @@ export const shippingOptions: ShippingOption[] = [
   {
     id: "standard",
     label: "Standard",
-    description: "3 to 5 days. Free from $40.00, otherwise $5.00.",
+    description: `3 to 5 days. Free from ${formatPrice(FREE_SHIPPING_FROM)}, otherwise ${formatPrice(SHIPPING_PRICE.standard)}.`,
   },
   {
     id: "express",
     label: "Express",
-    description: "Next day if you order before 2 pm. $12.00.",
+    description: `Next day if you order before 2 pm. ${formatPrice(SHIPPING_PRICE.express)}.`,
   },
 ]
 

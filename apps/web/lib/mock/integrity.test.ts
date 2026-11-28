@@ -1,8 +1,11 @@
 import { describe, expect, it } from "vitest"
 
+import { answer } from "../chat/brew-assistant"
 import {
+  account,
   authors,
   categories,
+  chatSuggestions,
   chatThreads,
   getPostsInCategory,
   getProduct,
@@ -48,9 +51,21 @@ describe("mock data", () => {
         t.messages.flatMap((m) => productRefs(m.content))
       ),
       ...scriptedReplies.flatMap((r) => productRefs(r.reply)),
+      ...account.coffees,
     ]
     for (const slug of referenced) {
       expect(getProduct(slug), slug).toBeDefined()
+    }
+  })
+
+  it("puts the signed-in account on a plan that exists", () => {
+    expect(plans.map((p) => p.id)).toContain(account.planId)
+  })
+
+  it("answers every suggested question with its own reply, not the fallback", () => {
+    const fallback = scriptedReplies.at(-1)
+    for (const suggestion of chatSuggestions) {
+      expect(answer(suggestion), suggestion).not.toBe(fallback)
     }
   })
 

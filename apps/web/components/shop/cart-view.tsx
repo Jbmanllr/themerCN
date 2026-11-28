@@ -9,7 +9,12 @@ import { OrderSummary } from "@/components/shop/order-summary"
 import { QuantityStepper } from "@/components/shop/quantity-stepper"
 import { formatPrice } from "@/lib/format"
 import { getProduct } from "@/lib/mock"
-import { FREE_SHIPPING_FROM, cartSummary, lineKey } from "@/lib/shop"
+import {
+  FREE_SHIPPING_FROM,
+  cartSummary,
+  lineKey,
+  shippingLabel,
+} from "@/lib/shop"
 import { useCart } from "@/lib/stores/cart"
 import { Button, buttonVariants } from "@workspace/ui/components/button"
 import { Progress } from "@workspace/ui/components/progress"
@@ -57,7 +62,10 @@ export function CartView() {
           })}
         </ul>
 
-        <OrderSummary summary={summary} shippingLabel="Standard shipping">
+        <OrderSummary
+          summary={summary}
+          shippingLabel={shippingLabel("standard")}
+        >
           <div className="flex flex-col gap-2">
             <Progress
               value={Math.min(

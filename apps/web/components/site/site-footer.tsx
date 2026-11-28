@@ -50,7 +50,7 @@ export function SiteFooter() {
       </div>
       <div className="border-t">
         <p className="mx-auto max-w-6xl px-4 py-4 text-xs text-muted-foreground sm:px-6">
-          Nightjar Coffee Co. is fictional. This site is the Playground for{" "}
+          {BRAND.name} is fictional. This site is the Playground for{" "}
           <a
             href={README_URL}
             className="font-medium text-foreground underline underline-offset-4"

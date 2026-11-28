@@ -16,7 +16,6 @@ export function SpacingControl() {
       presets={SPACING_PRESETS}
       presetsLabel="Spacing presets"
       sliderLabel="Custom"
-      fallback={0.25}
       presetClassName="capitalize"
     />
   )

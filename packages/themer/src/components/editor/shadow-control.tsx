@@ -66,23 +66,12 @@ export function ShadowControl() {
       }).shadow,
     [mode, shadowStyles]
   )
-  const setThemeState = useEditorStore((state) => state.setThemeState)
+  const updateModeStyle = useEditorStore((state) => state.updateModeStyle)
   const updateCommonStyle = useEditorStore((state) => state.updateCommonStyle)
 
   const handleColorChange = React.useCallback(
-    (value: string) => {
-      setThemeState((prev) => ({
-        ...prev,
-        styles: {
-          ...prev.styles,
-          [prev.currentMode]: {
-            ...prev.styles[prev.currentMode],
-            "shadow-color": value,
-          },
-        },
-      }))
-    },
-    [setThemeState]
+    (value: string) => updateModeStyle("shadow-color", value),
+    [updateModeStyle]
   )
 
   const params = getShadowParams(shadowStyles)

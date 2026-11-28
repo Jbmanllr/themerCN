@@ -39,7 +39,6 @@ export function RadiusControl() {
       presets={RADIUS_PRESETS}
       presetsLabel="Radius presets"
       sliderLabel="Custom"
-      fallback={0.625}
       renderPreview={RadiusPreview}
     />
   )

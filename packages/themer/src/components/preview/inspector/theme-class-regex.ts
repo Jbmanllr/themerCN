@@ -44,7 +44,7 @@ const escapeRegex = (value: string) =>
   value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
 
 /** Variant chain such as `hover:` or `data-[state=open]:` (brackets may hold `:`). */
-const VARIANT_PATTERN = String.raw`(?:(?:[^:\s\[]|\[[^\]]*\])+:)*`
+export const VARIANT_PATTERN = String.raw`(?:(?:[^:\s\[]|\[[^\]]*\])+:)*`
 
 /** Opacity modifier: `/50` or `/[0.35]`. */
 const OPACITY_PATTERN = String.raw`(?:\/(?:\d{1,3}|\[[^\]]+\]))?`

@@ -165,6 +165,13 @@ export interface EditorStoreActions {
    */
   updateCommonStyle: (key: CommonStyleKey, value: string) => void
   /**
+   * Write a style each mode holds its own value for (a colour, the shadow
+   * colour, a Host extra colour) to the mode the editor shows. Goes through
+   * setThemeState, so it batches into undo history and Sidebar Sync writes
+   * a base colour's sidebar twin.
+   */
+  updateModeStyle: (key: string, value: string) => void
+  /**
    * Apply styles parsed from imported CSS: one undo entry, a new checkpoint
    * and reset HSL adjustments. Common keys set only in light also reach dark.
    */

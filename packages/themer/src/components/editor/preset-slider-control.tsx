@@ -14,6 +14,7 @@ import {
 import { cn } from "@workspace/ui/lib/utils"
 import { useEditorStore } from "../../stores/editor-store"
 import { CONTROL_RANGES } from "../../config/constants"
+import { defaultLightStyles } from "../../config/defaults"
 import type { CommonStyleKey } from "../../types"
 import { parseLength } from "../../utils/length"
 import { SliderWithInput } from "./slider-with-input"
@@ -32,8 +33,6 @@ export interface PresetSliderControlProps {
   presetsLabel: string
   /** Label of the slider's numeric input. */
   sliderLabel: string
-  /** Value used when the stored one cannot be parsed. */
-  fallback: number
   /** Extra classes for each preset item (e.g. `capitalize`). */
   presetClassName?: string
   /** Preview below the slider, given the stored CSS value. */
@@ -48,7 +47,6 @@ export function PresetSliderControl({
   presets,
   presetsLabel,
   sliderLabel,
-  fallback,
   presetClassName,
   renderPreview,
 }: PresetSliderControlProps) {
@@ -103,7 +101,12 @@ export function PresetSliderControl({
 
       <SliderWithInput
         label={sliderLabel}
-        value={parseLength(storedValue, range.unit, fallback)}
+        // A stored value that cannot be parsed shows the default Theme's.
+        value={parseLength(
+          storedValue,
+          range.unit,
+          parseLength(defaultLightStyles[styleKey], range.unit)
+        )}
         onChange={(value) => handleChange(`${value}${range.unit}`)}
         min={range.min}
         max={range.max}

@@ -473,7 +473,9 @@ starts fresh, see Persistence and the head script).
 - Applying a Preset and importing CSS start a new entry and move the
   checkpoint; resetting to the Preset clears history.
 - `updateCommonStyle` writes mode-shared keys (fonts, radius, spacing, letter
-  spacing, shadow parameters) to both modes.
+  spacing, shadow parameters) to both modes; `updateModeStyle` writes a
+  per-mode key (a colour, the shadow colour, a Host extra colour) to the mode
+  the editor shows.
 - A fresh store (nothing saved, or an entry at another version or of the
   wrong shape) starts with
   its default Theme's own Preset baseline, so the refresh sets nothing.

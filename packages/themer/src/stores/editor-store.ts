@@ -363,6 +363,19 @@ export const useEditorStore = create<EditorStore>()(
         }))
       },
 
+      updateModeStyle: (key, value) => {
+        get().setThemeState((prev) => ({
+          ...prev,
+          styles: {
+            ...prev.styles,
+            [prev.currentMode]: {
+              ...prev.styles[prev.currentMode],
+              [key]: value,
+            },
+          },
+        }))
+      },
+
       importThemeStyles: (imported, options = {}) => {
         const currentThemeState = get().themeState
         const base = options.replace

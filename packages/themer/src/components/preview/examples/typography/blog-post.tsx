@@ -3,8 +3,7 @@
 //
 // Contract: the demo runs inside the Host app, which serves no image files, so
 // every <img> uses an inline `data:` URI (`avatarDataUri`) and the featured
-// image is a plain block. Never point an image at a file path (pinned by
-// blog-post.test.tsx).
+// image is a plain block. Never point an image at a file path.
 
 import {
   Avatar,

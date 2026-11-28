@@ -203,7 +203,7 @@ describe("the UI components themer.css leaves out", () => {
     const queue = sourceFiles(themerSrc)
     for (let file = queue.pop(); file; file = queue.pop()) {
       const imports = readFileSync(file, "utf8").matchAll(
-        /(?:from|import\()\s*["']([^"']+)["']/g
+        /(?:from|import\(?)\s*["']([^"']+)["']/g
       )
       for (const [, specifier = ""] of imports) {
         const target = uiFile(file, specifier)

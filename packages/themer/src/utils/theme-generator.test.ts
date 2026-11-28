@@ -3,6 +3,7 @@
 // defined in terms of itself. Also pins the Tailwind 3 oklch-to-hsl mapping, the
 // multiplicative radius scale, the heading font, Host extra colours and the
 // layout's next/font imports (one per family, none for OS families).
+import { readFileSync } from "node:fs"
 import { describe, expect, it } from "vitest"
 
 import { defaultThemeState } from "../config/defaults"
@@ -25,6 +26,16 @@ function withStyles(
     },
   }
 }
+
+const stylesheet = (path: string) =>
+  readFileSync(new URL(path, import.meta.url), "utf8")
+
+/** Every `--radius-<step>` a stylesheet declares, in order, with its value. */
+const radiusScale = (css: string) =>
+  Array.from(
+    css.matchAll(/--radius-([\w-]+): ([^;]+);/g),
+    ([, step = "", value = ""]) => [step, value] as const
+  )
 
 function block(css: string, selector: ":root" | ".dark"): string {
   const start = css.indexOf(`${selector} {`)
@@ -82,15 +93,33 @@ describe("generateThemeCode", () => {
   })
 
   // The preview's host rounds on shadcn v4's multiplicative scale; an
-  // additive export would round differently at any other --radius.
+  // additive export would round differently at any other --radius. The scale
+  // is written three times (the export, the Themer's CSS, and the UI
+  // package's CSS the Playground rounds with): this holds the three to one
+  // another, step for step. It starts at sm: an xs of the export's own would
+  // change the Host's `rounded-xs` on paste.
   it("exports the radius scale the preview rounds with", () => {
-    const css = generateThemeCode(defaultThemeState, "oklch", "4")
-    expect(css).toContain("--radius-sm: calc(var(--radius) * 0.6);")
-    // The scale the preview rounds with starts at sm (themer.css): an xs of
-    // its own would change the Host's `rounded-xs` on paste.
-    expect(css).not.toContain("--radius-xs")
-    expect(css).toContain("--radius-lg: var(--radius);")
-    expect(css).toContain("--radius-4xl: calc(var(--radius) * 2.6);")
+    const exported = radiusScale(
+      generateThemeCode(defaultThemeState, "oklch", "4")
+    )
+
+    expect(exported.map(([step]) => step)).toEqual([
+      "sm",
+      "md",
+      "lg",
+      "xl",
+      "2xl",
+      "3xl",
+      "4xl",
+    ])
+    expect(Object.fromEntries(exported)).toMatchObject({
+      sm: "calc(var(--radius) * 0.6)",
+      lg: "var(--radius)",
+    })
+    expect(radiusScale(stylesheet("../styles/themer.css"))).toEqual(exported)
+    expect(
+      radiusScale(stylesheet("../../../ui/src/styles/globals.css"))
+    ).toEqual(exported)
   })
 })
 
@@ -99,6 +128,19 @@ describe("generateTailwindConfigCode", () => {
     const config = generateTailwindConfigCode(defaultThemeState, "oklch")
     expect(config).toContain('border: "hsl(var(--border))"')
     expect(config).toContain('heading: ["var(--font-heading)"]')
+  })
+
+  it("rounds on the scale the v4 export declares", () => {
+    const config = generateTailwindConfigCode(defaultThemeState, "hsl")
+    const exported = radiusScale(
+      generateThemeCode(defaultThemeState, "oklch", "4")
+    )
+
+    expect(exported).toHaveLength(7)
+    for (const [step, value] of exported) {
+      const key = /^\d/.test(step) ? `"${step}"` : step
+      expect(config).toContain(`${key}: "${value}",`)
+    }
   })
 })
 

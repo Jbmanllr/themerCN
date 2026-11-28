@@ -101,7 +101,7 @@ export function PresetSliderControl({
 
       <SliderWithInput
         label={sliderLabel}
-        // A stored value that cannot be parsed shows the default Theme's.
+        // A stored value that cannot be parsed shows the default Preset's.
         value={parseLength(
           storedValue,
           range.unit,

@@ -49,6 +49,12 @@ const ciYml = parse(read("../.github/workflows/ci.yml")) as {
 }
 
 describe("formatting", () => {
+  // The README's commands table says the check covers the whole repo.
+  it("the root format check covers the whole repo", () => {
+    const scripts = JSON.parse(read("../package.json")).scripts
+    expect(scripts["format:check"]).toBe("prettier --check .")
+  })
+
   it("the root format writes exactly what the check checks", () => {
     const scripts = JSON.parse(read("../package.json")).scripts
     expect(scripts.format).toBe(
@@ -1493,6 +1499,12 @@ describe("Playwright tiers", () => {
     it("fails a CI run on a flaky test, and only a CI run", async () => {
       expect((await load("1")).failOnFlakyTests).toBe(true)
       expect((await load(undefined)).failOnFlakyTests).toBe(false)
+    })
+
+    // The README promises it: "the uploaded report keeps the trace of every
+    // attempt".
+    it("keeps the trace of every failed attempt and every retry", async () => {
+      expect((await load("1")).use?.trace).toBe("retain-on-failure-and-retries")
     })
   })
 

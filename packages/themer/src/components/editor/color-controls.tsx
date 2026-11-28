@@ -204,7 +204,9 @@ export function ColorControls() {
           description={group.description}
           forceOpen={isSearching}
           headerAction={
-            group.title === "Sidebar" ? <SidebarSyncToggle /> : undefined
+            group.colors.some((color) => isSyncedSidebarKey(color.key)) ? (
+              <SidebarSyncToggle />
+            ) : undefined
           }
         >
           {group.colors.map(({ key, label }) => (

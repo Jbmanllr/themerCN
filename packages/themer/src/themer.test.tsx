@@ -1347,6 +1347,21 @@ describe("Themer", () => {
       return button
     }
 
+    it("shows one Sync toggle, on the sidebar colours, when a Host group is titled Sidebar too", async () => {
+      await mount({
+        storageNamespace: "sync-toggle",
+        extraColors: [
+          { title: "Sidebar", colors: [{ key: "rail", label: "Rail" }] },
+        ],
+      })
+      await openThemer()
+
+      const toggles = document.querySelectorAll(
+        '[data-testid="themer-ui"] [aria-label="Sync sidebar colors"]'
+      )
+      expect(toggles).toHaveLength(1)
+    })
+
     it("puts a Preset on in sync, with no unsaved mark and Reset disabled", async () => {
       saveSidebarSync("sync-preset")
       await mount({ storageNamespace: "sync-preset" })

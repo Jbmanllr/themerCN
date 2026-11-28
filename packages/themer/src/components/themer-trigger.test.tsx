@@ -18,12 +18,10 @@ vi.mock("../stores/themer-ui-store", () => ({
 import { ThemerTrigger } from "./themer-trigger"
 
 it("hides the Themer trigger below sm", () => {
-  const html = renderToStaticMarkup(<ThemerTrigger className="flex" />)
+  const html = renderToStaticMarkup(<ThemerTrigger />)
   const trigger = html.match(
     /<button(?=[^>]*data-testid="themer-trigger")[^>]*>/u
   )?.[0]
-  const classes = trigger?.match(/class="([^"]*)"/u)?.[1]?.split(" ")
 
   expect(trigger).toMatch(/class="[^"]*\bhidden\b[^"]*\bsm:inline-flex\b/u)
-  expect(classes).not.toContain("flex")
 })

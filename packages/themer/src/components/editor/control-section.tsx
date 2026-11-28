@@ -1,9 +1,8 @@
 "use client"
 
 // One collapsible section for every editor panel. Open state:
-// - with an `id`, it lives in the preferences store (`sectionStates`), so
-//   it persists and focusColor can open a section from outside;
-// - without one, it is local state;
+// - it lives in the preferences store (`sectionStates`, under the section's
+//   `id`), so it persists and focusColor can open a section from outside;
 // - `forceOpen` (search matches) shows it open without changing what is
 //   stored, so clearing the search restores the user's layout.
 // The content stays mounted while closed (`keepMounted`) so colour pickers
@@ -20,18 +19,15 @@ import { cn } from "@workspace/ui/lib/utils"
 import { usePreferencesStore } from "../../stores/preferences-store"
 
 interface ControlSectionProps {
-  /** Persisted open-state key; without it the state is local. */
-  id?: string
+  /** Key of the section's open state in the preferences store. */
+  id: string
   title: string
   description?: string
-  /** Open state when nothing is stored for `id`. */
-  defaultOpen?: boolean
   /** Show open regardless of the stored state (e.g. a search match). */
   forceOpen?: boolean
   /** Control shown at the end of the header, outside the toggle button. */
   headerAction?: React.ReactNode
   children: React.ReactNode
-  className?: string
 }
 
 /**
@@ -42,26 +38,18 @@ export function ControlSection({
   id,
   title,
   description,
-  defaultOpen = false,
   forceOpen = false,
   headerAction,
   children,
-  className,
 }: ControlSectionProps) {
-  const storedOpen = usePreferencesStore((state) =>
-    id === undefined ? undefined : state.sectionStates[id]
-  )
+  const storedOpen = usePreferencesStore((state) => state.sectionStates[id])
   const setSectionOpen = usePreferencesStore((state) => state.setSectionOpen)
-  const [localOpen, setLocalOpen] = React.useState(defaultOpen)
 
-  const isOpen =
-    forceOpen || (id === undefined ? localOpen : (storedOpen ?? defaultOpen))
+  // Closed until the user opens it.
+  const isOpen = forceOpen || (storedOpen ?? false)
 
   const setIsExpanded = React.useCallback(
-    (open: boolean) => {
-      if (id === undefined) setLocalOpen(open)
-      else setSectionOpen(id, open)
-    },
+    (open: boolean) => setSectionOpen(id, open),
     [id, setSectionOpen]
   )
 
@@ -69,7 +57,7 @@ export function ControlSection({
     <Collapsible
       open={isOpen}
       onOpenChange={setIsExpanded}
-      className={cn("mb-4 overflow-hidden rounded-lg border", className)}
+      className="mb-4 overflow-hidden rounded-lg border"
     >
       <div className="flex items-center gap-2 bg-background pe-3 transition-colors hover:bg-muted">
         <h3 className="flex min-w-0 flex-1">

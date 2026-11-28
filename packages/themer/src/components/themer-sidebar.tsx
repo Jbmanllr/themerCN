@@ -47,7 +47,7 @@ export function ThemerSidebar({
 }: ThemerSidebarProps) {
   // The tooltip renders in a portal, outside the sidebar's `group`, so it is
   // shown from the sidebar state (as the stock SidebarMenuButton does).
-  const { state, isMobile } = useSidebar()
+  const { state } = useSidebar()
 
   return (
     <Sidebar collapsible="icon">
@@ -86,10 +86,7 @@ export function ThemerSidebar({
                 </Button>
               }
             />
-            <TooltipContent
-              side="right"
-              hidden={state !== "collapsed" || isMobile}
-            >
+            <TooltipContent side="right" hidden={state !== "collapsed"}>
               Close Themer
             </TooltipContent>
           </Tooltip>

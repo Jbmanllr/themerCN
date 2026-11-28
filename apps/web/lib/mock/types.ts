@@ -6,7 +6,6 @@ export type IllustrationSeed =
   "nightjar" | "kettle" | "beans" | "cup" | "grinder" | "dripper" | "moon"
 
 export type ImageRef = {
-  kind: "illustration" | "photo-placeholder"
   seed: IllustrationSeed
   alt: string
 }

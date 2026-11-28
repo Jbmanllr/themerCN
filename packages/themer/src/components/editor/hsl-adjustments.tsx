@@ -5,12 +5,11 @@
 // every colour of the theme at once (Host extra colours the theme sets
 // included; an unset extra stays unset).
 //
-// Contract: adjustments are applied from the checkpoint (the theme before the
-// first adjustment), never from the current styles, so moving a slider back
-// restores the original colours. The checkpoint is saved when an adjustment
-// leaves the neutral state. The debounced updater is created once and reads
-// the store when it fires: the checkpoint saved by the first change is always
-// seen, and nothing is lost to a closure over an older theme.
+// Contract: the editor store's setHslAdjustments holds the rule (every
+// adjustment is recomputed from the checkpoint, the theme before the first
+// adjustment, so moving a slider back restores the original colours). The
+// debounced updater is created once and calls the store when it fires, so
+// nothing is lost to a closure over an older theme.
 //
 // See: packages/themer/ARCHITECTURE.md (HSL Adjustments).
 
@@ -32,37 +31,14 @@ import { SliderWithInput } from "./slider-with-input"
 import { useEditorStore } from "../../stores/editor-store"
 import { hslPresets } from "../../config/presets"
 import { defaultHSLAdjustments } from "../../config/defaults"
-import { getExtraColorKeys } from "../../config/extra-colors"
-import {
-  adjustColor,
-  adjustThemeStyles,
-  isIdentityHslAdjustment,
-} from "../../utils/hsl-adjust"
+import { adjustColor } from "../../utils/hsl-adjust"
 import { debounce } from "../../utils/debounce"
 import type { HSLAdjustments } from "../../types"
 
 const HSL_UPDATE_DEBOUNCE_MS = 10
 
-function applyHslAdjustments(adjustments: HSLAdjustments) {
-  const { themeCheckpoint, themeState, setThemeState } =
-    useEditorStore.getState()
-  const base = (themeCheckpoint ?? themeState).styles
-  setThemeState((prev) => ({
-    ...prev,
-    hslAdjustments: adjustments,
-    styles: adjustThemeStyles(base, adjustments, getExtraColorKeys()),
-  }))
-}
-
-/** Save the checkpoint before the first adjustment away from neutral. */
-function checkpointIfNeutral() {
-  const { themeState, saveThemeCheckpoint } = useEditorStore.getState()
-  if (
-    isIdentityHslAdjustment(themeState.hslAdjustments ?? defaultHSLAdjustments)
-  ) {
-    saveThemeCheckpoint()
-  }
-}
+const applyHslAdjustments = (adjustments: HSLAdjustments) =>
+  useEditorStore.getState().setHslAdjustments(adjustments)
 
 /**
  * While collapsed, the grid is clipped to its first row; presets past that
@@ -108,12 +84,10 @@ export function HSLAdjustments() {
   React.useEffect(() => () => debouncedUpdate.cancel(), [debouncedUpdate])
 
   const handleAdjustmentChange = (key: keyof HSLAdjustments, value: number) => {
-    checkpointIfNeutral()
     debouncedUpdate({ ...currentAdjustments, [key]: value })
   }
 
   const handlePresetClick = (preset: (typeof hslPresets)[number]) => {
-    checkpointIfNeutral()
     debouncedUpdate({
       hueShift: preset.hueShift,
       saturationScale: preset.saturationScale,
@@ -165,7 +139,6 @@ export function HSLAdjustments() {
         ))}
       </ToggleGroup>
 
-      {/* Show more/less */}
       {hslPresets.length > 5 && (
         <Button
           variant="ghost"
@@ -185,7 +158,6 @@ export function HSLAdjustments() {
         </Button>
       )}
 
-      {/* Sliders */}
       <div className="space-y-1">
         <SliderWithInput
           label="Hue Shift"

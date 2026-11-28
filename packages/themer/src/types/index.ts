@@ -7,7 +7,6 @@
 // ThemerLayout, ThemerColorMode, ThemerPreviewTab) leave the package
 // (src/index.ts); the rest is internal.
 
-// Theme types
 export type {
   ThemeColorKey,
   CommonStyleKey,
@@ -23,7 +22,6 @@ export type {
   TailwindVersion,
 } from "./theme"
 
-// Editor types
 export type {
   ThemeEditorState,
   HistoryEntry,
@@ -39,7 +37,6 @@ export type {
   ThemerLayout,
 } from "./editor"
 
-// Import for use in interfaces below
 import type { ComponentType, ReactNode } from "react"
 import type { ThemerLayout } from "./editor"
 import type { ThemePreset } from "./theme"
@@ -198,7 +195,6 @@ export type ThemerConfig = Omit<
   "storageNamespace" | "colorMode" | "onColorModeChange"
 >
 
-// Context types
 export interface ThemerContextValue {
   /** Current configuration: the host's `config` merged over the defaults. */
   config: ThemerConfig

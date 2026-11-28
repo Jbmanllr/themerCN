@@ -9,7 +9,8 @@
 // stays after the popover closes (as tweakcn) so the arrows keep cycling
 // through what was searched, and clears once a theme is picked from the
 // list. The trigger label carries `*` while the theme differs from its
-// preset (useIsOnPreset).
+// preset (useIsOnPreset). It reads the Theme's Preset from the editor store
+// and applies a pick there itself, so every Themer layout mounts it bare.
 //
 // Differences: Base UI composition (`render`), and the popover sized from its
 // trigger with `--anchor-width` (no ResizeObserver). It portals into the
@@ -42,7 +43,11 @@ import {
 } from "../../config/presets"
 import { useEditorStore } from "../../stores/editor-store"
 import { useColorMode } from "../../hooks/use-color-mode"
-import { useIsOnPreset } from "../../hooks/use-editor-selectors"
+import {
+  useApplyThemePreset,
+  useIsOnPreset,
+  usePreset,
+} from "../../hooks/use-editor-selectors"
 import type { ThemeMode } from "../../types"
 import {
   cyclePresetId,
@@ -52,11 +57,6 @@ import {
   pickRandomPresetId,
 } from "./preset-list"
 import { ActionButton } from "../ui/action-button"
-
-interface PresetSelectProps {
-  value: string
-  onChange: (preset: string) => void
-}
 
 const PRESET_SWATCH_KEYS = ["primary", "accent", "secondary", "border"] as const
 
@@ -117,7 +117,9 @@ function CycleButton({
  * Preset selector with search, random, and navigation
  * Styled like tweakcn: full-width button, arrow separators, color preview
  */
-export function PresetSelect({ value, onChange }: PresetSelectProps) {
+export function PresetSelect() {
+  const value = usePreset()
+  const onChange = useApplyThemePreset()
   const [open, setOpen] = React.useState(false)
   const [searchValue, setSearchValue] = React.useState("")
   // Host presets are registered before the first render (ThemerProvider) and

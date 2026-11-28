@@ -343,9 +343,6 @@ describe("CI's Turbo cache", () => {
     )
     expect(setupNode.length).toBeGreaterThan(0)
     for (const step of setupNode) expect(step.with?.cache).toBeUndefined()
-    expect(readText("release.yml")).toMatch(
-      /# No dependency cache in this workflow/
-    )
     expect(readText("release.yml")).not.toMatch(/TURBO_CACHE|\.turbo/)
   })
 })

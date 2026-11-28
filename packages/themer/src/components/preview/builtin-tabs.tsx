@@ -82,7 +82,6 @@ export const BUILTIN_TABS: readonly BuiltinPreviewTab[] = [
     component: DashboardTab,
     scroll: "xy",
     order: 20,
-    wideOnly: true,
   },
   {
     id: "mail",
@@ -90,7 +89,6 @@ export const BUILTIN_TABS: readonly BuiltinPreviewTab[] = [
     component: MailTab,
     scroll: "xy",
     order: 30,
-    wideOnly: true,
   },
   {
     id: "pricing",

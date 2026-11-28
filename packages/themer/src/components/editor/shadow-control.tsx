@@ -113,7 +113,6 @@ export function ShadowControl() {
         )
       })}
 
-      {/* Preview */}
       <div className="pt-2">
         <div className="mb-2 text-xs text-muted-foreground">Preview</div>
         <div className="flex h-20 items-center justify-center rounded-lg border bg-card">

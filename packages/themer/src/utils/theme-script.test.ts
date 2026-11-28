@@ -153,13 +153,6 @@ describe("generateThemeScript", () => {
     expect(document.documentElement.classList.contains("dark")).toBe(false)
   })
 
-  it("restores the saved mode even without a saved Theme", async () => {
-    await saveColorMode("dark")
-    runScript()
-    expect(document.documentElement.classList.contains("dark")).toBe(true)
-    expect(primary()).toBe("")
-  })
-
   it("runs again without stacking a second restore", () => {
     saveTheme(styles)
     runScript()

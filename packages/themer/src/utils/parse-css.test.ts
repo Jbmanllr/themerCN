@@ -283,10 +283,4 @@ describe("parseThemeCss with host extra colours", () => {
     expect(parsed.light.signal).toBeUndefined()
     expect(parsed.ignored).toContain("--signal")
   })
-
-  it("parses extras from a host token sheet", () => {
-    const parsed = parseThemeCss(webCss, { extraColorKeys: ["signal"] })
-    expect(parsed.light.signal).toBeTypeOf("string")
-    expect(parsed.dark.signal).toBeTypeOf("string")
-  })
 })

@@ -63,9 +63,8 @@ describe("mock data", () => {
   })
 
   it("answers every suggested question with its own reply, not the fallback", () => {
-    const fallback = scriptedReplies.at(-1)
     for (const suggestion of chatSuggestions) {
-      expect(answer(suggestion), suggestion).not.toBe(fallback)
+      expect(answer(suggestion).match, suggestion).not.toBe("fallback")
     }
   })
 

@@ -49,9 +49,6 @@
       ],
       "outputs": []
     },
-    "format": {
-      "cache": false
-    },
     "typecheck": {
       "dependsOn": ["^typecheck", "^build", "build:css"]
     },
@@ -87,8 +84,10 @@
         "apps/*/turbo.json",
         "apps/*/eslint.config.js",
         "apps/*/playwright.config.ts",
+        "apps/*/vitest.config.ts",
         "apps/*/e2e/**/*.ts",
         "packages/*/package.json",
+        "packages/*/vitest.config.ts",
         "packages/*/turbo.json",
         "packages/*/eslint.config.js",
         "packages/eslint-config/*.js",

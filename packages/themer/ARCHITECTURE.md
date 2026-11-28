@@ -260,8 +260,11 @@ following it as it changes ([use-host-direction.ts](src/hooks/use-host-direction
 properties Preflight does not reset. Required browsers: `@scope` with a lower
 boundary (Chrome 118, Safari 17.4, Firefox 146).
 
-`build-css` output covers every class of the preview examples (about 250 kB
-minified). DOM tests that mount `<Themer>` mock `./generated/themer-css`:
+`build-css` output covers every class of the Themer UI and the preview
+examples (about 175 kB minified). The scan leaves out the UI components no
+Themer module reaches (the Playground's own): `themer.css` lists them, and
+[themer-css.test.ts](src/styles/themer-css.test.ts) holds the list to the
+Themer's imports. DOM tests that mount `<Themer>` mock `./generated/themer-css`:
 happy-dom's `getComputedStyle` overflows on the real sheet.
 
 ### Popup layering
@@ -663,14 +666,14 @@ sorted by `order`, a Host id replaces a built-in, Host tabs without `order`
 go last). Only the active tab mounts; Host tabs render inside
 `previewWrapper` and `[data-themer-host]`.
 
-| Module                              | Purpose                                                                                                                                                                                                   |
-| ----------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `PreviewTabs`                       | Tab bar, inspector toggle (`Ctrl+I`), fullscreen.                                                                                                                                                         |
-| `LivePreview`                       | Same-origin iframe of the Host page; the Theme is applied to its document after each load. The Host must allow same-origin framing.                                                                       |
-| `InspectorOverlay` + `useInspector` | Hover shows an element's token classes; click pins it and focuses the colour control. Off on mobile and for a cross-origin frame. `ignore` leaves a subtree alone (the page inspector's `[data-themer]`). |
-| `InspectorToggle`                   | The toggle, shared by `PreviewTabs` and `PageInspectorToggle`.                                                                                                                                            |
-| `useInspectorSession`               | Session rules for both entry points (`PreviewTabs`, `PageInspector`), in `inspector/`: mode for the layout in force, toggle, the pick that focuses the token's colour control, `Ctrl+I` while available.  |
-| `useFullscreenSync`                 | Keeps `fullscreenPreview` in step with the Fullscreen API; CSS fallback; `Esc` exits.                                                                                                                     |
+| Module                              | Purpose                                                                                                                                                                                                  |
+| ----------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `PreviewTabs`                       | Tab bar, inspector toggle (`Ctrl+I`), fullscreen.                                                                                                                                                        |
+| `LivePreview`                       | Same-origin iframe of the Host page; the Theme is applied to its document after each load. The Host must allow same-origin framing.                                                                      |
+| `InspectorOverlay` + `useInspector` | Hover shows an element's token classes; click pins it and focuses the colour control. Off for a cross-origin frame. `ignore` leaves a subtree alone (the page inspector's `[data-themer]`).              |
+| `InspectorToggle`                   | The toggle, shared by `PreviewTabs` and `PageInspectorToggle`.                                                                                                                                           |
+| `useInspectorSession`               | Session rules for both entry points (`PreviewTabs`, `PageInspector`), in `inspector/`: mode for the layout in force, toggle, the pick that focuses the token's colour control, `Ctrl+I` while available. |
+| `useFullscreenSync`                 | Keeps `fullscreenPreview` in step with the Fullscreen API; CSS fallback; `Esc` exits.                                                                                                                    |
 
 ## Color System
 
@@ -683,8 +686,10 @@ converts with `culori` for display and export formats.
 ### HSL Adjustments
 
 `{ hueShift (-180..180), saturationScale (0..2), lightnessScale (0.2..2) }`
-recomputed from `themeCheckpoint`
-([hsl-adjust.ts](src/utils/hsl-adjust.ts)); 15 presets in `hslPresets`.
+recomputed from `themeCheckpoint` by the editor store's `setHslAdjustments`,
+which moves the checkpoint to the Theme when an adjustment leaves neutral
+([hsl-adjust.ts](src/utils/hsl-adjust.ts) holds the maths); 15 presets in
+`hslPresets`.
 
 ### Sidebar Sync
 
@@ -721,8 +726,7 @@ parsed (`themerShortcuts`) and tooltips format it. Toggle (`shortcut`,
 default `SHORTCUTS.toggle` = `ctrl+shift+e`), undo and redo in
 `ThemerProvider` (undo and redo only while the Themer UI is open); `Ctrl+I`
 (`inspector`) in `useInspectorSession`, for `PreviewTabs` (Workspace: not on
-mobile or a cross-origin Live frame) and `PageInspector` (in-place layouts:
-every device). Outside `SHORTCUTS`, `Esc` exits the fallback fullscreen preview
+a cross-origin Live frame) and `PageInspector` (in-place layouts). Outside `SHORTCUTS`, `Esc` exits the fallback fullscreen preview
 (`subscribeFullscreen`) and hides the inspector card (`useInspector`; a
 pinned card takes the key first). The Themer binds no sidebar shortcut: the
 stock Ctrl/Cmd+B is off in `ThemerSidebarProvider`. A shortcut string

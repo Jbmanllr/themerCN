@@ -164,22 +164,6 @@ export function LivePreview() {
 
   useThemeInjectedIframe(iframeRef)
 
-  // Narrow screens have no room for device widths: stay at full width.
-  React.useEffect(() => {
-    const mediaQuery = window.matchMedia("(max-width: 1023px)")
-
-    const resizeToFullWidth = () => {
-      if (!mediaQuery.matches) return
-
-      resizablePanelRef.current?.resize("100%")
-      setViewportSize("100")
-    }
-
-    resizeToFullWidth()
-    mediaQuery.addEventListener("change", resizeToFullWidth)
-    return () => mediaQuery.removeEventListener("change", resizeToFullWidth)
-  }, [])
-
   // Keep the URL bar on the page the frame is showing after in-frame links.
   // A full page load fires `load` on the iframe; a client-side navigation
   // (history.pushState) only reaches the frame's own window, so its listeners

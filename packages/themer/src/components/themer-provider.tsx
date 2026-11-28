@@ -180,7 +180,6 @@ export function ThemerProvider({
     callback: toggle,
   })
 
-  // Undo keyboard shortcut (Ctrl+Z / Cmd+Z)
   useKeyboardShortcut({
     key: themerShortcuts.undo.key,
     modifiers: themerShortcuts.undo.modifiers,
@@ -188,7 +187,6 @@ export function ThemerProvider({
     enabled: isOpen,
   })
 
-  // Redo keyboard shortcut (Ctrl+Shift+Z / Cmd+Shift+Z)
   useKeyboardShortcut({
     key: themerShortcuts.redo.key,
     modifiers: themerShortcuts.redo.modifiers,

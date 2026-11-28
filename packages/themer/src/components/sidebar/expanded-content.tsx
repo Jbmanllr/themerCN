@@ -7,22 +7,17 @@
 // through MobilePanelContent.
 
 import { SidebarGroup } from "@workspace/ui/components/sidebar"
-import { useEditorStore } from "../../stores/editor-store"
 import { PresetSelect } from "../actions/preset-select"
 import { PanelTabs } from "./panel-tabs"
 
 export function ExpandedContent() {
-  // Narrow selections: the sidebar re-renders on preset changes only.
-  const preset = useEditorStore((state) => state.themeState.preset)
-  const applyPreset = useEditorStore((state) => state.applyThemePreset)
-
   return (
     <>
       {/* Preset selector: h-12 like the action bar beside it (both sit under
           an h-12 header), so their bottom borders line up. */}
       <SidebarGroup className="h-12 shrink-0 border-b p-0">
         <div className="flex h-full items-center px-2">
-          <PresetSelect value={preset} onChange={applyPreset} />
+          <PresetSelect />
         </div>
       </SidebarGroup>
 

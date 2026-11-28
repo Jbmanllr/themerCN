@@ -5,9 +5,10 @@
 // swatches and a label that changes), and the arrows step through the list.
 import { act } from "react"
 import { createRoot, type Root } from "react-dom/client"
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
+import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
 import { getPresetIds } from "../../config/presets"
+import { useEditorStore } from "../../stores/editor-store"
 import { PresetSelect } from "./preset-select"
 
 ;(
@@ -16,20 +17,17 @@ import { PresetSelect } from "./preset-select"
 
 let root: Root | null = null
 let container: HTMLDivElement
-const onChange = vi.fn<(preset: string) => void>()
+const appliedPreset = () => useEditorStore.getState().themeState.preset
 
 const byTestId = (id: string) =>
   container.querySelector<HTMLButtonElement>(`[data-testid="${id}"]`)!
 
 beforeEach(async () => {
-  onChange.mockReset()
   container = document.createElement("div")
   document.body.append(container)
   root = createRoot(container)
-  const ids = getPresetIds()
-  await act(async () =>
-    root?.render(<PresetSelect value={ids[0]!} onChange={onChange} />)
-  )
+  useEditorStore.getState().applyThemePreset(getPresetIds()[0]!)
+  await act(async () => root?.render(<PresetSelect />))
 })
 
 afterEach(async () => {
@@ -59,9 +57,11 @@ describe("PresetSelect", () => {
     expect(ids.length).toBeGreaterThan(2)
 
     await act(async () => byTestId("themer-preset-next").click())
-    expect(onChange).toHaveBeenLastCalledWith(ids[1])
+    expect(appliedPreset()).toBe(ids[1])
 
     await act(async () => byTestId("themer-preset-previous").click())
-    expect(onChange).toHaveBeenLastCalledWith(ids.at(-1))
+    expect(appliedPreset()).toBe(ids[0])
+    await act(async () => byTestId("themer-preset-previous").click())
+    expect(appliedPreset()).toBe(ids.at(-1))
   })
 })

@@ -30,7 +30,7 @@ export const metadata = { title: "Dashboard" }
 
 // The fixed "now" of the mock data: the week ending on the latest order.
 const WEEK_ENDING = "2026-10-12"
-const NEXT_ROAST = "2026-10-22"
+const NEXT_DELIVERY = "2026-10-22"
 
 export default function Page() {
   const revenue = metrics.find((metric) => metric.id === "revenue")
@@ -55,7 +55,7 @@ export default function Page() {
         <div className="lg:col-span-2">
           <SubscriptionCard
             plan={getAccountPlan()?.name ?? ""}
-            nextDelivery={NEXT_ROAST}
+            nextDelivery={NEXT_DELIVERY}
             coffees={coffees}
           />
         </div>
@@ -106,7 +106,7 @@ export default function Page() {
               <CardTitle>
                 <h3 className="font-heading text-xl">Roasting next</h3>
               </CardTitle>
-              <CardDescription>Thursday&apos;s batch plan.</CardDescription>
+              <CardDescription>Monday&apos;s batch plan.</CardDescription>
             </CardHeader>
             <CardContent>
               <ul className="flex flex-col divide-y">

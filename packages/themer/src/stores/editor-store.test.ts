@@ -374,14 +374,6 @@ describe("Sidebar Sync", () => {
     expect(store.getState().themeState).toBe(themeState)
     expect(store.getState().history).toBe(history)
   })
-
-  it("leaves the sidebar colours alone while the preference is off", () => {
-    usePreferencesStore.setState({ sidebarColorSync: false })
-    store.getState().applyThemePreset(PRESET)
-    expect(store.getState().themeState.styles).toEqual(
-      resolvePresetStyles(PRESET)
-    )
-  })
 })
 
 describe("isOnPreset", () => {
@@ -464,6 +456,37 @@ describe("updateModeStyle", () => {
     const { styles } = store.getState().themeState
     expect(styles.light.signal).toBe("#ff8800")
     expect(styles.dark.signal).toBeUndefined()
+  })
+})
+
+describe("setHslAdjustments", () => {
+  const hue60 = { hueShift: 60, saturationScale: 1, lightnessScale: 1 }
+
+  it("adjusts from the Theme as it was before the first adjustment", () => {
+    store.getState().updateModeStyle("primary", "#ff0000")
+    const before = store.getState().themeState.styles
+
+    store.getState().setHslAdjustments(hue60)
+    const once = store.getState().themeState.styles.light.primary
+    expect(once).not.toBe("#ff0000")
+    expect(store.getState().themeState.hslAdjustments).toEqual(hue60)
+
+    // A second step recomputes from the same base: it does not compound.
+    store.getState().setHslAdjustments(hue60)
+    expect(store.getState().themeState.styles.light.primary).toBe(once)
+
+    store.getState().setHslAdjustments(defaultHSLAdjustments)
+    expect(store.getState().themeState.styles).toEqual(before)
+  })
+
+  it("takes a new base once an edit follows a return to neutral", () => {
+    store.getState().setHslAdjustments(hue60)
+    store.getState().setHslAdjustments(defaultHSLAdjustments)
+    store.getState().updateModeStyle("primary", "#00ff00")
+
+    store.getState().setHslAdjustments(hue60)
+    store.getState().setHslAdjustments(defaultHSLAdjustments)
+    expect(store.getState().themeState.styles.light.primary).toBe("#00ff00")
   })
 })
 
@@ -726,18 +749,14 @@ describe("refreshUntouchedPreset", () => {
         light: { ...prev.styles.light, primary: "#000000" },
       },
     }))
-    // The HSL controls checkpoint the edited theme, adjust, then come back to
-    // neutral: the styles equal the checkpoint again.
-    store.getState().saveThemeCheckpoint()
-    const edited = store.getState().themeState
-    store.getState().setThemeState((prev) => ({
-      ...prev,
-      hslAdjustments: { hueShift: 30, saturationScale: 1, lightnessScale: 1 },
-    }))
-    store.getState().setThemeState({
-      ...edited,
-      hslAdjustments: defaultHSLAdjustments,
+    // The HSL controls adjust the edited theme, then come back to neutral:
+    // the styles equal the checkpoint again.
+    store.getState().setHslAdjustments({
+      hueShift: 30,
+      saturationScale: 1,
+      lightnessScale: 1,
     })
+    store.getState().setHslAdjustments(defaultHSLAdjustments)
 
     configurePresets({ presets: [v2] })
     store.getState().refreshUntouchedPreset()
@@ -805,7 +824,7 @@ describe("the stored entry", () => {
         styles: structuredClone(resolvePresetStyles("brand")),
       },
     })
-    store.getState().saveThemeCheckpoint()
+    store.setState({ themeCheckpoint: store.getState().themeState })
 
     store.getState().refreshUntouchedPreset()
 

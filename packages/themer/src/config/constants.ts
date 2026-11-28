@@ -130,13 +130,9 @@ export const THEMER_STYLE_ATTRIBUTE = "data-themer-style"
  * foreground and background pair against.
  */
 export const WCAG_CONTRAST = {
-  /** Minimum for large text (AA) */
   AA_LARGE: 3,
-  /** Minimum for normal text (AA) */
   AA_NORMAL: 4.5,
-  /** Minimum for large text (AAA) */
   AAA_LARGE: 4.5,
-  /** Minimum for normal text (AAA) */
   AAA_NORMAL: 7,
 } as const
 

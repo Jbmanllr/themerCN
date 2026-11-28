@@ -5,9 +5,8 @@ export const categories: Category[] = [
     slug: "beans",
     name: "Beans",
     blurb:
-      "Roasted on Tuesdays, shipped on Wednesdays. Rested by the time it reaches you.",
+      "Roasted on Mondays, shipped on Tuesdays. Rested by the time it reaches you.",
     image: {
-      kind: "illustration",
       seed: "beans",
       alt: "A scoop of coffee beans",
     },
@@ -17,14 +16,13 @@ export const categories: Category[] = [
     name: "Gear",
     blurb:
       "The few tools we actually use behind the bar, and nothing we don't.",
-    image: { kind: "illustration", seed: "grinder", alt: "A hand grinder" },
+    image: { seed: "grinder", alt: "A hand grinder" },
   },
   {
     slug: "subscriptions",
     name: "Subscriptions",
     blurb: "A bag every two or four weeks, adjusted to how you brew.",
     image: {
-      kind: "illustration",
       seed: "moon",
       alt: "A crescent moon over a cup",
     },
@@ -45,7 +43,6 @@ export const products: Product[] = [
       { name: "Size", values: ["250g", "1kg"] },
     ],
     image: {
-      kind: "illustration",
       seed: "beans",
       alt: "Night Owl Blend beans",
     },
@@ -70,7 +67,6 @@ export const products: Product[] = [
       { name: "Size", values: ["250g", "1kg"] },
     ],
     image: {
-      kind: "illustration",
       seed: "dripper",
       alt: "A pour-over dripper",
     },
@@ -91,7 +87,7 @@ export const products: Product[] = [
       { name: "Grind", values: ["Whole bean", "Espresso", "Filter"] },
       { name: "Size", values: ["250g"] },
     ],
-    image: { kind: "illustration", seed: "moon", alt: "A crescent moon" },
+    image: { seed: "moon", alt: "A crescent moon" },
     description:
       "Sugarcane-process decaf from Colombia. Caramel and red apple, and you will still sleep.",
     details: ["Huila, Colombia", "Medium roast", "Sugarcane (EA) decaf"],
@@ -108,7 +104,7 @@ export const products: Product[] = [
       { name: "Grind", values: ["Whole bean", "Filter"] },
       { name: "Size", values: ["250g", "1kg"] },
     ],
-    image: { kind: "illustration", seed: "beans", alt: "Kenya Kiambu beans" },
+    image: { seed: "beans", alt: "Kenya Kiambu beans" },
     description:
       "Blackcurrant, grapefruit, a long sweet finish. Loud in the best way.",
     details: ["Kiambu county", "Light roast", "SL28 and SL34"],
@@ -122,7 +118,7 @@ export const products: Product[] = [
     reviewCount: 133,
     badges: ["bestseller"],
     options: [{ name: "Finish", values: ["Graphite", "Walnut"] }],
-    image: { kind: "illustration", seed: "grinder", alt: "A hand grinder" },
+    image: { seed: "grinder", alt: "A hand grinder" },
     description:
       "Steel conical burrs and 40 clicked settings. Espresso to French press without a fight.",
     details: ["38 mm conical burrs", "Holds 30 g", "Two-year warranty"],
@@ -136,7 +132,7 @@ export const products: Product[] = [
     reviewCount: 58,
     badges: [],
     options: [{ name: "Finish", values: ["Matte black", "Steel"] }],
-    image: { kind: "illustration", seed: "kettle", alt: "A gooseneck kettle" },
+    image: { seed: "kettle", alt: "A gooseneck kettle" },
     description:
       "A slow, steady pour for pour-over. Holds a temperature to the degree.",
     details: [
@@ -154,7 +150,7 @@ export const products: Product[] = [
     reviewCount: 76,
     badges: ["new"],
     options: [{ name: "Glaze", values: ["Dusk", "Oat"] }],
-    image: { kind: "illustration", seed: "dripper", alt: "A ceramic dripper" },
+    image: { seed: "dripper", alt: "A ceramic dripper" },
     description:
       "A cone with spiral ribs for an even draw-down. Glazed by hand, so no two are quite alike.",
     details: [
@@ -176,7 +172,6 @@ export const products: Product[] = [
       { name: "Bags", values: ["1", "2"] },
     ],
     image: {
-      kind: "illustration",
       seed: "nightjar",
       alt: "A nightjar on a branch",
     },

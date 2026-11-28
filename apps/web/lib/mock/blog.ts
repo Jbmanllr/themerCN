@@ -11,19 +11,19 @@ export const authors: Author[] = [
     id: "mara",
     name: "Mara Okafor",
     role: "Head roaster",
-    avatar: { kind: "illustration", seed: "beans", alt: "Mara Okafor" },
+    avatar: { seed: "beans", alt: "Mara Okafor" },
   },
   {
     id: "theo",
     name: "Theo Lindqvist",
     role: "Bar lead",
-    avatar: { kind: "illustration", seed: "cup", alt: "Theo Lindqvist" },
+    avatar: { seed: "cup", alt: "Theo Lindqvist" },
   },
   {
     id: "ines",
     name: "Inès Marchetti",
     role: "Green coffee buyer",
-    avatar: { kind: "illustration", seed: "nightjar", alt: "Inès Marchetti" },
+    avatar: { seed: "nightjar", alt: "Inès Marchetti" },
   },
 ]
 
@@ -51,7 +51,7 @@ export const posts: Post[] = [
     author: "theo",
     publishedAt: "2026-09-18",
     readingMinutes: 6,
-    cover: { kind: "illustration", seed: "cup", alt: "A cup of espresso" },
+    cover: { seed: "cup", alt: "A cup of espresso" },
     body: [
       {
         type: "p",
@@ -86,7 +86,6 @@ export const posts: Post[] = [
     publishedAt: "2026-08-30",
     readingMinutes: 5,
     cover: {
-      kind: "illustration",
       seed: "dripper",
       alt: "A pour-over dripper",
     },
@@ -107,7 +106,6 @@ export const posts: Post[] = [
       {
         type: "image",
         image: {
-          kind: "illustration",
           seed: "kettle",
           alt: "A gooseneck kettle pouring",
         },
@@ -124,7 +122,7 @@ export const posts: Post[] = [
     author: "ines",
     publishedAt: "2026-07-12",
     readingMinutes: 9,
-    cover: { kind: "illustration", seed: "beans", alt: "Coffee cherries" },
+    cover: { seed: "beans", alt: "Coffee cherries" },
     body: [
       {
         type: "p",
@@ -145,7 +143,7 @@ export const posts: Post[] = [
     author: "theo",
     publishedAt: "2026-06-03",
     readingMinutes: 7,
-    cover: { kind: "illustration", seed: "grinder", alt: "A hand grinder" },
+    cover: { seed: "grinder", alt: "A hand grinder" },
     body: [
       {
         type: "p",
@@ -162,7 +160,7 @@ export const posts: Post[] = [
     author: "mara",
     publishedAt: "2026-05-21",
     readingMinutes: 4,
-    cover: { kind: "illustration", seed: "moon", alt: "A crescent moon" },
+    cover: { seed: "moon", alt: "A crescent moon" },
     body: [
       {
         type: "p",

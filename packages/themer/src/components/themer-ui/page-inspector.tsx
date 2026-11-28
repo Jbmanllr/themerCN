@@ -38,7 +38,6 @@ export function PageInspector() {
   const containerRef = React.useRef<HTMLDivElement>(null)
 
   const { state } = useInspectorSession({
-    surfaceAvailable: true,
     frame: false,
     bindingKey: "page",
     hostRef,

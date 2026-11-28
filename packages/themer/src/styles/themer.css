@@ -31,6 +31,33 @@
 @source not "../../../ui/src/**/*.test.{ts,tsx}";
 @source not "../../../ui/src/**/__snapshots__";
 @source not "../../../ui/src/**/*-snapshots";
+/* The UI components no Themer module reaches (the Playground's own): their
+   classes would ship in every Host page. themer-css.test.ts holds this list
+   to the Themer's imports, so add or drop a name when it fails. */
+@source not "../../../ui/src/components/accordion.tsx";
+@source not "../../../ui/src/components/alert-dialog.tsx";
+@source not "../../../ui/src/components/aspect-ratio.tsx";
+@source not "../../../ui/src/components/attachment.tsx";
+@source not "../../../ui/src/components/breadcrumb.tsx";
+@source not "../../../ui/src/components/bubble.tsx";
+@source not "../../../ui/src/components/carousel.tsx";
+@source not "../../../ui/src/components/code-block.tsx";
+@source not "../../../ui/src/components/combobox.tsx";
+@source not "../../../ui/src/components/context-menu.tsx";
+@source not "../../../ui/src/components/direction.tsx";
+@source not "../../../ui/src/components/empty.tsx";
+@source not "../../../ui/src/components/hover-card.tsx";
+@source not "../../../ui/src/components/input-otp.tsx";
+@source not "../../../ui/src/components/menubar.tsx";
+@source not "../../../ui/src/components/message-scroller.tsx";
+@source not "../../../ui/src/components/message.tsx";
+@source not "../../../ui/src/components/native-select.tsx";
+@source not "../../../ui/src/components/navigation-menu.tsx";
+@source not "../../../ui/src/components/pagination.tsx";
+@source not "../../../ui/src/components/progress.tsx";
+@source not "../../../ui/src/components/questionnaire.tsx";
+@source not "../../../ui/src/components/toast.tsx";
+@source not "../../../ui/src/components/trace.tsx";
 
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";

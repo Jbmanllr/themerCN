@@ -27,7 +27,6 @@ type ButtonClickEvent = Parameters<
 >[0]
 
 export interface CopyButtonProps extends React.ComponentProps<typeof Button> {
-  /** Text to copy to clipboard */
   textToCopy: string
   /** Custom children to render. If not provided, shows "Copy" / "Copied" */
   children?: React.ReactNode

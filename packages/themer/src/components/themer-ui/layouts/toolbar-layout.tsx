@@ -38,7 +38,6 @@ import {
 } from "@workspace/ui/components/toggle-group"
 import { useThemerLayout } from "../../../hooks/use-themer-layout"
 import { useColorFocusStore } from "../../../stores/color-focus-store"
-import { useEditorStore } from "../../../stores/editor-store"
 import { PresetSelect } from "../../actions/preset-select"
 import {
   ThemerActionButton,
@@ -56,8 +55,6 @@ import { PANELS, type Panel } from "../../sidebar/panels-config"
 import type { ThemerLayoutProps } from "./types"
 
 export function ToolbarLayout({ onClose, zIndex }: ThemerLayoutProps) {
-  const preset = useEditorStore((state) => state.themeState.preset)
-  const applyPreset = useEditorStore((state) => state.applyThemePreset)
   const { actions } = useThemerActions()
 
   return (
@@ -81,7 +78,7 @@ export function ToolbarLayout({ onClose, zIndex }: ThemerLayoutProps) {
         <Separator orientation="vertical" className="h-6.5" />
 
         <div className="w-64">
-          <PresetSelect value={preset} onChange={applyPreset} />
+          <PresetSelect />
         </div>
 
         <Separator orientation="vertical" className="h-6.5" />

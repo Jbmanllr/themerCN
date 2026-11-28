@@ -39,12 +39,12 @@ import { getThemeFonts } from "./font-names"
 const EXPORT_COLOR_KEYS = THEME_COLOR_KEYS
 
 /**
- * shadcn v4's multiplicative radius scale, as the previewed host declares it
- * (packages/ui/src/styles/globals.css), so an export rounds like the preview; null
- * is `var(--radius)` itself.
+ * shadcn v4's multiplicative radius scale, as the previewed host and the
+ * Themer's own CSS declare it (packages/ui/src/styles/globals.css,
+ * styles/themer.css), so an export rounds like the preview; null is
+ * `var(--radius)` itself.
  */
 const RADIUS_SCALE = [
-  ["xs", "0.5"],
   ["sm", "0.6"],
   ["md", "0.8"],
   ["lg", null],

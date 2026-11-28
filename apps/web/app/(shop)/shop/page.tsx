@@ -16,8 +16,8 @@ export default function ShopPage() {
           Beans, gear and a standing order
         </h1>
         <p className="max-w-xl text-lg text-muted-foreground">
-          Everything we sell, we use. Beans are roasted on Tuesdays and shipped
-          on Wednesdays, so they arrive rested and ready.
+          Everything we sell, we use. Beans are roasted on Mondays and shipped
+          on Tuesdays, so they arrive rested and ready.
         </p>
         <CategoryNav />
       </header>

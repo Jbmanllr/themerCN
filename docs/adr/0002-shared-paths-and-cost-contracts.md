@@ -56,7 +56,7 @@ Each path section below states its plug-in rule, what is built once and at which
 - **Plug-in rule:** a feature adds its work through the module's stages, select, measure and overlay, never through its own pointer, scroll or resize listener. A new entry point mounts one of the two adapters. No layout read outside the measure stage, no store action on a pointer move (a pick may call the colour focus once), and nothing per move that depends only on the session's inputs.
 - **Cost contract per pointer move:** 0 regex compiles. 0 store sets. At most 1 ancestor walk, testing each class of a walked element at most once. At most 1 `closest(ignore)`. At most 2 other DOM queries (the card's `closest`), only while a card is shown. No measure on a move that keeps the same element; at most 1 measure per animation frame, scheduled by a new element, a scroll or a resize. Per measure, at most 3 `getBoundingClientRect` plus the frame's `clientLeft` and `clientTop`. The overlay re-renders only when the measured state changed. The pointer-move rate is not throttled and is not part of the contract.
 - **Built once:** the class regex, once per registration of Host extra colours; the listeners, once per binding (inspector on, tab, frame load); a class's segmentation, once per class shown.
-- **Switched off:** the inspector off, or on mobile in Workspace, removes every listener and the pending frame, not just the card.
+- **Switched off:** the inspector off removes every listener and the pending frame, not just the card.
 - **Benchmark:** the inspector count test, whose composition run mounts each adapter in turn, Workspace's preview tabs and the in-place layouts' page inspector, then runs with the inspector off.
 
 ### Font catalog request

@@ -54,7 +54,6 @@ export function parseLength(
   return fromPx(toPx(amount, unit), targetUnit)
 }
 
-/** Clamp a number into an inclusive range. */
 export function clampToRange(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value))
 }

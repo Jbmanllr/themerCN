@@ -27,6 +27,7 @@ async function mount(props: Partial<Parameters<typeof ControlSection>[0]>) {
   await act(async () =>
     root?.render(
       <ControlSection
+        id="section-under-test"
         title="Primary colors"
         description="Brand and action colors"
         headerAction={<button type="button">Reset</button>}

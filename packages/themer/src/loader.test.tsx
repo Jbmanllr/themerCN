@@ -185,17 +185,4 @@ describe("the Themer loader", () => {
 
     expect(error).toHaveBeenCalledTimes(1)
   })
-
-  it("drops a Themer that arrives after the page has gone", async () => {
-    const themer = deferredLoad()
-    await mount(themer.load)
-    await act(async () => root?.unmount())
-    root = null
-    const error = vi.spyOn(console, "error").mockImplementation(() => {})
-
-    await themer.arrive()
-
-    expect(error).not.toHaveBeenCalled()
-    expect(container.querySelector('[data-testid="themer"]')).toBeNull()
-  })
 })

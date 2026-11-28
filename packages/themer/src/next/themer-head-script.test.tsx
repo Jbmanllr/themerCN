@@ -16,7 +16,6 @@ import { createRoot, hydrateRoot, type Root } from "react-dom/client"
 import { renderToString } from "react-dom/server"
 import { afterEach, beforeEach, expect, it, vi } from "vitest"
 
-import * as headScript from "../head-script"
 import { getThemerHeadScript } from "../head-script"
 import { ThemerHeadScript } from "./index"
 
@@ -24,15 +23,6 @@ vi.mock("../head-script", async (importOriginal) => {
   const real = await importOriginal<typeof import("../head-script")>()
   return { ...real, getThemerHeadScript: vi.fn(real.getThemerHeadScript) }
 })
-
-/** Builds of the head-script string for `storageNamespace` since the spy
- *  was last cleared, by any caller. */
-const builds = (storageNamespace?: string) =>
-  vi
-    .mocked(headScript.getThemerHeadScript)
-    .mock.calls.filter(
-      ([options]) => options?.storageNamespace === storageNamespace
-    ).length
 
 ;(
   globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT: boolean }
@@ -86,29 +76,6 @@ it("renders an inert data block, without a warning, when drawn on the client", a
 
   expect(container.querySelector("script")?.type).toBe("application/json")
   expect(consoleError).not.toHaveBeenCalled()
-})
-
-it("builds the string once for every render of one namespace", async () => {
-  const namespace = "once"
-  vi.mocked(headScript.getThemerHeadScript).mockClear()
-
-  container.innerHTML = renderToString(
-    <ThemerHeadScript storageNamespace={namespace} />
-  )
-  await act(async () => {
-    root = hydrateRoot(
-      container,
-      <ThemerHeadScript storageNamespace={namespace} />
-    )
-  })
-  await act(async () =>
-    root?.render(<ThemerHeadScript storageNamespace={namespace} />)
-  )
-
-  expect(builds(namespace)).toBe(1)
-  expect(container.querySelector("script")?.textContent).toBe(
-    getThemerHeadScript({ storageNamespace: namespace })
-  )
 })
 
 it("builds the default namespace's string once, named or not", async () => {

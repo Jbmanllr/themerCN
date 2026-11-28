@@ -25,11 +25,9 @@ import { isDeepEqual } from "../utils/deep-equal"
 import { applySidebarSync } from "../utils/sidebar-sync"
 import { isIdentityHslAdjustment } from "../utils/hsl-adjust"
 
-/** Whether there is an undo entry. */
 export const selectCanUndo = (state: EditorStore): boolean =>
   state.history.length > 0
 
-/** Whether there is a redo entry. */
 export const selectCanRedo = (state: EditorStore): boolean =>
   state.future.length > 0
 
@@ -37,7 +35,6 @@ export const selectCanRedo = (state: EditorStore): boolean =>
 export const selectCurrentMode = (state: EditorStore) =>
   state.themeState.currentMode
 
-/** The current preset id. */
 export const selectPreset = (state: EditorStore) => state.themeState.preset
 
 // The Sidebar-Synced form of each resolved Preset. resolvePresetStyles

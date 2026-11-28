@@ -6,6 +6,12 @@ The home of [`themercn`](packages/themer), a live editor for a shadcn Theme's de
 
 `pre-release`
 
+## Shipping
+
+The owner authorizes finished work to ship without asking. Commit, push and open the pull request as ready (not draft). Set it to auto-merge into `main` with a merge commit once `ci-gate` is green. After the merge, check its commits are in `origin/main`, remove the worktree, delete its local and remote branch and fast-forward local `main`. When a change deletes tests, regenerates visual baselines or changes behaviour inside a refactor, run the `code-review` skill on its range (with the disprove pass) and ship the fixes the same way.
+
+The owner keeps: the Changesets "Version Packages" pull request, loosening a Quality register row, force-pushes, and `packages/ui` (vendored shadcn components: leave every file there as it is, and fix from the consuming side).
+
 ## Architecture
 
 Before changing code under `packages/themer/src`, read the part of [`packages/themer/ARCHITECTURE.md`](packages/themer/ARCHITECTURE.md) that covers the module you touch: it maps the modules and states their contracts.

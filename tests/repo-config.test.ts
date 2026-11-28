@@ -2026,6 +2026,60 @@ describe("the T1 Stop hook", () => {
   )
 })
 
+// TESTING.md "Verification tiers", T0: a PostToolUse hook formats each file
+// an agent writes with Edit or Write, so formatting is never a manual step.
+describe("the format-on-edit hook", () => {
+  const HOOK = join(ROOT, ".claude/hooks/format-edited.sh")
+  const sandbox = scriptSandbox("format-hook")
+  const edited = (dir: string, file: string, pnpm = {}) =>
+    sandbox.run(HOOK, {
+      input: JSON.stringify({
+        hook_event_name: "PostToolUse",
+        tool_name: "Edit",
+        tool_input: { file_path: join(dir, file) },
+      }),
+      pnpm,
+    })
+
+  it("formats the edited file with Prettier from its repository's root", () => {
+    const { dir } = sandbox.repo()
+    mkdirSync(join(dir, "src"))
+    writeFileSync(join(dir, "src/a.ts"), "export const a=1\n")
+    expect(edited(dir, "src/a.ts")).toMatchObject({
+      status: 0,
+      ran: [
+        `exec prettier --write --ignore-unknown -- ${join(dir, "src/a.ts")}`,
+      ],
+    })
+  })
+
+  // Formatting never blocks an edit: the Stop hook's check is the gate.
+  it("lets the edit through when Prettier fails", () => {
+    const { dir } = sandbox.repo()
+    writeFileSync(join(dir, "a.ts"), "export const a = (\n")
+    expect(edited(dir, "a.ts", { exit: 2 }).status).toBe(0)
+  })
+
+  it("does nothing for a file outside a repository", () => {
+    expect(edited(tmpdir(), "nowhere.ts")).toMatchObject({ status: 0, ran: [] })
+  })
+
+  it("runs after Edit and Write, from the project's settings", () => {
+    const settings = JSON.parse(read("../.claude/settings.json"))
+    expect(settings.hooks.PostToolUse).toEqual([
+      {
+        matcher: "Edit|Write|MultiEdit",
+        hooks: [
+          expect.objectContaining({
+            type: "command",
+            command: '"$CLAUDE_PROJECT_DIR"/.claude/hooks/format-edited.sh',
+          }),
+        ],
+      },
+    ])
+  })
+})
+
 // TESTING.md "Verification tiers": one heavy suite (a build, Playwright, the
 // Docker visual run) at a time per host. scripts/heavy-slot.sh runs a
 // command in the clone's one slot, shared by all its worktrees.
@@ -2116,10 +2170,11 @@ describe("local Claude Code state", () => {
     })
   })
 
-  it.each([".claude/settings.json", ".claude/hooks/stop-t1.sh"])(
-    "%s is committed",
-    (path) => {
-      expect(ignoredByGit(path)).toBe(false)
-    }
-  )
+  it.each([
+    ".claude/settings.json",
+    ".claude/hooks/stop-t1.sh",
+    ".claude/hooks/format-edited.sh",
+  ])("%s is committed", (path) => {
+    expect(ignoredByGit(path)).toBe(false)
+  })
 })

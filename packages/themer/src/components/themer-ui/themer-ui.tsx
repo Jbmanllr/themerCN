@@ -90,7 +90,7 @@ export function ThemerUI() {
   return (
     <>
       {isMobile ? (
-        <MobileDrawer isOpen={isOpen} onClose={close} />
+        <MobileDrawer onClose={close} />
       ) : (
         <Layout onClose={close} zIndex={config.zIndex ?? Z_INDEX.sidebar} />
       )}

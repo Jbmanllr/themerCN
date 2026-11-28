@@ -90,6 +90,18 @@ export const chatThreads: ChatThread[] = [
   },
 ]
 
+/**
+ * The questions a new chat suggests. Each must match one of the scripted
+ * replies below (integrity.test.ts), or the assistant answers with its
+ * fallback.
+ */
+export const chatSuggestions = [
+  "Why is my espresso sour?",
+  "What ratio for a V60?",
+  "Is decaf any good?",
+  "A gift for a coffee lover",
+]
+
 export const scriptedReplies: ScriptedReply[] = [
   {
     match: /sour|bitter|espresso|shot/i,

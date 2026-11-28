@@ -4,15 +4,19 @@
 // in step with the directory, and the demo registry
 // (components/design-system/demos) must have a specimen for every slug.
 
-export type ComponentGroup =
-  | "Actions"
-  | "Forms"
-  | "Overlays"
-  | "Navigation"
-  | "Display"
-  | "Layout"
-  | "Feedback"
-  | "Chat"
+/** The groups, in the order the DocsShell lists them. */
+export const componentGroups = [
+  "Actions",
+  "Forms",
+  "Overlays",
+  "Navigation",
+  "Display",
+  "Layout",
+  "Feedback",
+  "Chat",
+] as const
+
+export type ComponentGroup = (typeof componentGroups)[number]
 
 type Entry = readonly [
   slug: string,
@@ -117,17 +121,6 @@ export const uiComponents: UiComponent[] = entries.map(
     name: name ?? titleCase(slug),
   })
 )
-
-export const componentGroups: ComponentGroup[] = [
-  "Actions",
-  "Forms",
-  "Overlays",
-  "Navigation",
-  "Display",
-  "Layout",
-  "Feedback",
-  "Chat",
-]
 
 export function getUiComponent(slug: string): UiComponent | undefined {
   return uiComponents.find((component) => component.slug === slug)

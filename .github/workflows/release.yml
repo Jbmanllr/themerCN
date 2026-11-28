@@ -129,8 +129,9 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
-      # Builds themercn and runs publint, attw and the packed-file check.
-      - run: pnpm turbo check:package
+      # Builds themercn and runs publint, attw and the packed-file check. The
+      # filter keeps the apps' builds out of a release.
+      - run: pnpm turbo check:package --filter=themercn
 
       # `pnpm pack`, which rewrites `workspace:*` ranges in the manifest.
       - id: pack

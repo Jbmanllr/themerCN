@@ -14,18 +14,31 @@ export type ModeToggleProps = Omit<
   "label" | "onClick" | "children"
 >
 
-/** Light/dark switch, named by the mode it switches to. */
-export function ModeToggle(props: ModeToggleProps) {
+/**
+ * The light/dark switch as data, for each form it is drawn in (ModeToggle's
+ * button, the actions menu's item): its label, which names the mode it
+ * switches to, its icon, and the click that starts the reveal from the
+ * pointer.
+ */
+export function useModeSwitch() {
   const isDark = useColorMode().mode === "dark"
   const toggleMode = useToggleMode()
 
+  return {
+    label: isDark ? "Switch to light mode" : "Switch to dark mode",
+    Icon: isDark ? Sun : Moon,
+    onClick: (event: { clientX: number; clientY: number }) =>
+      toggleMode({ x: event.clientX, y: event.clientY }),
+  }
+}
+
+/** Light/dark switch, named by the mode it switches to. */
+export function ModeToggle(props: ModeToggleProps) {
+  const { label, Icon, onClick } = useModeSwitch()
+
   return (
-    <ActionButton
-      {...props}
-      label={isDark ? "Switch to light mode" : "Switch to dark mode"}
-      onClick={(event) => toggleMode({ x: event.clientX, y: event.clientY })}
-    >
-      {isDark ? <Sun /> : <Moon />}
+    <ActionButton {...props} label={label} onClick={onClick}>
+      <Icon />
     </ActionButton>
   )
 }

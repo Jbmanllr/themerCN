@@ -6,7 +6,7 @@ import {
   ImageRefIllustration,
 } from "@/components/illustrations/illustration"
 import { BrewTimeline } from "@/components/marketing/brew-timeline"
-import { formatPrice } from "@/lib/format"
+import { formatPlanPrice, formatPrice } from "@/lib/format"
 import { getProductsInCategory, plans, posts } from "@/lib/mock"
 import { BRAND } from "@/lib/site"
 import { buttonVariants } from "@workspace/ui/components/button"
@@ -98,8 +98,8 @@ export default function HomePage() {
                 {featuredPlan.name}: {featuredPlan.description.toLowerCase()}
               </h2>
               <p className="text-primary-foreground/80">
-                From {formatPrice(featuredPlan.yearly).replace(/\.00$/, "")} a
-                month. Skip, pause or switch any time.
+                From {formatPlanPrice(featuredPlan.yearly)} a month. Skip, pause
+                or switch any time.
               </p>
             </div>
             <Link

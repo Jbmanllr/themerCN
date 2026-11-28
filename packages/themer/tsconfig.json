@@ -11,5 +11,11 @@
     "allowJs": true,
     "types": ["node"]
   },
-  "include": ["src/**/*.ts", "src/**/*.tsx", "scripts/**/*.test.ts"]
+  "include": [
+    "src/**/*.ts",
+    "src/**/*.tsx",
+    "scripts/**/*.test.ts",
+    "tsdown.config.ts",
+    "vitest.config.ts"
+  ]
 }

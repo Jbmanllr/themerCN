@@ -28,7 +28,6 @@ export function LetterSpacingControl() {
       presets={LETTER_SPACING_PRESETS}
       presetsLabel="Letter spacing presets"
       sliderLabel="Custom Letter Spacing"
-      fallback={0}
       presetClassName="capitalize"
       renderPreview={LetterSpacingPreview}
     />

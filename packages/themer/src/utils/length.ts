@@ -7,10 +7,14 @@
 
 export type LengthUnit = "px" | "rem" | "em"
 
-/** Root font size the editor assumes when converting px to rem/em. */
-const ROOT_FONT_SIZE_PX = 16
+/**
+ * Root font size the editor assumes when converting px to rem/em, for a
+ * control (parseLength) and for imported CSS (parse-css.ts) alike.
+ */
+export const ROOT_FONT_SIZE_PX = 16
 
-const LENGTH_PATTERN = /^(-?(?:\d+\.?\d*|\.\d+))(px|rem|em)?$/i
+/** A number with an optional px, rem or em unit: the lengths the editor reads. */
+export const LENGTH_PATTERN = /^(-?(?:\d+\.?\d*|\.\d+))(px|rem|em)?$/i
 
 function toPx(amount: number, unit: LengthUnit): number {
   return unit === "px" ? amount : amount * ROOT_FONT_SIZE_PX

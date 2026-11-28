@@ -9,36 +9,23 @@
 //
 // See: packages/themer/ARCHITECTURE.md (Preview System).
 
-import * as React from "react"
 import { cn } from "@workspace/ui/lib/utils"
 import { ActionBar } from "../action-bar"
 import { PreviewTabs } from "../preview/preview-tabs"
-import { BUILTIN_TABS } from "../preview/builtin-tabs"
-import {
-  mergePreviewTabs,
-  resolveActiveTabId,
-} from "../preview/preview-tab-registry"
-import { useThemerContext } from "../../hooks/use-themer-context"
-import { usePreferencesStore } from "../../stores/preferences-store"
+import { usePreviewTabs } from "../preview/use-preview-tabs"
 import { useThemerUIStore } from "../../stores/themer-ui-store"
 
 /**
  * Right preview panel with action bar.
  *
- * The padding follows the tab PreviewTabs actually shows (an unknown saved
- * id resolves to the first tab, as there), not the raw saved id. In
+ * The padding follows the tab PreviewTabs actually shows (usePreviewTabs),
+ * tighter around a tab that fills its area edge to edge (`bare`: Live). In
  * fullscreen the fixed preview covers the action bar; the bar is `inert`
  * then, so keyboard focus cannot land on hidden controls.
  */
 export function PreviewPanel() {
-  const previewTab = usePreferencesStore((state) => state.previewTab)
   const isFullscreen = useThemerUIStore((state) => state.fullscreenPreview)
-  const { config } = useThemerContext()
-  const tabs = React.useMemo(
-    () => mergePreviewTabs(BUILTIN_TABS, config.previewTabs),
-    [config.previewTabs]
-  )
-  const isLivePreview = resolveActiveTabId(tabs, previewTab) === "live"
+  const { activeTab } = usePreviewTabs()
 
   return (
     <div className="flex h-full flex-1 flex-col overflow-hidden">
@@ -52,7 +39,7 @@ export function PreviewPanel() {
           data-testid="themer-preview-scroll"
           className={cn(
             "absolute inset-0 overflow-y-auto",
-            isLivePreview ? "px-2 pt-2 pb-6" : "px-6 pt-2 pb-6"
+            activeTab?.bare ? "px-2 pt-2 pb-6" : "px-6 pt-2 pb-6"
           )}
           data-lenis-prevent
         >

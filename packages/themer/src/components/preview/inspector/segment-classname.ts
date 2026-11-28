@@ -8,7 +8,7 @@
 // `ring-offset` + `background`, not `ring` + `offset-background`), bracketed
 // variants may contain `:`, and important markers are dropped.
 
-import { COLOR_UTILITY_PREFIXES } from "./theme-class-regex"
+import { COLOR_UTILITY_PREFIXES, VARIANT_PATTERN } from "./theme-class-regex"
 
 export interface ClassNameSegments {
   selector: string | null
@@ -17,7 +17,7 @@ export interface ClassNameSegments {
   opacity: string | null
 }
 
-const SELECTOR_REGEX = /^((?:(?:[^:\s[]|\[[^\]]*\])+:)*)/
+const SELECTOR_REGEX = new RegExp(`^(${VARIANT_PATTERN})`)
 
 export function segmentClassName(className: string): ClassNameSegments {
   const selectorMatch = className.match(SELECTOR_REGEX)

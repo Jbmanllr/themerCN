@@ -44,7 +44,7 @@ const escapeRegex = (value: string) =>
   value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
 
 /** Variant chain such as `hover:` or `data-[state=open]:` (brackets may hold `:`). */
-const VARIANT_PATTERN = String.raw`(?:(?:[^:\s\[]|\[[^\]]*\])+:)*`
+export const VARIANT_PATTERN = String.raw`(?:(?:[^:\s\[]|\[[^\]]*\])+:)*`
 
 /** Opacity modifier: `/50` or `/[0.35]`. */
 const OPACITY_PATTERN = String.raw`(?:\/(?:\d{1,3}|\[[^\]]+\]))?`
@@ -131,9 +131,9 @@ export function matchThemeClasses(
  */
 export function findThemeClasses(
   target: unknown,
-  boundary: unknown,
-  regex: RegExp = getThemeClassRegex()
+  boundary: unknown
 ): { element: ElementLike; matches: string[] } | null {
+  const regex = getThemeClassRegex()
   let current: ElementLike | null = isElementLike(target) ? target : null
   while (current && current !== boundary) {
     const matches = matchThemeClasses(getClassString(current), regex)

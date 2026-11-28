@@ -8,7 +8,7 @@ import * as z from "zod"
 import { formatPrice } from "@/lib/format"
 import { TextField } from "@/components/forms/text-field"
 import { emailAddress, focusOnMount } from "@/lib/forms"
-import { plans } from "@/lib/mock"
+import { account, plans } from "@/lib/mock"
 import { Button } from "@workspace/ui/components/button"
 import {
   Field,
@@ -67,11 +67,11 @@ const settingsSchema = z.object({
 type SettingsValues = z.infer<typeof settingsSchema>
 
 const current: SettingsValues = {
-  name: "Ada Brennan",
-  email: "ada@example.com",
-  address: "14 Larkspur Lane\nPortland, OR 97214",
-  plan: "night-shift",
-  grind: "Filter",
+  name: account.name,
+  email: account.email,
+  address: account.address,
+  plan: account.planId,
+  grind: account.grind,
   notifications: { roastDay: true, brewTips: false, newOrigins: true },
 }
 

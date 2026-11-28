@@ -35,6 +35,7 @@ import {
   useState,
   useSyncExternalStore,
 } from "react"
+import { shallow } from "zustand/shallow"
 
 import type { ThemerConfig, ThemerProps } from "../types"
 import { DEFAULT_STORAGE_NAMESPACE, getStorageKeys } from "../config/constants"
@@ -153,21 +154,7 @@ function ThemerApp({
  */
 function useShallowStable<T extends object>(value: T): T {
   const [stable, setStable] = useState(value)
-  if (stable === value || isShallowEqual(stable, value)) return stable
+  if (shallow(stable, value)) return stable
   setStable(value)
   return value
-}
-
-function isShallowEqual(a: object, b: object): boolean {
-  const aKeys = Object.keys(a)
-  const bKeys = Object.keys(b)
-  return (
-    aKeys.length === bKeys.length &&
-    aKeys.every((key) =>
-      Object.is(
-        (a as Record<string, unknown>)[key],
-        (b as Record<string, unknown>)[key]
-      )
-    )
-  )
 }

@@ -26,10 +26,8 @@ import {
   Code2,
   Ellipsis,
   Eye,
-  Moon,
   Redo2,
   RotateCcw,
-  Sun,
   Undo2,
   Upload,
   type LucideIcon,
@@ -45,14 +43,13 @@ import {
   DropdownMenuTrigger,
 } from "@workspace/ui/components/dropdown-menu"
 import { SHORTCUTS } from "../../config/constants"
-import { useToggleMode } from "../../hooks/use-toggle-mode"
 import { useIsOnPreset } from "../../hooks/use-editor-selectors"
 import { selectCanRedo, selectCanUndo } from "../../selectors/editor-selectors"
 import { useEditorStore } from "../../stores/editor-store"
-import { useColorMode } from "../../hooks/use-color-mode"
 import { usePreferencesStore } from "../../stores/preferences-store"
 import { useThemerUIStore } from "../../stores/themer-ui-store"
 import { ActionButton } from "../ui/action-button"
+import { useModeSwitch } from "../ui/mode-toggle"
 
 export interface ThemerAction {
   /** Accessible name, tooltip and menu text. */
@@ -233,16 +230,12 @@ function ThemerActionMenuItem({ action }: { action: ThemerAction }) {
 
 /** ModeToggle's menu form, named by the mode it switches to. */
 function ThemerModeMenuItem() {
-  const isDark = useColorMode().mode === "dark"
-  const toggleMode = useToggleMode()
-  const Icon = isDark ? Sun : Moon
+  const { label, Icon, onClick } = useModeSwitch()
 
   return (
-    <DropdownMenuItem
-      onClick={(event) => toggleMode({ x: event.clientX, y: event.clientY })}
-    >
+    <DropdownMenuItem onClick={onClick}>
       <Icon />
-      {isDark ? "Switch to light mode" : "Switch to dark mode"}
+      {label}
     </DropdownMenuItem>
   )
 }

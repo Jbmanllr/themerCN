@@ -251,7 +251,6 @@ function ColorSelectorPanel({
                               {...getSwatchAppearance({
                                 color: entry.color,
                                 isSelected,
-                                size: "md",
                               })}
                             />
                             <span>{entry.name}</span>
@@ -293,7 +292,6 @@ function ColorSelectorPanel({
                       isSelected={isColorSelected(entry)}
                       onClick={() => onSelect(entry.color)}
                       className="rounded-none"
-                      size="md"
                     />
                   ))}
                 </div>
@@ -357,25 +355,15 @@ function getSelectedPaletteEntryName(currentColor: string) {
   )
 }
 
-type SwatchSize = "sm" | "md" | "lg"
-
-const SWATCH_SIZE_CLASSES: Record<SwatchSize, string> = {
-  sm: "size-5",
-  md: "size-6",
-  lg: "size-8",
-}
-
 // The swatch look, shared by the list view's decorative swatch (the option
 // itself is the control) and the palette grid's swatch button.
 function getSwatchAppearance({
   color,
   isSelected,
-  size = "sm",
   className,
 }: {
   color: string
   isSelected: boolean
-  size?: SwatchSize
   className?: string
 }): { className: string; style: React.CSSProperties } {
   const isTransparent = color === "transparent"
@@ -392,9 +380,8 @@ function getSwatchAppearance({
 
   return {
     className: cn(
-      "relative cursor-pointer rounded-md border transition-transform hover:z-10 hover:scale-105",
+      "relative size-6 cursor-pointer rounded-md border transition-transform hover:z-10 hover:scale-105",
       needsContrastBorder ? "border-border/60" : "border-transparent",
-      SWATCH_SIZE_CLASSES[size],
       isSelected && "ring-2 ring-foreground/70",
       className
     ),
@@ -406,7 +393,6 @@ interface ColorSwatchProps extends React.ButtonHTMLAttributes<HTMLButtonElement>
   isSelected: boolean
   color: string
   name: string
-  size?: SwatchSize
 }
 
 function ColorSwatch({
@@ -414,7 +400,6 @@ function ColorSwatch({
   name,
   className,
   isSelected,
-  size = "sm",
   ...props
 }: ColorSwatchProps) {
   return (
@@ -423,7 +408,7 @@ function ColorSwatch({
       aria-label={`Select color ${name}`}
       aria-pressed={isSelected}
       title={name}
-      {...getSwatchAppearance({ color, isSelected, size, className })}
+      {...getSwatchAppearance({ color, isSelected, className })}
       {...props}
     />
   )

@@ -33,6 +33,7 @@ import {
 import { ScrollArea, ScrollBar } from "@workspace/ui/components/scroll-area"
 import { Tabs, TabsContent, TabsList } from "@workspace/ui/components/tabs"
 import { cn } from "@workspace/ui/lib/utils"
+import { focusColor } from "../../hooks/use-color-focus"
 import { useIsMobile } from "../../hooks/use-is-mobile"
 import { useThemerUIStore } from "../../stores/themer-ui-store"
 import { usePreferencesStore } from "../../stores/preferences-store"
@@ -40,36 +41,24 @@ import type { ThemerConfig } from "../../types"
 import { useThemerContext } from "../../hooks/use-themer-context"
 import { ActionButton } from "../ui/action-button"
 import { ModeToggle } from "../ui/mode-toggle"
-import { BUILTIN_TABS } from "./builtin-tabs"
 import {
   InspectorOverlay,
   InspectorToggle,
   useInspectorSession,
 } from "./inspector"
-import {
-  mergePreviewTabs,
-  resolveActiveTabId,
-  type PreviewTabDefinition,
-} from "./preview-tab-registry"
+import type { PreviewTabDefinition } from "./preview-tab-registry"
+import { usePreviewTabs } from "./use-preview-tabs"
 import ExamplesPreviewContainer from "./theme-preview/examples-preview-container"
 import TabsTriggerPill from "./theme-preview/tabs-trigger-pill"
 import { useHostDirection } from "../../hooks/use-host-direction"
 
 export function PreviewTabs() {
-  const { config } = useThemerContext()
-  const { previewTabs, previewWrapper } = config
-  const previewTab = usePreferencesStore((state) => state.previewTab)
+  const { previewWrapper } = useThemerContext().config
+  const { tabs, activeTabId, activeTab } = usePreviewTabs()
   const setPreviewTab = usePreferencesStore((state) => state.setPreviewTab)
   const isFullscreen = useThemerUIStore((state) => state.fullscreenPreview)
   const toggleFullscreen = useThemerUIStore((state) => state.toggleFullscreen)
   const isMobile = useIsMobile()
-
-  const tabs = React.useMemo(
-    () => mergePreviewTabs(BUILTIN_TABS, previewTabs),
-    [previewTabs]
-  )
-  const activeTabId = resolveActiveTabId(tabs, previewTab)
-  const activeTab = tabs.find((tab) => tab.id === activeTabId)
 
   const hostRef = React.useRef<HTMLDivElement>(null)
   const containerRef = React.useRef<HTMLElement>(null)
@@ -79,7 +68,6 @@ export function PreviewTabs() {
     active: inspectorMode,
     toggle: toggleInspector,
     available: inspectorAvailable,
-    focusColor,
   } = useInspectorSession({
     surfaceAvailable: !isMobile,
     frame: activeTab?.frame === true,
@@ -203,7 +191,7 @@ const PreviewTabBody = React.memo(function PreviewTabBody({
     )
 
   return (
-    <ExamplesPreviewContainer className="size-full">
+    <ExamplesPreviewContainer>
       {tab.scroll === "none" ? (
         content
       ) : (

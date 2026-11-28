@@ -37,7 +37,7 @@ export const selectCanRedo = (state: EditorStore): boolean =>
 export const selectCurrentMode = (state: EditorStore) =>
   state.themeState.currentMode
 
-/** The current preset id; undefined when the state carries none. */
+/** The current preset id. */
 export const selectPreset = (state: EditorStore) => state.themeState.preset
 
 // The Sidebar-Synced form of each resolved Preset. resolvePresetStyles
@@ -68,7 +68,7 @@ export function isOnPreset(
   return onPreset(
     themeState,
     sidebarSync,
-    resolvePresetStyles(themeState.preset ?? "default")
+    resolvePresetStyles(themeState.preset)
   )
 }
 
@@ -155,7 +155,7 @@ function sharedIsOnPreset(
   themeState: ThemeEditorState,
   sidebarSync: boolean
 ): boolean {
-  const presetStyles = resolvePresetStyles(themeState.preset ?? "default")
+  const presetStyles = resolvePresetStyles(themeState.preset)
   let answers = onPresetAnswers.get(themeState)
   if (!answers) {
     answers = {}

@@ -128,6 +128,10 @@ describe("a stored editor entry", () => {
       { themeState: { ...theme, currentMode: "sepia" } },
     ],
     [
+      "has a Theme without a Preset id",
+      { themeState: { ...theme, preset: undefined } },
+    ],
+    [
       "has HSL adjustments that are not numbers",
       { themeState: { ...theme, hslAdjustments: { hueShift: "10" } } },
     ],

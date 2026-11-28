@@ -1054,6 +1054,14 @@ describe("Themer", () => {
       expect(rootVar("--primary")).toBe("rgb(9, 9, 9)")
     })
 
+    it("follows a prop that replaces another one left undefined", async () => {
+      await mount({ presets: undefined })
+      expect(trigger()).not.toBeNull()
+
+      await act(async () => root?.render(<Themer showTrigger={false} />))
+      expect(trigger()).toBeNull()
+    })
+
     it("hides the trigger when showTrigger is false", async () => {
       await mount({ showTrigger: false })
 
@@ -1346,6 +1354,21 @@ describe("Themer", () => {
       if (!button) throw new Error("Reset not rendered")
       return button
     }
+
+    it("shows one Sync toggle, on the sidebar colours, when a Host group is titled Sidebar too", async () => {
+      await mount({
+        storageNamespace: "sync-toggle",
+        extraColors: [
+          { title: "Sidebar", colors: [{ key: "rail", label: "Rail" }] },
+        ],
+      })
+      await openThemer()
+
+      const toggles = document.querySelectorAll(
+        '[data-testid="themer-ui"] [aria-label="Sync sidebar colors"]'
+      )
+      expect(toggles).toHaveLength(1)
+    })
 
     it("puts a Preset on in sync, with no unsaved mark and Reset disabled", async () => {
       saveSidebarSync("sync-preset")

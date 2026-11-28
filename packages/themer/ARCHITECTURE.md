@@ -384,7 +384,8 @@ label reads `<html>` once per toggle.
   ([stores/persisted-state.ts](src/stores/persisted-state.ts)), after the
   version. An editor entry whose Theme, checkpoint or baseline has a shape
   the code cannot read (styles that are not objects, a style that is not a
-  string, HSL adjustments that are not numbers) is ignored whole: the store
+  string, no Preset id, HSL adjustments that are not numbers) is ignored
+  whole: the store
   starts fresh, as with nothing stored, and says so once in development. A
   built-in style left out is not a wrong shape: a Preset may unset one.
   Nothing is written, so the entry stays until the next store set replaces
@@ -456,7 +457,7 @@ starts fresh, see Persistence and the head script).
   themeState: {
     styles: { light: ThemeModeStyles, dark: ThemeModeStyles }, // shadcn keys + Host extra colours
     currentMode: 'light' | 'dark',
-    preset?: string,
+    preset: string, // every Theme is on a Preset id; a fresh one on "default"
     hslAdjustments?: { hueShift, saturationScale, lightnessScale }
   },
   themeCheckpoint: ThemeEditorState | null, // base the HSL controls recompute from
@@ -472,7 +473,9 @@ starts fresh, see Persistence and the head script).
 - Applying a Preset and importing CSS start a new entry and move the
   checkpoint; resetting to the Preset clears history.
 - `updateCommonStyle` writes mode-shared keys (fonts, radius, spacing, letter
-  spacing, shadow parameters) to both modes.
+  spacing, shadow parameters) to both modes; `updateModeStyle` writes a
+  per-mode key (a colour, the shadow colour, a Host extra colour) to the mode
+  the editor shows.
 - A fresh store (nothing saved, or an entry at another version or of the
   wrong shape) starts with
   its default Theme's own Preset baseline, so the refresh sets nothing.

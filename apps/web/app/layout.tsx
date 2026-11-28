@@ -5,6 +5,7 @@ import { ThemerHeadScript } from "themercn/next"
 import "./globals.css"
 import { PlaygroundThemer } from "@/components/themer/playground-themer"
 import { ThemeProvider } from "@/components/theme-provider"
+import { BRAND } from "@/lib/site"
 import { cn } from "@workspace/ui/lib/utils"
 
 // The variables the Nightjar Preset's font stacks name (lib/brand/nightjar.ts).
@@ -24,8 +25,8 @@ const mono = JetBrains_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "Nightjar Coffee Co.",
-    template: "%s | Nightjar Coffee Co.",
+    default: BRAND.name,
+    template: `%s | ${BRAND.name}`,
   },
   description:
     "Small-batch coffee, brew guides and a subscription that remembers how you like it. The themercn Playground.",

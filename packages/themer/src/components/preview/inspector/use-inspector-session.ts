@@ -14,7 +14,7 @@
 // move: its only listener is the shortcut's, and it adds no work to a move.
 
 import * as React from "react"
-import { useColorFocusTrigger } from "../../../hooks/use-color-focus"
+import { focusColor } from "../../../hooks/use-color-focus"
 import {
   themerShortcuts,
   useKeyboardShortcut,
@@ -48,18 +48,13 @@ export function useInspectorSession({
   toggle: () => void
   /** `surfaceAvailable`, unless the frame cannot be read. */
   available: boolean
-  focusColor: (value: string) => void
 } {
   const { active, toggle } = useInspectorMode()
-  const { focusColor } = useColorFocusTrigger()
 
-  const handlePick = React.useCallback(
-    (className: string) => {
-      const { value } = segmentClassName(className)
-      if (value) focusColor(value)
-    },
-    [focusColor]
-  )
+  const handlePick = React.useCallback((className: string) => {
+    const { value } = segmentClassName(className)
+    if (value) focusColor(value)
+  }, [])
 
   const { state, frameBlocked } = useInspector({
     enabled: active && surfaceAvailable,
@@ -79,5 +74,5 @@ export function useInspectorSession({
     enabled: available,
   })
 
-  return { state, active, toggle, available, focusColor }
+  return { state, active, toggle, available }
 }

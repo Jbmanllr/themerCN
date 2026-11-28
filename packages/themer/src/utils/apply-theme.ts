@@ -38,13 +38,18 @@
 //   step that parses a colour, is memoised per mode on its shadow inputs, so
 //   an edit that touches no shadow input parses nothing.
 //
-// Contract: next-themes owns `.dark` in every themed document, so this module
-// never toggles it. The override sheet exists only while a `--shadow-*`
+// Contract: the colour mode's owner (the Host app, or an uncontrolled
+// Themer's ColorModeProvider) sets `.dark` in every themed document, so this
+// module never toggles it. The override sheet exists only while a `--shadow-*`
 // variable is written, and removing the theme removes the sheet with it.
 //
 // See: packages/themer/ARCHITECTURE.md ("Applying a theme").
 import type { StoreApi } from "zustand"
-import { RESTORE_STYLE_ID, THEMER_STYLE_ATTRIBUTE } from "../config/constants"
+import {
+  RESTORE_STYLE_ID,
+  THEMER_STYLE_ATTRIBUTE,
+  TRACKING_OFFSETS,
+} from "../config/constants"
 import { defaultLightStyles } from "../config/defaults"
 import { getExtraColorKeys } from "../config/extra-colors"
 import type { ThemeEditorState, ThemeMode } from "../types"
@@ -66,16 +71,6 @@ const VARIABLE_KEYS = [...THEME_FONT_KEYS, ...THEME_SPACING_KEYS] as const
 
 /** Tailwind shadow utilities the override sheet rewires, by variable name. */
 const SHADOW_VARIABLE_SET: ReadonlySet<string> = new Set(SHADOW_SCALE_KEYS)
-
-/** tweakcn's tracking scale, as offsets from the theme's letter-spacing. */
-const TRACKING_OFFSETS = [
-  ["tighter", "- 0.05em"],
-  ["tight", "- 0.025em"],
-  ["normal", null],
-  ["wide", "+ 0.025em"],
-  ["wider", "+ 0.05em"],
-  ["widest", "+ 0.1em"],
-] as const
 
 export const THEMER_OVERRIDES_ATTRIBUTE = "data-themer-overrides"
 
@@ -437,7 +432,7 @@ export function removeThemeFromElement(element: HTMLElement): void {
  * override sheet in its <head> and the theme's Google fonts (fonts are per
  * document, so a frame needs its own links). The head script's restore sheet
  * (RESTORE_STYLE_ID) in that document is removed: the theme applied here
- * replaces it. next-themes owns the `dark` class, so it is never toggled.
+ * replaces it. The `dark` class is the colour mode owner's: never toggled.
  */
 function applyThemeToDocument(doc: Document, themeState: ThemeEditorState) {
   applyThemeToElement(themeState, doc.documentElement)
@@ -473,8 +468,8 @@ type ThemeStateSource = Pick<
  * Theme fonts from the document. The caller decides when it runs (while the
  * Theme override is on); one instance themes one document: the provider runs
  * one on the Host page, the Live view one per Live frame document.
- * next-themes owns the `dark` class in every themed document, so it is never
- * toggled here.
+ * The `dark` class in a themed document is the colour mode owner's, so it
+ * is never toggled here.
  *
  * A document that is gone (its frame navigated away or was removed) is not
  * themed: an apply to it is skipped, and the caller starts a new instance on

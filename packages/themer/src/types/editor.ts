@@ -50,10 +50,12 @@ export interface ThemeEditorState {
   /** Currently active mode */
   currentMode: ThemeMode
   /**
-   * Id of the preset the theme started from. On reset, a stale id (a removed
-   * Host Preset) falls back to the Host app's default preset.
+   * Id of the preset the theme started from: every Theme has one, since a
+   * fresh store starts on the built-in default Preset and no action removes
+   * it. On reset, a stale id (a removed Host Preset) falls back to the Host
+   * app's default preset.
    */
-  preset?: string
+  preset: string
   /** HSL adjustment values; absent or neutral means no adjustment */
   hslAdjustments?: HSLAdjustments
 }
@@ -162,6 +164,13 @@ export interface EditorStoreActions {
    * Goes through setThemeState, so it batches into undo history.
    */
   updateCommonStyle: (key: CommonStyleKey, value: string) => void
+  /**
+   * Write a style each mode holds its own value for (a colour, the shadow
+   * colour, a Host extra colour) to the mode the editor shows. Goes through
+   * setThemeState, so it batches into undo history and Sidebar Sync writes
+   * a base colour's sidebar twin.
+   */
+  updateModeStyle: (key: string, value: string) => void
   /**
    * Apply styles parsed from imported CSS: one undo entry, a new checkpoint
    * and reset HSL adjustments. Common keys set only in light also reach dark.

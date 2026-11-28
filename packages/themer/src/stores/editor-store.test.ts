@@ -446,6 +446,27 @@ describe("updateCommonStyle", () => {
   })
 })
 
+describe("updateModeStyle", () => {
+  it("writes the value to the mode the editor shows, in one undo entry", () => {
+    const before = store.getState().themeState.styles
+    store.getState().setCurrentMode("dark")
+
+    store.getState().updateModeStyle("primary", "#123456")
+
+    const { styles } = store.getState().themeState
+    expect(styles.dark.primary).toBe("#123456")
+    expect(styles.light.primary).toBe(before.light.primary)
+    expect(store.getState().history).toHaveLength(1)
+  })
+
+  it("sets a Host extra colour as it sets a built-in one", () => {
+    store.getState().updateModeStyle("signal", "#ff8800")
+    const { styles } = store.getState().themeState
+    expect(styles.light.signal).toBe("#ff8800")
+    expect(styles.dark.signal).toBeUndefined()
+  })
+})
+
 describe("importThemeStyles", () => {
   it("merges onto the current styles with history, checkpoint and HSL reset", () => {
     store.setState({

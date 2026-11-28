@@ -1,5 +1,21 @@
-// Pricing plans and the /app dashboard's data.
+// Pricing plans, the signed-in account and the /app dashboard's data.
 import type { Metric, Order, Plan } from "./types"
+
+/**
+ * The signed-in subscriber of the /app screens: the one record behind the
+ * AppShell's account button, the dashboard and the settings form.
+ * integrity.test.ts checks its plan and coffees exist.
+ */
+export const account = {
+  name: "Ada Brennan",
+  email: "ada@example.com",
+  address: "14 Larkspur Lane\nPortland, OR 97214",
+  /** A `plans` id. */
+  planId: "night-shift",
+  grind: "Filter",
+  /** The coffees in the next box (product slugs). */
+  coffees: ["ethiopia-guji", "night-owl-blend"],
+} as const
 
 export const plans: Plan[] = [
   {
@@ -136,3 +152,8 @@ export const orders: Order[] = [
     date: "2026-10-08",
   },
 ]
+
+/** The plan the signed-in account is on. */
+export function getAccountPlan(): Plan | undefined {
+  return plans.find((plan) => plan.id === account.planId)
+}

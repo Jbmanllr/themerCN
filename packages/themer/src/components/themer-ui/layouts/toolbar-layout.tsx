@@ -81,7 +81,7 @@ export function ToolbarLayout({ onClose, zIndex }: ThemerLayoutProps) {
         <Separator orientation="vertical" className="h-6.5" />
 
         <div className="w-64">
-          <PresetSelect value={preset ?? "default"} onChange={applyPreset} />
+          <PresetSelect value={preset} onChange={applyPreset} />
         </div>
 
         <Separator orientation="vertical" className="h-6.5" />

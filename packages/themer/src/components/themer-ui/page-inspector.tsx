@@ -21,6 +21,7 @@
 //   (hooks/use-themer-layout.ts).
 
 import * as React from "react"
+import { focusColor } from "../../hooks/use-color-focus"
 import { useInspectorMode } from "../../hooks/use-themer-layout"
 import {
   InspectorOverlay,
@@ -36,7 +37,7 @@ export function PageInspector() {
   const hostRef = React.useRef<HTMLElement>(document.documentElement)
   const containerRef = React.useRef<HTMLDivElement>(null)
 
-  const { state, focusColor } = useInspectorSession({
+  const { state } = useInspectorSession({
     surfaceAvailable: true,
     frame: false,
     bindingKey: "page",

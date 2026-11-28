@@ -4,7 +4,7 @@ import { CheckIcon } from "lucide-react"
 import Link from "next/link"
 import { useState } from "react"
 
-import { formatPrice } from "@/lib/format"
+import { formatPlanPrice } from "@/lib/format"
 import type { Plan } from "@/lib/mock/types"
 import { Badge } from "@workspace/ui/components/badge"
 import { buttonVariants } from "@workspace/ui/components/button"
@@ -75,7 +75,7 @@ export function PlanGrid({ plans }: { plans: Plan[] }) {
               </p>
               <p className="flex items-baseline gap-2">
                 <span className="font-heading text-5xl">
-                  {formatPrice(price).replace(/\.00$/, "")}
+                  {formatPlanPrice(price)}
                 </span>
                 <span
                   className={cn(

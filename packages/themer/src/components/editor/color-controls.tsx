@@ -7,8 +7,8 @@
 // components/editor/colors-tab-content.tsx).
 //
 // Store access is narrow: the current mode's styles object (stable until a
-// style changes) and individual preferences. Every write is a functional
-// setThemeState, so the change handler is stable and pickers' debounces
+// style changes) and individual preferences. Every write is the store's
+// updateModeStyle, so the change handler is stable and pickers' debounces
 // survive re-renders.
 //
 // Sidebar Sync (utils/sidebar-sync.ts) is held by the editor store: the
@@ -50,7 +50,7 @@ import {
 } from "../../utils/color-groups"
 import { getExtraColorKeys } from "../../config/extra-colors"
 import { isSyncedSidebarKey } from "../../utils/sidebar-sync"
-import type { ThemeColorKey, ThemeModeStyles } from "../../types"
+import type { ThemeModeStyles } from "../../types"
 
 const NO_HOST_VALUES: Readonly<Record<string, string>> = {}
 
@@ -131,27 +131,15 @@ export function ColorControls() {
   const currentStyles = useEditorStore(
     (state) => state.themeState.styles[state.themeState.currentMode]
   )
-  const setThemeState = useEditorStore((state) => state.setThemeState)
+  const updateModeStyle = useEditorStore((state) => state.updateModeStyle)
   const sidebarSync = usePreferencesStore((state) => state.sidebarColorSync)
   const search = useColorFocusStore((state) => state.colorSearch)
   const setSearch = useColorFocusStore((state) => state.setColorSearch)
 
+  // The store writes the sidebar twin while Sidebar Sync is on.
   const handleColorChange = React.useCallback(
-    (value: string, name: string) => {
-      const key = name as ThemeColorKey
-      // The store writes the sidebar twin while Sidebar Sync is on.
-      setThemeState((prev) => ({
-        ...prev,
-        styles: {
-          ...prev.styles,
-          [prev.currentMode]: {
-            ...prev.styles[prev.currentMode],
-            [key]: value,
-          },
-        },
-      }))
-    },
-    [setThemeState]
+    (value: string, name: string) => updateModeStyle(name, value),
+    [updateModeStyle]
   )
 
   const isSearching = search.trim() !== ""
@@ -204,7 +192,9 @@ export function ColorControls() {
           description={group.description}
           forceOpen={isSearching}
           headerAction={
-            group.title === "Sidebar" ? <SidebarSyncToggle /> : undefined
+            group.colors.some((color) => isSyncedSidebarKey(color.key)) ? (
+              <SidebarSyncToggle />
+            ) : undefined
           }
         >
           {group.colors.map(({ key, label }) => (

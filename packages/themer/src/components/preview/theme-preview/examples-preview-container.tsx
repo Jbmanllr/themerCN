@@ -4,7 +4,6 @@
 import { Suspense } from "react"
 import { Skeleton } from "@workspace/ui/components/skeleton"
 import { Spinner } from "@workspace/ui/components/spinner"
-import { cn } from "@workspace/ui/lib/utils"
 
 const LoadingSkeleton = () => (
   <div className="absolute inset-0 flex flex-col">
@@ -20,13 +19,11 @@ const LoadingSkeleton = () => (
 
 const ExamplesPreviewContainer = ({
   children,
-  className,
 }: {
   children: React.ReactNode
-  className?: string
 }) => {
   return (
-    <div className={cn("space-y-6", className)}>
+    <div className="size-full space-y-6">
       <div className="@container mt-0 h-full w-full space-y-6">
         <Suspense fallback={<LoadingSkeleton />}>{children}</Suspense>
       </div>

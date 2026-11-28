@@ -14,7 +14,7 @@
 // belong in reactive (or persisted) state. Pickers subscribe only to
 // `highlightTarget === name`, so a highlight re-renders two pickers at most.
 
-import { useCallback, useEffect, useRef } from "react"
+import { useEffect, useRef } from "react"
 import { useColorFocusStore } from "../stores/color-focus-store"
 import { useThemerUIStore } from "../stores/themer-ui-store"
 import { usePreferencesStore } from "../stores/preferences-store"
@@ -156,14 +156,4 @@ export function useColorFocus(name: string | undefined) {
   }, [isHighlighted, name])
 
   return { ref, isHighlighted }
-}
-
-/**
- * Hook form of focusColor for components (stable reference).
- */
-export function useColorFocusTrigger() {
-  const focus = useCallback((name: string) => {
-    focusColor(name)
-  }, [])
-  return { focusColor: focus }
 }

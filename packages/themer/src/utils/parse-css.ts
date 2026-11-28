@@ -30,6 +30,7 @@ import {
   THEME_STYLE_KEYS,
   type ThemeShadowKey,
 } from "../types/theme"
+import { LENGTH_PATTERN, ROOT_FONT_SIZE_PX } from "./length"
 
 export interface ParseThemeCssOptions {
   /**
@@ -448,37 +449,32 @@ function formatNumber(value: number): string {
   return String(Number(value.toFixed(4)))
 }
 
-const LENGTH = /^(-?(?:\d+\.?\d*|\.\d+))(px|rem|em)?$/i
-
-/** Number of CSS pixels per rem/em; the editor assumes the 16px default. */
-const PX_PER_REM = 16
-
 function toRem(value: string): string | null {
-  const m = LENGTH.exec(value.trim())
+  const m = LENGTH_PATTERN.exec(value.trim())
   if (!m) return null
   const n = Number(m[1])
   const unit = m[2]?.toLowerCase()
   if (!unit && n !== 0) return null
-  return `${formatNumber(unit === "px" ? n / PX_PER_REM : n)}rem`
+  return `${formatNumber(unit === "px" ? n / ROOT_FONT_SIZE_PX : n)}rem`
 }
 
 function toEm(value: string): string | null {
   const trimmed = value.trim().toLowerCase()
   if (trimmed === "normal") return "0em"
-  const m = LENGTH.exec(trimmed)
+  const m = LENGTH_PATTERN.exec(trimmed)
   if (!m) return null
   const n = Number(m[1])
   const unit = m[2]
   if (!unit && n !== 0) return null
-  return `${formatNumber(unit === "px" ? n / PX_PER_REM : n)}em`
+  return `${formatNumber(unit === "px" ? n / ROOT_FONT_SIZE_PX : n)}em`
 }
 
 function toPx(value: string): string | null {
-  const m = LENGTH.exec(value.trim())
+  const m = LENGTH_PATTERN.exec(value.trim())
   if (!m) return null
   const n = Number(m[1])
   const unit = m[2]?.toLowerCase()
-  return `${formatNumber(unit === "rem" || unit === "em" ? n * PX_PER_REM : n)}px`
+  return `${formatNumber(unit === "rem" || unit === "em" ? n * ROOT_FONT_SIZE_PX : n)}px`
 }
 
 const BARE_HSL =

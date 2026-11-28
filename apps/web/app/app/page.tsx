@@ -7,7 +7,14 @@ import {
   SubscriptionCard,
 } from "@/components/app/dashboard"
 import { Illustration } from "@/components/illustrations/illustration"
-import { chatThreads, getProduct, metrics, orders } from "@/lib/mock"
+import {
+  account,
+  chatThreads,
+  getAccountPlan,
+  getProduct,
+  metrics,
+  orders,
+} from "@/lib/mock"
 import type { Product } from "@/lib/mock"
 import { Button } from "@workspace/ui/components/button"
 import {
@@ -27,7 +34,7 @@ const NEXT_ROAST = "2026-10-22"
 
 export default function Page() {
   const revenue = metrics.find((metric) => metric.id === "revenue")
-  const coffees = ["ethiopia-guji", "night-owl-blend"]
+  const coffees = account.coffees
     .map(getProduct)
     .filter((product): product is Product => product !== undefined)
   const lastThread = chatThreads[0]
@@ -35,7 +42,9 @@ export default function Page() {
   return (
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-8 p-4 md:p-8">
       <div className="flex flex-col gap-2">
-        <h2 className="font-heading text-3xl md:text-4xl">Good evening, Ada</h2>
+        <h2 className="font-heading text-3xl md:text-4xl">
+          Good evening, {account.name.split(" ")[0]}
+        </h2>
         <p className="max-w-prose text-muted-foreground">
           The kettle&apos;s on. Here is your next box, and how the roastery did
           this week: we share our numbers with every subscriber.
@@ -45,7 +54,7 @@ export default function Page() {
       <div className="grid gap-4 lg:grid-cols-3">
         <div className="lg:col-span-2">
           <SubscriptionCard
-            plan="Night Shift"
+            plan={getAccountPlan()?.name ?? ""}
             nextDelivery={NEXT_ROAST}
             coffees={coffees}
           />

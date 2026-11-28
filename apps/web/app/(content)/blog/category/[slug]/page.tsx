@@ -29,11 +29,7 @@ export default async function JournalCategoryPage({
 
   return (
     <>
-      <PageIntro
-        title={category.name}
-        lede={category.blurb}
-        className="md:grid-cols-1"
-      >
+      <PageIntro title={category.name} lede={category.blurb}>
         <CategoryNav />
       </PageIntro>
       <div className="mx-auto grid max-w-6xl gap-x-8 gap-y-14 px-4 pt-4 pb-20 sm:grid-cols-2 sm:px-6 lg:grid-cols-3">

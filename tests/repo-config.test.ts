@@ -1936,8 +1936,9 @@ describe("the T1 Stop hook", () => {
     const { ran } = stop(dir, { t1Exit: 1 })
     expect(ran).toHaveLength(4)
     for (const command of ran) {
-      // Past the base SHA, whose hex digits can spell "e2e".
-      expect(command.replace(/^TURBO_SCM_BASE=\S+ /, "")).not.toMatch(
+      // Without the base SHA, whose hex digits can spell "e2e": Turbo takes
+      // it as a variable in front, the floor guard as its `--base` argument.
+      expect(command.replace(/\b[0-9a-f]{40}\b/g, "<sha>")).not.toMatch(
         /e2e|visual|smoke|playwright/
       )
     }

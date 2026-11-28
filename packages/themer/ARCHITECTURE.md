@@ -683,8 +683,10 @@ converts with `culori` for display and export formats.
 ### HSL Adjustments
 
 `{ hueShift (-180..180), saturationScale (0..2), lightnessScale (0.2..2) }`
-recomputed from `themeCheckpoint`
-([hsl-adjust.ts](src/utils/hsl-adjust.ts)); 15 presets in `hslPresets`.
+recomputed from `themeCheckpoint` by the editor store's `setHslAdjustments`,
+which moves the checkpoint to the Theme when an adjustment leaves neutral
+([hsl-adjust.ts](src/utils/hsl-adjust.ts) holds the maths); 15 presets in
+`hslPresets`.
 
 ### Sidebar Sync
 

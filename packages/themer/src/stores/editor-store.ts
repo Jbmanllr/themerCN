@@ -35,8 +35,9 @@
 // - themeCheckpoint is the theme before the first HSL adjustment (the base
 //   the HSL controls recompute from). Applying, resetting, adopting or
 //   refreshing a preset, importing CSS, undo and redo move it;
-//   saveThemeCheckpoint sets it before the first HSL adjustment away from
-//   neutral. It says nothing about whether the theme was edited.
+//   setHslAdjustments moves it to the Theme before the first adjustment away
+//   from neutral, and recomputes every later one from it. It says nothing
+//   about whether the theme was edited.
 // - presetBaseline is the preset's styles as they were when a preset was
 //   last put on the theme (applyThemePreset, resetToCurrentPreset,
 //   adoptDefaultPreset, refreshUntouchedPreset). Nothing else moves it, so an
@@ -78,7 +79,9 @@ import {
   EDITOR_STATE_VERSION,
   getStorageKeys,
 } from "../config/constants"
+import { getExtraColorKeys } from "../config/extra-colors"
 import { isDeepEqual } from "../utils/deep-equal"
+import { adjustThemeStyles, isIdentityHslAdjustment } from "../utils/hsl-adjust"
 import { isProduction } from "../utils/is-production"
 import { applySidebarSync } from "../utils/sidebar-sync"
 import {
@@ -334,8 +337,24 @@ export const useEditorStore = create<EditorStore>()(
         })
       },
 
-      saveThemeCheckpoint: () => {
-        set({ themeCheckpoint: get().themeState })
+      setHslAdjustments: (adjustments) => {
+        const { themeState, themeCheckpoint } = get()
+        // Leaving neutral: the Theme as it is now is the base from here on.
+        const leavingNeutral = isIdentityHslAdjustment(
+          themeState.hslAdjustments ?? defaultHSLAdjustments
+        )
+        const base =
+          leavingNeutral || !themeCheckpoint ? themeState : themeCheckpoint
+        if (base !== themeCheckpoint) set({ themeCheckpoint: base })
+        get().setThemeState((prev) => ({
+          ...prev,
+          hslAdjustments: adjustments,
+          styles: adjustThemeStyles(
+            base.styles,
+            adjustments,
+            getExtraColorKeys()
+          ),
+        }))
       },
 
       resetToCurrentPreset: () => {

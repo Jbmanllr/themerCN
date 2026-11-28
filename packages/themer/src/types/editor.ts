@@ -144,8 +144,14 @@ export interface EditorStoreActions {
    * a new checkpoint.
    */
   applyThemePreset: (preset: string) => void
-  /** Save current state as checkpoint */
-  saveThemeCheckpoint: () => void
+  /**
+   * Set the HSL adjustment: every colour recomputed from the checkpoint, the
+   * Theme as it was before the first adjustment away from neutral, so a
+   * second step never compounds the first and neutral gives the colours
+   * back. Moves the checkpoint to the Theme when the adjustment leaves
+   * neutral. Goes through setThemeState, so it batches into undo history.
+   */
+  setHslAdjustments: (adjustments: HSLAdjustments) => void
   /**
    * Reset to the current preset's resolved styles (the Host app's default preset
    * when that id is no longer registered). Clears undo and redo and moves the

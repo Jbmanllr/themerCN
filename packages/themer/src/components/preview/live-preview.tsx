@@ -15,7 +15,8 @@
 //   old instance and starts one on the new document. Stopping it, when the
 //   override switch goes off or the tab unmounts, removes everything it
 //   wrote, even after the frame navigated or was detached.
-// - next-themes inside the frame owns its light/dark class, as on the page.
+// - The page inside the frame sets its own light/dark class (its Host's
+//   mode library, or the head script): nothing here toggles it.
 // - A cross-origin URL cannot be themed (or inspected); reading it throws or
 //   yields null, which is ignored.
 // - The Host must allow same-origin framing (`frame-ancestors 'self'`,

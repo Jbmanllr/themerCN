@@ -13,10 +13,6 @@ import {
   DrawerHeader,
   DrawerTitle,
 } from "@workspace/ui/components/drawer"
-import {
-  useApplyThemePreset,
-  usePreset,
-} from "../../hooks/use-editor-selectors"
 import { PresetSelect } from "../actions/preset-select"
 import { MobilePanelContent } from "./mobile-panel-content"
 
@@ -29,10 +25,6 @@ interface MobileDrawerProps {
  * Themer UI is open. Calls `onClose` whenever the drawer asks to close.
  */
 export function MobileDrawer({ onClose }: MobileDrawerProps) {
-  // Narrow selections: the drawer re-renders on preset changes only.
-  const preset = usePreset()
-  const applyPreset = useApplyThemePreset()
-
   return (
     <Drawer open onOpenChange={(open) => !open && onClose()}>
       <DrawerContent className="max-h-[90dvh]">
@@ -40,7 +32,7 @@ export function MobileDrawer({ onClose }: MobileDrawerProps) {
           <DrawerTitle>Themer</DrawerTitle>
         </DrawerHeader>
         <div className="border-b p-4">
-          <PresetSelect value={preset} onChange={applyPreset} />
+          <PresetSelect />
         </div>
         <div className="overflow-y-auto p-4" data-lenis-prevent>
           <MobilePanelContent />

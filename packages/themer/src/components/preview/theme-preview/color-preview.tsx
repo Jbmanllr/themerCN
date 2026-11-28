@@ -5,7 +5,7 @@
 // can tell them apart; keep the `Edit <label>` / `Copy <label>` names.
 import { ActionButton } from "../../ui/action-button"
 import { CopyButton } from "../../ui/copy-button"
-import { useColorFocusTrigger } from "../../../hooks/use-color-focus"
+import { focusColor } from "../../../hooks/use-color-focus"
 import type { ThemeMode, ThemeStyles } from "../../../types"
 import { getColorListGroups } from "../../../utils/color-groups"
 import { Copy, SquarePen } from "lucide-react"
@@ -24,8 +24,6 @@ function ColorPreviewItem({
   color: string
   name: string
 }) {
-  const { focusColor } = useColorFocusTrigger()
-
   return (
     <div className="group/color-preview relative flex items-center gap-2 rounded-md p-1 transition-colors hover:bg-muted/60">
       <div

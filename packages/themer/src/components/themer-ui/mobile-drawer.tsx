@@ -21,21 +21,20 @@ import { PresetSelect } from "../actions/preset-select"
 import { MobilePanelContent } from "./mobile-panel-content"
 
 interface MobileDrawerProps {
-  isOpen: boolean
   onClose: () => void
 }
 
 /**
- * Calls `onClose` whenever the drawer asks to close; an open request does
- * nothing.
+ * Open for as long as it is mounted: ThemerUI renders it only while the
+ * Themer UI is open. Calls `onClose` whenever the drawer asks to close.
  */
-export function MobileDrawer({ isOpen, onClose }: MobileDrawerProps) {
+export function MobileDrawer({ onClose }: MobileDrawerProps) {
   // Narrow selections: the drawer re-renders on preset changes only.
   const preset = usePreset()
   const applyPreset = useApplyThemePreset()
 
   return (
-    <Drawer open={isOpen} onOpenChange={(open) => !open && onClose()}>
+    <Drawer open onOpenChange={(open) => !open && onClose()}>
       <DrawerContent className="max-h-[90dvh]">
         <DrawerHeader className="border-b px-4">
           <DrawerTitle>Themer</DrawerTitle>

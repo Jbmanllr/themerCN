@@ -234,11 +234,6 @@ function ContrastResultItem({ result, canFocus }: ContrastResultItemProps) {
   )
 }
 
-interface ContrastBadgeProps {
-  level: WCAGLevel
-  className?: string
-}
-
 const BADGES: Record<
   WCAGLevel,
   {
@@ -253,10 +248,10 @@ const BADGES: Record<
 }
 
 /** One WCAG level as a badge; "AA Large" carries a warning icon, not a check. */
-function ContrastBadge({ level, className }: ContrastBadgeProps) {
+function ContrastBadge({ level }: { level: WCAGLevel }) {
   const { variant, Icon } = BADGES[level]
   return (
-    <Badge variant={variant} className={className}>
+    <Badge variant={variant}>
       <Icon aria-hidden />
       {level}
     </Badge>

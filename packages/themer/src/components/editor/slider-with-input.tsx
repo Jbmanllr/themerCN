@@ -11,7 +11,6 @@ import * as React from "react"
 import { Slider } from "@workspace/ui/components/slider"
 import { Input } from "@workspace/ui/components/input"
 import { Label } from "@workspace/ui/components/label"
-import { cn } from "@workspace/ui/lib/utils"
 import { clampToRange } from "../../utils/length"
 
 interface SliderWithInputProps {
@@ -22,8 +21,6 @@ interface SliderWithInputProps {
   max: number
   step: number
   unit?: string
-  disabled?: boolean
-  className?: string
 }
 
 /**
@@ -37,8 +34,6 @@ export function SliderWithInput({
   max,
   step,
   unit = "",
-  disabled = false,
-  className,
 }: SliderWithInputProps) {
   const inputId = React.useId()
   const labelId = React.useId()
@@ -92,7 +87,7 @@ export function SliderWithInput({
   }
 
   return (
-    <div className={cn("mb-4", className)}>
+    <div className="mb-4">
       <div className="mb-2 flex items-center justify-between">
         <Label id={labelId} htmlFor={inputId} className="text-sm font-medium">
           {label}
@@ -107,7 +102,6 @@ export function SliderWithInput({
             min={min}
             max={max}
             step={step}
-            disabled={disabled}
             className="h-7 w-16 text-end text-xs"
           />
           {unit && (
@@ -121,7 +115,6 @@ export function SliderWithInput({
         min={min}
         max={max}
         step={step}
-        disabled={disabled}
         aria-labelledby={labelId}
         className="w-full py-1"
       />

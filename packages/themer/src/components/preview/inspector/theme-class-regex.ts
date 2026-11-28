@@ -131,9 +131,9 @@ export function matchThemeClasses(
  */
 export function findThemeClasses(
   target: unknown,
-  boundary: unknown,
-  regex: RegExp = getThemeClassRegex()
+  boundary: unknown
 ): { element: ElementLike; matches: string[] } | null {
+  const regex = getThemeClassRegex()
   let current: ElementLike | null = isElementLike(target) ? target : null
   while (current && current !== boundary) {
     const matches = matchThemeClasses(getClassString(current), regex)

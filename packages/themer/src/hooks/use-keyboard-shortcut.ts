@@ -36,8 +36,6 @@ interface ShortcutOptions {
   callback: () => void
   /** Whether the shortcut is enabled */
   enabled?: boolean
-  /** Prevent default browser behavior */
-  preventDefault?: boolean
 }
 
 export interface ParsedShortcut {
@@ -193,12 +191,11 @@ export function useKeyboardShortcut({
   modifiers = EMPTY_MODIFIERS,
   callback,
   enabled = true,
-  preventDefault = true,
 }: ShortcutOptions): void {
   const signature = shortcutSignature(key, modifiers)
 
   const onShortcut = useEffectEvent((event: KeyboardEvent) => {
-    if (preventDefault) event.preventDefault()
+    event.preventDefault()
     callback()
   })
 

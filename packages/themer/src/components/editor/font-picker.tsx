@@ -83,7 +83,6 @@ interface FontPickerProps {
   onChange: (font: string) => void
   category: ThemeFontRole
   label: string
-  disabled?: boolean
   fontCatalogEndpoint?: string
 }
 
@@ -451,7 +450,6 @@ export function FontPicker({
   onChange,
   category,
   label,
-  disabled = false,
   fontCatalogEndpoint,
 }: FontPickerProps) {
   const themerContext = useOptionalThemerContext()
@@ -594,7 +592,6 @@ export function FontPicker({
               variant="outline"
               role="combobox"
               aria-labelledby={labelId}
-              disabled={disabled}
               className="h-9 w-full justify-between font-normal"
             />
           }

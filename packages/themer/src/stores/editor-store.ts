@@ -246,7 +246,6 @@ function restored(
 export const useEditorStore = create<EditorStore>()(
   persist(
     (set, get) => ({
-      // State
       themeState: defaultThemeState,
       themeCheckpoint: null,
       // The default Theme is its own Preset, untouched: with its baseline,
@@ -256,7 +255,6 @@ export const useEditorStore = create<EditorStore>()(
       future: [],
       restoredFromStorage: false,
 
-      // Actions
       setThemeState: (stateOrUpdater: SetThemeStateArg) => {
         const oldThemeState = get().themeState
         // Support functional updaters for avoiding stale closures
@@ -299,12 +297,10 @@ export const useEditorStore = create<EditorStore>()(
             ? currentHistory[currentHistory.length - 1]
             : null
 
-        // Batch rapid changes within debounce threshold
         if (
           !lastHistoryEntry ||
           currentTime - lastHistoryEntry.timestamp >= HISTORY_DEBOUNCE_MS
         ) {
-          // Add a new history entry (pushHistory enforces the max count)
           currentHistory = pushHistory(currentHistory, oldThemeState)
         }
 

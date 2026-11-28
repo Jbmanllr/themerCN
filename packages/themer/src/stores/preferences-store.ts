@@ -51,7 +51,6 @@ function formatFor(version: TailwindVersion, format: ColorFormat): ColorFormat {
 export const usePreferencesStore = create<PreferencesStore>()(
   persist(
     (set, get) => ({
-      // State
       colorFormat: "oklch",
       tailwindVersion: "4",
       packageManager: "pnpm",
@@ -64,7 +63,6 @@ export const usePreferencesStore = create<PreferencesStore>()(
       colorSelectorTab: "list",
       sectionStates: {},
 
-      // Actions
       setColorFormat: (format) => {
         if (get().getAvailableColorFormats().includes(format)) {
           set({ colorFormat: format })

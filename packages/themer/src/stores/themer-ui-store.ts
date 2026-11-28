@@ -34,14 +34,12 @@ export const useThemerUIStore = create<ThemerUIStore>()((set, get) => {
     set({ fullscreenPreview })
 
   return {
-    // State
     isOpen: false,
     activePanel: "colors",
     inspectorLayout: null,
     fullscreenPreview: false,
     dialog: null,
 
-    // Actions
     open: () => set({ isOpen: true }),
     close: () => {
       const wasOpen = get().isOpen

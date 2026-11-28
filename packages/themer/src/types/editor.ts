@@ -45,9 +45,7 @@ export type ColorSelectorTab = (typeof COLOR_SELECTOR_TABS)[number]
  * Complete theme editor state
  */
 export interface ThemeEditorState {
-  /** Current theme styles for light and dark modes */
   styles: ThemeStyles
-  /** Currently active mode */
   currentMode: ThemeMode
   /**
    * Id of the preset the theme started from: every Theme has one, since a
@@ -85,7 +83,6 @@ export interface PresetBaseline {
  * Editor store state
  */
 export interface EditorStoreState {
-  /** Current theme state */
   themeState: ThemeEditorState
   /**
    * The theme before the first HSL adjustment: the base the HSL controls
@@ -162,7 +159,6 @@ export interface EditorStoreActions {
   undo: () => void
   /** Redo last undone change; moves the checkpoint to the restored state. */
   redo: () => void
-  /** Set current mode (light/dark) */
   setCurrentMode: (mode: ThemeMode) => void
   /**
    * Write a style shared by both modes (fonts, radius, spacing, letter
@@ -223,7 +219,6 @@ export interface PreferencesState {
   tailwindVersion: TailwindVersion
   /** Package manager for registry commands */
   packageManager: PackageManager
-  /** Show contrast warnings */
   showContrastWarnings: boolean
   /**
    * Id of the last selected preview tab, built-in or host. An id that no
@@ -284,7 +279,6 @@ export type PreferencesStore = PreferencesState & PreferencesActions
  * in hooks/use-color-focus.ts), so no DOM node ends up in reactive state.
  */
 export interface ColorFocusState {
-  /** Currently highlighted color variable name */
   highlightTarget: string | null
   /** Colour list search query; kept across panel switches, reset on close. */
   colorSearch: string
@@ -301,9 +295,7 @@ export interface ColorFocusState {
  * Color focus store actions
  */
 export interface ColorFocusActions {
-  /** Set the highlighted color */
   setHighlightTarget: (target: string | null) => void
-  /** Set the colour list search query */
   setColorSearch: (query: string) => void
 }
 
@@ -319,9 +311,7 @@ export type ThemerDialog = "code" | "importCss" | "contrast"
  * Themer UI state
  */
 export interface ThemerUIState {
-  /** Whether the themer is open */
   isOpen: boolean
-  /** Current active panel. */
   activePanel: "colors" | "typography" | "other"
   /**
    * The Themer layout the inspector was turned on in, or null when off. It
@@ -339,23 +329,16 @@ export interface ThemerUIState {
  * Themer UI actions
  */
 export interface ThemerUIActions {
-  /** Open the themer */
   open: () => void
-  /** Close the themer */
   close: () => void
-  /** Toggle the themer */
   toggle: () => void
-  /** Set active panel */
   setActivePanel: (panel: ThemerUIState["activePanel"]) => void
   /** Toggle the inspector in the Themer layout in force */
   toggleInspector: (layout: ThemerLayout) => void
-  /** Turn the inspector off */
   turnOffInspector: () => void
-  /** Toggle fullscreen preview */
   toggleFullscreen: () => void
   /** Open an action's dialog, closing any other */
   openDialog: (dialog: ThemerDialog) => void
-  /** Close the open dialog */
   closeDialog: () => void
 }
 

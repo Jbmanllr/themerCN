@@ -32,9 +32,7 @@ interface ShortcutOptions {
   key: string
   /** Modifiers required (e.g., ['ctrl', 'shift']) */
   modifiers?: readonly KeyModifier[]
-  /** Callback to execute */
   callback: () => void
-  /** Whether the shortcut is enabled */
   enabled?: boolean
 }
 

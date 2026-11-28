@@ -23,8 +23,6 @@ export const useIsOnPreset = () => {
   return useEditorStore(selectIsOnPreset(sidebarSync))
 }
 
-/** Hook for current preset */
 export const usePreset = () => useEditorStore(selectPreset)
 
-/** Hook for applyThemePreset action */
 export const useApplyThemePreset = () => useEditorStore(selectApplyThemePreset)

@@ -139,7 +139,6 @@ export function HSLAdjustments() {
         ))}
       </ToggleGroup>
 
-      {/* Show more/less */}
       {hslPresets.length > 5 && (
         <Button
           variant="ghost"
@@ -159,7 +158,6 @@ export function HSLAdjustments() {
         </Button>
       )}
 
-      {/* Sliders */}
       <div className="space-y-1">
         <SliderWithInput
           label="Hue Shift"

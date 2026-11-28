@@ -60,6 +60,7 @@ import { useEditorStore } from "../../stores/editor-store"
 import { useOptionalThemerContext } from "../../hooks/use-themer-context"
 import { useScrollBoundary } from "./scroll-boundary"
 import type { FilterFontCategory, FontInfo } from "../../types/fonts"
+import { THEME_FONT_KEYS, type ThemeFontKey } from "../../types/theme"
 import { getPopularFonts } from "../../utils/font-catalog-data"
 import {
   acquireFontPreview,
@@ -692,11 +693,9 @@ export function FontPicker({
   )
 }
 
-/** The theme font variables the editor exposes; each has one picker. */
-type FontControlKey = "font-sans" | "font-heading" | "font-serif" | "font-mono"
-
+/** The label and category of each theme font slot; each has one picker. */
 const FONT_CONTROLS: Readonly<
-  Record<FontControlKey, { category: "sans" | "serif" | "mono"; label: string }>
+  Record<ThemeFontKey, { category: "sans" | "serif" | "mono"; label: string }>
 > = {
   "font-sans": { category: "sans", label: "Sans-serif" },
   // Headings usually take a display serif; presets without one resolve it
@@ -706,14 +705,12 @@ const FONT_CONTROLS: Readonly<
   "font-mono": { category: "mono", label: "Monospace" },
 }
 
-const FONT_SLOTS = Object.keys(FONT_CONTROLS) as FontControlKey[]
-
 /**
  * One theme font slot, with its label and category from FONT_CONTROLS.
  * Fonts are shared by both modes, so the change goes through
  * updateCommonStyle; the slot reads only its own value.
  */
-function FontSlotPicker({ slot }: Readonly<{ slot: FontControlKey }>) {
+function FontSlotPicker({ slot }: Readonly<{ slot: ThemeFontKey }>) {
   const value = useEditorStore(
     (state) => state.themeState.styles[state.themeState.currentMode][slot]
   )
@@ -741,7 +738,7 @@ function FontSlotPicker({ slot }: Readonly<{ slot: FontControlKey }>) {
 export function FontControls() {
   return (
     <div className="flex flex-col gap-4">
-      {FONT_SLOTS.map((slot) => (
+      {THEME_FONT_KEYS.map((slot) => (
         <FontSlotPicker key={slot} slot={slot} />
       ))}
     </div>

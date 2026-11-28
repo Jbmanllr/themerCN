@@ -185,6 +185,21 @@ export const SPACING_PRESETS = {
 } as const
 
 /**
+ * Tailwind's tracking scale as offsets from the Theme's letter spacing
+ * (tweakcn's app/globals.css); `normal` is the letter spacing itself. The one
+ * list: a Theme apply writes `--tracking-*` from it (utils/apply-theme.ts)
+ * and the export declares the same scale (utils/theme-generator.ts).
+ */
+export const TRACKING_OFFSETS = [
+  ["tighter", "- 0.05em"],
+  ["tight", "- 0.025em"],
+  ["normal", null],
+  ["wide", "+ 0.025em"],
+  ["wider", "+ 0.05em"],
+  ["widest", "+ 0.1em"],
+] as const
+
+/**
  * Letter spacing presets in em
  */
 export const LETTER_SPACING_PRESETS = {

@@ -30,6 +30,7 @@ import type {
 } from "../types"
 import { colorFormatter } from "./color-converter"
 import { SHADOW_SCALE_KEYS, getShadowMap } from "./shadows"
+import { TRACKING_OFFSETS } from "../config/constants"
 import { defaultThemeState } from "../config/defaults"
 import { THEME_COLOR_KEYS, THEME_FONT_KEYS } from "../types/theme"
 import { getThemeFonts } from "./font-names"
@@ -163,13 +164,12 @@ function generateTrackingVariables(styles: ThemeStyles): string {
   if (!hasLetterSpacing(styles)) {
     return ""
   }
-  return `
-
-  --tracking-tighter: calc(var(--tracking-normal) - 0.05em);
-  --tracking-tight: calc(var(--tracking-normal) - 0.025em);
-  --tracking-wide: calc(var(--tracking-normal) + 0.025em);
-  --tracking-wider: calc(var(--tracking-normal) + 0.05em);
-  --tracking-widest: calc(var(--tracking-normal) + 0.1em);`
+  const scale = TRACKING_OFFSETS.flatMap(([name, offset]) =>
+    offset
+      ? [`  --tracking-${name}: calc(var(--tracking-normal) ${offset});`]
+      : []
+  )
+  return `\n\n${scale.join("\n")}`
 }
 
 function indentBlock(value: string): string {
@@ -345,7 +345,7 @@ function toExportColorFormat(
 /**
  * The theme as a stylesheet: Tailwind 4 (`@import "tailwindcss"`, a `:root`
  * and a `.dark` block, `@theme inline`) or Tailwind 3 (`@tailwind` layers).
- * Throws when either mode's styles are missing. For Tailwind 3 an oklch
+ * For Tailwind 3 an oklch
  * `colorFormat` exports as hsl. Extra colours are written only for the keys in
  * `extraColorKeys` that the theme sets.
  */
@@ -355,10 +355,6 @@ export function generateThemeCode(
   tailwindVersion: TailwindVersion = "4",
   extraColorKeys: readonly string[] = []
 ): string {
-  if (!themeState?.styles?.light || !themeState?.styles?.dark) {
-    throw new Error("Invalid theme styles: missing light or dark mode")
-  }
-
   const exportFormat = toExportColorFormat(colorFormat, tailwindVersion)
   const formatColor = (color: string) =>
     colorFormatter(color, exportFormat, tailwindVersion)
@@ -427,17 +423,13 @@ ${indentBlock(darkTheme)}
 
 /**
  * The Tailwind 3 `tailwind.config.js` colours, radius and font families.
- * Always the v3 shape. Throws when either mode's styles are missing.
+ * Always the v3 shape.
  */
 export function generateTailwindConfigCode(
   themeState: ThemeEditorState,
   colorFormat: ColorFormat = "hsl",
   extraColorKeys: readonly string[] = []
 ): string {
-  if (!themeState?.styles?.light || !themeState?.styles?.dark) {
-    throw new Error("Invalid theme styles: missing light or dark mode")
-  }
-
   return generateTailwindV3Config(
     toExportColorFormat(colorFormat, "3"),
     exportedExtraKeys(themeState.styles, extraColorKeys)
@@ -447,14 +439,9 @@ export function generateTailwindConfigCode(
 /**
  * A Next.js root `layout.tsx` that imports each Google family the light mode's
  * font slots name through `next/font/google` and binds it to the slot's CSS
- * variable. An OS family or a `var(...)` host font gets no import. Throws when
- * either mode's styles are missing.
+ * variable. An OS family or a `var(...)` host font gets no import.
  */
 export function generateLayoutCode(themeState: ThemeEditorState): string {
-  if (!themeState?.styles?.light || !themeState?.styles?.dark) {
-    throw new Error("Invalid theme styles: missing light or dark mode")
-  }
-
   const googleFonts: { importName: string; varName: string; cssVar: string }[] =
     []
 

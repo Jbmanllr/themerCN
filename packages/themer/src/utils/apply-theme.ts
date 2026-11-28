@@ -44,7 +44,11 @@
 //
 // See: packages/themer/ARCHITECTURE.md ("Applying a theme").
 import type { StoreApi } from "zustand"
-import { RESTORE_STYLE_ID, THEMER_STYLE_ATTRIBUTE } from "../config/constants"
+import {
+  RESTORE_STYLE_ID,
+  THEMER_STYLE_ATTRIBUTE,
+  TRACKING_OFFSETS,
+} from "../config/constants"
 import { defaultLightStyles } from "../config/defaults"
 import { getExtraColorKeys } from "../config/extra-colors"
 import type { ThemeEditorState, ThemeMode } from "../types"
@@ -66,16 +70,6 @@ const VARIABLE_KEYS = [...THEME_FONT_KEYS, ...THEME_SPACING_KEYS] as const
 
 /** Tailwind shadow utilities the override sheet rewires, by variable name. */
 const SHADOW_VARIABLE_SET: ReadonlySet<string> = new Set(SHADOW_SCALE_KEYS)
-
-/** tweakcn's tracking scale, as offsets from the theme's letter-spacing. */
-const TRACKING_OFFSETS = [
-  ["tighter", "- 0.05em"],
-  ["tight", "- 0.025em"],
-  ["normal", null],
-  ["wide", "+ 0.025em"],
-  ["wider", "+ 0.05em"],
-  ["widest", "+ 0.1em"],
-] as const
 
 export const THEMER_OVERRIDES_ATTRIBUTE = "data-themer-overrides"
 

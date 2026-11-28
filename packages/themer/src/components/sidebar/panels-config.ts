@@ -1,6 +1,8 @@
 import { Palette, Type, Sliders, type LucideIcon } from "lucide-react"
+import type { ThemerUIStore } from "../../types"
 
-export type Panel = "colors" | "typography" | "other"
+/** A panel of the Themer UI: the ThemerUIStore's `activePanel`. */
+export type Panel = ThemerUIStore["activePanel"]
 
 export interface PanelConfig {
   id: Panel

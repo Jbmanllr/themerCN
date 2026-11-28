@@ -663,14 +663,14 @@ sorted by `order`, a Host id replaces a built-in, Host tabs without `order`
 go last). Only the active tab mounts; Host tabs render inside
 `previewWrapper` and `[data-themer-host]`.
 
-| Module                              | Purpose                                                                                                                                                                                                   |
-| ----------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `PreviewTabs`                       | Tab bar, inspector toggle (`Ctrl+I`), fullscreen.                                                                                                                                                         |
-| `LivePreview`                       | Same-origin iframe of the Host page; the Theme is applied to its document after each load. The Host must allow same-origin framing.                                                                       |
-| `InspectorOverlay` + `useInspector` | Hover shows an element's token classes; click pins it and focuses the colour control. Off on mobile and for a cross-origin frame. `ignore` leaves a subtree alone (the page inspector's `[data-themer]`). |
-| `InspectorToggle`                   | The toggle, shared by `PreviewTabs` and `PageInspectorToggle`.                                                                                                                                            |
-| `useInspectorSession`               | Session rules for both entry points (`PreviewTabs`, `PageInspector`), in `inspector/`: mode for the layout in force, toggle, the pick that focuses the token's colour control, `Ctrl+I` while available.  |
-| `useFullscreenSync`                 | Keeps `fullscreenPreview` in step with the Fullscreen API; CSS fallback; `Esc` exits.                                                                                                                     |
+| Module                              | Purpose                                                                                                                                                                                                  |
+| ----------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `PreviewTabs`                       | Tab bar, inspector toggle (`Ctrl+I`), fullscreen.                                                                                                                                                        |
+| `LivePreview`                       | Same-origin iframe of the Host page; the Theme is applied to its document after each load. The Host must allow same-origin framing.                                                                      |
+| `InspectorOverlay` + `useInspector` | Hover shows an element's token classes; click pins it and focuses the colour control. Off for a cross-origin frame. `ignore` leaves a subtree alone (the page inspector's `[data-themer]`).              |
+| `InspectorToggle`                   | The toggle, shared by `PreviewTabs` and `PageInspectorToggle`.                                                                                                                                           |
+| `useInspectorSession`               | Session rules for both entry points (`PreviewTabs`, `PageInspector`), in `inspector/`: mode for the layout in force, toggle, the pick that focuses the token's colour control, `Ctrl+I` while available. |
+| `useFullscreenSync`                 | Keeps `fullscreenPreview` in step with the Fullscreen API; CSS fallback; `Esc` exits.                                                                                                                    |
 
 ## Color System
 
@@ -721,8 +721,7 @@ parsed (`themerShortcuts`) and tooltips format it. Toggle (`shortcut`,
 default `SHORTCUTS.toggle` = `ctrl+shift+e`), undo and redo in
 `ThemerProvider` (undo and redo only while the Themer UI is open); `Ctrl+I`
 (`inspector`) in `useInspectorSession`, for `PreviewTabs` (Workspace: not on
-mobile or a cross-origin Live frame) and `PageInspector` (in-place layouts:
-every device). Outside `SHORTCUTS`, `Esc` exits the fallback fullscreen preview
+a cross-origin Live frame) and `PageInspector` (in-place layouts). Outside `SHORTCUTS`, `Esc` exits the fallback fullscreen preview
 (`subscribeFullscreen`) and hides the inspector card (`useInspector`; a
 pinned card takes the key first). The Themer binds no sidebar shortcut: the
 stock Ctrl/Cmd+B is off in `ThemerSidebarProvider`. A shortcut string

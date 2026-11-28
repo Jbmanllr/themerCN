@@ -46,10 +46,10 @@ function stubViewport(initialWidth: number) {
   }
 }
 
-async function mount(breakpoint?: number) {
+async function mount() {
   const rendered: boolean[] = []
   function Harness() {
-    const isMobile = useIsMobile(breakpoint)
+    const isMobile = useIsMobile()
     rendered.push(isMobile)
     return null
   }
@@ -66,17 +66,17 @@ afterEach(async () => {
 describe("useIsMobile", () => {
   it("is right on the first render, with no desktop frame first", async () => {
     stubViewport(390)
-    expect(await mount(1280)).toEqual([true])
+    expect(await mount()).toEqual([true])
   })
 
   it("is false on a wide viewport and treats the breakpoint itself as desktop", async () => {
     stubViewport(1280)
-    expect(await mount(1280)).toEqual([false])
+    expect(await mount()).toEqual([false])
   })
 
   it("follows the viewport crossing the breakpoint, and stops listening on unmount", async () => {
     const viewport = stubViewport(1400)
-    const rendered = await mount(1280)
+    const rendered = await mount()
     expect(rendered.at(-1)).toBe(false)
     expect(viewport.queries.at(-1)).toBe("(max-width: 1279px)")
 

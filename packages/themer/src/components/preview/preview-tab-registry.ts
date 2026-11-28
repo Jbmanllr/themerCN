@@ -24,8 +24,6 @@ export interface PreviewTabDefinition {
   source: "builtin" | "host"
   /** Listed in the "More previews" menu instead of the tab bar. */
   inMenu?: boolean
-  /** Hidden from the tab bar below `md` (wide demos). */
-  wideOnly?: boolean
   /** The body is a same-origin frame the inspector binds to. */
   frame?: boolean
   /** Fills the area edge to edge (no inner padding or rounding). */

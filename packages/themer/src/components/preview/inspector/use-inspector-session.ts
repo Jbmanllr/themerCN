@@ -6,11 +6,10 @@
 //   (useInspectorMode), and the toggle;
 // - the pick: a picked class is segmented to its token, whose colour control
 //   gets focus;
-// - Ctrl+I toggles it, bound only while the inspector is available on the
-//   entry point's surface (and not on a frame the Themer cannot read).
+// - Ctrl+I toggles it, bound only while the inspector is available: always,
+//   except on a frame the Themer cannot read.
 //
-// An entry point passes its surface and whether the inspector can run there,
-// and renders the overlay and toggle. This runs per render, not per pointer
+// An entry point passes its surface, and renders the overlay and toggle. This runs per render, not per pointer
 // move: its only listener is the shortcut's, and it adds no work to a move.
 
 import * as React from "react"
@@ -24,15 +23,12 @@ import { segmentClassName } from "./segment-classname"
 import { useInspector, type InspectorState } from "./use-inspector"
 
 export function useInspectorSession({
-  surfaceAvailable,
   frame,
   bindingKey,
   hostRef,
   containerRef,
   ignore,
 }: {
-  /** The entry point's surface can be inspected (e.g. not on mobile). */
-  surfaceAvailable: boolean
   /** The surface is an iframe (first `iframe` inside the host). */
   frame: boolean
   /** Changes when the inspected surface changes, so the inspector rebinds. */
@@ -46,7 +42,7 @@ export function useInspectorSession({
   /** The inspector mode is on for the Themer layout in force. */
   active: boolean
   toggle: () => void
-  /** `surfaceAvailable`, unless the frame cannot be read. */
+  /** False only on a frame the Themer cannot read (another origin). */
   available: boolean
 } {
   const { active, toggle } = useInspectorMode()
@@ -57,7 +53,7 @@ export function useInspectorSession({
   }, [])
 
   const { state, frameBlocked } = useInspector({
-    enabled: active && surfaceAvailable,
+    enabled: active,
     frame,
     bindingKey,
     hostRef,
@@ -65,7 +61,7 @@ export function useInspectorSession({
     ignore,
     onPick: handlePick,
   })
-  const available = surfaceAvailable && !(frame && frameBlocked)
+  const available = !(frame && frameBlocked)
 
   useKeyboardShortcut({
     key: themerShortcuts.inspector.key,

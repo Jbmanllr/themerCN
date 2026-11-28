@@ -13,8 +13,8 @@
 //   (the editor is portaled outside the host tree).
 // - Inspector: its session rules (mode, pick, Ctrl+I) live in
 //   useInspectorSession (./inspector/use-inspector-session.ts); this entry
-//   point passes the active tab as its surface, unavailable on mobile, and
-//   renders the toggle and overlay. A cross-origin Live frame also makes it unavailable.
+//   point passes the active tab as its surface and renders the toggle and
+//   overlay. A cross-origin Live frame makes it unavailable.
 // - Fullscreen: this area goes `fixed` over the editor; ThemerUI unmounts
 //   the sidebar and header. The light/dark toggle (ModeToggle) shows here
 //   meanwhile, since the action bar is covered.
@@ -34,7 +34,6 @@ import { ScrollArea, ScrollBar } from "@workspace/ui/components/scroll-area"
 import { Tabs, TabsContent, TabsList } from "@workspace/ui/components/tabs"
 import { cn } from "@workspace/ui/lib/utils"
 import { focusColor } from "../../hooks/use-color-focus"
-import { useIsMobile } from "../../hooks/use-is-mobile"
 import { useThemerUIStore } from "../../stores/themer-ui-store"
 import { usePreferencesStore } from "../../stores/preferences-store"
 import type { ThemerConfig } from "../../types"
@@ -58,7 +57,6 @@ export function PreviewTabs() {
   const setPreviewTab = usePreferencesStore((state) => state.setPreviewTab)
   const isFullscreen = useThemerUIStore((state) => state.fullscreenPreview)
   const toggleFullscreen = useThemerUIStore((state) => state.toggleFullscreen)
-  const isMobile = useIsMobile()
 
   const hostRef = React.useRef<HTMLDivElement>(null)
   const containerRef = React.useRef<HTMLElement>(null)
@@ -69,7 +67,6 @@ export function PreviewTabs() {
     toggle: toggleInspector,
     available: inspectorAvailable,
   } = useInspectorSession({
-    surfaceAvailable: !isMobile,
     frame: activeTab?.frame === true,
     bindingKey: activeTabId,
     hostRef,
@@ -106,11 +103,7 @@ export function PreviewTabs() {
           <InspectorToggle
             pressed={inspectorMode && inspectorAvailable}
             available={inspectorAvailable}
-            blockedReason={
-              isMobile
-                ? "The inspector needs a desktop layout"
-                : "Pages from another origin cannot be inspected"
-            }
+            blockedReason="Pages from another origin cannot be inspected"
             onToggle={toggleInspector}
             data-testid="themer-preview-inspector"
           />
@@ -231,7 +224,6 @@ function PreviewTabList({
               key={tab.id}
               data-testid={`themer-preview-tab-${tab.id}`}
               value={tab.id}
-              className={tab.wideOnly ? "hidden md:inline-flex" : undefined}
             >
               {tab.label}
             </TabsTriggerPill>

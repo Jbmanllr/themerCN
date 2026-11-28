@@ -2,6 +2,7 @@
 // (editor-store.ts, preferences-store.ts).
 
 import type { PersistStorage, StorageValue } from "zustand/middleware"
+import { shallow } from "zustand/shallow"
 import { isProduction } from "../utils/is-production"
 
 /**
@@ -30,28 +31,6 @@ function warnOnce(error: unknown): void {
   console.warn(
     "[themercn] localStorage is unavailable, so Themer changes are not saved.",
     error
-  )
-}
-
-function shallowEqual(a: unknown, b: unknown): boolean {
-  if (Object.is(a, b)) return true
-  if (
-    typeof a !== "object" ||
-    typeof b !== "object" ||
-    a === null ||
-    b === null
-  ) {
-    return false
-  }
-  const aKeys = Object.keys(a)
-  if (aKeys.length !== Object.keys(b).length) return false
-  return aKeys.every(
-    (key) =>
-      Object.hasOwn(b, key) &&
-      Object.is(
-        (a as Record<string, unknown>)[key],
-        (b as Record<string, unknown>)[key]
-      )
   )
 }
 
@@ -94,7 +73,7 @@ export function guardedLocalStorage<
       if (
         last &&
         last.version === value.version &&
-        shallowEqual(last.state, value.state)
+        shallow(last.state, value.state)
       ) {
         return
       }

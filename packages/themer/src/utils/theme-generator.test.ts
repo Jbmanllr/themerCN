@@ -86,6 +86,9 @@ describe("generateThemeCode", () => {
   it("exports the radius scale the preview rounds with", () => {
     const css = generateThemeCode(defaultThemeState, "oklch", "4")
     expect(css).toContain("--radius-sm: calc(var(--radius) * 0.6);")
+    // The scale the preview rounds with starts at sm (themer.css): an xs of
+    // its own would change the Host's `rounded-xs` on paste.
+    expect(css).not.toContain("--radius-xs")
     expect(css).toContain("--radius-lg: var(--radius);")
     expect(css).toContain("--radius-4xl: calc(var(--radius) * 2.6);")
   })

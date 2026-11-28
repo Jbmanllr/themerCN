@@ -53,16 +53,11 @@ export const useThemerUIStore = create<ThemerUIStore>()((set, get) => {
       })
       if (wasOpen) clearColorFocus()
     },
+    // Closing resets the modes and the dialog: `close` holds that rule.
     toggle: () => {
-      const wasOpen = get().isOpen
-      set((state) => ({
-        isOpen: !state.isOpen,
-        // Reset modes and the dialog when closing
-        inspectorLayout: state.isOpen ? null : state.inspectorLayout,
-        fullscreenPreview: state.isOpen ? false : state.fullscreenPreview,
-        dialog: state.isOpen ? null : state.dialog,
-      }))
-      if (wasOpen) clearColorFocus()
+      const { isOpen, open, close } = get()
+      if (isOpen) close()
+      else open()
     },
     setActivePanel: (panel) => set({ activePanel: panel }),
     toggleInspector: (layout) =>

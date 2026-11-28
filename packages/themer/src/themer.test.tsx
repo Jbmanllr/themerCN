@@ -1054,6 +1054,14 @@ describe("Themer", () => {
       expect(rootVar("--primary")).toBe("rgb(9, 9, 9)")
     })
 
+    it("follows a prop that replaces another one left undefined", async () => {
+      await mount({ presets: undefined })
+      expect(trigger()).not.toBeNull()
+
+      await act(async () => root?.render(<Themer showTrigger={false} />))
+      expect(trigger()).toBeNull()
+    })
+
     it("hides the trigger when showTrigger is false", async () => {
       await mount({ showTrigger: false })
 

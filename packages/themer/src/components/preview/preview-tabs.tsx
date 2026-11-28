@@ -33,6 +33,7 @@ import {
 import { ScrollArea, ScrollBar } from "@workspace/ui/components/scroll-area"
 import { Tabs, TabsContent, TabsList } from "@workspace/ui/components/tabs"
 import { cn } from "@workspace/ui/lib/utils"
+import { focusColor } from "../../hooks/use-color-focus"
 import { useIsMobile } from "../../hooks/use-is-mobile"
 import { useThemerUIStore } from "../../stores/themer-ui-store"
 import { usePreferencesStore } from "../../stores/preferences-store"
@@ -67,7 +68,6 @@ export function PreviewTabs() {
     active: inspectorMode,
     toggle: toggleInspector,
     available: inspectorAvailable,
-    focusColor,
   } = useInspectorSession({
     surfaceAvailable: !isMobile,
     frame: activeTab?.frame === true,
@@ -191,7 +191,7 @@ const PreviewTabBody = React.memo(function PreviewTabBody({
     )
 
   return (
-    <ExamplesPreviewContainer className="size-full">
+    <ExamplesPreviewContainer>
       {tab.scroll === "none" ? (
         content
       ) : (

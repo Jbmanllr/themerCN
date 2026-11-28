@@ -48,7 +48,6 @@ export function useInspectorSession({
   toggle: () => void
   /** `surfaceAvailable`, unless the frame cannot be read. */
   available: boolean
-  focusColor: (value: string) => void
 } {
   const { active, toggle } = useInspectorMode()
 
@@ -75,5 +74,5 @@ export function useInspectorSession({
     enabled: available,
   })
 
-  return { state, active, toggle, available, focusColor }
+  return { state, active, toggle, available }
 }

@@ -49,6 +49,12 @@ const ciYml = parse(read("../.github/workflows/ci.yml")) as {
 }
 
 describe("formatting", () => {
+  // The README's commands table says the check covers the whole repo.
+  it("the root format check covers the whole repo", () => {
+    const scripts = JSON.parse(read("../package.json")).scripts
+    expect(scripts["format:check"]).toBe("prettier --check .")
+  })
+
   it("the root format writes exactly what the check checks", () => {
     const scripts = JSON.parse(read("../package.json")).scripts
     expect(scripts.format).toBe(
@@ -1494,6 +1500,12 @@ describe("Playwright tiers", () => {
       expect((await load("1")).failOnFlakyTests).toBe(true)
       expect((await load(undefined)).failOnFlakyTests).toBe(false)
     })
+
+    // The README promises it: "the uploaded report keeps the trace of every
+    // attempt".
+    it("keeps the trace of every failed attempt and every retry", async () => {
+      expect((await load("1")).use?.trace).toBe("retain-on-failure-and-retries")
+    })
   })
 
   it("a plain run lists no visual test", () => {
@@ -1924,8 +1936,9 @@ describe("the T1 Stop hook", () => {
     const { ran } = stop(dir, { t1Exit: 1 })
     expect(ran).toHaveLength(4)
     for (const command of ran) {
-      // Past the base SHA, whose hex digits can spell "e2e".
-      expect(command.replace(/^TURBO_SCM_BASE=\S+ /, "")).not.toMatch(
+      // Without the base SHA, whose hex digits can spell "e2e": Turbo takes
+      // it as a variable in front, the floor guard as its `--base` argument.
+      expect(command.replace(/\b[0-9a-f]{40}\b/g, "<sha>")).not.toMatch(
         /e2e|visual|smoke|playwright/
       )
     }

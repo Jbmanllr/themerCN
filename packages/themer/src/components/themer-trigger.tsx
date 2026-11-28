@@ -1,7 +1,7 @@
 "use client"
 
 // The floating button that opens the editor; ThemerRoot mounts it. Hidden
-// below `sm` (themer-trigger.test.tsx).
+// below `sm`: its classes come after the caller's, so a caller cannot show it.
 
 import * as React from "react"
 import { Paintbrush } from "lucide-react"

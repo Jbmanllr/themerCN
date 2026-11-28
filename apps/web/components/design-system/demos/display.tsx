@@ -477,7 +477,7 @@ export function AccordionDemo() {
         <AccordionItem value="ship">
           <AccordionTrigger>When do you ship?</AccordionTrigger>
           <AccordionContent>
-            Every Tuesday, two days after roasting.
+            Every Tuesday, the day after roasting.
           </AccordionContent>
         </AccordionItem>
         <AccordionItem value="pause">

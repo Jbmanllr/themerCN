@@ -387,10 +387,16 @@ describe("task hashes", () => {
         changes: ["web#test"],
         keeps: ["web#build", "web#e2e", "web#visual"],
       },
+      // test-slot.test.ts reads every workspace's Vitest config.
       {
         file: "apps/web/vitest.config.ts",
-        changes: ["web#test"],
+        changes: ["web#test", "//#test:repo"],
         keeps: ["web#build", "web#e2e", "web#visual"],
+      },
+      {
+        file: "packages/themer/vitest.config.ts",
+        changes: ["themercn#test", "//#test:repo"],
+        keeps: ["themercn#build", "themercn#build:css"],
       },
       {
         file: "apps/vite/src/__snapshots__/hash-probe.test.tsx.snap",

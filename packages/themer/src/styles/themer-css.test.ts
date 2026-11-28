@@ -1,6 +1,10 @@
 // The Themer's precompiled CSS (scripts/build-css.mjs → src/generated/), as
 // <Themer> injects it. It must style the Themer UI only and follow the
 // page's Theme variables without declaring any of its own.
+import { existsSync, readdirSync, readFileSync } from "node:fs"
+import { dirname, join } from "node:path"
+import { fileURLToPath } from "node:url"
+
 import postcss, { type AtRule, type Container, type Rule } from "postcss"
 import { describe, expect, it } from "vitest"
 
@@ -160,5 +164,69 @@ describe("the Themer's CSS", () => {
 
   it("carries shadcn's base border rule", () => {
     expect(utility("*")).toMatchObject({ "border-color": "var(--border)" })
+  })
+})
+
+// themer.css scans the UI package for class names, minus the components the
+// Themer never renders (their classes would ship in every Host page). The
+// exclusions must be exactly the components no Themer module reaches: one too
+// many and a rendered component loses its styles; one too few and dead CSS
+// ships again.
+describe("the UI components themer.css leaves out", () => {
+  const here = dirname(fileURLToPath(import.meta.url))
+  const themerSrc = join(here, "..")
+  const uiSrc = join(here, "../../../ui/src")
+
+  const sourceFiles = (dir: string): string[] =>
+    readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
+      const file = join(dir, entry.name)
+      if (entry.isDirectory()) return sourceFiles(file)
+      return /\.tsx?$/.test(entry.name) && !/\.test\.|test-helper/.test(file)
+        ? [file]
+        : []
+    })
+
+  /** The UI package file an import names, if it names one. */
+  function uiFile(from: string, specifier: string): string | undefined {
+    const base = specifier.startsWith("@workspace/ui/")
+      ? join(uiSrc, specifier.slice("@workspace/ui/".length))
+      : from.startsWith(uiSrc) && specifier.startsWith(".")
+        ? join(dirname(from), specifier)
+        : undefined
+    return (
+      base && [`${base}.tsx`, `${base}.ts`].find((file) => existsSync(file))
+    )
+  }
+
+  function reachedUiFiles(): Set<string> {
+    const reached = new Set<string>()
+    const queue = sourceFiles(themerSrc)
+    for (let file = queue.pop(); file; file = queue.pop()) {
+      const imports = readFileSync(file, "utf8").matchAll(
+        /(?:from|import\()\s*["']([^"']+)["']/g
+      )
+      for (const [, specifier = ""] of imports) {
+        const target = uiFile(file, specifier)
+        if (!target || reached.has(target)) continue
+        reached.add(target)
+        queue.push(target)
+      }
+    }
+    return reached
+  }
+
+  it("are exactly the ones no Themer module reaches", () => {
+    const css = readFileSync(join(here, "themer.css"), "utf8")
+    const excluded = Array.from(
+      css.matchAll(/@source not "[./]+\/ui\/src\/components\/([\w-]+)\.tsx";/g),
+      ([, name = ""]) => name
+    )
+    const reached = reachedUiFiles()
+    const unreached = readdirSync(join(uiSrc, "components"))
+      .filter((name) => name.endsWith(".tsx"))
+      .filter((name) => !reached.has(join(uiSrc, "components", name)))
+      .map((name) => name.replace(/\.tsx$/, ""))
+
+    expect(excluded.sort()).toEqual(unreached.sort())
   })
 })

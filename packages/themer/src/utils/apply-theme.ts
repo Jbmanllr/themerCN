@@ -289,7 +289,7 @@ function mirrorShadowRules(rules: ArrayLike<CssRuleLike>, out: string[]) {
 
 /**
  * A sheet the Themer wrote: the override sheet itself, or the Themer's own
- * CSS (about 250 kB, whose variant shadow rules are its UI's, not the Host's).
+ * CSS (about 175 kB, whose variant shadow rules are its UI's, not the Host's).
  */
 function isThemerSheet(owner: CSSStyleSheet["ownerNode"]): boolean {
   return (

@@ -260,8 +260,11 @@ following it as it changes ([use-host-direction.ts](src/hooks/use-host-direction
 properties Preflight does not reset. Required browsers: `@scope` with a lower
 boundary (Chrome 118, Safari 17.4, Firefox 146).
 
-`build-css` output covers every class of the preview examples (about 250 kB
-minified). DOM tests that mount `<Themer>` mock `./generated/themer-css`:
+`build-css` output covers every class of the Themer UI and the preview
+examples (about 175 kB minified). The scan leaves out the UI components no
+Themer module reaches (the Playground's own): `themer.css` lists them, and
+[themer-css.test.ts](src/styles/themer-css.test.ts) holds the list to the
+Themer's imports. DOM tests that mount `<Themer>` mock `./generated/themer-css`:
 happy-dom's `getComputedStyle` overflows on the real sheet.
 
 ### Popup layering

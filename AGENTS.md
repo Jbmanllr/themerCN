@@ -6,6 +6,10 @@ The home of [`themercn`](packages/themer), a live editor for a shadcn Theme's de
 
 `pre-release`
 
+## Architecture
+
+Before changing code under `packages/themer/src`, read the part of [`packages/themer/ARCHITECTURE.md`](packages/themer/ARCHITECTURE.md) that covers the module you touch: it maps the modules and states their contracts.
+
 ## Testing standard
 
 Read [`TESTING.md`](TESTING.md) before you verify or hand off a change: its "Verification tiers" say which checks run at each moment (T0 to T3), and describe the Stop hook that runs T1.
